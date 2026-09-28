@@ -1,0 +1,8 @@
+{
+  "url": "https://www.seek.com.au/software-engineer-jobs/in-All-Sydney-NSW?jobId=81234567&type=standard",
+  "expected": {
+    "site": "seek",
+    "canonicalUrl": "https://seek.com.au/job/81234567",
+    "title": "Software Engineer"
+  }
+}

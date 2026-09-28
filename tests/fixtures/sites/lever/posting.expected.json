@@ -1,0 +1,13 @@
+{
+  "url": "https://jobs.lever.co/rokt/2f1c9a3e-4b5d-4c6e-8f70-123456789abc/apply?lever-source=LinkedIn",
+  "expected": {
+    "site": "lever",
+    "canonicalUrl": "https://jobs.lever.co/rokt/2f1c9a3e-4b5d-4c6e-8f70-123456789abc",
+    "title": "Software Engineer, Platform",
+    "company": "Rokt",
+    "location": "Sydney",
+    "workplaceType": "hybrid",
+    "employmentTypes": ["full-time"],
+    "externalId": "2f1c9a3e-4b5d-4c6e-8f70-123456789abc"
+  }
+}

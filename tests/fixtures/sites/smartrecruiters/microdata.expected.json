@@ -1,0 +1,13 @@
+{
+  "url": "https://jobs.smartrecruiters.com/Visa/744000012345678-product-designer",
+  "expected": {
+    "site": "smartrecruiters",
+    "title": "Product Designer",
+    "company": "Visa",
+    "location": "Sydney, NSW, au",
+    "employmentTypes": ["full-time"],
+    "postedAt": "2026-09-10",
+    "externalId": "744000012345678",
+    "provenance": { "title": "microdata" }
+  }
+}

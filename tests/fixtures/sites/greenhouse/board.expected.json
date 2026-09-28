@@ -1,0 +1,14 @@
+{
+  "url": "https://job-boards.greenhouse.io/airwallex/jobs/6123456?gh_src=linkedin&utm_source=li",
+  "expected": {
+    "site": "greenhouse",
+    "canonicalUrl": "https://job-boards.greenhouse.io/airwallex/jobs/6123456",
+    "title": "Backend Engineer (Payments)",
+    "company": "Airwallex",
+    "location": "Melbourne, Australia; Sydney, Australia",
+    "salary": { "min": 160000, "max": 200000, "currency": "AUD", "period": "year" },
+    "postedAt": "2026-09-01",
+    "externalId": "6123456",
+    "descriptionContains": "Build global payments."
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "url": "https://careers.safetyculture.example/jobs/sre?utm_campaign=x",
+  "expected": {
+    "site": "generic",
+    "canonicalUrl": "https://careers.safetyculture.example/jobs/sre",
+    "title": "Site Reliability Engineer",
+    "company": "Safety Culture",
+    "descriptionContains": "observability stack",
+    "provenance": { "title": "heuristic" }
+  }
+}

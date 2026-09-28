@@ -1,0 +1,77 @@
+# Jobtrail
+
+**Save any job posting to a Kanban board in one click.** Jobtrail is a Chrome
+extension that reads the job page you're on, extracts the title, company,
+location, salary, dates and description, and files it as a card on a local
+board you drag through _Saved → Applied → Screening → Interviewing → Offer_.
+
+- **No AI.** Extraction is deterministic: structured data first
+  (schema.org JSON-LD and microdata), then 50 hand-written site adapters, then
+  conservative heuristics. Every field records where it came from.
+- **No third parties.** No backend, no accounts, no analytics, no remote code,
+  no network requests. Your data lives in `chrome.storage.local` and leaves the
+  browser only when you export a backup.
+- **Minimal permissions.** The extension can read a page only after you click it
+  (`activeTab`). No "read all your data on all websites" warning.
+
+## Using it
+
+| Action                     | How                                                                                      |
+| -------------------------- | ---------------------------------------------------------------------------------------- |
+| Capture, review, then save | Click the toolbar icon (or <kbd>Alt</kbd>+<kbd>J</kbd>) on a job page                    |
+| Save instantly (no review) | Right-click the page → _Track this job_, or <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>J</kbd> |
+| Open the board             | Popup → _Open board_, or right-click the toolbar icon                                    |
+| Search the board           | <kbd>/</kbd>                                                                             |
+| Add a job by hand          | <kbd>N</kbd> on the board                                                                |
+| Back up / move browsers    | Board menu → _Export backup_ / _Import backup_                                           |
+
+Badge feedback for instant saves: **✓** saved, **=** already on your board,
+**!** couldn't read the page.
+
+## Getting started (development)
+
+Requires Node 20.11+ (see `.nvmrc`).
+
+```bash
+npm install
+npm run dev          # launches Chrome with the extension and hot reload
+npm run build        # production build → .output/chrome-mv3
+npm run zip          # store-ready zip → .output/*.zip
+npm run verify       # format + lint + typecheck + unit tests + build (what CI runs)
+npm run test:e2e     # Playwright against the real built extension
+```
+
+To load a build manually: `chrome://extensions` → enable _Developer mode_ →
+_Load unpacked_ → select `.output/chrome-mv3`.
+
+## Project layout
+
+```
+src/
+  entrypoints/   Extension surfaces: background worker, popup, board page, injected extractor
+  domain/        Pure business model (Job, Stage, ranking, state transitions) — zod schemas
+  extraction/    Pure extraction engine: strategies, normalisers, 50 site adapters
+  storage/       Repositories over a KeyValueStore port, migrations, backup format
+  services/      Application use cases (JobService, CaptureService) + composition root
+  platform/      The only code that touches chrome.* APIs (adapters for the ports)
+  features/      UI features: board/ (Kanban, drawer, dialogs), capture/ (popup)
+  ui/            Design system: tokens, primitives, hooks
+tests/
+  unit/          Vitest (happy-dom) — domain, extraction, storage, services, board logic
+  fixtures/      HTML fixtures; drop in <case>.html + <case>.expected.json to add a test
+  e2e/           Playwright — loads the real extension into Chromium
+docs/            Knowledge base (start at docs/README.md)
+```
+
+## Documentation
+
+The knowledge base lives in [`docs/`](docs/README.md): architecture, decision
+records, how-to guides (adding a site adapter, debugging extraction, releasing)
+and reference material (data model, storage and migrations, permissions,
+supported sites). Contributors — human or AI agent — should read
+[`AGENTS.md`](AGENTS.md) first.
+
+## Status
+
+v0.1.0 — first working release. See [`docs/roadmap.md`](docs/roadmap.md) for
+what's next and [`CHANGELOG.md`](CHANGELOG.md) for what changed.

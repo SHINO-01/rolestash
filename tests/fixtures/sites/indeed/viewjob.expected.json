@@ -1,0 +1,13 @@
+{
+  "url": "https://au.indeed.com/jobs?q=data+analyst&l=Sydney&vjk=a1b2c3d4e5f60718",
+  "expected": {
+    "site": "indeed",
+    "canonicalUrl": "https://au.indeed.com/viewjob?jk=a1b2c3d4e5f60718",
+    "title": "Data Analyst",
+    "company": "Woolworths Group",
+    "location": "Bella Vista NSW 2153",
+    "salary": { "min": 95000, "max": 110000, "currency": "AUD", "period": "year" },
+    "employmentTypes": ["full-time"],
+    "externalId": "a1b2c3d4e5f60718"
+  }
+}

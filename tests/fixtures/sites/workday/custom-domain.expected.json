@@ -1,0 +1,14 @@
+{
+  "url": "https://careers.telstra.example/en-US/External/job/Melbourne/Cloud-Security-Engineer_R-12345/apply",
+  "now": "2026-09-28T10:00:00+10:00",
+  "expected": {
+    "site": "workday",
+    "canonicalUrl": "https://careers.telstra.example/External/job/Melbourne/Cloud-Security-Engineer_R-12345",
+    "title": "Cloud Security Engineer",
+    "company": "Telstra Careers",
+    "location": "Melbourne, Victoria",
+    "employmentTypes": ["full-time"],
+    "postedAt": "2026-09-25",
+    "externalId": "R-12345"
+  }
+}

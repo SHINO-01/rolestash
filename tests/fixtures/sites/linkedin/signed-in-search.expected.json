@@ -1,0 +1,18 @@
+{
+  "url": "https://www.linkedin.com/jobs/search/?currentJobId=4012345678&keywords=frontend&origin=JOB_SEARCH_PAGE_SEARCH_BUTTON&refId=abc",
+  "now": "2026-09-28T10:00:00+10:00",
+  "expected": {
+    "site": "linkedin",
+    "canonicalUrl": "https://linkedin.com/jobs/view/4012345678",
+    "title": "Senior Frontend Engineer",
+    "company": "Canva",
+    "location": "Sydney, New South Wales, Australia",
+    "workplaceType": "hybrid",
+    "employmentTypes": ["full-time"],
+    "salary": { "min": 180000, "max": 220000, "currency": "AUD", "period": "year" },
+    "postedAt": "2026-09-26",
+    "externalId": "4012345678",
+    "descriptionContains": "• 5+ years with React",
+    "isJobPage": true
+  }
+}

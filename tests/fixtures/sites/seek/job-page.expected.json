@@ -1,0 +1,15 @@
+{
+  "url": "https://www.seek.com.au/job/81234567?type=standard&ref=search-standalone#sol=abc",
+  "expected": {
+    "site": "seek",
+    "canonicalUrl": "https://seek.com.au/job/81234567",
+    "title": "Software Engineer",
+    "company": "Commonwealth Bank",
+    "location": "Sydney NSW (Hybrid)",
+    "workplaceType": "hybrid",
+    "employmentTypes": ["full-time"],
+    "salary": { "min": 130000, "max": 150000, "currency": "AUD", "period": "year" },
+    "externalId": "81234567",
+    "descriptionContains": "• Java"
+  }
+}

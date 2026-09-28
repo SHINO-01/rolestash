@@ -1,0 +1,12 @@
+{
+  "url": "https://www.glassdoor.com.au/job-listing/machine-learning-engineer-optiver-JV_IC2235932_KO0,25_KE26,33.htm?jl=1009512345678&src=GD_JOB_AD",
+  "expected": {
+    "site": "glassdoor",
+    "canonicalUrl": "https://glassdoor.com.au/job-listing/machine-learning-engineer-optiver-JV_IC2235932_KO0,25_KE26,33.htm?jl=1009512345678",
+    "title": "Machine Learning Engineer",
+    "company": "Optiver",
+    "location": "Sydney",
+    "salary": { "min": 150000, "max": 190000, "currency": "AUD" },
+    "externalId": "1009512345678"
+  }
+}

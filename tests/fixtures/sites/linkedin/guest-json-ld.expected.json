@@ -1,0 +1,15 @@
+{
+  "url": "https://au.linkedin.com/jobs/view/graduate-software-engineer-at-atlassian-4011111111?trk=public_jobs_topcard-title",
+  "expected": {
+    "site": "linkedin",
+    "canonicalUrl": "https://linkedin.com/jobs/view/4011111111",
+    "title": "Graduate Software Engineer",
+    "company": "Atlassian",
+    "location": "Sydney, NSW, AU",
+    "employmentTypes": ["full-time"],
+    "postedAt": "2026-09-20T03:12:44.000Z",
+    "closesAt": "2026-10-20T03:12:44.000Z",
+    "descriptionContains": "Join our graduate program.",
+    "provenance": { "title": "json-ld", "company": "json-ld" }
+  }
+}
