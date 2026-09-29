@@ -63,21 +63,26 @@ Security scanning outside the pipeline: CodeQL (JavaScript/TypeScript and
 workflow files), secret scanning with push protection, Dependabot alerts and
 security updates, and weekly Dependabot version PRs into `dev`.
 
-## Repository settings (already applied)
+## Repository settings (settings as code)
+
+`scripts/setup-github.sh` applies these to both repos and is safe to re-run.
+Run `gh auth login`, then `bash scripts/setup-github.sh`:
 
 Source repo:
 
 - Default branch `dev`. Ruleset on `main`: required checks _Quality_,
-  _Unit tests & coverage_, _E2E_; no force-push; no deletion. Ruleset on `v*`
-  tags: no deletion or rewrite.
+  _Unit tests & coverage_ and _E2E_, which must come from GitHub Actions; no
+  force-push; no deletion. `dev`: no force-push or deletion. `v*` tags:
+  immutable.
 - Actions: `GITHUB_TOKEN` read-only by default (jobs opt in to write); only
-  GitHub-authored actions allowed.
-- CodeQL default setup, secret scanning + push protection, Dependabot security
-  updates, private vulnerability reporting.
+  GitHub-authored actions allowed, pinned to commit SHAs.
+- CodeQL default setup, secret scanning + push protection, Dependabot alerts
+  and security updates, private vulnerability reporting.
 
 Extension repo: the same Actions restrictions, security features and tag
 ruleset; `main` protected from force-push and deletion; environment
-`chrome-web-store` limited to `main`, requiring your approval.
+`chrome-web-store` restricted to `main` and requiring the owner's approval.
+`--store` also prompts for the Web Store credentials (hidden input).
 
 ## One-time Chrome Web Store setup
 

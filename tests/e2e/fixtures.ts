@@ -7,8 +7,9 @@ import { chromium, test as base, type BrowserContext, type Worker } from '@playw
 const FIXTURES_ROOT = resolve(import.meta.dirname, '../fixtures');
 
 /**
- * Use a system Chromium when PLAYWRIGHT_CHROMIUM_PATH is set (e.g. sandboxes
- * with a pre-installed browser); otherwise Playwright's bundled Chromium.
+ * Extensions need full Chromium: Playwright's default headless build
+ * (chromium-headless-shell) cannot load them, so we use the `chromium` channel
+ * (new headless mode). Set PLAYWRIGHT_CHROMIUM_PATH to use a system Chromium.
  */
 const executablePath = process.env.PLAYWRIGHT_CHROMIUM_PATH;
 
@@ -33,7 +34,7 @@ export const test = base.extend<Fixtures & Options>({
       throw new Error(`No build at ${extensionDir}; build it first.`);
     const context = await chromium.launchPersistentContext('', {
       headless: true,
-      ...(executablePath ? { executablePath } : {}),
+      ...(executablePath ? { executablePath } : { channel: 'chromium' }),
       args: [
         '--headless=new',
         `--disable-extensions-except=${EXTENSION_PATH}`,
@@ -45,7 +46,14 @@ export const test = base.extend<Fixtures & Options>({
   },
   worker: async ({ context }, use) => {
     let [worker] = context.serviceWorkers();
-    worker ??= await context.waitForEvent('serviceworker');
+    worker ??= await context
+      .waitForEvent('serviceworker', { timeout: 10_000 })
+      .catch((error: unknown) => {
+        throw new Error(
+          'The extension service worker did not start. Is the browser a full Chromium build?',
+          { cause: error },
+        );
+      });
     // The worker can be reachable a moment before extension APIs are bound.
     await base.expect
       .poll(
