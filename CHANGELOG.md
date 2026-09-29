@@ -6,7 +6,7 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
-## [0.1.0] — 2026-09-29
+## [0.1.0] — 2026-09-30
 
 ### Added
 
@@ -24,4 +24,9 @@ All notable changes to this project are documented here. The format follows
 - JSON backup export/import (merge or replace), versioned and validated.
 - Light, dark and system themes.
 - Versioned storage with forward-only migrations.
-- Unit (Vitest), fixture-driven extraction and E2E (Playwright) test suites; CI workflow.
+- Unit (Vitest), fixture-driven extraction and E2E (Playwright) test suites,
+  with a 90% coverage gate on the core and a smoke suite for the production build.
+- CI/CD: push to `dev` → quality, unit/coverage and E2E gates → fast-forward
+  `main` → tag and GitHub Release on version bumps; packaged and published by
+  [jobtrail-extension](https://github.com/SHINO-01/jobtrail-extension).
+- `npm run release` to bump the version and roll the changelog.

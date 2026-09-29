@@ -1,49 +1,121 @@
+# Source pipeline: push to dev → quality + unit/coverage + E2E → fast-forward main → release tag.
+# Design and rationale: docs/guides/ci-cd.md and docs/adr/0008-two-repo-release-pipeline.md
 name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [dev]
   pull_request:
+    branches: [dev]
+  workflow_dispatch:
 
+# Least privilege by default; the promote job escalates explicitly.
+permissions:
+  contents: read
+
+# Only the newest commit on a branch matters; promotion is idempotent.
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  CI: true
+
 jobs:
-  verify:
+  quality:
+    name: Quality
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      - name: Verify dependency signatures
+        run: npm audit signatures
+      - name: Audit runtime dependencies
+        run: npm audit --omit=dev --audit-level=high
       - run: npm run format:check
-      - run: npm run lint
+      - run: npm run lint -- --max-warnings 0
       - run: npm run typecheck
-      - run: npm run test:coverage
-      - run: npm run build
-      - run: npm run zip
-      - uses: actions/upload-artifact@v4
+      - name: Production build
+        run: npm run build
+
+  test:
+    name: Unit tests & coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          name: extension-zip
-          path: .output/*.zip
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      # Fails below 90% line/statement/function coverage of the core (vitest.config.ts).
+      - run: npm run test:coverage -- --coverage.reporter=text-summary
 
   e2e:
+    name: E2E
     runs-on: ubuntu-latest
-    needs: verify
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
-      - uses: actions/upload-artifact@v4
+      - run: npm run test:smoke
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: failure()
         with:
           name: playwright-report
           path: playwright-report/
+          retention-days: 7
+
+  promote:
+    name: Promote to main
+    # Only real pushes to dev promote; PRs just report checks.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    needs: [quality, test, e2e]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+      # Fast-forward only: main becomes exactly the commit that just passed.
+      # Fails loudly if main has diverged (someone committed to main directly).
+      - name: Fast-forward main
+        run: git push origin "${GITHUB_SHA}:refs/heads/main"
+      # A version bump (npm run release) on dev turns into a tagged GitHub Release.
+      # jobtrail-extension picks up new tags and ships them.
+      - name: Tag release if the version is new
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          if git ls-remote --exit-code --tags origin "refs/tags/v${version}" >/dev/null; then
+            echo "v${version} already released; nothing to tag." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          node scripts/changelog.ts notes "${version}" > release-notes.md
+          gh release create "v${version}" --target "${GITHUB_SHA}" --title "v${version}" --notes-file release-notes.md
+          echo "Released **v${version}** from ${GITHUB_SHA}." >> "$GITHUB_STEP_SUMMARY"

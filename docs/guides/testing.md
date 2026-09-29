@@ -2,12 +2,13 @@
 
 ## Layers
 
-| Suite         | Tool                  | Location                  | Runs in CI    |
-| ------------- | --------------------- | ------------------------- | ------------- |
-| Unit          | Vitest + happy-dom    | `tests/unit/**`           | yes           |
-| Site fixtures | Vitest (data-driven)  | `tests/fixtures/sites/**` | yes           |
-| Docs drift    | Vitest                | `tests/unit/docs.test.ts` | yes           |
-| End-to-end    | Playwright + Chromium | `tests/e2e/**`            | yes (2nd job) |
+| Suite         | Tool                  | Location                         | Runs in CI                          |
+| ------------- | --------------------- | -------------------------------- | ----------------------------------- |
+| Unit          | Vitest + happy-dom    | `tests/unit/**`                  | yes                                 |
+| Site fixtures | Vitest (data-driven)  | `tests/fixtures/sites/**`        | yes                                 |
+| Docs drift    | Vitest                | `tests/unit/docs.test.ts`        | yes                                 |
+| End-to-end    | Playwright + Chromium | `tests/e2e/**` (project `e2e`)   | yes                                 |
+| Smoke         | Playwright + Chromium | `@smoke` tests (project `smoke`) | yes, here and in jobtrail-extension |
 
 ## Unit tests
 
@@ -33,6 +34,15 @@ unpacked extension. The spec:
 - injects the real `extractor.js` into fixture pages served on localhost,
 - drives the board: empty state, seeded cards, drawer editing with persisted
   notes, drag-and-drop across columns with persisted stage and activity, search.
+
+`npm run test:smoke` runs the tests tagged `@smoke` (the board) against the
+**production** build, which has no host permissions. The extension repo runs
+the same project on every release candidate.
+
+Coverage gate: `npm run test:coverage` fails below 90% lines/statements/functions
+(80% branches) on `src/{domain,extraction,storage,services}`. UI and browser
+adapters are covered by E2E instead. Tests never touch the network (happy-dom
+resource loading is disabled).
 
 Set `PLAYWRIGHT_CHROMIUM_PATH` to use a system Chromium instead of Playwright's download.
 

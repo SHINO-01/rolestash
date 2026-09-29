@@ -1,24 +1,31 @@
 # Releasing
 
-1. Update `version` in `package.json` (semver) — WXT copies it to the manifest.
-2. Move _Unreleased_ entries in `CHANGELOG.md` under the new version and date.
-3. `npm run verify && npm run test:e2e`.
-4. `npm run zip` → `.output/jobtrail-<version>-chrome.zip`.
-5. Smoke-test: load `.output/chrome-mv3` unpacked in a clean Chrome profile,
-   capture a posting on LinkedIn, SEEK and one ATS, drag it, export a backup.
-6. Tag: `git tag v<version> && git push --tags`.
-7. Upload the zip in the Chrome Web Store developer dashboard.
+Releases are automated end to end. See [CI/CD](ci-cd.md) for the full pipeline.
 
-## Store listing checklist
+1. On `dev`, make sure `CHANGELOG.md` → _Unreleased_ describes the changes.
+2. `npm run release -- patch` (or `minor`, `major`, `x.y.z`). This bumps
+   `package.json` + `package-lock.json` and dates the changelog section.
+3. Commit (`chore(release): vX.Y.Z`) and push to `dev`.
+4. CI promotes to `main` and creates tag `vX.Y.Z` + a GitHub Release.
+5. jobtrail-extension builds, verifies and releases it (daily, or run
+   _Release_ manually), then asks for your approval before submitting to the
+   Chrome Web Store.
 
-- **Single purpose:** "Save job postings to a personal Kanban board."
-- **Permission justifications:** copy from [permissions](../reference/permissions.md).
-- **Data usage:** "Does not collect or transmit user data" — see `PRIVACY.md`.
-- **Remote code:** none.
-- Screenshots: board (light + dark), popup, drawer — 1280×800.
+## Versioning
+
+Semantic versioning, and the manifest version equals `package.json`:
+
+- **patch**: fixes, adapter selector updates
+- **minor**: new features, new adapters
+- **major**: breaking storage/backup format changes (with migrations)
 
 ## Storage schema changes in a release
 
-If the release contains a migration, test upgrading: install the previous
-release, add jobs, then load the new build over the same profile and confirm
-the board and an old backup import both work.
+If the release contains a migration, test the upgrade path first. Install the
+previous release, add jobs, load the new build over the same profile, and
+confirm the board and an old backup import both work.
+
+## Store listing
+
+Listing text, screenshots, permission justifications and the privacy
+disclosure live in jobtrail-extension under `store/`.

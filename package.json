@@ -6,7 +6,7 @@
   "license": "UNLICENSED",
   "type": "module",
   "engines": {
-    "node": ">=20.11"
+    "node": ">=22.18"
   },
   "scripts": {
     "dev": "wxt",
@@ -22,9 +22,11 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "npm run build:e2e && playwright test",
+    "test:e2e": "npm run build:e2e && playwright test --project=e2e",
     "docs:sites": "tsx scripts/generate-supported-sites.ts",
-    "verify": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run build"
+    "verify": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run build",
+    "test:smoke": "npm run build && playwright test --project=smoke",
+    "release": "node scripts/changelog.ts release"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

@@ -38,6 +38,9 @@ entrypoints ─► features ─► ui
 
 ## Workflow
 
+- Work on `dev` (or a branch → PR into `dev`). **Never push to `main`**: CI
+  fast-forwards it after the checks pass (docs/guides/ci-cd.md).
+- Releasing = `npm run release -- <patch|minor|major>` on `dev`, then push.
 - `npm run verify` must pass before you finish (format, lint with zero
   warnings, typecheck, unit tests, build). Run `npm run test:e2e` when you touch
   entrypoints, platform code or the board's drag-and-drop.

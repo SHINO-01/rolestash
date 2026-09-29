@@ -1,5 +1,8 @@
 # Jobtrail
 
+[![CI](https://github.com/SHINO-01/jobtrail/actions/workflows/ci.yml/badge.svg?branch=dev)](https://github.com/SHINO-01/jobtrail/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/SHINO-01/jobtrail)](https://github.com/SHINO-01/jobtrail/releases)
+
 **Save any job posting to a Kanban board in one click.** Jobtrail is a Chrome
 extension that reads the job page you're on, extracts the title, company,
 location, salary, dates and description, and files it as a card on a local
@@ -30,7 +33,9 @@ Badge feedback for instant saves: **✓** saved, **=** already on your board,
 
 ## Getting started (development)
 
-Requires Node 20.11+ (see `.nvmrc`).
+Requires Node 22.18+ (see `.nvmrc`). Work happens on `dev`; CI promotes green
+commits to `main` and tags releases. Packaging and Chrome Web Store releases live
+in [jobtrail-extension](https://github.com/SHINO-01/jobtrail-extension).
 
 ```bash
 npm install
@@ -39,6 +44,7 @@ npm run build        # production build → .output/chrome-mv3
 npm run zip          # store-ready zip → .output/*.zip
 npm run verify       # format + lint + typecheck + unit tests + build (what CI runs)
 npm run test:e2e     # Playwright against the real built extension
+npm run release -- patch   # prepare a release (see docs/guides/releasing.md)
 ```
 
 To load a build manually: `chrome://extensions` → enable _Developer mode_ →

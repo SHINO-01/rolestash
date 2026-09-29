@@ -45,7 +45,8 @@ test.describe('extractor injection', () => {
   });
 });
 
-test.describe('board', () => {
+// @smoke: also runs against the production build (npm run test:smoke).
+test.describe('board @smoke', () => {
   const seed = (worker: Worker, jobs: Partial<Job>[]) =>
     worker.evaluate(async (items) => {
       const now = new Date().toISOString();

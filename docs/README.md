@@ -18,17 +18,19 @@ Start with **Architecture → Overview**, then go by task.
 | [0005](adr/0005-plain-text-descriptions.md)         | Store descriptions as plain text, never HTML |
 | [0006](adr/0006-fractional-ranking.md)              | Fractional ranking for card order            |
 | [0007](adr/0007-storage-per-key-with-migrations.md) | One key per job, versioned migrations        |
+| [0008](adr/0008-two-repo-release-pipeline.md)       | Two repos, promote the tested commit         |
 
 New decision? Copy [the template](adr/0000-template.md).
 
 ## Guides (how-to)
 
 - [Development setup & workflow](guides/development.md)
+- [CI/CD pipeline](guides/ci-cd.md)
 - [Adding or fixing a site adapter](guides/adding-a-site-adapter.md)
 - [Debugging a bad capture](guides/debugging-extraction.md)
 - [Adding a feature](guides/adding-a-feature.md)
 - [Testing](guides/testing.md)
-- [Releasing to the Chrome Web Store](guides/releasing.md)
+- [Releasing](guides/releasing.md)
 
 ## Reference
 

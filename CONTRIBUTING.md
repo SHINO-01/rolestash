@@ -4,11 +4,14 @@
 2. Set up: `nvm use && npm install`.
 3. Develop: `npm run dev` opens Chrome with the extension and hot reload.
 4. Before pushing: `npm run verify` (and `npm run test:e2e` for UI/platform changes).
-5. Open a PR using the template. CI runs the same checks plus E2E.
+5. Push to `dev` or open a PR into `dev`. CI runs quality, unit tests with coverage, and E2E.
 
 ## Branches and commits
 
-- Branch from `main`: `feat/…`, `fix/…`, `docs/…`.
+- `dev` is the default branch. Push small changes directly, or branch from
+  `dev` (`feat/…`, `fix/…`) and open a PR into `dev`.
+- `main` is updated only by CI (fast-forward after all checks pass).
+  See [docs/guides/ci-cd.md](docs/guides/ci-cd.md).
 - [Conventional Commits](https://www.conventionalcommits.org/): `feat(extraction): add Jora salary selector`.
 - Keep PRs focused; one adapter or one feature per PR is ideal.
 

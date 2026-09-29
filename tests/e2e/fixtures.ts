@@ -4,7 +4,6 @@ import { existsSync } from 'node:fs';
 import { resolve, join, normalize } from 'node:path';
 import { chromium, test as base, type BrowserContext, type Worker } from '@playwright/test';
 
-const EXTENSION_PATH = resolve(import.meta.dirname, '../../.output/chrome-mv3-e2e');
 const FIXTURES_ROOT = resolve(import.meta.dirname, '../fixtures');
 
 /**
@@ -13,6 +12,12 @@ const FIXTURES_ROOT = resolve(import.meta.dirname, '../fixtures');
  */
 const executablePath = process.env.PLAYWRIGHT_CHROMIUM_PATH;
 
+/** Set per Playwright project (see playwright.config.ts). */
+export interface Options {
+  /** Build directory relative to the repo root, e.g. `.output/chrome-mv3`. */
+  extensionDir: string;
+}
+
 interface Fixtures {
   context: BrowserContext;
   worker: Worker;
@@ -20,10 +25,12 @@ interface Fixtures {
   fixtureServer: { url: (path: string) => string };
 }
 
-export const test = base.extend<Fixtures>({
-  // eslint-disable-next-line no-empty-pattern
-  context: async ({}, use) => {
-    if (!existsSync(EXTENSION_PATH)) throw new Error('Run `npm run build:e2e` first.');
+export const test = base.extend<Fixtures & Options>({
+  extensionDir: ['.output/chrome-mv3-e2e', { option: true }],
+  context: async ({ extensionDir }, use) => {
+    const EXTENSION_PATH = resolve(import.meta.dirname, '../..', extensionDir);
+    if (!existsSync(EXTENSION_PATH))
+      throw new Error(`No build at ${extensionDir}; build it first.`);
     const context = await chromium.launchPersistentContext('', {
       headless: true,
       ...(executablePath ? { executablePath } : {}),
