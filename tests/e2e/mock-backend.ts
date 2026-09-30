@@ -39,6 +39,8 @@ const PAGE = '<!doctype html><title>Mock checkout</title><h1>Checkout</h1>';
 
 function route(path: string, body: unknown, state: MockBackend): [number, unknown, string?] {
   switch (path) {
+    case '/auth/v1/settings':
+      return [200, { external: { email: true, google: true } }];
     case '/auth/v1/otp':
       return [200, {}];
     case '/auth/v1/verify':

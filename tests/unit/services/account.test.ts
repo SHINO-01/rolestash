@@ -125,6 +125,23 @@ describe('AccountService sign-in', () => {
     expect((await account.state()).signedIn).toBe(true);
   });
 
+  it('offers Google only when the project enables it, and not when offline', async () => {
+    const on = setup({
+      [`GET ${SB}/auth/v1/settings`]: { status: 200, body: { external: { google: true } } },
+    });
+    expect(await on.account.googleSignInAvailable()).toBe(true);
+    const off = setup({
+      [`GET ${SB}/auth/v1/settings`]: { status: 200, body: { external: { google: false } } },
+    });
+    expect(await off.account.googleSignInAvailable()).toBe(false);
+    const offline = new AccountService(
+      new MemoryKeyValueStore(),
+      new SupabaseClient(CONFIG, () => Promise.reject(new TypeError('offline'))),
+      new FakeAuthFlow(() => ''),
+    );
+    expect(await offline.googleSignInAvailable()).toBe(false);
+  });
+
   it('fails Google sign-in cleanly when the redirect carries no code', async () => {
     const { store } = setup();
     const client = new SupabaseClient(CONFIG, fakeFetch({}).fetch);

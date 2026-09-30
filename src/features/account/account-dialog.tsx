@@ -50,6 +50,18 @@ function SignIn({ account }: { account: AccountService }) {
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState<'google' | 'email' | 'code' | null>(null);
   const [error, setError] = useState<string>();
+  const [google, setGoogle] = useState(false);
+
+  // Offer Google only when the project has it switched on.
+  useEffect(() => {
+    let active = true;
+    void account.googleSignInAvailable().then((on) => {
+      if (active) setGoogle(on);
+    });
+    return () => {
+      active = false;
+    };
+  }, [account]);
 
   async function run(kind: 'google' | 'email' | 'code', task: () => Promise<void>) {
     setBusy(kind);
@@ -73,20 +85,24 @@ function SignIn({ account }: { account: AccountService }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <Button
-        className="w-full justify-center"
-        loading={busy === 'google'}
-        disabled={busy !== null}
-        onClick={() => void run('google', () => account.signInWithGoogle())}
-        icon={<GoogleMark />}
-      >
-        Continue with Google
-      </Button>
+      {google ? (
+        <>
+          <Button
+            className="w-full justify-center"
+            loading={busy === 'google'}
+            disabled={busy !== null}
+            onClick={() => void run('google', () => account.signInWithGoogle())}
+            icon={<GoogleMark />}
+          >
+            Continue with Google
+          </Button>
 
-      <div className="text-subtle flex items-center gap-3 text-xs">
-        <span className="bg-line h-px flex-1" /> or use email{' '}
-        <span className="bg-line h-px flex-1" />
-      </div>
+          <div className="text-subtle flex items-center gap-3 text-xs">
+            <span className="bg-line h-px flex-1" /> or use email{' '}
+            <span className="bg-line h-px flex-1" />
+          </div>
+        </>
+      ) : null}
 
       {step === 'email' ? (
         <form className="flex flex-col gap-3" onSubmit={sendCode}>

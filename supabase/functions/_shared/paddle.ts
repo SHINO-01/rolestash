@@ -187,6 +187,21 @@ export class PaddleClient {
     return url;
   }
 
+  /**
+   * The Paddle customer for an account email: the existing one, or a new one.
+   * Binding checkout to it means receipts, invoices and the billing portal use
+   * the email the user signed in with, not whatever the checkout form got.
+   */
+  async customerForEmail(email: string): Promise<string> {
+    const found = await this.call<{ id: string }[]>(
+      'GET',
+      `/customers?email=${encodeURIComponent(email)}&status=active`,
+    );
+    if (found[0]) return found[0].id;
+    const created = await this.call<{ id: string }>('POST', '/customers', { email });
+    return created.id;
+  }
+
   async createPortalSession(customerId: string, subscriptionId: string | null): Promise<string> {
     const data = await this.call<{ urls: { general: { overview: string } } }>(
       'POST',

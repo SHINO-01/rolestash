@@ -83,6 +83,15 @@ export class AccountService implements PlanProvider {
     });
   }
 
+  /** Whether "Continue with Google" should be offered. False when unknown (offline). */
+  async googleSignInAvailable(): Promise<boolean> {
+    try {
+      return (await this.client.oauthProviders()).google;
+    } catch {
+      return false;
+    }
+  }
+
   async requestEmailCode(email: string): Promise<void> {
     await this.client.sendEmailCode(normalizeEmail(email));
   }

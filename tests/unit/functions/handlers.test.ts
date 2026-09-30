@@ -65,6 +65,11 @@ describe('user endpoints', () => {
   it('create-checkout returns a Paddle checkout URL for the chosen interval', async () => {
     const { deps: d, calls } = deps({
       [`GET ${SB}/rest/v1/entitlements`]: entitlementRoute({ status: 'trialing' }),
+      'GET https://sandbox-api.paddle.com/customers': { status: 200, body: { data: [] } },
+      'POST https://sandbox-api.paddle.com/customers': {
+        status: 201,
+        body: { data: { id: 'ctm_new' } },
+      },
       'POST https://sandbox-api.paddle.com/transactions': {
         status: 201,
         body: { data: { checkout: { url: 'https://rolestash.com/pay/?_ptxn=txn_1' } } },
@@ -73,15 +78,59 @@ describe('user endpoints', () => {
     const res = await handleCreateCheckout(post({ interval: 'year' }), d);
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ url: 'https://rolestash.com/pay/?_ptxn=txn_1' });
-    const paddleCall = calls.find((c) => c.url.includes('paddle'));
+    // The Paddle customer is looked up, then created, for the account's email.
+    const customerLookup = calls.find((c) => c.method === 'GET' && c.url.includes('/customers'));
+    expect(customerLookup?.url).toContain(`email=${encodeURIComponent(USER.email)}`);
+    expect(calls.find((c) => c.method === 'POST' && c.url.endsWith('/customers'))?.body).toEqual({
+      email: USER.email,
+    });
+    const paddleCall = calls.find((c) => c.url.endsWith('/transactions'));
     expect(paddleCall?.body).toMatchObject({
       items: [{ price_id: 'pri_year' }],
       custom_data: { user_id: USER.id },
+      customer_id: 'ctm_new',
     });
     // The entitlement lookup uses the service role, scoped to this user.
     const lookup = calls.find((c) => c.url.includes('/rest/v1/entitlements'));
     expect(lookup?.url).toContain(`user_id=eq.${USER.id}`);
     expect(lookup?.headers.apikey).toBe('service');
+  });
+
+  it('create-checkout reuses the Paddle customer for the account email', async () => {
+    const { deps: d, calls } = deps({
+      [`GET ${SB}/rest/v1/entitlements`]: entitlementRoute({ status: 'expired' }),
+      'GET https://sandbox-api.paddle.com/customers': {
+        status: 200,
+        body: { data: [{ id: 'ctm_existing' }] },
+      },
+      'POST https://sandbox-api.paddle.com/transactions': {
+        status: 201,
+        body: { data: { checkout: { url: 'https://rolestash.com/pay/?_ptxn=txn_2' } } },
+      },
+    });
+    expect((await handleCreateCheckout(post({ interval: 'month' }), d)).status).toBe(200);
+    expect(calls.some((c) => c.method === 'POST' && c.url.endsWith('/customers'))).toBe(false);
+    expect(calls.find((c) => c.url.endsWith('/transactions'))?.body).toMatchObject({
+      customer_id: 'ctm_existing',
+    });
+  });
+
+  it('create-checkout keeps a returning subscriber on their Paddle customer', async () => {
+    const { deps: d, calls } = deps({
+      [`GET ${SB}/rest/v1/entitlements`]: entitlementRoute({
+        status: 'canceled',
+        provider_customer_id: 'ctm_returning',
+      }),
+      'POST https://sandbox-api.paddle.com/transactions': {
+        status: 201,
+        body: { data: { checkout: { url: 'https://rolestash.com/pay/?_ptxn=txn_3' } } },
+      },
+    });
+    expect((await handleCreateCheckout(post({ interval: 'month' }), d)).status).toBe(200);
+    expect(calls.some((c) => c.url.includes('/customers'))).toBe(false);
+    expect(calls.find((c) => c.url.endsWith('/transactions'))?.body).toMatchObject({
+      customer_id: 'ctm_returning',
+    });
   });
 
   it('create-checkout rejects bad intervals and existing subscribers', async () => {
@@ -100,6 +149,7 @@ describe('user endpoints', () => {
   it('maps Paddle outages to 502 and our own failures to 500', async () => {
     const paddleDown = deps({
       [`GET ${SB}/rest/v1/entitlements`]: entitlementRoute(null),
+      'GET https://sandbox-api.paddle.com/customers': { status: 503, body: {} },
       'POST https://sandbox-api.paddle.com/transactions': { status: 503, body: {} },
     });
     expect((await handleCreateCheckout(post({ interval: 'month' }), paddleDown.deps)).status).toBe(

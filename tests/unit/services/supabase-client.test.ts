@@ -78,6 +78,19 @@ describe('SupabaseClient error mapping', () => {
     expect(await code(expired.c.deleteAccount('t'))).toBe('session_expired');
   });
 
+  it('reads which OAuth providers are enabled', async () => {
+    const on = client({
+      [`GET ${SB}/auth/v1/settings`]: { status: 200, body: { external: { google: true } } },
+    });
+    expect(await on.c.oauthProviders()).toEqual({ google: true });
+    const off = client({
+      [`GET ${SB}/auth/v1/settings`]: { status: 200, body: { external: { email: true } } },
+    });
+    expect(await off.c.oauthProviders()).toEqual({ google: false });
+    const down = client({ [`GET ${SB}/auth/v1/settings`]: { status: 500, body: {} } });
+    expect(await code(down.c.oauthProviders())).toBe('server');
+  });
+
   it('never fails sign-out, even offline', async () => {
     const c = new SupabaseClient({ url: SB, anonKey: 'anon' }, () =>
       Promise.reject(new TypeError('offline')),

@@ -86,10 +86,15 @@ export const handleCreateCheckout = userEndpoint(async ({ req, user, admin, padd
   if (entitlement && PAID.has(entitlement.status) && entitlement.provider_subscription_id) {
     return json(409, { error: 'already_subscribed' });
   }
+  // Returning subscribers keep their Paddle customer; everyone else is bound to
+  // the customer for their account email before checkout opens.
+  const customerId =
+    entitlement?.provider_customer_id ??
+    (user.email ? await paddle.customerForEmail(user.email) : null);
   const url = await paddle.createCheckout({
     priceId: env.paddle.prices[interval],
     userId: user.id,
-    customerId: entitlement?.provider_customer_id ?? null,
+    customerId,
   });
   return json(200, { url });
 });

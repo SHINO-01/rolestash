@@ -122,6 +122,14 @@ export class SupabaseClient {
     throw new BackendError('server', status);
   }
 
+  /** Which OAuth providers the project has switched on. */
+  async oauthProviders(): Promise<{ google: boolean }> {
+    const { status, data } = await this.request('/auth/v1/settings');
+    if (status >= 300) this.fail(status, data);
+    const external = (data as { external?: Record<string, unknown> } | null)?.external;
+    return { google: external?.google === true };
+  }
+
   /** Emails a 6-digit sign-in code, creating the account on first use. */
   async sendEmailCode(email: string): Promise<void> {
     const { status, data } = await this.request('/auth/v1/otp', {

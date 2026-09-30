@@ -69,6 +69,8 @@ test.describe('accounts', () => {
     await page.getByRole('button', { name: 'Account', exact: true }).click();
     const dialog = page.getByRole('dialog');
     await expect(dialog.getByText('Start your 30-day Pro trial')).toBeVisible();
+    // The mock project enables Google, so the button is offered.
+    await expect(dialog.getByRole('button', { name: 'Continue with Google' })).toBeVisible();
 
     await dialog.getByLabel('Email').fill('Jo@Example.com');
     await dialog.getByRole('button', { name: 'Email me a sign-in code' }).click();
