@@ -71,6 +71,19 @@ npm run site:screenshots
 Edit the seeded jobs in `scripts/site-screenshots.ts`. Use fictional
 employers only.
 
+## Link previews
+
+Pages share `site/assets/og-image.png` (1200×630) through Open Graph and
+Twitter card tags. It's a PNG because many chat apps don't show WebP
+previews. Regenerate it after changing the screenshots or the headline:
+
+```bash
+npm run site:og
+```
+
+Chat apps cache previews, so a changed image can take days to show for a
+link that was already shared.
+
 ## Preview locally
 
 ```bash

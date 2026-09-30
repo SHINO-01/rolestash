@@ -106,6 +106,27 @@ describe('rolestash.com static site', () => {
     }
   });
 
+  it('shares with a PNG link preview that apps without WebP support can show', () => {
+    const meta = (doc: Document, key: string) =>
+      doc.querySelector(`meta[property="${key}"], meta[name="${key}"]`)?.getAttribute('content');
+    for (const file of [
+      'index.html',
+      'privacy/index.html',
+      'terms/index.html',
+      'support/index.html',
+    ]) {
+      const doc = pages.find((p) => p.file === file)?.doc;
+      if (!doc) throw new Error(file);
+      const image = meta(doc, 'og:image') ?? '';
+      expect(image, file).toMatch(/^https:\/\/rolestash\.com\/assets\/.+\.png$/);
+      expect(existsSync(join(SITE, new URL(image).pathname))).toBe(true);
+      expect(meta(doc, 'og:image:width')).toBe('1200');
+      expect(meta(doc, 'og:image:height')).toBe('630');
+      expect(meta(doc, 'og:title')).toBeTruthy();
+      expect(meta(doc, 'twitter:card')).toBe('summary_large_image');
+    }
+  });
+
   it('gives every image explicit dimensions so nothing shifts as it loads', () => {
     for (const { file, doc } of pages)
       for (const img of doc.querySelectorAll('img, picture > source')) {

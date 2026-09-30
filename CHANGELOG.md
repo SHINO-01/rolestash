@@ -27,6 +27,8 @@ All notable changes to this project are documented here. The format follows
   states and "Notify me at launch" buttons. `npm run site:chrome` stamps the
   shared header and footer; `npm run site:screenshots` regenerates the board
   screenshots from the E2E build.
+- Links to rolestash.com now show a preview card (a 1200×630 PNG with Open
+  Graph and Twitter tags); `npm run site:og` regenerates it.
 - The privacy policy and support page now say that accounts are for Pro and
   Advanced, and that sync is an Advanced feature.
 - Renamed to **Rolestash**, with a new logo, icons and spruce-green theme.
