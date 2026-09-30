@@ -27,6 +27,8 @@ All notable changes to this project are documented here. The format follows
   states and "Notify me at launch" buttons. `npm run site:chrome` stamps the
   shared header and footer; `npm run site:screenshots` regenerates the board
   screenshots from the E2E build.
+- The privacy policy and support page now say that accounts are for Pro and
+  Advanced, and that sync is an Advanced feature.
 - Renamed to **Rolestash**, with a new logo, icons and spruce-green theme.
   Backups exported under the old name still import, and manually added jobs
   keep working.
