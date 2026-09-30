@@ -31,7 +31,7 @@ describe('SupabaseClient error mapping', () => {
     });
     expect(await code(c.sendEmailCode('a@b.c'))).toBe('rate_limited');
     expect(await code(c.verifyEmailCode('a@b.c', '1'))).toBe('invalid_code');
-    expect(await code(c.exchangeCode('x', 'y'))).toBe('server');
+    expect(await code(c.signInWithIdToken('x', 'y'))).toBe('server');
     expect(await code(c.refresh('r'))).toBe('server');
   });
 

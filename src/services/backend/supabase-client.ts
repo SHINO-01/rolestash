@@ -13,6 +13,8 @@ export interface BackendConfig {
   url: string;
   /** The public anon key (safe to ship; RLS guards the data). */
   anonKey: string;
+  /** Google OAuth web client ID (public). Google sign-in is offered only when set. */
+  googleClientId?: string;
 }
 
 export const SessionSchema = z.object({
@@ -147,20 +149,13 @@ export class SupabaseClient {
     return this.toSession(data);
   }
 
-  /** The URL that starts an OAuth sign-in with PKCE. */
-  authorizeUrl(provider: 'google', redirectTo: string, codeChallenge: string): string {
-    const params = new URLSearchParams({
-      provider,
-      redirect_to: redirectTo,
-      code_challenge: codeChallenge,
-      code_challenge_method: 's256',
-    });
-    return `${this.config.url}/auth/v1/authorize?${params.toString()}`;
-  }
-
-  async exchangeCode(authCode: string, codeVerifier: string): Promise<Session> {
-    const { status, data } = await this.request('/auth/v1/token?grant_type=pkce', {
-      body: { auth_code: authCode, code_verifier: codeVerifier },
+  /**
+   * Exchanges a Google ID token for a session (ADR-0012). Supabase verifies the
+   * token's signature and audience, and that sha256(nonce) matches its claim.
+   */
+  async signInWithIdToken(idToken: string, rawNonce: string): Promise<Session> {
+    const { status, data } = await this.request('/auth/v1/token?grant_type=id_token', {
+      body: { provider: 'google', id_token: idToken, nonce: rawNonce },
     });
     if (status >= 300) this.fail(status, data);
     return this.toSession(data);
@@ -235,18 +230,14 @@ export class SupabaseClient {
   }
 }
 
-/** PKCE helpers (RFC 7636, S256). */
+/** URL-safe base64 without padding. */
 export function base64Url(bytes: Uint8Array): string {
   let binary = '';
   for (const b of bytes) binary += String.fromCharCode(b);
   return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-export function createCodeVerifier(): string {
+/** 256 bits of randomness, URL-safe (nonces and state values). */
+export function randomToken(): string {
   return base64Url(crypto.getRandomValues(new Uint8Array(32)));
-}
-
-export async function codeChallenge(verifier: string): Promise<string> {
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier));
-  return base64Url(new Uint8Array(digest));
 }

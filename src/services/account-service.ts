@@ -4,12 +4,12 @@ import type { KeyValueStore } from '@/storage/key-value-store';
 import { ACCOUNT_ENTITLEMENT_KEY, ACCOUNT_SESSION_KEY } from '@/storage/keys';
 import {
   BackendError,
-  codeChallenge,
-  createCodeVerifier,
+  randomToken,
   SessionSchema,
   type Session,
   type SupabaseClient,
 } from './backend/supabase-client';
+import { googleAuthUrl, readGoogleResult, sha256Hex } from './backend/google';
 import type { PlanProvider } from './job-service';
 import type { WebAuthFlow } from './ports';
 
@@ -85,6 +85,7 @@ export class AccountService implements PlanProvider {
 
   /** Whether "Continue with Google" should be offered. False when unknown (offline). */
   async googleSignInAvailable(): Promise<boolean> {
+    if (!this.client.config.googleClientId) return false;
     try {
       return (await this.client.oauthProviders()).google;
     } catch {
@@ -104,17 +105,16 @@ export class AccountService implements PlanProvider {
     await this.signedIn(session);
   }
 
+  /** Google sign-in via an ID token and rolestash.com's forwarding page (ADR-0012). */
   async signInWithGoogle(): Promise<void> {
-    const verifier = createCodeVerifier();
-    const url = this.client.authorizeUrl(
-      'google',
-      this.authFlow.redirectUrl(),
-      await codeChallenge(verifier),
-    );
-    const redirected = new URL(await this.authFlow.launch(url));
-    const code = redirected.searchParams.get('code');
-    if (!code) throw new BackendError('server');
-    await this.signedIn(await this.client.exchangeCode(code, verifier));
+    const clientId = this.client.config.googleClientId;
+    if (!clientId) throw new BackendError('server');
+    const extensionId = new URL(this.authFlow.redirectUrl()).hostname.split('.')[0] ?? '';
+    const nonce = randomToken();
+    const state = { e: extensionId, s: randomToken() };
+    const url = googleAuthUrl({ clientId, nonceHash: await sha256Hex(nonce), state });
+    const idToken = readGoogleResult(await this.authFlow.launch(url), state);
+    await this.signedIn(await this.client.signInWithIdToken(idToken, nonce));
   }
 
   private async signedIn(session: Session): Promise<void> {

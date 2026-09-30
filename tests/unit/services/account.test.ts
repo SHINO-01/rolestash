@@ -1,11 +1,12 @@
 import { FREE_ACTIVE_JOB_LIMIT } from '@/domain/plan';
 import { AccountService } from '@/services/account-service';
 import {
-  BackendError,
-  codeChallenge,
-  createCodeVerifier,
-  SupabaseClient,
-} from '@/services/backend/supabase-client';
+  decodeState,
+  encodeState,
+  GOOGLE_REDIRECT_URI,
+  sha256Hex,
+} from '@/services/backend/google';
+import { BackendError, randomToken, SupabaseClient } from '@/services/backend/supabase-client';
 import { createServices } from '@/services/container';
 import { JobLimitError } from '@/services/job-service';
 import type { ExtractorRunner, WebAuthFlow } from '@/services/ports';
@@ -15,7 +16,7 @@ import { fakeFetch, type FakeResponse, type RecordedCall } from '../helpers/fake
 import { makeJob, testContext } from '../helpers/factories';
 
 const SB = 'https://ref.supabase.co';
-const CONFIG = { url: SB, anonKey: 'anon-key' };
+const CONFIG = { url: SB, anonKey: 'anon-key', googleClientId: 'gcid.apps.googleusercontent.com' };
 const START = '2026-10-01T00:00:00.000Z';
 const USER = { id: 'u-1', email: 'jo@example.com' };
 
@@ -59,9 +60,11 @@ function setup(routes: Record<string, FakeResponse | ((c: RecordedCall) => FakeR
     ...routes,
   });
   const client = new SupabaseClient(CONFIG, f.fetch, ctx.now);
+  // Plays Google and rolestash.com/auth/google/: returns the chromiumapp URL
+  // with the ID token and the same state in the fragment.
   const flow = new FakeAuthFlow((url) => {
-    const redirect = new URL(url).searchParams.get('redirect_to') ?? '';
-    return `${redirect}?code=auth-code`;
+    const state = new URL(url).searchParams.get('state') ?? '';
+    return `https://ext-id.chromiumapp.org/#id_token=google-id-token&state=${state}`;
   });
   const account = new AccountService(store, client, flow, ctx.now);
   return { ctx, store, calls: f.calls, account, flow, client };
@@ -105,23 +108,30 @@ describe('AccountService sign-in', () => {
     expect((await account.state()).signedIn).toBe(false);
   });
 
-  it('signs in with Google through PKCE', async () => {
-    let exchanged: unknown;
-    const { account, flow } = setup({
+  it('signs in with Google via an ID token, returning through rolestash.com', async () => {
+    let exchanged: { provider?: string; id_token?: string; nonce?: string } = {};
+    const { account, flow, calls } = setup({
       [`POST ${SB}/auth/v1/token`]: (c) => {
-        exchanged = c.body;
+        exchanged = c.body as typeof exchanged;
         return token('g1');
       },
     });
     await account.signInWithGoogle();
     const url = new URL(flow.launched[0] ?? '');
-    expect(url.origin + url.pathname).toBe(`${SB}/auth/v1/authorize`);
-    expect(url.searchParams.get('provider')).toBe('google');
-    expect(url.searchParams.get('redirect_to')).toBe('https://ext-id.chromiumapp.org/');
-    expect(url.searchParams.get('code_challenge_method')).toBe('s256');
-    const { auth_code, code_verifier } = exchanged as { auth_code: string; code_verifier: string };
-    expect(auth_code).toBe('auth-code');
-    expect(await codeChallenge(code_verifier)).toBe(url.searchParams.get('code_challenge'));
+    expect(url.origin + url.pathname).toBe('https://accounts.google.com/o/oauth2/v2/auth');
+    expect(Object.fromEntries(url.searchParams)).toMatchObject({
+      client_id: 'gcid.apps.googleusercontent.com',
+      response_type: 'id_token',
+      redirect_uri: GOOGLE_REDIRECT_URI,
+      scope: 'openid email profile',
+    });
+    // The state names this extension, so the forwarding page knows where to return.
+    expect(decodeState(url.searchParams.get('state'))?.e).toBe('ext-id');
+    // Supabase gets the raw nonce; Google got its SHA-256.
+    expect(exchanged.provider).toBe('google');
+    expect(exchanged.id_token).toBe('google-id-token');
+    expect(await sha256Hex(exchanged.nonce ?? '')).toBe(url.searchParams.get('nonce'));
+    expect(calls.find((c) => c.url.includes('grant_type=id_token'))).toBeDefined();
     expect((await account.state()).signedIn).toBe(true);
   });
 
@@ -140,15 +150,41 @@ describe('AccountService sign-in', () => {
       new FakeAuthFlow(() => ''),
     );
     expect(await offline.googleSignInAvailable()).toBe(false);
+    // A build without a Google client ID never offers it, and doesn't ask the server.
+    const silent = fakeFetch({});
+    const bare = new AccountService(
+      new MemoryKeyValueStore(),
+      new SupabaseClient({ url: SB, anonKey: 'anon-key' }, silent.fetch),
+      new FakeAuthFlow(() => ''),
+    );
+    expect(await bare.googleSignInAvailable()).toBe(false);
+    expect(silent.calls).toHaveLength(0);
+    await expect(bare.signInWithGoogle()).rejects.toBeInstanceOf(BackendError);
   });
 
-  it('fails Google sign-in cleanly when the redirect carries no code', async () => {
-    const { store } = setup();
-    const client = new SupabaseClient(CONFIG, fakeFetch({}).fetch);
-    const flow = new FakeAuthFlow(() => 'https://ext-id.chromiumapp.org/?error=access_denied');
-    const account = new AccountService(store, client, flow);
-    await expect(account.signInWithGoogle()).rejects.toBeInstanceOf(BackendError);
-    expect((await account.state()).signedIn).toBe(false);
+  it('rejects a Google result that is tampered with, cancelled or empty', async () => {
+    const attempt = async (respond: (state: string) => string) => {
+      const { store } = setup();
+      const client = new SupabaseClient(CONFIG, fakeFetch({}).fetch);
+      const flow = new FakeAuthFlow((url) => respond(new URL(url).searchParams.get('state') ?? ''));
+      const account = new AccountService(store, client, flow);
+      const error = await account.signInWithGoogle().catch((e: unknown) => e);
+      expect((await account.state()).signedIn).toBe(false);
+      return error;
+    };
+    const forged = encodeState({ e: 'ext-id', s: 'someone-elses-attempt' });
+    expect(
+      await attempt(() => `https://ext-id.chromiumapp.org/#id_token=stolen&state=${forged}`),
+    ).toBeInstanceOf(BackendError);
+    expect(await attempt(() => 'https://ext-id.chromiumapp.org/#id_token=x')).toBeInstanceOf(
+      BackendError,
+    );
+    expect(
+      await attempt((st) => `https://ext-id.chromiumapp.org/#error=access_denied&state=${st}`),
+    ).toMatchObject({ message: 'Sign-in was cancelled' });
+    expect(await attempt((st) => `https://ext-id.chromiumapp.org/#state=${st}`)).toBeInstanceOf(
+      BackendError,
+    );
   });
 });
 
@@ -319,14 +355,19 @@ describe('accounts in the service container', () => {
   });
 });
 
-describe('PKCE helpers', () => {
-  it('creates URL-safe verifiers and the RFC 7636 S256 challenge', async () => {
-    const v = createCodeVerifier();
-    expect(v).toMatch(/^[A-Za-z0-9_-]{43}$/);
-    expect(createCodeVerifier()).not.toBe(v);
-    // Test vector from RFC 7636 appendix B.
-    expect(await codeChallenge('dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk')).toBe(
-      'E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM',
+describe('token helpers', () => {
+  it('makes URL-safe random tokens and standard SHA-256 hex digests', async () => {
+    const t = randomToken();
+    expect(t).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    expect(randomToken()).not.toBe(t);
+    expect(await sha256Hex('abc')).toBe(
+      'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad',
     );
+  });
+
+  it('decodes only well-formed state values', () => {
+    expect(decodeState(encodeState({ e: 'abc', s: 'xyz' }))).toEqual({ e: 'abc', s: 'xyz' });
+    for (const bad of [null, '', 'not-base64!!', btoa('[]'), btoa('{"e":1,"s":"x"}')])
+      expect(decodeState(bad)).toBeUndefined();
   });
 });

@@ -72,14 +72,21 @@ timestamp as their version. Rewrite it to the file's version in
    - Custom SMTP through Resend.
    - Sender `Rolestash <noreply@rolestash.com>`.
    - Verify the domain in Resend (it adds DNS records in Cloudflare).
-5. **Google provider:**
+5. **Google sign-in (ADR-0012):**
    - Create an OAuth client (type _Web application_) in Google Cloud.
-   - Add the Supabase callback URL, then paste the client id and secret into
-     the Google provider settings.
+     - Authorised redirect URI: `https://rolestash.com/auth/google/`.
+     - Consent screen authorised domain: `rolestash.com` only.
+   - In Supabase, enable the Google provider with that client ID and secret.
+     Supabase uses them to verify ID tokens.
+   - Keep `uri_allow_list` empty.
+   - Allowed extension IDs live in `site/assets/auth-google.js`: the pinned
+     dev/staging ID, plus the store ID once assigned.
 6. **Build variables** (public, safe to commit to CI settings):
-   `WXT_SUPABASE_URL=https://<ref>.supabase.co` and `WXT_SUPABASE_ANON_KEY`.
-   **Never** put the `service_role` key in the extension, the repo or chat.
-   It belongs only in Edge Function secrets.
+   - `WXT_SUPABASE_URL=https://<ref>.supabase.co`
+   - `WXT_SUPABASE_ANON_KEY`
+   - `WXT_GOOGLE_CLIENT_ID`
+     **Never** put the `service_role` key in the extension, the repo or chat.
+     It belongs only in Edge Function secrets.
 
 ## Edge Functions
 

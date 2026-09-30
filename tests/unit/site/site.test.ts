@@ -1,5 +1,9 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
+import { runInNewContext } from 'node:vm';
+
+/** Chrome maps extension-ID hex digits 0-f to the letters a-p. */
+const HEX_TO_ID = 'abcdefghijklmnop';
 
 /**
  * rolestash.com is static HTML in site/ (see docs/guides/website.md). These
@@ -37,6 +41,7 @@ describe('rolestash.com static site', () => {
     expect(files).toEqual(
       [
         '404.html',
+        'auth/google/index.html',
         'index.html',
         'pay/index.html',
         'pay/success/index.html',
@@ -53,12 +58,12 @@ describe('rolestash.com static site', () => {
     ({ file, doc }) => {
       const scripts = [...doc.querySelectorAll('script')];
       for (const script of scripts) expect(script.textContent.trim()).toBe('');
-      // Checkout is the only page with scripts: Paddle.js and our own pay.js.
-      expect(scripts.map((el) => el.getAttribute('src'))).toEqual(
-        file === 'pay/index.html'
-          ? ['https://cdn.paddle.com/paddle/v2/paddle.js', '/assets/pay.js']
-          : [],
-      );
+      // Only checkout (Paddle.js + pay.js) and the Google hand-off have scripts.
+      const allowed: Record<string, string[]> = {
+        'pay/index.html': ['https://cdn.paddle.com/paddle/v2/paddle.js', '/assets/pay.js'],
+        'auth/google/index.html': ['/assets/auth-google.js'],
+      };
+      expect(scripts.map((el) => el.getAttribute('src'))).toEqual(allowed[file] ?? []);
       expect(doc.querySelectorAll('[style], style')).toHaveLength(0);
       const refs = [
         ...doc.querySelectorAll('link[rel="stylesheet"], link[rel="preload"], img, source'),
@@ -115,6 +120,60 @@ describe('rolestash.com static site', () => {
     expect(config.route).toBeUndefined();
     expect(config.workers_dev).toBe(false);
     expect(config.preview_urls).toBe(false);
+  });
+
+  it('Google hand-off forwards only to allow-listed Rolestash extensions', () => {
+    const code = readFileSync(join(SITE, 'assets/auth-google.js'), 'utf8');
+    // Run the page script in a sandbox without `location`/`document`, so it
+    // only defines forwardTarget().
+    const forwardTarget = runInNewContext(`${code}; forwardTarget`, {
+      URLSearchParams,
+      atob,
+      JSON,
+    }) as (hash: string) => string | null;
+    const state = (e: string) =>
+      btoa(JSON.stringify({ e, s: 'x' }))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+    const ours = 'bdajnmkjahhphadpdbbkibljcheonejp';
+    expect(forwardTarget(`#id_token=t&state=${state(ours)}`)).toBe(
+      `https://${ours}.chromiumapp.org/#id_token=t&state=${state(ours)}`,
+    );
+    // Errors are forwarded too, so the extension can report a cancelled sign-in.
+    expect(forwardTarget(`#error=access_denied&state=${state(ours)}`)).toContain(
+      `${ours}.chromiumapp.org/#error=access_denied`,
+    );
+    for (const hash of [
+      `#id_token=t&state=${state('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')}`, // another extension
+      `#id_token=t&state=${state('evil.com/x')}`,
+      '#id_token=t',
+      '#id_token=t&state=%%%',
+      '',
+    ])
+      expect(forwardTarget(hash)).toBeNull();
+  });
+
+  it('allows the extension ID pinned by the manifest key in wxt.config.ts', async () => {
+    const config = readFileSync(resolve(SITE, '../wxt.config.ts'), 'utf8');
+    const key = /DEV_EXTENSION_KEY =\s*'([^']+)'/.exec(config)?.[1] ?? '';
+    const der = Uint8Array.from(atob(key), (c) => c.charCodeAt(0));
+    const hash = new Uint8Array(await crypto.subtle.digest('SHA-256', der));
+    const id = [...hash.slice(0, 16)]
+      .map((b) => `${HEX_TO_ID[b >> 4] ?? ''}${HEX_TO_ID[b & 15] ?? ''}`)
+      .join('');
+    expect(id).toBe('bdajnmkjahhphadpdbbkibljcheonejp');
+    expect(readFileSync(join(SITE, 'assets/auth-google.js'), 'utf8')).toContain(`'${id}'`);
+  });
+
+  it('keeps the Google hand-off page private: own script only, no referrer, not cached', () => {
+    const headers = readFileSync(join(SITE, '_headers'), 'utf8');
+    const auth = headers.slice(headers.indexOf('/auth/*'));
+    expect(auth).toMatch(/^\s+! Content-Security-Policy$/m);
+    expect(auth).toMatch(/^\s+! Referrer-Policy$/m);
+    expect(auth).toContain("script-src 'self';");
+    expect(auth).toContain('Referrer-Policy: no-referrer');
+    expect(auth).toContain('Cache-Control: no-store');
   });
 
   it('scopes the Paddle CSP to /pay/ and replaces, not adds to, the site-wide one', () => {

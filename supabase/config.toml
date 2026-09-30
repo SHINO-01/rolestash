@@ -159,8 +159,10 @@ site_url = "https://rolestash.com"
 # The public URL that Auth serves on. Defaults to the API external URL with `/auth/v1` appended.
 # external_url = ""
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
-# Chrome extensions sign in via chrome.identity: https://<extension-id>.chromiumapp.org/
-additional_redirect_urls = ["https://*.chromiumapp.org/**"]
+# No Supabase-hosted OAuth redirects: Google sign-in returns through
+# rolestash.com/auth/google/ and exchanges an ID token (ADR-0012), so no
+# redirect (and no wildcard over every extension) is allowed.
+additional_redirect_urls = []
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # JWT issuer URL. If not set, defaults to auth.external_url.

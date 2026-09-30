@@ -1,6 +1,6 @@
 # ADR-0011: Implement accounts with a small Supabase client, server-side trials and an off-by-default build switch
 
-- **Status:** Accepted
+- **Status:** Accepted (Google sign-in superseded by ADR-0012)
 - **Date:** 2026-09-30
 
 ## Context

@@ -10,7 +10,10 @@ import type { WebAuthFlow } from '@/services/ports';
 export function backendConfig(): BackendConfig | undefined {
   const url = import.meta.env.WXT_SUPABASE_URL;
   const anonKey = import.meta.env.WXT_SUPABASE_ANON_KEY;
-  return url && anonKey ? { url: url.replace(/\/+$/, ''), anonKey } : undefined;
+  const googleClientId = import.meta.env.WXT_GOOGLE_CLIENT_ID;
+  return url && anonKey
+    ? { url: url.replace(/\/+$/, ''), anonKey, ...(googleClientId ? { googleClientId } : {}) }
+    : undefined;
 }
 
 /**
