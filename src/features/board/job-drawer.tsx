@@ -1,5 +1,7 @@
 import clsx from 'clsx';
 import {
+  Archive,
+  ArchiveRestore,
   ArrowRight,
   ExternalLink,
   MoreHorizontal,
@@ -17,7 +19,11 @@ import {
   type JobPatch,
   type WorkplaceType,
 } from '@/domain/job';
+import { visibleActivity } from '@/domain/history';
 import type { Stage } from '@/domain/stage';
+import { JobLimitError } from '@/services/job-service';
+import { limitMessage } from '@/features/account/plan-copy';
+import { HistoryLimitNote } from './history-dialog';
 import { formatSalary, parseSalaryText } from '@/extraction';
 import { Button, IconButton } from '@/ui/components/button';
 import { CompanyAvatar } from '@/ui/components/company-avatar';
@@ -39,10 +45,13 @@ import { STAGE_STYLE } from '@/ui/stage-style';
 export function JobDrawer({
   job,
   stages,
+  historyFrom,
   onClose,
 }: {
   job: Job | undefined;
   stages: readonly Stage[];
+  /** Start of the plan's visible history (Free: 30 days); undefined shows all. */
+  historyFrom?: Date | undefined;
   onClose: () => void;
 }) {
   return (
@@ -51,7 +60,15 @@ export function JobDrawer({
       onClose={onClose}
       label={job ? `${job.title} details` : 'Job details'}
     >
-      {job ? <DrawerBody key={job.id} job={job} stages={stages} onClose={onClose} /> : null}
+      {job ? (
+        <DrawerBody
+          key={job.id}
+          job={job}
+          stages={stages}
+          historyFrom={historyFrom}
+          onClose={onClose}
+        />
+      ) : null}
     </Drawer>
   );
 }
@@ -59,10 +76,12 @@ export function JobDrawer({
 function DrawerBody({
   job,
   stages,
+  historyFrom,
   onClose,
 }: {
   job: Job;
   stages: readonly Stage[];
+  historyFrom: Date | undefined;
   onClose: () => void;
 }) {
   const { jobService } = useServices();
@@ -81,6 +100,32 @@ function DrawerBody({
   async function moveTo(stageId: string) {
     const changed = await jobService.move(job.id, stageId, 0);
     live.applyLocal(changed);
+  }
+
+  async function toggleArchive() {
+    try {
+      if (job.archivedAt) {
+        live.applyLocal([await jobService.unarchive(job.id)]);
+        toast({ message: 'Back on the board', tone: 'success' });
+      } else {
+        const archived = await jobService.archive(job.id);
+        live.applyLocal([archived]);
+        onClose();
+        toast({
+          message: 'Archived. Find it under History.',
+          action: {
+            label: 'Undo',
+            onClick: () => void jobService.unarchive(job.id).then((j) => live.applyLocal([j])),
+          },
+          durationMs: 8000,
+        });
+      }
+    } catch (error) {
+      toast({
+        tone: 'error',
+        message: error instanceof JobLimitError ? limitMessage(error) : 'Could not update the job',
+      });
+    }
   }
 
   async function remove() {
@@ -131,6 +176,15 @@ function DrawerBody({
                 </IconButton>
               )}
               items={[
+                {
+                  label: job.archivedAt ? 'Restore to board' : 'Archive',
+                  icon: job.archivedAt ? (
+                    <ArchiveRestore className="size-4" />
+                  ) : (
+                    <Archive className="size-4" />
+                  ),
+                  onSelect: () => void toggleArchive(),
+                },
                 {
                   label: 'Delete job',
                   icon: <Trash2 className="size-4" />,
@@ -278,7 +332,7 @@ function DrawerBody({
         </Section>
 
         <Section title="Activity">
-          <Timeline activity={job.activity} stages={stages} />
+          <Timeline activity={job.activity} stages={stages} historyFrom={historyFrom} />
         </Section>
 
         <p className="text-subtle border-line border-t pt-4 text-xs">
@@ -519,33 +573,64 @@ function Description({ text }: { text: string | undefined }) {
   );
 }
 
-function Timeline({ activity, stages }: { activity: Activity[]; stages: readonly Stage[] }) {
+function Timeline({
+  activity,
+  stages,
+  historyFrom,
+}: {
+  activity: Activity[];
+  stages: readonly Stage[];
+  historyFrom: Date | undefined;
+}) {
+  const [all, setAll] = useState(false);
   const name = (id: string | undefined) => stages.find((s) => s.id === id)?.name ?? id ?? '—';
-  const items = [...activity].reverse().slice(0, 30);
+  const { items, hidden } = visibleActivity(activity, historyFrom);
+  const shown = all ? items : items.slice(0, TIMELINE_PREVIEW);
   return (
-    <ol className="border-line relative space-y-3 border-l pl-4">
-      {items.map((entry) => (
-        <li key={entry.id} className="relative text-[13px]">
-          <span className="bg-surface-3 ring-surface absolute top-1.5 -left-[21px] size-2 rounded-full ring-4" />
-          <span className="text-muted">
-            {entry.type === 'created' ? (
-              <>
-                Saved to <b className="text-ink font-medium">{name(entry.toStageId)}</b>
-              </>
-            ) : entry.type === 'stage_changed' ? (
-              <span className="inline-flex flex-wrap items-center gap-1">
-                Moved {name(entry.fromStageId)} <ArrowRight className="size-3" />
-                <b className="text-ink font-medium">{name(entry.toStageId)}</b>
-              </span>
-            ) : (
-              <>Edited {entry.fields?.join(', ')}</>
-            )}
-          </span>
-          <span className="text-subtle ml-2 text-xs" title={new Date(entry.at).toLocaleString()}>
-            {relativeTime(entry.at)}
-          </span>
-        </li>
-      ))}
-    </ol>
+    <>
+      <ol className="border-line relative space-y-3 border-l pl-4">
+        {shown.map((entry) => (
+          <li key={entry.id} className="relative text-[13px]">
+            <span className="bg-surface-3 ring-surface absolute top-1.5 -left-[21px] size-2 rounded-full ring-4" />
+            <span className="text-muted">
+              {entry.type === 'created' ? (
+                <>
+                  Saved to <b className="text-ink font-medium">{name(entry.toStageId)}</b>
+                </>
+              ) : entry.type === 'stage_changed' ? (
+                <span className="inline-flex flex-wrap items-center gap-1">
+                  Moved {name(entry.fromStageId)} <ArrowRight className="size-3" />
+                  <b className="text-ink font-medium">{name(entry.toStageId)}</b>
+                </span>
+              ) : entry.type === 'archived' ? (
+                <>Archived</>
+              ) : entry.type === 'unarchived' ? (
+                <>Restored to the board</>
+              ) : (
+                <>Edited {entry.fields?.join(', ')}</>
+              )}
+            </span>
+            <span className="text-subtle ml-2 text-xs" title={new Date(entry.at).toLocaleString()}>
+              {relativeTime(entry.at)}
+            </span>
+          </li>
+        ))}
+      </ol>
+      {items.length > shown.length ? (
+        <button
+          type="button"
+          className="text-accent mt-3 text-xs font-medium hover:underline"
+          onClick={() => setAll(true)}
+        >
+          Show all {items.length} entries
+        </button>
+      ) : null}
+      {hidden > 0 ? (
+        <HistoryLimitNote hidden={hidden} what={['timeline entry', 'timeline entries']} />
+      ) : null}
+    </>
   );
 }
+
+/** Timeline entries shown before "Show all". */
+const TIMELINE_PREVIEW = 30;

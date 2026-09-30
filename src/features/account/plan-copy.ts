@@ -72,7 +72,7 @@ export function backendErrorMessage(error: unknown): string {
 }
 
 export function limitMessage(error: JobLimitError): string {
-  return `Your plan holds ${String(error.check.limit)} active jobs, and you have ${String(error.check.active)}. Move finished jobs to Rejected or Withdrawn, or open Account for a bigger plan.`;
+  return `Your plan holds ${String(error.check.limit)} active jobs, and you have ${String(error.check.active)}. Archive finished jobs or move them to Rejected or Withdrawn, or open Account for a bigger plan.`;
 }
 
 export const PLAN_NAMES = { free: 'Free', pro: 'Pro', advanced: 'Advanced' } as const;

@@ -87,7 +87,13 @@ export const JobSourceSchema = z.object({
 });
 export type JobSource = z.infer<typeof JobSourceSchema>;
 
-export const ACTIVITY_TYPES = ['created', 'stage_changed', 'edited'] as const;
+export const ACTIVITY_TYPES = [
+  'created',
+  'stage_changed',
+  'edited',
+  'archived',
+  'unarchived',
+] as const;
 
 export const ActivitySchema = z.object({
   id: z.string().min(1),
@@ -123,6 +129,8 @@ export const JobSchema = PostingSchema.extend({
   createdAt: IsoDateTime,
   updatedAt: IsoDateTime,
   appliedAt: IsoDateTime.optional(),
+  /** Set while the job is archived: off the board, in History, not counted as active. */
+  archivedAt: IsoDateTime.optional(),
 });
 export type Job = z.infer<typeof JobSchema>;
 export type JobId = Job['id'];

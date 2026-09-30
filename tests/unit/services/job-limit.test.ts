@@ -75,3 +75,30 @@ describe('free-plan limit in JobService', () => {
     });
   });
 });
+
+describe('archiving in JobService', () => {
+  it('frees a place in the limit, and restoring checks it again', async () => {
+    const { service } = await setup('free', { active: FREE_ACTIVE_JOB_LIMIT });
+    await expect(service.createManual({ posting })).rejects.toBeInstanceOf(JobLimitError);
+
+    const archived = await service.archive('a0');
+    expect(archived.archivedAt).toBeDefined();
+    expect(archived.activity.at(-1)?.type).toBe('archived');
+    expect(await service.archive('a0')).toEqual(archived); // idempotent
+    await expect(service.createManual({ posting })).resolves.toBeDefined();
+
+    // The board is full again, so the archived job can't come back yet.
+    await expect(service.unarchive('a0')).rejects.toBeInstanceOf(JobLimitError);
+    await service.archive('a1');
+    const restored = await service.unarchive('a0');
+    expect(restored.archivedAt).toBeUndefined();
+    expect(restored.activity.at(-1)?.type).toBe('unarchived');
+    expect(await service.unarchive('a0')).toEqual(restored); // not archived: no-op
+  });
+
+  it('restores rejected jobs even when the board is full', async () => {
+    const { service } = await setup('free', { active: FREE_ACTIVE_JOB_LIMIT, lost: 1 });
+    await service.archive('l0');
+    await expect(service.unarchive('l0')).resolves.toMatchObject({ stageId: 'rejected' });
+  });
+});

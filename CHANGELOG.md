@@ -8,6 +8,15 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **History and archiving:**
+  - Archive any job from its menu. It leaves the board, stops counting toward
+    your plan's active jobs, and can be restored any time (subject to the
+    limit).
+  - _History_ lists finished (Offer, Rejected, Withdrawn) and archived jobs.
+  - On Free, finished and archived jobs and timeline entries older than 30
+    days are hidden, never deleted, and exports include them. Pro and
+    Advanced show everything.
+  - Long timelines show the latest 30 entries, with "Show all".
 - **Export to CSV** from the board menu, on every plan: one row per job with
   every field, in board order. It opens cleanly in Excel, Numbers and Google
   Sheets (UTF-8 BOM), and cells that a spreadsheet would run as formulas are

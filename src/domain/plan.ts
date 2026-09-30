@@ -141,9 +141,15 @@ export function planOf(entitlement: Entitlement | undefined, now: Date): PlanSta
   return state;
 }
 
-/** Jobs that count toward a plan's limit: anything not in a `lost` stage. */
+/** Jobs that count toward a plan's limit: anything not archived or in a `lost` stage. */
 export function countActiveJobs(jobs: readonly Job[], stages: readonly Stage[]): number {
-  return jobs.filter((job) => findStage(stages, job.stageId)?.kind !== 'lost').length;
+  return jobs.filter((job) => !job.archivedAt && findStage(stages, job.stageId)?.kind !== 'lost')
+    .length;
+}
+
+/** Would restoring this job from the archive make it count as active again? */
+export function countsAsActive(job: Job, stages: readonly Stage[]): boolean {
+  return findStage(stages, job.stageId)?.kind !== 'lost';
 }
 
 export interface LimitCheck {

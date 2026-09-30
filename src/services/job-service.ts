@@ -1,6 +1,19 @@
-import { createJob, moveJob, updateJob, type DomainContext } from '@/domain/job-factory';
+import {
+  archiveJob,
+  createJob,
+  moveJob,
+  unarchiveJob,
+  updateJob,
+  type DomainContext,
+} from '@/domain/job-factory';
 import { MANUAL_URL_HOST, type Job, type JobId, type JobPatch, type Posting } from '@/domain/job';
-import { checkJobLimit, countActiveJobs, type LimitCheck, type Plan } from '@/domain/plan';
+import {
+  checkJobLimit,
+  countActiveJobs,
+  countsAsActive,
+  type LimitCheck,
+  type Plan,
+} from '@/domain/plan';
 import { evenRanks, needsRebalance, RANK_STEP, rankBetween } from '@/domain/rank';
 import { findStage, type Stage, type StageId } from '@/domain/stage';
 import { canonicalizeUrl, toExtractionMeta, toPosting, type ExtractionResult } from '@/extraction';
@@ -160,7 +173,7 @@ export class JobService {
       this.jobs.list(),
     ]);
     const siblings = all
-      .filter((j) => j.stageId === stage.id && j.id !== jobId)
+      .filter((j) => j.stageId === stage.id && j.id !== jobId && !j.archivedAt)
       .sort((a, b) => a.rank - b.rank);
     const clamped = Math.max(0, Math.min(index, siblings.length));
     const before = siblings[clamped - 1]?.rank;
@@ -183,6 +196,25 @@ export class JobService {
     const job = await this.require(jobId);
     const next = updateJob(job, patch, this.ctx);
     return next === job ? job : this.jobs.save(next);
+  }
+
+  /** Moves a job off the board into History; frees its place in the plan's limit. */
+  async archive(jobId: JobId): Promise<Job> {
+    const job = await this.require(jobId);
+    const next = archiveJob(job, this.ctx);
+    return next === job ? job : this.jobs.save(next);
+  }
+
+  /**
+   * Puts an archived job back on the board. Like adding a job, this is
+   * blocked when it would count as active and the plan is full.
+   */
+  async unarchive(jobId: JobId): Promise<Job> {
+    const job = await this.require(jobId);
+    if (!job.archivedAt) return job;
+    const settings = await this.settings.get();
+    if (countsAsActive(job, settings.stages)) await this.assertCanAdd();
+    return this.jobs.save(unarchiveJob(job, this.ctx));
   }
 
   async remove(jobId: JobId): Promise<Job | undefined> {

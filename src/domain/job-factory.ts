@@ -66,6 +66,30 @@ export function moveJob(job: Job, to: Stage, rank: number, ctx: DomainContext): 
   return next;
 }
 
+/** Takes a job off the board into History. Idempotent. */
+export function archiveJob(job: Job, ctx: DomainContext): Job {
+  if (job.archivedAt) return job;
+  const at = ctx.now().toISOString();
+  return {
+    ...job,
+    archivedAt: at,
+    updatedAt: at,
+    activity: [...job.activity, { id: ctx.newId(), at, type: 'archived' }],
+  };
+}
+
+/** Puts an archived job back on the board, in the same column. Idempotent. */
+export function unarchiveJob(job: Job, ctx: DomainContext): Job {
+  if (!job.archivedAt) return job;
+  const at = ctx.now().toISOString();
+  const { archivedAt: _archivedAt, ...rest } = job;
+  return {
+    ...rest,
+    updatedAt: at,
+    activity: [...job.activity, { id: ctx.newId(), at, type: 'unarchived' }],
+  };
+}
+
 /**
  * Apply a user edit. Consecutive edits within `EDIT_COALESCE_MS` are merged
  * into one activity entry so typing notes doesn't flood the timeline.

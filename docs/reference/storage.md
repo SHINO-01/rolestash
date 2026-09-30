@@ -35,6 +35,9 @@ Rules:
 5. **Test it** in `tests/unit/storage/storage.test.ts`: seed the old shape,
    migrate, assert the new shape.
 
+Optional fields added without a migration: `archivedAt` (History, and the
+`archived`/`unarchived` activity types).
+
 When do you need one? Adding an **optional** field: no. Renaming, removing,
 changing a type, making a field required, or changing semantics: yes.
 

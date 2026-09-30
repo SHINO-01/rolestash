@@ -1,5 +1,6 @@
 import {
   Download,
+  History,
   FileSpreadsheet,
   Keyboard,
   Monitor,
@@ -13,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { browser } from 'wxt/browser';
+import { boardView, historyStart } from '@/domain/history';
 import type { Theme } from '@/domain/settings';
 import { createBackup } from '@/storage/backup';
 import { jobsToCsv } from '@/storage/csv-export';
@@ -28,6 +30,7 @@ import { useJobs, useServices, useSettings } from '@/ui/hooks/services';
 import { matchesQuery } from '@/ui/format';
 import { AddJobDialog } from './add-job-dialog';
 import { EmptyBoard } from './empty-board';
+import { HistoryDialog, HistoryLimitNote } from './history-dialog';
 import { ImportDialog } from './import-dialog';
 import { JobDrawer } from './job-drawer';
 import { Kanban } from './kanban';
@@ -48,14 +51,23 @@ export function BoardPage() {
   const deferredQuery = useDeferredValue(query);
   const [openJobId, setOpenJobId] = useState<string | undefined>(readJobFromHash);
   const { account, state: accountState } = useAccount();
-  const [dialog, setDialog] = useState<'add' | 'import' | 'account' | null>(() =>
+  const [dialog, setDialog] = useState<'add' | 'import' | 'account' | 'history' | null>(() =>
     location.hash === '#account' ? 'account' : null,
   );
   const searchRef = useRef<HTMLInputElement>(null);
 
+  // History (ADR-0013): Free shows 30 days of finished and archived jobs.
+  // Without accounts in the build, nothing is limited.
+  const plan = account ? (accountState?.plan.plan ?? 'free') : undefined;
+  const historyFrom = useMemo(() => historyStart(plan, new Date()), [plan]);
+  const onBoard = useMemo(() => jobs.filter((j) => !j.archivedAt), [jobs]);
+  const board = useMemo(
+    () => boardView(jobs, settings.stages, historyFrom),
+    [jobs, settings.stages, historyFrom],
+  );
   const visibleJobs = useMemo(
-    () => jobs.filter((j) => matchesQuery(j, deferredQuery)),
-    [jobs, deferredQuery],
+    () => board.board.filter((j) => matchesQuery(j, deferredQuery)),
+    [board, deferredQuery],
   );
   const openJob = openJobId ? jobs.find((j) => j.id === openJobId) : undefined;
 
@@ -134,7 +146,14 @@ export function BoardPage() {
           </span>
         </div>
         <div className="flex-1" />
-        <BoardStats jobs={jobs} stages={settings.stages} />
+        <BoardStats jobs={onBoard} stages={settings.stages} />
+        <Button
+          variant="ghost"
+          icon={<History className="size-4" />}
+          onClick={() => setDialog('history')}
+        >
+          History
+        </Button>
         <Button
           variant="primary"
           icon={<Plus className="size-4" />}
@@ -207,6 +226,14 @@ export function BoardPage() {
       {accountState ? (
         <PlanBanner state={accountState} onOpenAccount={() => setDialog('account')} />
       ) : null}
+      {board.hidden > 0 ? (
+        <HistoryLimitNote
+          className="mx-6 mt-0 mb-2"
+          hidden={board.hidden}
+          what={['finished job', 'finished jobs']}
+          onSeePlans={account ? () => setDialog('account') : undefined}
+        />
+      ) : null}
 
       <main className="min-h-0 flex-1 pt-2">
         {!loaded ? (
@@ -218,7 +245,7 @@ export function BoardPage() {
         ) : (
           <Kanban
             settings={settings}
-            allJobs={jobs}
+            allJobs={onBoard}
             visibleJobs={visibleJobs}
             filtered={deferredQuery.trim() !== ''}
             onOpen={openCard}
@@ -226,7 +253,24 @@ export function BoardPage() {
         )}
       </main>
 
-      <JobDrawer job={openJob} stages={settings.stages} onClose={() => openCard(undefined)} />
+      <JobDrawer
+        job={openJob}
+        stages={settings.stages}
+        historyFrom={historyFrom}
+        onClose={() => openCard(undefined)}
+      />
+      <HistoryDialog
+        open={dialog === 'history'}
+        onClose={() => setDialog(null)}
+        jobs={jobs}
+        stages={settings.stages}
+        historyFrom={historyFrom}
+        onOpenJob={(id) => {
+          setDialog(null);
+          openCard(id);
+        }}
+        {...(account ? { onSeePlans: () => setDialog('account') } : {})}
+      />
       <AddJobDialog open={dialog === 'add'} onClose={() => setDialog(null)} settings={settings} />
       <ImportDialog open={dialog === 'import'} onClose={() => setDialog(null)} />
       {account ? (

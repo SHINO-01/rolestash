@@ -166,6 +166,39 @@ test.describe('board @smoke', () => {
     await expect(page.getByText('Platform Engineer')).toBeHidden();
   });
 
+  test('archives a job into History and restores it', async ({ context, worker, extensionId }) => {
+    await seed(worker, [
+      { id: 'a', title: 'Platform Engineer', company: 'Northwind Labs' },
+      { id: 'b', title: 'Designer', company: 'Tidewater Studio' },
+    ]);
+    const page = await context.newPage();
+    await page.goto(`chrome-extension://${extensionId}/board.html`);
+    await page.getByText('Platform Engineer').click();
+    const drawer = page.getByRole('dialog', { name: 'Platform Engineer details' });
+    await drawer.getByRole('button', { name: 'More actions' }).click();
+    await page.getByRole('menuitem', { name: 'Archive' }).click();
+    await expect(
+      page.getByRole('region', { name: 'Saved column' }).getByText('Platform Engineer'),
+    ).toBeHidden();
+
+    await page.getByRole('button', { name: 'History' }).click();
+    const history = page.getByRole('dialog', { name: 'History' });
+    await history.getByRole('tab', { name: 'Archived' }).click();
+    await expect(history.getByText('Platform Engineer')).toBeVisible();
+    await history.getByRole('button', { name: 'Restore' }).click();
+    await expect(history.getByText('Platform Engineer')).toBeHidden();
+    await history.getByRole('button', { name: 'Close' }).click();
+    await expect(
+      page.getByRole('region', { name: 'Saved column' }).getByText('Platform Engineer'),
+    ).toBeVisible();
+
+    const job = await worker.evaluate(
+      async () => (await chrome.storage.local.get('job:a'))['job:a'] as Job,
+    );
+    expect(job.archivedAt).toBeUndefined();
+    expect(job.activity.map((a) => a.type)).toEqual(['archived', 'unarchived']);
+  });
+
   test('exports the board to CSV', async ({ context, worker, extensionId }) => {
     await seed(worker, [
       { id: 'a', title: 'Platform Engineer', company: 'Northwind Labs', tags: ['go'] },

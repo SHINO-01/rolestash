@@ -36,7 +36,7 @@ export function PlanBanner({
     const next = nextPlan(plan.plan);
     message =
       active >= limit
-        ? `You've reached the ${name} plan's ${String(limit)} active jobs. Move finished ones to Rejected or Withdrawn${next ? `, or upgrade to ${PLAN_NAMES[next]} for ${String(ACTIVE_JOB_LIMITS[next])}` : ''}.`
+        ? `You've reached the ${name} plan's ${String(limit)} active jobs. Archive finished ones or move them to Rejected or Withdrawn${next ? `, or upgrade to ${PLAN_NAMES[next]} for ${String(ACTIVE_JOB_LIMITS[next])}` : ''}.`
         : `${String(active)} of ${String(limit)} active jobs used on ${name}.`;
     action = !next ? 'Plan' : state.signedIn ? `Get ${PLAN_NAMES[next]}` : 'Try Pro free';
   }
