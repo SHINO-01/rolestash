@@ -102,6 +102,21 @@ describe('rolestash.com static site', () => {
     expect(headers).toContain('Strict-Transport-Security');
   });
 
+  it('deploys as an assets-only Worker that never touches routes or adds public URLs', () => {
+    const raw = readFileSync(resolve(SITE, '../infra/site.wrangler.jsonc'), 'utf8');
+    const config = JSON.parse(
+      // JSONC → JSON: drop line comments and trailing commas.
+      raw.replace(/^\s*\/\/.*$/gm, '').replace(/,(\s*[}\]])/g, '$1'),
+    ) as Record<string, unknown>;
+    expect(config.name).toBe('rolestash-v001');
+    expect(config.assets).toMatchObject({ directory: '../site' });
+    expect(config.main).toBeUndefined(); // no code, only static files
+    expect(config.routes).toBeUndefined();
+    expect(config.route).toBeUndefined();
+    expect(config.workers_dev).toBe(false);
+    expect(config.preview_urls).toBe(false);
+  });
+
   it('scopes the Paddle CSP to /pay/ and replaces, not adds to, the site-wide one', () => {
     const headers = readFileSync(join(SITE, '_headers'), 'utf8');
     const pay = headers.slice(headers.indexOf('/pay/*'));

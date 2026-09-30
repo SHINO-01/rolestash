@@ -139,8 +139,8 @@ jobs:
   deploy-site:
     name: Deploy rolestash.com
     # Only tested commits reach the site: runs after main was fast-forwarded.
-    # Stays off until the Pages project is configured (repo variable + secrets).
-    if: github.event_name == 'push' && github.ref == 'refs/heads/dev' && vars.CF_PAGES_PROJECT != ''
+    # Stays off until the repo variable SITE_DEPLOY is "enabled" (secrets set).
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev' && vars.SITE_DEPLOY == 'enabled'
     needs: [promote]
     runs-on: ubuntu-24.04
     timeout-minutes: 10
@@ -151,16 +151,16 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: .nvmrc
-      # Direct upload to Cloudflare Pages (docs/guides/website.md). Runs on every
-      # promoted push: wrangler uploads only changed files, and deploying always
-      # means a cancelled run can never leave the site behind main. Wrangler is
-      # pinned; the token is limited to "Cloudflare Pages: Edit" on one account.
-      - name: Deploy site/ to Cloudflare Pages
+      # site/ is served by an assets-only Worker (infra/site.wrangler.jsonc).
+      # Runs on every promoted push: wrangler uploads only changed files, and
+      # deploying always means a cancelled run can never leave the site behind
+      # main. Wrangler is pinned; the token only has Workers Scripts: Edit.
+      - name: Deploy site/ to the rolestash-v001 Worker
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          PROJECT: ${{ vars.CF_PAGES_PROJECT }}
+          WRANGLER_SEND_METRICS: 'false'
         run: |
-          npx --yes wrangler@4.144.0 pages deploy site \
-            --project-name "$PROJECT" --branch main --commit-hash "$GITHUB_SHA" --commit-dirty=false
-          echo "Deployed site/ at ${GITHUB_SHA} to Cloudflare Pages (${PROJECT})." >> "$GITHUB_STEP_SUMMARY"
+          npx --yes wrangler@4.144.0 deploy --config infra/site.wrangler.jsonc \
+            --message "CI ${GITHUB_SHA::12}"
+          echo "Deployed site/ at ${GITHUB_SHA} to rolestash.com." >> "$GITHUB_STEP_SUMMARY"

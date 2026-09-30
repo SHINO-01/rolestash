@@ -1,0 +1,16 @@
+// rolestash.com: an assets-only Cloudflare Worker serving ../site
+// (docs/guides/website.md). Deployed by CI after "Promote to main".
+// Custom domains (rolestash.com, www, landing) are managed in the dashboard;
+// this file deliberately declares no routes so a deploy never changes them.
+{
+  "name": "rolestash-v001",
+  "compatibility_date": "2026-09-01",
+  "assets": {
+    "directory": "../site",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page",
+  },
+  // Only the custom domains serve the site: no *.workers.dev or preview URLs.
+  "workers_dev": false,
+  "preview_urls": false,
+}

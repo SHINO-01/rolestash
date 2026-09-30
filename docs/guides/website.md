@@ -46,22 +46,29 @@ python3 -m http.server 4321 --directory site
 
 ## Deployment
 
-The Pages project uses **direct upload**, not Cloudflare's Git integration,
-so Cloudflare never needs access to the repo. CI deploys instead: the
-_Deploy rolestash.com_ job in `ci.yml` runs `wrangler pages deploy site`
-after _Promote to main_. The site therefore only ever serves tested commits
-from `main`.
+The site is served by an **assets-only Cloudflare Worker**, `rolestash-v001`.
+Cloudflare's Git integration isn't used, so Cloudflare never needs access to
+the repo. Instead, the _Deploy rolestash.com_ job in `ci.yml` runs
+`wrangler deploy --config infra/site.wrangler.jsonc` after _Promote to main_.
+The site therefore only ever serves tested commits from `main`.
+
+- **Routes:** the config declares none, so custom domains stay managed in
+  the dashboard and a deploy never changes them.
+- **No extra URLs:** `workers_dev` and `preview_urls` are off, so no extra
+  public URLs exist.
+- **No telemetry:** Wrangler's telemetry is disabled in CI.
+
+Check a change locally with
+`npx wrangler@4.144.0 deploy --config infra/site.wrangler.jsonc --dry-run`.
 
 It is enabled by three repo settings:
 
 | Setting                 | Kind     | Value                                                                 |
 | ----------------------- | -------- | --------------------------------------------------------------------- |
-| `CF_PAGES_PROJECT`      | variable | The Pages project name                                                |
-| `CLOUDFLARE_ACCOUNT_ID` | secret   | Cloudflare account id                                                 |
-| `CLOUDFLARE_API_TOKEN`  | secret   | Custom token: **Account → Cloudflare Pages → Edit**, one account only |
+| `SITE_DEPLOY`           | variable | `enabled`                                                             |
+| `CLOUDFLARE_ACCOUNT_ID` | secret   | `49cd45db57a5ff345b63cea810ae7bae`                                    |
+| `CLOUDFLARE_API_TOKEN`  | secret   | Custom token: **Account → Workers Scripts → Edit**, this account only |
 
-Without `CF_PAGES_PROJECT` the job is skipped.
-
-Domains: `rolestash.com` (primary) and `landing.rolestash.com`, with
-`www.rolestash.com` redirecting to the apex. Leave **Web Analytics off**:
+Domains (on the Worker): `rolestash.com` (primary), `landing.rolestash.com`
+and `www.rolestash.com`, which should redirect to the apex. Leave **Web Analytics off**:
 the privacy policy says the site has none.
