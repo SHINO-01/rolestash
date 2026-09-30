@@ -1,6 +1,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { runInNewContext } from 'node:vm';
+import { stampChrome } from '../../../scripts/build-site-chrome';
 
 /** Chrome maps extension-ID hex digits 0-f to the letters a-p. */
 const HEX_TO_ID = 'abcdefghijklmnop';
@@ -27,6 +28,14 @@ const pages = walk(SITE)
     file: relative(SITE, file),
     doc: new DOMParser().parseFromString(readFileSync(file, 'utf8'), 'text/html'),
   }));
+
+/** The URLs an element loads: href/src, or every candidate in a srcset. */
+function urlsOf(el: Element): string[] {
+  const srcset = el.getAttribute('srcset');
+  if (srcset !== null) return srcset.split(',').map((c) => c.trim().split(/\s+/)[0] ?? '');
+  const url = el.getAttribute('href') ?? el.getAttribute('src');
+  return url === null ? [] : [url];
+}
 
 function resolveInternal(href: string): string {
   const path = decodeURIComponent(href.split(/[?#]/)[0] ?? '');
@@ -67,18 +76,18 @@ describe('rolestash.com static site', () => {
       expect(doc.querySelectorAll('[style], style')).toHaveLength(0);
       const refs = [
         ...doc.querySelectorAll('link[rel="stylesheet"], link[rel="preload"], img, source'),
-      ]
-        .map((el) => el.getAttribute('href') ?? el.getAttribute('src') ?? el.getAttribute('srcset'))
-        .filter((v): v is string => v !== null);
+      ].flatMap(urlsOf);
       expect(refs.length).toBeGreaterThan(0);
       for (const ref of refs) expect(ref).toMatch(/^\//);
     },
   );
 
   it.each(pages)('$file has working internal links and assets', ({ doc }) => {
-    const refs = [...doc.querySelectorAll('a[href], link[href], img[src], source[srcset]')]
-      .map((el) => el.getAttribute('href') ?? el.getAttribute('src') ?? el.getAttribute('srcset'))
-      .filter((v): v is string => v?.startsWith('/') === true);
+    const refs = [
+      ...doc.querySelectorAll('a[href], link[href], img[src], img[srcset], source[srcset]'),
+    ]
+      .flatMap(urlsOf)
+      .filter((v) => v.startsWith('/'));
     for (const ref of refs) expect(existsSync(resolveInternal(ref)), ref).toBe(true);
   });
 
@@ -87,6 +96,22 @@ describe('rolestash.com static site', () => {
       new Set(pages.map(({ doc }) => doc.querySelector(sel)?.outerHTML ?? 'missing'));
     expect(shared('header.site-header').size).toBe(1);
     expect(shared('footer.site-footer').size).toBe(1);
+  });
+
+  it('has the header and footer stamped by npm run site:chrome', () => {
+    const landing = readFileSync(join(SITE, 'index.html'), 'utf8');
+    for (const { file } of pages) {
+      const html = readFileSync(join(SITE, file), 'utf8');
+      expect(stampChrome(html, landing), file).toBe(html);
+    }
+  });
+
+  it('gives every image explicit dimensions so nothing shifts as it loads', () => {
+    for (const { file, doc } of pages)
+      for (const img of doc.querySelectorAll('img, picture > source')) {
+        expect(img.getAttribute('width'), `${file}: ${img.outerHTML}`).toMatch(/^\d+$/);
+        expect(img.getAttribute('height'), `${file}: ${img.outerHTML}`).toMatch(/^\d+$/);
+      }
   });
 
   it('states the merchant of record and support contact the payment provider requires', () => {

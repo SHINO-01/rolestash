@@ -20,6 +20,13 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- Redesigned rolestash.com: a framed product hero with responsive, art-directed
+  board screenshots, a bento feature grid, an email-updates walkthrough for
+  Advanced, a plan comparison table, a JavaScript-free mobile menu, a larger
+  footer and motion that respects reduced-motion. Pricing cards now have hover
+  states and "Notify me at launch" buttons. `npm run site:chrome` stamps the
+  shared header and footer; `npm run site:screenshots` regenerates the board
+  screenshots from the E2E build.
 - Renamed to **Rolestash**, with a new logo, icons and spruce-green theme.
   Backups exported under the old name still import, and manually added jobs
   keep working.
