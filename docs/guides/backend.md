@@ -54,3 +54,36 @@ Rules:
    `WXT_SUPABASE_URL=https://<ref>.supabase.co` and `WXT_SUPABASE_ANON_KEY`.
    **Never** put the `service_role` key in the extension, the repo or chat.
    It belongs only in Edge Function secrets.
+
+## Edge Functions
+
+| Function          | Caller                  | Does                                                                              |
+| ----------------- | ----------------------- | --------------------------------------------------------------------------------- |
+| `paddle-webhook`  | Paddle (signed, no JWT) | Verifies `Paddle-Signature`, applies `subscription.*` events                      |
+| `create-checkout` | Extension (user JWT)    | Creates a Paddle transaction with `custom_data.user_id`; returns its checkout URL |
+| `billing-portal`  | Extension (user JWT)    | Returns a one-time Paddle customer-portal link                                    |
+| `delete-account`  | Extension (user JWT)    | Cancels a live subscription immediately, then deletes the user                    |
+
+All the logic is in `supabase/functions/_shared/`. It's plain TypeScript
+with injected `fetch`, unit-tested in `tests/unit/functions/` under the same
+coverage gate as the core. Each `index.ts` only wires a handler to
+`Deno.serve`.
+
+**Deploy (after the project is linked):**
+
+```bash
+npx supabase secrets set PADDLE_ENV=sandbox PADDLE_API_KEY=… PADDLE_WEBHOOK_SECRET=… \
+  PADDLE_PRICE_MONTHLY=pri_… PADDLE_PRICE_YEARLY=pri_…
+npx supabase functions deploy
+```
+
+**Paddle dashboard:**
+
+1. Create the product with two prices: US$7/month and US$59/year.
+2. Default payment link: `https://rolestash.com/pay/`.
+3. Add a notification destination for
+   `https://<ref>.supabase.co/functions/v1/paddle-webhook` with the
+   `subscription.*` events. Its secret is `PADDLE_WEBHOOK_SECRET`.
+
+Use the sandbox until Paddle approves the account, then switch
+`PADDLE_ENV=production` and the production keys and prices.

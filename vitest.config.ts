@@ -20,14 +20,26 @@ export default defineConfig({
     include: ['tests/unit/**/*.test.ts', 'tests/unit/**/*.test.tsx'],
     coverage: {
       provider: 'v8',
-      include: ['src/**/*.ts', 'src/**/*.tsx'],
-      exclude: ['src/entrypoints/**', 'src/**/*.d.ts'],
+      include: ['src/**/*.ts', 'src/**/*.tsx', 'supabase/functions/_shared/**/*.ts'],
+      exclude: [
+        'src/entrypoints/**',
+        'src/**/*.d.ts',
+        'supabase/functions/_shared/serve.ts',
+        '**/*.d.ts',
+      ],
       reporter: ['text-summary', 'html'],
       // Gate: the pure core (everything except UI and browser adapters, which
       // the E2E suite covers) must keep ≥90% line/statement/function coverage.
       // Branches start at 80% and should only ever be ratcheted up.
       thresholds: {
         'src/{domain,extraction,storage,services}/**': {
+          lines: 90,
+          statements: 90,
+          functions: 90,
+          branches: 80,
+        },
+        // Edge Functions handle money and account deletion: same bar as the core.
+        'supabase/functions/_shared/**': {
           lines: 90,
           statements: 90,
           functions: 90,
