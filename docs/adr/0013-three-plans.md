@@ -5,15 +5,20 @@
 
 ## Context
 
-The owner's pricing, 2026-10-01:
+The owner's pricing and features, 2026-10-01 (revised the same day):
 
-| Plan     | Price                    | Active jobs | Extras                                                          |
-| -------- | ------------------------ | ----------- | --------------------------------------------------------------- |
-| Free     | US$0, no account         | 15          | Capture from every supported site, CSV/JSON export              |
-| Pro      | US$7/month, US$59/year   | 45          | Full history, tips and tricks. 30-day trial on sign-in, no card |
-| Advanced | US$15/month, US$159/year | 95          | Automatic status updates parsed from job emails                 |
+| Plan     | Price                    | Active jobs | Features                                                                                                                                                                                                                                        |
+| -------- | ------------------------ | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Free     | US$0, no account         | 15          | Capture from every supported site, board, CSV/JSON export, last 30 days of history                                                                                                                                                              |
+| Pro      | US$7/month, US$59/year   | 45          | Everything in Free, plus: full history (archived and finished jobs, every timeline entry), reminders and closing-date alerts, custom columns, capture from a pasted link. 30-day trial on sign-in, no card                                      |
+| Advanced | US$15/month, US$159/year | 95          | Everything in Pro, plus: sync across devices and the web board, automatic status updates from job emails (ADR-0014), interview details on cards, and all later features (autofill, contacts and documents, analytics, side panel, bulk actions) |
 
-Paid plans that lapse drop to Free. No data is deleted or locked.
+Tips and tricks were dropped.
+
+When a paid plan lapses, the account drops to Free. No data is deleted.
+
+We don't launch until every advertised feature of every plan is built, so
+the site advertises them all.
 
 ## Decision
 
@@ -39,38 +44,35 @@ Paid plans that lapse drop to Free. No data is deleted or locked.
     listed amount _includes_ VAT/GST. That's what consumers there expect,
     and in Australia it's the law. US customers pay tax on top.
   - The starting amounts are the owner's; see "Consequences" for the review.
-- **Features not built yet are labelled "coming soon" wherever they're
-  sold:** on the site, in the extension, and in the Terms, which say they
-  aren't part of what you pay for until released. Selling unreleased
-  features as available would breach the Chrome Web Store's listing rules
-  and Australian consumer law.
+- **Launch gate:** the store listing and live payments wait until every
+  advertised feature ships, so the site can list them all. The Chrome Web
+  Store's listing rules and Australian consumer law both prohibit selling a
+  feature that doesn't exist.
+- **History:**
+  - Free shows finished (won/lost) jobs and timeline entries from the last
+    30 days.
+  - Pro and Advanced show everything, including archived jobs.
+  - Nothing is ever deleted, and exports always contain everything, so a
+    downgrade hides old history but never holds it hostage.
 
 ## Consequences
 
-- **Price review.** Paddle's sandbox has the owner's amounts, all
-  tax-inclusive locally. The Advanced **monthly** overrides cost more than
-  the US price after conversion (about US$19–20 in each country), while Pro
-  and Advanced annual cost less. That looks unintended. Suggested:
+- **Local prices applied:**
 
-  | Price            | Owner                | Suggested                 |
-  | ---------------- | -------------------- | ------------------------- |
-  | Pro monthly      | £5.50 / €6.50 / A$10 | keep                      |
-  | Pro annual       | £48 / €55 / A$89     | keep                      |
-  | Advanced monthly | £15 / €17.50 / A$28  | £11.99 / €13.99 / A$22.99 |
-  | Advanced annual  | £129 / €145 / A$239  | keep                      |
+  | Price            | UK     | Ireland | Australia |
+  | ---------------- | ------ | ------- | --------- |
+  | Pro monthly      | £5.50  | €6.50   | A$10.00   |
+  | Pro annual       | £48    | €55     | A$89      |
+  | Advanced monthly | £11.99 | €13.99  | A$22.99   |
+  | Advanced annual  | £129   | €145    | A$239     |
 
-- **The email-parsed status updates need their own design before any
-  code**, in a separate ADR:
-  - Reading Gmail through Google's API requires a _restricted_ scope. That
-    means Google's annual security assessment (CASA), which costs hundreds
-    to thousands of dollars.
-  - The zero-cost alternative is a personal forwarding address per user
-    (e.g. `u-…@in.rolestash.com`), handled by a Cloudflare Email Worker and
-    parsed with deterministic rules, no AI.
-  - Either way the privacy policy must change first.
-- The roadmap's Phase 1b features (sync, reminders, custom columns, capture
-  from a pasted link) are not placed in a plan yet. They're marked "coming
-  soon" on the site until the owner decides.
+  All are tax-inclusive, as confirmed by Paddle pricing previews. The first
+  draft of Advanced monthly (£15/€17.50/A$28) cost more than the US price.
+
+- **Email-parsed status updates** follow ADR-0014: a forwarding address and deterministic rules, no AI vendors.
+- **Plan gating uses `planOf()` in the extension and `plan_tier()` on the
+  server:** Pro features check `plan !== 'free'`, and Advanced features check
+  `plan === 'advanced'`.
 
 ## Alternatives considered
 

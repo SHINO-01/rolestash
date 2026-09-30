@@ -2,131 +2,115 @@
 
 Rolestash is a freemium product with three plans (ADR-0013):
 
-- **Free:** no account, up to 15 active jobs, capture from every site, CSV/JSON export.
-- **Pro:** US$7/month or US$59/year, 45 active jobs, full history, tips and
-  tricks. 30-day trial on sign-in, no card.
-- **Advanced:** US$15/month or US$159/year, 95 active jobs, automatic status
-  updates from job emails.
+| Plan     | Price                | Active jobs | Features                                                                                                                                                                      |
+| -------- | -------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Free     | US$0, no account     | 15          | Capture from every supported site, board, CSV/JSON export, last 30 days of history                                                                                            |
+| Pro      | US$7/mo · US$59/yr   | 45          | Everything in Free, plus: full history, reminders and closing-date alerts, custom columns, capture from a pasted link. 30-day trial                                           |
+| Advanced | US$15/mo · US$159/yr | 95          | Everything in Pro, plus: sync across devices and a web board, email status updates and interview cards, autofill, contacts and documents, analytics, side panel, bulk actions |
 
-Local prices in the UK, Ireland and Australia. Every item still follows
-AGENTS.md: no AI/LLM vendors, local-first, least privilege, and close to
-zero running cost until revenue arrives.
+Local prices in the UK, Ireland and Australia. Every item follows AGENTS.md:
+no AI/LLM vendors, local-first, least privilege, and near-zero running cost
+until revenue arrives.
 
-Phases are listed in order. Within a phase, items are in priority order.
-The Chrome Web Store launch comes at the end of **Phase 1**. We don't list
-publicly until billing works, because paying users arriving through reviews
-are the launch.
+**Launch rule:** no public store listing and no live payments until every
+feature on the pricing page is built. The site already advertises them all.
 
-## Phase 1 — Paid launch (v0.2 → v1.0)
+## Done
 
-### 1a. Accounts, entitlement, billing (the paywall)
+- **Capture and board (v0.1.0):**
+  - capture engine with 50 site adapters;
+  - Kanban board;
+  - JSON backups.
+- **Brand:** Rolestash, with rolestash.com (ADR-0010).
+- **Website:** rolestash.com with pricing, legal pages and checkout, deployed
+  by CI.
+- **Accounts and billing** (ADR-0009, 0011, 0012, 0013):
+  - Sign-in with an email code, or with Google through rolestash.com.
+  - A 30-day Pro trial.
+  - Per-plan limits of 15, 45 and 95.
+  - Paddle: checkout bound to the account email, billing portal, plan
+    changes, signed webhooks and local prices.
+  - Account deletion.
+  - Everything is off in release builds until launch.
 
-- **Supabase project** (free plan).
-  - Schema: `profiles`, `entitlements`, `jobs`, `settings`.
-  - RLS on every table.
-  - SQL migrations in `supabase/migrations/`.
-  - `supabase start` for local tests.
-- **Sign-in.**
-  - Google via `chrome.identity.launchWebAuthFlow` (PKCE), plus an email
-    one-time code fallback.
-  - Custom SMTP through Resend (free: 3,000 emails/month, 100/day).
-- **Free tier and trial.**
-  - ~~Per-plan limits (15 / 45 / 95)~~ done (ADR-0013).
-  - The Pro trial starts at sign-in, with no card.
-  - The extension caches a signed entitlement with a 7-day offline grace
-    period.
-  - The "Trial: N days left" banner and the paywall screen appear on the
-    board and in the popup.
-- **Checkout.**
-  - A merchant of record: **Paddle** by default, **Creem** as the fallback.
-  - Monthly **$7** and annual **$59** (two months free).
-  - A webhook Edge Function writes `entitlements`.
-  - "Manage subscription" opens the MoR's customer portal.
-- **Lapsed Pro drops back to Free.** Nothing is locked or deleted; only new
-  captures above the limit are blocked.
-- **Account deletion** in Settings. It removes the server rows and keeps the
-  local data.
-- ~~**Legal and store pages.**~~ Done: `site/` (docs/guides/website.md) has
-  the landing page, Terms, Privacy, Refunds and Support. Still to do: connect
-  Cloudflare Pages; rewrite the extension's PRIVACY.md in the PR that ships
-  sync; update the store listing's payment disclosure.
-- **Extension repo.** Update `policy/manifest-policy.json` (`identity`,
-  `alarms`, `notifications`) and `store/listing.md`.
+## Phase 1b: Free and Pro features
 
-### 1b. Paid features that justify $7
-
-- **Cloud sync across devices** (server-enforced).
-  - A `SyncService` behind a `RemoteJobStore` port.
-  - Push and pull by `updatedAt`, tombstones for deletes.
-  - Last writer wins per job.
-  - Descriptions stored compressed.
-- **Follow-up reminders and deadlines.**
-  - A `followUpAt` field, with a migration.
-  - `chrome.alarms` + `chrome.notifications`.
-  - A "closing soon" digest from `closesAt`.
-  - An optional weekly email digest via `pg_cron` + Resend
-    (server-enforced).
-- **Customise columns.** Rename, recolor, reorder, add or archive stages.
-  Stages are already data in settings.
-- **Paste a link.** Capture a URL without opening it:
+- **CSV export** (Free).
+- **History** (Free: 30 days; Pro: everything):
+  - an Archive action and an archived view;
+  - a finished-jobs view (won and lost);
+  - timeline entries older than 30 days behind Pro.
+  - Exports always include everything.
+- **Reminders and closing-date alerts** (Pro):
+  - a `followUpAt` field, with a migration;
+  - `chrome.alarms` + `chrome.notifications` (new permissions, with
+    justifications);
+  - a daily "closing soon" digest.
+- **Custom columns** (Pro): rename, recolor, reorder, add and archive
+  stages. Stages are already data in settings.
+- **Capture from a pasted link** (Pro):
   - `optional_host_permissions` per site;
   - `fetch` + `DOMParser` in an offscreen document, running the same pure
     extractor;
   - a background tab as the fallback for JavaScript-rendered pages.
-- **Verify adapters against live sites.**
-  - Replace the synthetic fixtures with scrubbed real snapshots.
-  - Start with LinkedIn, SEEK, Indeed, Greenhouse, Lever and Workday.
-  - Set `lastVerified`.
-- **CSV export** for spreadsheets. It is included in Free.
+- **Quality:** verify adapters against live sites. Replace synthetic
+  fixtures with scrubbed real snapshots, starting with LinkedIn, SEEK,
+  Indeed, Greenhouse, Lever and Workday.
 
-### 1c. Launch
+## Phase 1c: Advanced features
 
-- ~~Rebrand to Rolestash~~ Done (ADR-0010): product, icons, docs and both
-  GitHub repos.
+- **Sync across devices:**
+  - Supabase `jobs` and `settings` tables, with RLS
+    `plan_tier() = 'advanced'`;
+  - a `SyncService` behind a `RemoteJobStore` port;
+  - last writer wins per job, tombstones for deletes, compressed
+    descriptions.
+- **Web board:** a static board on rolestash.com that reads the same data
+  (for phones).
+- **Email status updates and interview cards** (ADR-0014):
+  - a personal `@in.rolestash.com` address;
+  - a Cloudflare Email Worker;
+  - a deterministic intent engine with an email fixture suite;
+  - suggestions for low-confidence results;
+  - Join, map and add-to-calendar actions on cards.
+- **Application autofill:** a local profile and deterministic field mapping
+  for Greenhouse, Lever, Workday, Ashby and SmartRecruiters.
+- **Contacts, interview notes and documents** per job (file names, not
+  uploads), plus an `.ics` export.
+- **Analytics:** funnel by stage, response time, source site, applications
+  per week.
+- **Side panel** (`chrome.sidePanel`) and **bulk actions** (multi-select,
+  archive, tag).
 
-- One-time Chrome Web Store setup (rolestash-extension README → _One-time
-  setup_).
-  - The first listing goes in unlisted or with a small audience.
-  - Then public.
-- Onboarding: sign in, capture your first job, see the board. Include a
-  sample-data option.
-- Support inbox (email forwarding on the domain, free) and a public
-  changelog page.
+## Phase 1d: Launch
 
-## Phase 2 — Retention and differentiation (v1.x)
+1. **Paddle live:**
+   - account approval;
+   - live products, prices and local prices;
+   - the live webhook;
+   - `PADDLE_ENV=production`;
+   - the live client token in `site/assets/pay.js`.
+2. **Chrome Web Store:**
+   - one-time setup and an unlisted first upload, to get the store ID;
+   - add that ID to `site/assets/auth-google.js`;
+   - accounts build variables in the extension repo's release workflow;
+   - a manifest policy covering `identity`, `alarms`, `notifications` and
+     the optional hosts;
+   - the listing text and new screenshots.
+3. **Privacy:** rewrite PRIVACY.md and the store privacy disclosure to match
+   what ships.
+4. **Google brand verification** (name and logo on the consent screen).
+5. **Beta, then public:** an unlisted beta with 10–20 testers, then the
+   public listing.
 
-- **Application autofill.** A local profile (name, email, phone, links, work
-  rights) and deterministic field mapping for Greenhouse, Lever, Workday,
-  Ashby and SmartRecruiters. No AI. This is the most-requested feature in
-  this category.
-- **Contacts and interviews** per job: recruiter, interview dates, outcomes,
-  and an `.ics` export for calendars.
-- **Documents.** Record which CV/cover letter version was sent (file names
-  and notes, not uploads).
-- **Analytics view.**
-  - Funnel conversion by stage.
-  - Response time.
-  - Source site.
-  - Applications per week.
-- **Web board** (read and edit on a phone). A static site on Cloudflare
-  Pages talking to the same Supabase project with RLS. Server-enforced.
-- **Side panel** (`chrome.sidePanel`) with the current job's card while
-  browsing.
-- **Bulk actions**: multi-select, archive, tag.
-- **Referral**: give a month, get a month. It costs nothing to run.
+## Later
 
-## Phase 3 — Reach (v2)
-
-- **Edge and Firefox builds.** WXT supports both; most of the work is
-  manifest differences. Edge Add-ons listing is free.
-- **Optional on-device assist** via Chrome's built-in AI (Gemini Nano,
-  Prompt API): summarise a posting, draft a follow-up note.
-  - Runs locally, costs nothing, no vendor.
-  - Hidden when the device can't run it.
-- **Opt-in end-to-end encrypted "vault" mode** for synced data (a separate
-  ADR).
-- **Coach/team plan** (career coaches, bootcamps, university careers
-  services): shared read access to a client's board.
+- Edge and Firefox builds.
+- An opt-in end-to-end encrypted "vault" for synced data (its own ADR).
+- A coach/team plan.
+- Referral: give a month, get a month.
+- Optional on-device assist with Chrome's built-in AI (no vendor), for
+  example re-checking low-confidence email updates.
 
 ## Infrastructure cost gates
 
