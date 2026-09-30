@@ -5,7 +5,7 @@
 
 ## Context
 
-Jobtrail becomes a freemium product:
+Rolestash (formerly Jobtrail, ADR-0010) becomes a freemium product:
 
 - a **small free tier**, local-only and with no account needed;
 - **Pro at US$7/month**, with a **30-day free trial** that starts when you

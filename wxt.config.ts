@@ -13,8 +13,8 @@ export default defineConfig({
     plugins: [tailwindcss()],
   }),
   manifest: ({ mode }) => ({
-    name: 'Jobtrail — Job Application Tracker',
-    short_name: 'Jobtrail',
+    name: 'Rolestash — Job Application Tracker',
+    short_name: 'Rolestash',
     description:
       'Save any job posting to a local Kanban board in one click. No AI, no accounts, no servers.',
     minimum_chrome_version: '116',
@@ -38,7 +38,7 @@ export default defineConfig({
     commands: {
       _execute_action: {
         suggested_key: { default: 'Alt+J' },
-        description: 'Open Jobtrail on the current page',
+        description: 'Open Rolestash on the current page',
       },
       'track-current-tab': {
         suggested_key: { default: 'Alt+Shift+J' },

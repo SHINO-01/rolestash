@@ -40,7 +40,7 @@ export class CaptureService {
           ok: false,
           reason: 'restricted',
           message:
-            'Jobtrail doesn’t have access to this page. Click the toolbar icon while viewing the job.',
+            'Rolestash doesn’t have access to this page. Click the toolbar icon while viewing the job.',
         };
       }
       return { ok: false, reason: 'error', message };

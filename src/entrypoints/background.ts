@@ -13,8 +13,8 @@ import { DuplicateJobError } from '@/services/job-service';
  *  - Right-click the toolbar icon → "Open board"
  */
 
-const MENU_TRACK = 'jobtrail.track';
-const MENU_OPEN_BOARD = 'jobtrail.openBoard';
+const MENU_TRACK = 'rolestash.track';
+const MENU_OPEN_BOARD = 'rolestash.openBoard';
 const COMMAND_TRACK = 'track-current-tab';
 
 export default defineBackground(() => {
@@ -23,12 +23,12 @@ export default defineBackground(() => {
     void browser.contextMenus.removeAll().then(() => {
       browser.contextMenus.create({
         id: MENU_TRACK,
-        title: 'Track this job in Jobtrail',
+        title: 'Track this job in Rolestash',
         contexts: ['page', 'frame', 'selection'],
       });
       browser.contextMenus.create({
         id: MENU_OPEN_BOARD,
-        title: 'Open Jobtrail board',
+        title: 'Open Rolestash board',
         contexts: ['action'],
       });
     });
@@ -60,7 +60,7 @@ async function quickSave(tabId: number, tabUrl: string | undefined): Promise<voi
   } catch (error) {
     if (error instanceof DuplicateJobError) await flashBadge(tabId, '=', 'info');
     else {
-      console.error('[jobtrail] quick save failed', error);
+      console.error('[rolestash] quick save failed', error);
       await flashBadge(tabId, '!', 'error');
     }
   }

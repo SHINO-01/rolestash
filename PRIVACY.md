@@ -1,8 +1,8 @@
 # Privacy
 
-Jobtrail collects nothing.
+Rolestash collects nothing.
 
-- **What is read:** the content of a tab, only when you click the Jobtrail icon,
+- **What is read:** the content of a tab, only when you click the Rolestash icon,
   use its context-menu item or its keyboard shortcut on that tab.
 - **What is stored:** the job details you save (title, company, location,
   salary, dates, description text, the posting URL) plus your own notes, tags

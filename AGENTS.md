@@ -1,6 +1,6 @@
 # AGENTS.md — working in this repository
 
-Instructions for anyone (human or AI coding agent) changing Jobtrail. Read this
+Instructions for anyone (human or AI coding agent) changing Rolestash. Read this
 before your first change; it is short on purpose. Details live in `docs/`.
 
 ## Non-negotiable product constraints

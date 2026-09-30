@@ -1,6 +1,6 @@
 # Architecture overview
 
-Jobtrail is a Manifest V3 Chrome extension built with [WXT](https://wxt.dev),
+Rolestash is a Manifest V3 Chrome extension built with [WXT](https://wxt.dev),
 React and TypeScript. There is no server: every component runs inside the
 browser, and all state lives in `chrome.storage.local`.
 

@@ -6,6 +6,12 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- Renamed to **Rolestash**, with a new logo, icons and spruce-green theme.
+  Backups exported under the old name still import, and manually added jobs
+  keep working.
+
 ## [0.1.0] — 2026-09-30
 
 ### Added

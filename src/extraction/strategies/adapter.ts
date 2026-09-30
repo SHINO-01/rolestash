@@ -85,7 +85,7 @@ function runCustom(ctx: ExtractionContext, out: StrategyOutput): void {
   try {
     custom = ctx.adapter.extract(ctx);
   } catch (error) {
-    console.warn(`[jobtrail] adapter ${ctx.adapter.id} extract() threw`, error);
+    console.warn(`[rolestash] adapter ${ctx.adapter.id} extract() threw`, error);
   }
   for (const [key, value] of Object.entries(custom)) {
     put(out, key as keyof ExtractedFields, value, CUSTOM_CONFIDENCE, 'adapter:custom');

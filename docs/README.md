@@ -1,4 +1,4 @@
-# Jobtrail knowledge base
+# Rolestash knowledge base
 
 Start with **Architecture → Overview**, then go by task.
 
@@ -20,6 +20,7 @@ Start with **Architecture → Overview**, then go by task.
 | [0007](adr/0007-storage-per-key-with-migrations.md) | One key per job, versioned migrations        |
 | [0008](adr/0008-two-repo-release-pipeline.md)       | Two repos, promote the tested commit         |
 | [0009](adr/0009-accounts-sync-and-billing.md)       | Accounts, sync and billing (Supabase + MoR)  |
+| [0010](adr/0010-rename-to-rolestash.md)             | Rename the product to Rolestash              |
 
 New decision? Copy [the template](adr/0000-template.md).
 

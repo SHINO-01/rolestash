@@ -17,7 +17,7 @@ export class JobRepository {
       if (!isJobKey(key)) continue;
       const parsed = JobSchema.safeParse(value);
       if (parsed.success) jobs.push(parsed.data);
-      else console.warn(`[jobtrail] Skipping invalid record ${key}`, parsed.error.issues);
+      else console.warn(`[rolestash] Skipping invalid record ${key}`, parsed.error.issues);
     }
     return jobs;
   }

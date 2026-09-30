@@ -9,7 +9,7 @@ export class SettingsRepository {
     const result = await this.store.get([SETTINGS_KEY]);
     const parsed = SettingsSchema.safeParse(result[SETTINGS_KEY]);
     if (!parsed.success && result[SETTINGS_KEY] !== undefined) {
-      console.warn('[jobtrail] Invalid settings in storage; using defaults', parsed.error.issues);
+      console.warn('[rolestash] Invalid settings in storage; using defaults', parsed.error.issues);
     }
     return parsed.success ? parsed.data : structuredClone(DEFAULT_SETTINGS);
   }

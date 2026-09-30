@@ -73,7 +73,7 @@ export function AddJobDialog({
       open={open}
       onClose={onClose}
       title="Add a job"
-      description="Tip: on a job page, click the Jobtrail icon (Alt+J) to fill this in automatically."
+      description="Tip: on a job page, click the Rolestash icon (Alt+J) to fill this in automatically."
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>

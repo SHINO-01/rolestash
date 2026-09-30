@@ -103,7 +103,7 @@ function runSafely(strategy: Strategy, ctx: ExtractionContext): StrategyOutput {
   try {
     return strategy.run(ctx);
   } catch (error) {
-    console.warn(`[jobtrail] strategy ${strategy.id} failed`, error);
+    console.warn(`[rolestash] strategy ${strategy.id} failed`, error);
     return {};
   }
 }
@@ -113,7 +113,7 @@ function safeCanonical(adapter: SiteAdapter | undefined, url: URL): string {
     const custom = adapter?.canonicalUrl?.(url);
     if (custom) return custom;
   } catch (error) {
-    console.warn('[jobtrail] canonicalUrl failed', error);
+    console.warn('[rolestash] canonicalUrl failed', error);
   }
   return canonicalizeUrl(url.href);
 }

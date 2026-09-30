@@ -1,9 +1,9 @@
-# Jobtrail
+<img src="brand/rolestash-logo.svg" alt="Rolestash" height="56">
 
 [![CI](https://github.com/SHINO-01/jobtrail/actions/workflows/ci.yml/badge.svg?branch=dev)](https://github.com/SHINO-01/jobtrail/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/SHINO-01/jobtrail)](https://github.com/SHINO-01/jobtrail/releases)
 
-**Save any job posting to a Kanban board in one click.** Jobtrail is a Chrome
+**Save any job posting to a Kanban board in one click.** Rolestash is a Chrome
 extension that reads the job page you're on, extracts the title, company,
 location, salary, dates and description, and files it as a card on a local
 board you drag through _Saved → Applied → Screening → Interviewing → Offer_.

@@ -13,6 +13,18 @@ const IsoDateTime = z.iso.datetime({ offset: true });
 /** Dates from postings are often date-only; we accept both forms. */
 const IsoDateOrDateTime = z.union([z.iso.date(), IsoDateTime]);
 
+/**
+ * Manual jobs without a link get a placeholder URL on this reserved host.
+ * Jobs created before the rename to Rolestash use the legacy host; both stay
+ * recognised because the URL is stored on every job.
+ */
+export const MANUAL_URL_HOST = 'rolestash.invalid';
+const LEGACY_MANUAL_URL_HOSTS = ['jobtrail.invalid'];
+
+export function isManualUrl(url: string): boolean {
+  return [MANUAL_URL_HOST, ...LEGACY_MANUAL_URL_HOSTS].some((host) => url.includes(host));
+}
+
 export const SALARY_PERIODS = ['hour', 'day', 'week', 'month', 'year'] as const;
 export type SalaryPeriod = (typeof SALARY_PERIODS)[number];
 

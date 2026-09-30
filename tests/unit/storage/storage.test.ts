@@ -130,7 +130,7 @@ describe('backup', () => {
       makeJob({ id: 'older', updatedAt: '2026-09-01T00:00:00.000Z', title: 'Local older' }),
     ]);
     const backup = {
-      format: 'jobtrail-backup',
+      format: 'rolestash-backup',
       schemaVersion: CURRENT_SCHEMA_VERSION,
       exportedAt: '2026-09-28T00:00:00.000Z',
       settings: DEFAULT_SETTINGS,
@@ -153,13 +153,26 @@ describe('backup', () => {
     expect(byId.new?.stageId).toBe(DEFAULT_SETTINGS.defaultStageId);
   });
 
+  it('still imports backups exported under the old Jobtrail name', () => {
+    const legacy = {
+      format: 'jobtrail-backup',
+      schemaVersion: CURRENT_SCHEMA_VERSION,
+      exportedAt: '2026-09-28T00:00:00.000Z',
+      settings: DEFAULT_SETTINGS,
+      jobs: [makeJob({ id: 'legacy' })],
+    };
+    const backup = parseBackup(JSON.stringify(legacy));
+    expect(backup.format).toBe('rolestash-backup');
+    expect(backup.jobs.map((j) => j.id)).toEqual(['legacy']);
+  });
+
   it.each([
     ['not json', /not valid JSON/],
-    ['{"format":"other"}', /not a Jobtrail backup/],
-    [JSON.stringify({ format: 'jobtrail-backup', schemaVersion: 999 }), /newer version/],
+    ['{"format":"other"}', /not a Rolestash backup/],
+    [JSON.stringify({ format: 'rolestash-backup', schemaVersion: 999 }), /newer version/],
     [
       JSON.stringify({
-        format: 'jobtrail-backup',
+        format: 'rolestash-backup',
         schemaVersion: 1,
         exportedAt: 'x',
         settings: {},

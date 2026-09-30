@@ -6,7 +6,7 @@ first: an adapter only needs to supply what structured data doesn't.
 
 ## 1. Capture a real page
 
-1. Load a dev build, open a posting on the site, click the Jobtrail icon.
+1. Load a dev build, open a posting on the site, click the Rolestash icon.
 2. Expand **Extraction details**. It shows the resolved adapter, and for every
    field the strategy that produced it and its confidence.
 3. Click **Page HTML** to download a snapshot of the rendered DOM.

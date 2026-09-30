@@ -1,4 +1,4 @@
-import type { EmploymentType, Job, WorkplaceType } from '@/domain/job';
+import { isManualUrl, type EmploymentType, type Job, type WorkplaceType } from '@/domain/job';
 
 /** Presentation helpers shared by popup and board. */
 
@@ -49,10 +49,8 @@ export function daysUntil(iso: string | undefined, now: Date = new Date()): numb
   return Math.ceil((d.getTime() - now.getTime()) / 86_400_000);
 }
 
-export const MANUAL_URL_HOST = 'jobtrail.invalid';
-
 export function hasPostingUrl(job: Job): boolean {
-  return !job.source.url.includes(MANUAL_URL_HOST);
+  return !isManualUrl(job.source.url);
 }
 
 export function matchesQuery(job: Job, query: string): boolean {

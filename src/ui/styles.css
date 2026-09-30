@@ -62,10 +62,10 @@
   --jt-ink: #18181b;
   --jt-muted: #52525b;
   --jt-subtle: #8a8a93;
-  --jt-accent: #4f46e5;
-  --jt-accent-hover: #4338ca;
-  --jt-accent-soft: #eef2ff;
-  --jt-accent-ink: #3730a3;
+  --jt-accent: #0b5d52;
+  --jt-accent-hover: #084a41;
+  --jt-accent-soft: #e7f3ef;
+  --jt-accent-ink: #07433b;
   color-scheme: light;
 }
 
@@ -79,10 +79,10 @@
   --jt-ink: #f4f4f5;
   --jt-muted: #a1a1aa;
   --jt-subtle: #71717a;
-  --jt-accent: #818cf8;
-  --jt-accent-hover: #a5b4fc;
-  --jt-accent-soft: #1e1b4b;
-  --jt-accent-ink: #c7d2fe;
+  --jt-accent: #5cc4ad;
+  --jt-accent-hover: #7fd1be;
+  --jt-accent-soft: #0d2b26;
+  --jt-accent-ink: #9fe0cf;
   color-scheme: dark;
 }
 

@@ -100,6 +100,12 @@ describe('format helpers', () => {
     expect(hasPostingUrl(makeJob())).toBe(true);
     expect(
       hasPostingUrl(
+        makeJob({ source: { ...makeJob().source, url: 'https://rolestash.invalid/manual/1' } }),
+      ),
+    ).toBe(false);
+    // Manual jobs saved before the rename keep the legacy placeholder host.
+    expect(
+      hasPostingUrl(
         makeJob({ source: { ...makeJob().source, url: 'https://jobtrail.invalid/manual/1' } }),
       ),
     ).toBe(false);

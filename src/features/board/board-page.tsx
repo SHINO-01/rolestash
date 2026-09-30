@@ -83,7 +83,7 @@ export function BoardPage() {
     const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `jobtrail-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `rolestash-backup-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(a.href);
     toast({ message: `Exported ${backup.jobs.length} jobs`, tone: 'success' });

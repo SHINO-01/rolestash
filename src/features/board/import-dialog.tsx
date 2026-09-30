@@ -71,7 +71,7 @@ export function ImportDialog({ open, onClose }: { open: boolean; onClose: () => 
       open={open}
       onClose={close}
       title="Import backup"
-      description="Restore a Jobtrail backup (.json) exported from this or another browser."
+      description="Restore a Rolestash backup (.json) exported from this or another browser."
       footer={
         <>
           <Button variant="ghost" onClick={close}>

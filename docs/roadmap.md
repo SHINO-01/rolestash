@@ -81,15 +81,10 @@ are the launch.
 
 ### 1c. Launch
 
-- **Rebrand before listing.** "Jobtrail" is a registered Australian trade
-  mark (no. 2141436, classes 35/41). Rename to the chosen brand in:
-  - the manifest name;
-  - the UI copy;
-  - the docs;
-  - both GitHub repos (GitHub redirects the old URLs).
-
-  Adapter ids and storage keys stay as they are; nothing is published yet, so
-  no users are affected.
+- **Rebrand to Rolestash** (ADR-0010). The product, manifest, UI, icons and
+  docs are done. Still to do: rename both GitHub repos and update their
+  references (CI badges, `setup-github.sh`, the extension repo's submodule
+  URL). GitHub redirects the old URLs.
 
 - One-time Chrome Web Store setup (jobtrail-extension README → _One-time
   setup_).

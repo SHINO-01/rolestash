@@ -2,16 +2,37 @@ import clsx from 'clsx';
 import { Star } from 'lucide-react';
 import type { Priority } from '@/domain/job';
 
+/** The Rolestash mark (brand/rolestash-mark.svg) plus wordmark. Brand colours are fixed. */
 export function Logo({ className }: { className?: string }) {
   return (
     <span className={clsx('flex items-center gap-2', className)}>
-      <svg viewBox="0 0 32 32" className="size-7" aria-hidden>
-        <rect width="32" height="32" rx="8" className="fill-accent" />
-        <rect x="7" y="8" width="5" height="16" rx="1.6" fill="white" opacity="0.95" />
-        <rect x="13.5" y="8" width="5" height="11" rx="1.6" fill="white" opacity="0.75" />
-        <rect x="20" y="8" width="5" height="7" rx="1.6" fill="white" opacity="0.55" />
+      <svg viewBox="0 0 128 128" className="size-7" aria-hidden>
+        <rect width="128" height="128" rx="30" fill="#0B5D52" />
+        <rect
+          x="52"
+          y="26"
+          width="38"
+          height="50"
+          rx="7"
+          fill="#CFE6DF"
+          transform="rotate(12 71 51)"
+        />
+        <g transform="rotate(-9 64 52)">
+          <rect x="43" y="18" width="42" height="58" rx="7" fill="#F4B63F" />
+          <rect x="51" y="29" width="22" height="5" rx="2.5" fill="#8A5A12" />
+          <rect x="51" y="39" width="14" height="5" rx="2.5" fill="#8A5A12" />
+        </g>
+        <path
+          d="M28 62H100V84Q100 92 93 96L68 109Q64 111 60 109L35 96Q28 92 28 84Z"
+          fill="#FFF7E6"
+          stroke="#FFF7E6"
+          strokeWidth="4"
+          strokeLinejoin="round"
+        />
       </svg>
-      <span className="text-[15px] font-semibold tracking-tight">Jobtrail</span>
+      <span className="text-[15px] font-semibold tracking-tight">
+        role<span className="text-accent">stash</span>
+      </span>
     </span>
   );
 }

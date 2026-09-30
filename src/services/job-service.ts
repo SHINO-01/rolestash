@@ -1,5 +1,5 @@
 import { createJob, moveJob, updateJob, type DomainContext } from '@/domain/job-factory';
-import type { Job, JobId, JobPatch, Posting } from '@/domain/job';
+import { MANUAL_URL_HOST, type Job, type JobId, type JobPatch, type Posting } from '@/domain/job';
 import { evenRanks, needsRebalance, RANK_STEP, rankBetween } from '@/domain/rank';
 import { findStage, type Stage, type StageId } from '@/domain/stage';
 import { canonicalizeUrl, toExtractionMeta, toPosting, type ExtractionResult } from '@/extraction';
@@ -102,8 +102,8 @@ export class JobService {
         posting: input.posting,
         source: {
           // Manual jobs without a link get a stable, unique placeholder URL.
-          url: url ?? `https://jobtrail.invalid/manual/${this.ctx.newId()}`,
-          originalUrl: input.url ?? 'https://jobtrail.invalid/manual',
+          url: url ?? `https://${MANUAL_URL_HOST}/manual/${this.ctx.newId()}`,
+          originalUrl: input.url ?? `https://${MANUAL_URL_HOST}/manual`,
           siteId: 'manual',
           siteName: 'Added manually',
           capturedAt: this.ctx.now().toISOString(),

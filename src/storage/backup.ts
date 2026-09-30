@@ -9,7 +9,9 @@ import type { SettingsRepository } from './settings-repository';
  * JSON backup format. With no backend, export/import *is* the backup and
  * device-transfer story, so the format is versioned and strictly validated.
  */
-export const BACKUP_FORMAT = 'jobtrail-backup';
+export const BACKUP_FORMAT = 'rolestash-backup';
+/** Backups exported before the rename to Rolestash. Same shape. */
+const LEGACY_BACKUP_FORMATS: readonly string[] = ['jobtrail-backup'];
 
 export const BackupSchema = z.object({
   format: z.literal(BACKUP_FORMAT),
@@ -70,9 +72,12 @@ export function parseBackup(text: string): Backup {
   }
   if (typeof raw !== 'object' || raw === null) throw new BackupError('Unrecognised backup file.');
   const record = raw as Record<string, unknown>;
-  if (record.format !== BACKUP_FORMAT) throw new BackupError('This is not a Jobtrail backup file.');
+  if (typeof record.format === 'string' && LEGACY_BACKUP_FORMATS.includes(record.format))
+    record.format = BACKUP_FORMAT;
+  if (record.format !== BACKUP_FORMAT)
+    throw new BackupError('This is not a Rolestash backup file.');
   if (typeof record.schemaVersion === 'number' && record.schemaVersion > CURRENT_SCHEMA_VERSION) {
-    throw new BackupError('This backup was made by a newer version of Jobtrail. Update first.');
+    throw new BackupError('This backup was made by a newer version of Rolestash. Update first.');
   }
   const parsed = BackupSchema.safeParse(upgradeBackup(record));
   if (!parsed.success) {

@@ -1,5 +1,5 @@
 {
-  "name": "jobtrail",
+  "name": "rolestash",
   "description": "Local-first Chrome extension that turns job postings into Kanban cards. No AI, no backend, no third-party services.",
   "version": "0.1.0",
   "private": true,
