@@ -9,18 +9,31 @@ function parseCsv(text: string): string[][] {
   let cell = '';
   let quoted = false;
   for (let i = 0; i < text.length; i++) {
-    const c = text[i];
+    const c = text.charAt(i);
+    const next = text.charAt(i + 1);
     if (quoted) {
-      if (c === '"' && text[i + 1] === '"') ((cell += '"'), i++);
-      else if (c === '"') quoted = false;
-      else cell += c;
-    } else if (c === '"') quoted = true;
-    else if (c === ',') (row.push(cell), (cell = ''));
-    else if (c === '\r' && text[i + 1] === '\n') {
+      if (c === '"' && next === '"') {
+        cell += '"';
+        i++;
+      } else if (c === '"') {
+        quoted = false;
+      } else {
+        cell += c;
+      }
+    } else if (c === '"') {
+      quoted = true;
+    } else if (c === ',') {
+      row.push(cell);
+      cell = '';
+    } else if (c === '\r' && next === '\n') {
       row.push(cell);
       rows.push(row);
-      ((row = []), (cell = ''), i++);
-    } else cell += c;
+      row = [];
+      cell = '';
+      i++;
+    } else {
+      cell += c;
+    }
   }
   return rows;
 }
