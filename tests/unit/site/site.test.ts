@@ -38,6 +38,8 @@ describe('rolestash.com static site', () => {
       [
         '404.html',
         'index.html',
+        'pay/index.html',
+        'pay/success/index.html',
         'privacy/index.html',
         'refunds/index.html',
         'support/index.html',
@@ -46,17 +48,27 @@ describe('rolestash.com static site', () => {
     );
   });
 
-  it.each(pages)('$file loads nothing from other origins and has no inline code', ({ doc }) => {
-    expect(doc.querySelectorAll('script')).toHaveLength(0);
-    expect(doc.querySelectorAll('[style], style')).toHaveLength(0);
-    const refs = [
-      ...doc.querySelectorAll('link[rel="stylesheet"], link[rel="preload"], img, source'),
-    ]
-      .map((el) => el.getAttribute('href') ?? el.getAttribute('src') ?? el.getAttribute('srcset'))
-      .filter((v): v is string => v !== null);
-    expect(refs.length).toBeGreaterThan(0);
-    for (const ref of refs) expect(ref).toMatch(/^\//);
-  });
+  it.each(pages)(
+    '$file loads nothing from other origins and has no inline code',
+    ({ file, doc }) => {
+      const scripts = [...doc.querySelectorAll('script')];
+      for (const script of scripts) expect(script.textContent.trim()).toBe('');
+      // Checkout is the only page with scripts: Paddle.js and our own pay.js.
+      expect(scripts.map((el) => el.getAttribute('src'))).toEqual(
+        file === 'pay/index.html'
+          ? ['https://cdn.paddle.com/paddle/v2/paddle.js', '/assets/pay.js']
+          : [],
+      );
+      expect(doc.querySelectorAll('[style], style')).toHaveLength(0);
+      const refs = [
+        ...doc.querySelectorAll('link[rel="stylesheet"], link[rel="preload"], img, source'),
+      ]
+        .map((el) => el.getAttribute('href') ?? el.getAttribute('src') ?? el.getAttribute('srcset'))
+        .filter((v): v is string => v !== null);
+      expect(refs.length).toBeGreaterThan(0);
+      for (const ref of refs) expect(ref).toMatch(/^\//);
+    },
+  );
 
   it.each(pages)('$file has working internal links and assets', ({ doc }) => {
     const refs = [...doc.querySelectorAll('a[href], link[href], img[src], source[srcset]')]
@@ -88,5 +100,14 @@ describe('rolestash.com static site', () => {
     expect(headers).toContain("default-src 'none'");
     expect(headers).toContain("frame-ancestors 'none'");
     expect(headers).toContain('Strict-Transport-Security');
+  });
+
+  it('scopes the Paddle CSP to /pay/ and replaces, not adds to, the site-wide one', () => {
+    const headers = readFileSync(join(SITE, '_headers'), 'utf8');
+    const pay = headers.slice(headers.indexOf('/pay/*'));
+    expect(pay).toMatch(/^\s+! Content-Security-Policy$/m);
+    expect(pay).toContain("script-src 'self' https://cdn.paddle.com;");
+    expect(pay).toContain('frame-src https://buy.paddle.com https://sandbox-buy.paddle.com;');
+    expect(headers.slice(0, headers.indexOf('/pay/*'))).not.toContain('paddle');
   });
 });

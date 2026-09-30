@@ -90,4 +90,13 @@ export default tseslint.config(
     files: ['*.config.js'],
     ...tseslint.configs.disableTypeChecked,
   },
+  {
+    // rolestash.com's only script (the checkout page); plain browser JS.
+    files: ['site/**/*.js'],
+    ...tseslint.configs.disableTypeChecked,
+    languageOptions: {
+      parserOptions: { projectService: false, project: null },
+      globals: { ...globals.browser },
+    },
+  },
 );
