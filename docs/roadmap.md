@@ -45,11 +45,10 @@ are the launch.
   captures above the limit are blocked.
 - **Account deletion** in Settings. It removes the server rows and keeps the
   local data.
-- **Legal and store pages.**
-  - A static site (Cloudflare Pages, free) on our own domain: landing page,
-    Terms, Privacy, Refund policy, Support.
-  - Rewrite PRIVACY.md in the PR that ships sync.
-  - Update the store listing's payment disclosure.
+- ~~**Legal and store pages.**~~ Done: `site/` (docs/guides/website.md) has
+  the landing page, Terms, Privacy, Refunds and Support. Still to do: connect
+  Cloudflare Pages; rewrite the extension's PRIVACY.md in the PR that ships
+  sync; update the store listing's payment disclosure.
 - **Extension repo.** Update `policy/manifest-policy.json` (`identity`,
   `alarms`, `notifications`) and `store/listing.md`.
 

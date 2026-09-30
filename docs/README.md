@@ -33,6 +33,7 @@ New decision? Copy [the template](adr/0000-template.md).
 - [Adding a feature](guides/adding-a-feature.md)
 - [Testing](guides/testing.md)
 - [Releasing](guides/releasing.md)
+- [Website (rolestash.com)](guides/website.md)
 
 ## Reference
 

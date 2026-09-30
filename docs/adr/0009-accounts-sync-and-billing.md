@@ -37,6 +37,8 @@ One Supabase project provides Postgres, Auth, Row Level Security (RLS), Edge
 Functions (billing webhooks) and `pg_cron` (reminder digests). That means no
 server of our own.
 
+- **Region:** `ap-southeast-2` (Sydney), close to our first market and
+  matching the privacy policy.
 - **Postgres** stores accounts, entitlements and synced jobs. Every table has
   RLS set to `auth.uid() = user_id`. The extension only ever holds the public
   anon key.
