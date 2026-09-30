@@ -20,6 +20,15 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- "Notify me at launch" on rolestash.com is now a real launch list:
+  - a form with double opt-in;
+  - an automatic acknowledgement email once confirmed;
+  - a one-click launch-day announcement (**Actions → Announce launch**).
+
+  Unsubscribing, or sending the launch email, deletes the address. It's
+  built on Supabase and Resend, with no new vendors. The privacy policy has
+  a new "Launch updates" section.
+
 - Redesigned rolestash.com: a framed product hero with responsive, art-directed
   board screenshots, a bento feature grid, an email-updates walkthrough for
   Advanced, a plan comparison table, a JavaScript-free mobile menu, a larger

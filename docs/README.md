@@ -39,6 +39,7 @@ New decision? Copy [the template](adr/0000-template.md).
 - [Releasing](guides/releasing.md)
 - [Website (rolestash.com)](guides/website.md)
 - [Backend (Supabase + Paddle)](guides/backend.md)
+- [Launch list ("Notify me at launch")](guides/launch-list.md)
 
 ## Reference
 

@@ -444,3 +444,8 @@ verify_jwt = false
 
 [functions.change-plan]
 verify_jwt = false
+
+# rolestash.com's launch list: a plain HTML form posts here (no JWT); the
+# handler checks the Origin, and announcing needs LAUNCH_ADMIN_SECRET.
+[functions.launch-list]
+verify_jwt = false

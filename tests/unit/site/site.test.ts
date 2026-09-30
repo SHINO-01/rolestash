@@ -52,6 +52,10 @@ describe('rolestash.com static site', () => {
         '404.html',
         'auth/google/index.html',
         'index.html',
+        'notify/check-email/index.html',
+        'notify/confirmed/index.html',
+        'notify/problem/index.html',
+        'notify/unsubscribed/index.html',
         'pay/index.html',
         'pay/success/index.html',
         'privacy/index.html',
@@ -144,6 +148,23 @@ describe('rolestash.com static site', () => {
     for (const file of ['terms/index.html', 'privacy/index.html', 'refunds/index.html'])
       expect(text(file)).toContain('support@rolestash.com');
     expect(text('index.html')).toContain('US$7');
+  });
+
+  it('posts the launch-list form only to our own function, which the CSP allows', () => {
+    const headers = readFileSync(join(SITE, '_headers'), 'utf8');
+    const siteWide = headers.slice(0, headers.indexOf('/assets/*'));
+    const forms = pages.flatMap(({ file, doc }) =>
+      [...doc.querySelectorAll('form')].map((f) => ({ file, form: f })),
+    );
+    expect(forms.map((f) => f.file)).toEqual(['index.html']);
+    const action = forms[0]?.form.getAttribute('action') ?? '';
+    expect(action).toMatch(/^https:\/\/[a-z]+\.supabase\.co\/functions\/v1\/launch-list$/);
+    expect(forms[0]?.form.getAttribute('method')).toBe('post');
+    expect(siteWide).toContain(`form-action 'self' ${action};`);
+    // The redirect targets of the launch-list function exist.
+    const fn = readFileSync(resolve(SITE, '../supabase/functions/_shared/launch-list.ts'), 'utf8');
+    for (const [, path] of fn.matchAll(/siteUrl\}(\/notify\/[a-z-]+\/)/g))
+      expect(existsSync(resolveInternal(path ?? '')), path).toBe(true);
   });
 
   it('keeps its security headers', () => {

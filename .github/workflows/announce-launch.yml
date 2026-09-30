@@ -1,0 +1,42 @@
+# Launch day: emails everyone on the confirmed launch list, then deletes the list.
+# Run it by hand (Actions → Announce launch → Run workflow). Leave "send" off
+# first for a dry run that only counts recipients. docs/guides/launch-list.md
+name: Announce launch
+
+on:
+  workflow_dispatch:
+    inputs:
+      store_url:
+        description: Chrome Web Store listing URL (https://chromewebstore.google.com/detail/…)
+        required: true
+        type: string
+      send:
+        description: Really send (off = dry run that only counts recipients)
+        required: true
+        default: false
+        type: boolean
+
+permissions: {}
+
+concurrency:
+  group: announce-launch
+  cancel-in-progress: false
+
+jobs:
+  announce:
+    name: Announce launch
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Call the launch-list function
+        env:
+          FUNCTION_URL: https://fhclnxqumcdsqxyunelp.supabase.co/functions/v1/launch-list?announce
+          LAUNCH_ADMIN_SECRET: ${{ secrets.LAUNCH_ADMIN_SECRET }}
+          STORE_URL: ${{ inputs.store_url }}
+          SEND: ${{ inputs.send }}
+        run: |
+          body=$(jq -n --arg url "$STORE_URL" --argjson send "$SEND" '{storeUrl: $url, dryRun: ($send | not)}')
+          curl --fail-with-body --silent --show-error \
+            -H "Authorization: Bearer $LAUNCH_ADMIN_SECRET" \
+            -H 'Content-Type: application/json' \
+            --data "$body" "$FUNCTION_URL" | tee -a "$GITHUB_STEP_SUMMARY"

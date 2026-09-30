@@ -5,18 +5,19 @@ no JavaScript, no third-party requests. An assets-only Cloudflare Worker
 serves it from `main`, so the site only changes after CI has promoted a
 tested commit (docs/guides/ci-cd.md).
 
-| Path                | Page                                                                |
-| ------------------- | ------------------------------------------------------------------- |
-| `site/index.html`   | Landing page: features, pricing, FAQ                                |
-| `site/privacy/`     | Privacy policy (also the store listing URL)                         |
-| `site/terms/`       | Terms of service (Paddle wording included)                          |
-| `site/refunds/`     | Refund policy                                                       |
-| `site/support/`     | Support and FAQ                                                     |
-| `site/404.html`     | Not found                                                           |
-| `site/pay/`         | Paddle checkout (default payment link); `pay/success/` after paying |
-| `site/auth/google/` | Google sign-in hand-off (ADR-0012); own script and CSP              |
-| `site/_headers`     | CSP and security headers                                            |
-| `site/assets/`      | CSS, self-hosted Inter (OFL), logos, board screenshots              |
+| Path                | Page                                                                     |
+| ------------------- | ------------------------------------------------------------------------ |
+| `site/index.html`   | Landing page: features, pricing, FAQ                                     |
+| `site/privacy/`     | Privacy policy (also the store listing URL)                              |
+| `site/terms/`       | Terms of service (Paddle wording included)                               |
+| `site/refunds/`     | Refund policy                                                            |
+| `site/support/`     | Support and FAQ                                                          |
+| `site/404.html`     | Not found                                                                |
+| `site/pay/`         | Paddle checkout (default payment link); `pay/success/` after paying      |
+| `site/auth/google/` | Google sign-in hand-off (ADR-0012); own script and CSP                   |
+| `site/notify/`      | Launch-list result pages (check email, confirmed, unsubscribed, problem) |
+| `site/_headers`     | CSP and security headers                                                 |
+| `site/assets/`      | CSS, self-hosted Inter (OFL), logos, board screenshots                   |
 
 ## Rules
 
@@ -39,9 +40,11 @@ tested commit (docs/guides/ci-cd.md).
   scroll reveals only run where `animation-timeline: view()` is supported.
 - **Images carry `width` and `height`** (tested), including each `<source>`
   in a `<picture>`, so nothing shifts while loading.
-- **Plan CTAs are "Notify me at launch" `mailto:` links** until the store
-  listing and live payments exist (launch rule, ADR-0013). Swap them for the
-  store link at launch.
+- **Plan CTAs link to the launch-list form** (`/#notify`) until the store
+  listing and live payments exist (launch rule, ADR-0013). The form posts to
+  the `launch-list` Edge Function, the one form action the CSP allows. See
+  [launch-list.md](launch-list.md). At launch, point the CTAs at the store
+  listing.
 - **Legal pages describe what actually ships.** Update the privacy policy
   in the same PR as any change to what the extension or backend collects,
   and bump "Last updated".

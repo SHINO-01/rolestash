@@ -488,11 +488,7 @@
                 <li>CSV and JSON export</li>
                 <li>Stored locally in your browser</li>
               </ul>
-              <a
-                class="btn btn-ghost plan-cta"
-                href="mailto:support@rolestash.com?subject=Notify%20me%20when%20Rolestash%20launches%20(Free)"
-                >Notify me at launch</a
-              >
+              <a class="btn btn-ghost plan-cta" href="/#notify">Notify me at launch</a>
             </article>
             <article class="plan plan-pro">
               <span class="plan-badge">30-day free trial</span>
@@ -509,11 +505,7 @@
                 <li>Custom columns</li>
                 <li>Capture from a pasted link</li>
               </ul>
-              <a
-                class="btn btn-primary plan-cta"
-                href="mailto:support@rolestash.com?subject=Notify%20me%20when%20Rolestash%20launches%20(Pro)"
-                >Notify me at launch</a
-              >
+              <a class="btn btn-primary plan-cta" href="/#notify">Notify me at launch</a>
             </article>
             <article class="plan">
               <h3>Advanced</h3>
@@ -528,11 +520,7 @@
                 <li>Interview details on each card: join link, or time and map</li>
                 <li>Application autofill, contacts, documents and insights</li>
               </ul>
-              <a
-                class="btn btn-ghost plan-cta"
-                href="mailto:support@rolestash.com?subject=Notify%20me%20when%20Rolestash%20launches%20(Advanced)"
-                >Notify me at launch</a
-              >
+              <a class="btn btn-ghost plan-cta" href="/#notify">Notify me at launch</a>
             </article>
           </div>
 
@@ -716,21 +704,50 @@
         </div>
       </section>
 
-      <section class="closer">
+      <section id="notify" class="closer">
         <div class="wrap">
           <div class="closer-card">
             <h2>Launching soon on the Chrome Web Store</h2>
             <p>
-              Free for up to 15 active jobs. Pro comes with a 30-day free trial, no card needed.
+              Leave your email and we'll tell you the day Rolestash goes live. Free for up to 15
+              active jobs; Pro comes with a 30-day free trial, no card needed.
             </p>
-            <div class="cta-row">
-              <a
-                class="btn btn-amber btn-lg"
-                href="mailto:support@rolestash.com?subject=Notify%20me%20when%20Rolestash%20launches"
-                >Notify me at launch</a
-              >
-              <a class="btn btn-onink btn-lg" href="/#pricing">Compare plans</a>
-            </div>
+            <form
+              class="notify-form"
+              action="https://fhclnxqumcdsqxyunelp.supabase.co/functions/v1/launch-list"
+              method="post"
+            >
+              <div class="notify-row">
+                <label class="sr-only" for="notify-email">Email address</label>
+                <input
+                  id="notify-email"
+                  type="email"
+                  name="email"
+                  required
+                  maxlength="254"
+                  autocomplete="email"
+                  placeholder="you@example.com"
+                />
+                <button class="btn btn-amber btn-lg" type="submit">Notify me at launch</button>
+              </div>
+              <fieldset class="notify-plans">
+                <legend>I'm most interested in</legend>
+                <label><input type="radio" name="plan" value="" checked /> Not sure yet</label>
+                <label><input type="radio" name="plan" value="free" /> Free</label>
+                <label><input type="radio" name="plan" value="pro" /> Pro</label>
+                <label><input type="radio" name="plan" value="advanced" /> Advanced</label>
+              </fieldset>
+              <div class="hp" aria-hidden="true">
+                <label
+                  >Leave this empty
+                  <input type="text" name="company" tabindex="-1" autocomplete="off"
+                /></label>
+              </div>
+              <p class="notify-fine">
+                We'll email you to confirm, then once at launch, and then delete your address. No
+                other emails. See our <a href="/privacy/#launch-list">privacy policy</a>.
+              </p>
+            </form>
           </div>
         </div>
       </section>

@@ -90,13 +90,14 @@ timestamp as their version. Rewrite it to the file's version in
 
 ## Edge Functions
 
-| Function          | Caller                  | Does                                                                              |
-| ----------------- | ----------------------- | --------------------------------------------------------------------------------- |
-| `paddle-webhook`  | Paddle (signed, no JWT) | Verifies `Paddle-Signature`, applies `subscription.*` events                      |
-| `create-checkout` | Extension (user JWT)    | Creates a Paddle transaction with `custom_data.user_id`; returns its checkout URL |
-| `billing-portal`  | Extension (user JWT)    | Returns a one-time Paddle customer-portal link                                    |
-| `change-plan`     | Extension (user JWT)    | Moves a live subscription between Pro and Advanced (prorated)                     |
-| `delete-account`  | Extension (user JWT)    | Cancels a live subscription immediately, then deletes the user                    |
+| Function          | Caller                  | Does                                                                               |
+| ----------------- | ----------------------- | ---------------------------------------------------------------------------------- |
+| `paddle-webhook`  | Paddle (signed, no JWT) | Verifies `Paddle-Signature`, applies `subscription.*` events                       |
+| `create-checkout` | Extension (user JWT)    | Creates a Paddle transaction with `custom_data.user_id`; returns its checkout URL  |
+| `billing-portal`  | Extension (user JWT)    | Returns a one-time Paddle customer-portal link                                     |
+| `change-plan`     | Extension (user JWT)    | Moves a live subscription between Pro and Advanced (prorated)                      |
+| `delete-account`  | Extension (user JWT)    | Cancels a live subscription immediately, then deletes the user                     |
+| `launch-list`     | rolestash.com form      | Launch-list signup, confirm, unsubscribe and announce (docs/guides/launch-list.md) |
 
 All the logic is in `supabase/functions/_shared/`. It's plain TypeScript
 with injected `fetch`, unit-tested in `tests/unit/functions/` under the same
