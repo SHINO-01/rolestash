@@ -1,6 +1,6 @@
 # ADR-0002: Local-first, no AI, no third-party services
 
-- **Status:** Accepted
+- **Status:** Accepted; network and backend parts superseded by ADR-0009
 - **Date:** 2026-09-29
 
 ## Context

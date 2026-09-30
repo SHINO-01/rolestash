@@ -19,6 +19,7 @@ Start with **Architecture → Overview**, then go by task.
 | [0006](adr/0006-fractional-ranking.md)              | Fractional ranking for card order            |
 | [0007](adr/0007-storage-per-key-with-migrations.md) | One key per job, versioned migrations        |
 | [0008](adr/0008-two-repo-release-pipeline.md)       | Two repos, promote the tested commit         |
+| [0009](adr/0009-accounts-sync-and-billing.md)       | Accounts, sync and billing (Supabase + MoR)  |
 
 New decision? Copy [the template](adr/0000-template.md).
 

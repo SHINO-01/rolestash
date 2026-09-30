@@ -5,12 +5,17 @@ before your first change; it is short on purpose. Details live in `docs/`.
 
 ## Non-negotiable product constraints
 
-1. **No AI/LLM calls and no third-party services.** No network requests at all
-   from the extension, except to the page the user is already on. No analytics,
-   no remote config, no CDN assets, no remote fonts. Bundled npm libraries are
-   fine; hosted services are not.
-2. **Local-first.** Data lives in `chrome.storage.local`. Export/import is the
-   backup story.
+1. **No AI/LLM vendors, and only first-party network calls.** The extension may
+   contact only the page the user is on, our Supabase project and the
+   merchant of record's hosted checkout/portal (opened as tabs), per ADR-0009.
+   No analytics, no crash reporting, no remote config, no CDN assets, no remote
+   fonts. Bundled npm libraries are fine. Optional on-device Chrome built-in AI
+   is the only AI allowed. PRIVACY.md is updated in the same PR as any new
+   network call.
+2. **Local-first.** Data lives in `chrome.storage.local`, the source of truth.
+   The board works offline and without an account. Sync is an optional layer
+   behind a port. A lapsed subscription drops back to the free tier and never
+   blocks viewing, editing, exporting or deleting your own data.
 3. **Least privilege.** Adding a permission requires a justification in
    `docs/reference/permissions.md` and usually an ADR. Never add `<all_urls>`
    host permissions to production builds (the `e2e` build mode is the only
