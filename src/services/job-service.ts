@@ -1,5 +1,6 @@
 import { createJob, moveJob, updateJob, type DomainContext } from '@/domain/job-factory';
 import { MANUAL_URL_HOST, type Job, type JobId, type JobPatch, type Posting } from '@/domain/job';
+import { checkJobLimit, countActiveJobs, type LimitCheck, type Plan } from '@/domain/plan';
 import { evenRanks, needsRebalance, RANK_STEP, rankBetween } from '@/domain/rank';
 import { findStage, type Stage, type StageId } from '@/domain/stage';
 import { canonicalizeUrl, toExtractionMeta, toPosting, type ExtractionResult } from '@/extraction';
@@ -33,12 +34,41 @@ export class DuplicateJobError extends Error {
   }
 }
 
+/** Thrown when a new job would exceed the free plan's active-job limit. */
+export class JobLimitError extends Error {
+  constructor(readonly check: LimitCheck) {
+    super(`The free plan holds ${check.limit} active jobs.`);
+    this.name = 'JobLimitError';
+  }
+}
+
+/**
+ * Where the current plan comes from (AccountService). Absent when accounts
+ * aren't configured in this build: then nothing is limited, because there is
+ * no way to upgrade.
+ */
+export interface PlanProvider {
+  currentPlan(): Promise<Plan>;
+}
+
 export class JobService {
   constructor(
     private readonly jobs: JobRepository,
     private readonly settings: SettingsRepository,
     private readonly ctx: DomainContext,
+    private readonly plans?: PlanProvider,
   ) {}
+
+  /** Whether one more job can be created right now (for UI hints). */
+  async limitCheck(): Promise<LimitCheck | undefined> {
+    if (!this.plans) return undefined;
+    const [plan, all, settings] = await Promise.all([
+      this.plans.currentPlan(),
+      this.jobs.list(),
+      this.settings.get(),
+    ]);
+    return checkJobLimit(plan, countActiveJobs(all, settings.stages));
+  }
 
   list(): Promise<Job[]> {
     return this.jobs.list();
@@ -66,6 +96,7 @@ export class JobService {
       result.fields.externalId,
     );
     if (duplicate) throw new DuplicateJobError(duplicate);
+    await this.assertCanAdd();
 
     const stage = await this.resolveStage(options.stageId);
     const job = createJob(
@@ -97,6 +128,7 @@ export class JobService {
       const duplicate = await this.findDuplicate(url);
       if (duplicate) throw new DuplicateJobError(duplicate);
     }
+    await this.assertCanAdd();
     const job = createJob(
       {
         posting: input.posting,
@@ -162,6 +194,11 @@ export class JobService {
   /** Re-inserts a deleted job exactly as it was (undo). */
   async restore(job: Job): Promise<Job> {
     return this.jobs.save(job);
+  }
+
+  private async assertCanAdd(): Promise<void> {
+    const check = await this.limitCheck();
+    if (check && !check.allowed) throw new JobLimitError(check);
   }
 
   private async require(jobId: JobId): Promise<Job> {

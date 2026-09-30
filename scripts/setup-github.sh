@@ -91,7 +91,8 @@ upsert_ruleset "$SRC" "main: tested commits only" '{
         "required_status_checks": [
           { "context": "Quality", "integration_id": 15368 },
           { "context": "Unit tests & coverage", "integration_id": 15368 },
-          { "context": "E2E", "integration_id": 15368 } ] } } ] }'
+          { "context": "E2E", "integration_id": 15368 },
+          { "context": "Database", "integration_id": 15368 } ] } } ] }'
 upsert_ruleset "$SRC" "dev: no rewrites" '{
   "name": "dev: no rewrites", "target": "branch", "enforcement": "active",
   "conditions": { "ref_name": { "include": ["refs/heads/dev"], "exclude": [] } },

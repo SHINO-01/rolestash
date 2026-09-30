@@ -7,8 +7,9 @@ behind each choice are in [ADR-0008](../adr/0008-two-repo-release-pipeline.md).
 SHINO-01/rolestash (source)                         SHINO-01/rolestash-extension (package)
 ───────────────────────────                        ─────────────────────────────────────
 push to dev ─┬─ Quality ────────────┐              daily 06:17 Sydney, or "Run workflow"
-             ├─ Unit tests ≥90% ────┼─► Promote          │
-             └─ E2E + smoke ────────┘    │               ▼
+             ├─ Unit tests ≥90% ────┤                    │
+             ├─ E2E + smoke ────────┼─► Promote          │
+             └─ Database (RLS) ─────┘    │               ▼
                                          ├─ fast-forward main      Detect newest source tag not yet shipped
                                          └─ new version?                 │
                                             tag vX.Y.Z + GitHub ───────► Verify (audit, build, manifest gate, smoke E2E)
@@ -54,6 +55,7 @@ hours to a few days.
 | Quality               | source    | Prettier, ESLint (0 warnings, architecture boundaries), `tsc`, `npm audit signatures`, `npm audit --omit=dev --audit-level=high`, production build |
 | Unit tests & coverage | source    | 277+ Vitest tests incl. fixture-driven site tests; ≥90% lines/statements/functions and ≥80% branches on `src/{domain,extraction,storage,services}` |
 | E2E                   | source    | Playwright: full suite on the test build, `@smoke` suite on the production build                                                                   |
+| Database              | source    | Local Supabase Postgres with `supabase/migrations` applied; pgTAP suite (RLS, trial rules, `has_pro`); PL/pgSQL lint                               |
 | Promote               | source    | Fast-forward `main` only; tag + release when the version is new and CHANGELOG has an entry                                                         |
 | Integration           | extension | Same audits against today's advisory database, production build + zip, manifest policy gate, smoke E2E on the production build                     |
 | Release               | extension | Pins the source tag, CHANGELOG entry, GitHub Release with the verified zip, checksums, provenance                                                  |
@@ -71,7 +73,7 @@ Run `gh auth login`, then `bash scripts/setup-github.sh`:
 Source repo:
 
 - Default branch `dev`. Ruleset on `main`: required checks _Quality_,
-  _Unit tests & coverage_ and _E2E_, which must come from GitHub Actions; no
+  _Unit tests & coverage_, _E2E_ and _Database_, which must come from GitHub Actions; no
   force-push; no deletion. `dev`: no force-push or deletion. `v*` tags:
   immutable.
 - Actions: `GITHUB_TOKEN` read-only by default (jobs opt in to write); only

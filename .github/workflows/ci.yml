@@ -1,4 +1,4 @@
-# Source pipeline: push to dev → quality + unit/coverage + E2E → fast-forward main → release tag.
+# Source pipeline: push to dev → quality + unit/coverage + E2E + database → fast-forward main → release tag.
 # Design and rationale: docs/guides/ci-cd.md and docs/adr/0008-two-repo-release-pipeline.md
 name: CI
 
@@ -85,11 +85,28 @@ jobs:
           path: playwright-report/
           retention-days: 7
 
+  database:
+    name: Database
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      # Local Postgres (Docker) with supabase/migrations applied, then the pgTAP
+      # suite (RLS, trial rules, has_pro) and the PL/pgSQL linter.
+      - run: npm run test:db
+
   promote:
     name: Promote to main
     # Only real pushes to dev promote; PRs just report checks.
     if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
-    needs: [quality, test, e2e]
+    needs: [quality, test, e2e, database]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
