@@ -111,5 +111,14 @@ npx supabase functions deploy
    `https://<ref>.supabase.co/functions/v1/paddle-webhook` with the
    `subscription.*` events. Its secret is `PADDLE_WEBHOOK_SECRET`.
 
+**Sandbox email caveat:** Paddle's sandbox delivers customer emails
+(receipts, confirmations) only to your seller account's email domain. Every
+other address is forwarded to the seller account's main email, so test
+receipts always land there
+([changelog](https://developer.paddle.com/changelog/2024/sandbox-emails-recipient-domain/)).
+To check which email a purchase really used, look at the Paddle customer:
+`create-checkout` binds every checkout to the Paddle customer for the account
+email.
+
 Use the sandbox until Paddle approves the account, then switch
 `PADDLE_ENV=production` and the production keys and prices.
