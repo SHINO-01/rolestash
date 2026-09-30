@@ -8,15 +8,20 @@ import {
   Search,
   Sun,
   Upload,
+  UserRound,
 } from 'lucide-react';
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { browser } from 'wxt/browser';
 import type { Theme } from '@/domain/settings';
 import { createBackup } from '@/storage/backup';
+import { AccountDialog } from '@/features/account/account-dialog';
+import { PlanBanner } from '@/features/account/plan-banner';
+import { planChip } from '@/features/account/plan-copy';
 import { Button, IconButton, Spinner } from '@/ui/components/button';
 import { Menu } from '@/ui/components/menu';
 import { Kbd, Logo } from '@/ui/components/misc';
 import { useToast } from '@/ui/components/toast';
+import { useAccount } from '@/ui/hooks/account';
 import { useJobs, useServices, useSettings } from '@/ui/hooks/services';
 import { matchesQuery } from '@/ui/format';
 import { AddJobDialog } from './add-job-dialog';
@@ -40,7 +45,10 @@ export function BoardPage() {
   const [query, setQuery] = useState('');
   const deferredQuery = useDeferredValue(query);
   const [openJobId, setOpenJobId] = useState<string | undefined>(readJobFromHash);
-  const [dialog, setDialog] = useState<'add' | 'import' | null>(null);
+  const { account, state: accountState } = useAccount();
+  const [dialog, setDialog] = useState<'add' | 'import' | 'account' | null>(() =>
+    location.hash === '#account' ? 'account' : null,
+  );
   const searchRef = useRef<HTMLInputElement>(null);
 
   const visibleJobs = useMemo(
@@ -51,7 +59,10 @@ export function BoardPage() {
 
   // Deep links (#job=<id>) from the popup and the "View on board" button.
   useEffect(() => {
-    const onHash = () => setOpenJobId(readJobFromHash());
+    const onHash = () => {
+      setOpenJobId(readJobFromHash());
+      if (location.hash === '#account') setDialog('account');
+    };
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
@@ -120,6 +131,16 @@ export function BoardPage() {
         >
           Add job
         </Button>
+        {account ? (
+          <Button
+            variant="ghost"
+            icon={<UserRound className="size-4" />}
+            onClick={() => setDialog('account')}
+            aria-label="Account"
+          >
+            {accountState?.signedIn ? planChip(accountState.plan).label : 'Sign in'}
+          </Button>
+        ) : null}
         <Menu
           trigger={(props) => (
             <IconButton label="Board menu" {...props}>
@@ -167,6 +188,10 @@ export function BoardPage() {
         />
       </header>
 
+      {accountState ? (
+        <PlanBanner state={accountState} onOpenAccount={() => setDialog('account')} />
+      ) : null}
+
       <main className="min-h-0 flex-1 pt-2">
         {!loaded ? (
           <div className="text-muted flex h-full items-center justify-center gap-2 text-sm">
@@ -188,6 +213,17 @@ export function BoardPage() {
       <JobDrawer job={openJob} stages={settings.stages} onClose={() => openCard(undefined)} />
       <AddJobDialog open={dialog === 'add'} onClose={() => setDialog(null)} settings={settings} />
       <ImportDialog open={dialog === 'import'} onClose={() => setDialog(null)} />
+      {account ? (
+        <AccountDialog
+          open={dialog === 'account'}
+          onClose={() => {
+            setDialog(null);
+            if (location.hash === '#account') history.replaceState(null, '', location.pathname);
+          }}
+          account={account}
+          state={accountState}
+        />
+      ) : null}
     </div>
   );
 }

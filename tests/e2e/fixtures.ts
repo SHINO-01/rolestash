@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { resolve, join, normalize } from 'node:path';
 import { chromium, test as base, type BrowserContext, type Worker } from '@playwright/test';
+import { startMockBackend, type MockBackend } from './mock-backend';
 
 const FIXTURES_ROOT = resolve(import.meta.dirname, '../fixtures');
 
@@ -24,6 +25,8 @@ interface Fixtures {
   worker: Worker;
   extensionId: string;
   fixtureServer: { url: (path: string) => string };
+  /** Mock Supabase for account tests (E2E builds point at it via .env.e2e). */
+  backend: MockBackend;
 }
 
 export const test = base.extend<Fixtures & Options>({
@@ -72,6 +75,12 @@ export const test = base.extend<Fixtures & Options>({
   },
   extensionId: async ({ worker }, use) => {
     await use(new URL(worker.url()).host);
+  },
+  // eslint-disable-next-line no-empty-pattern
+  backend: async ({}, use) => {
+    const backend = await startMockBackend();
+    await use(backend);
+    await backend.close();
   },
   // eslint-disable-next-line no-empty-pattern
   fixtureServer: async ({}, use) => {

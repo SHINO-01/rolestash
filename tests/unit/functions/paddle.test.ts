@@ -4,7 +4,7 @@ import {
   toBillingEvent,
   verifyPaddleSignature,
 } from '../../../supabase/functions/_shared/paddle.ts';
-import { fakeFetch } from './fake-fetch';
+import { fakeFetch } from '../helpers/fake-fetch';
 import { subscriptionEvent } from './fixtures';
 
 const SECRET = 'pdl_ntfset_test_secret';

@@ -2,7 +2,7 @@ import { browser } from 'wxt/browser';
 import { flashBadge } from '@/platform/badge';
 import { getServices } from '@/platform/services';
 import { openBoard } from '@/platform/tabs';
-import { DuplicateJobError } from '@/services/job-service';
+import { DuplicateJobError, JobLimitError } from '@/services/job-service';
 
 /**
  * Background service worker. Deliberately thin: it wires browser events to
@@ -59,6 +59,7 @@ async function quickSave(tabId: number, tabUrl: string | undefined): Promise<voi
     await flashBadge(tabId, '✓', 'success');
   } catch (error) {
     if (error instanceof DuplicateJobError) await flashBadge(tabId, '=', 'info');
+    else if (error instanceof JobLimitError) await flashBadge(tabId, 'MAX', 'error', 6000);
     else {
       console.error('[rolestash] quick save failed', error);
       await flashBadge(tabId, '!', 'error');

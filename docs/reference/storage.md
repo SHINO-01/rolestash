@@ -2,11 +2,13 @@
 
 All data lives in `chrome.storage.local` (with `unlimitedStorage`).
 
-| Key        | Value                       |
-| ---------- | --------------------------- |
-| `meta`     | `{ schemaVersion: number }` |
-| `settings` | `Settings`                  |
-| `job:<id>` | `Job` (one key per job)     |
+| Key                   | Value                                                   |
+| --------------------- | ------------------------------------------------------- |
+| `meta`                | `{ schemaVersion: number }`                             |
+| `settings`            | `Settings`                                              |
+| `job:<id>`            | `Job` (one key per job)                                 |
+| `account:session`     | Supabase session (accounts builds only; not backed up)  |
+| `account:entitlement` | Cached entitlement + `checkedAt` (accounts builds only) |
 
 Access only through `JobRepository` / `SettingsRepository`
 (`src/storage/`), which depend on the `KeyValueStore` port.

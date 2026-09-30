@@ -17,3 +17,11 @@ export interface ExtractorRunner {
   /** Raw page HTML — used by the "download fixture" developer tool. */
   snapshot(tabId: number): Promise<PageSnapshot>;
 }
+
+/** Browser-driven OAuth (chrome.identity.launchWebAuthFlow in production). */
+export interface WebAuthFlow {
+  /** Where the provider redirects back to, e.g. https://<id>.chromiumapp.org/ */
+  redirectUrl(): string;
+  /** Opens `url` for the user and resolves with the final redirect URL. */
+  launch(url: string): Promise<string>;
+}

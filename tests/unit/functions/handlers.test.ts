@@ -6,7 +6,7 @@ import {
   type Deps,
 } from '../../../supabase/functions/_shared/handlers.ts';
 import { readEnv } from '../../../supabase/functions/_shared/env.ts';
-import { fakeFetch, type FakeResponse } from './fake-fetch';
+import { fakeFetch, type FakeResponse } from '../helpers/fake-fetch';
 import { subscriptionEvent } from './fixtures';
 
 const SB = 'https://ref.supabase.co';

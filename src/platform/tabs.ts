@@ -15,10 +15,18 @@ export async function getActiveTab(): Promise<ActiveTab | undefined> {
 
 export const BOARD_PATH = '/board.html';
 
-/** Focuses an open board tab, or opens a new one. Optional `jobId` deep-links a card. */
-export async function openBoard(jobId?: string): Promise<void> {
+/**
+ * Focuses an open board tab, or opens a new one. Optional `jobId` deep-links
+ * a card; `'account'` opens the account dialog.
+ */
+export async function openBoard(target?: string | { account: true }): Promise<void> {
   const base = browser.runtime.getURL(BOARD_PATH);
-  const url = jobId ? `${base}#job=${encodeURIComponent(jobId)}` : base;
+  const url =
+    target === undefined
+      ? base
+      : typeof target === 'string'
+        ? `${base}#job=${encodeURIComponent(target)}`
+        : `${base}#account`;
   // runtime.getContexts (Chrome 116+) finds our own pages without the `tabs` permission.
   const contexts = await browser.runtime.getContexts({
     contextTypes: ['TAB'],

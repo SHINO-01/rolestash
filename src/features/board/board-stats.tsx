@@ -12,7 +12,7 @@ export function BoardStats({ jobs, stages }: { jobs: readonly Job[]; stages: rea
     ['Offers', stats.offers],
   ] as const;
   return (
-    <dl className="mr-2 hidden items-center gap-5 lg:flex">
+    <dl className="mr-2 hidden items-center gap-5 whitespace-nowrap xl:flex">
       {items.map(([label, value]) => (
         <div key={label} className="flex items-baseline gap-1.5">
           <dd className="text-sm font-semibold tabular-nums">{value}</dd>

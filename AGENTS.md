@@ -67,6 +67,7 @@ entrypoints ─► features ─► ui
 | A capture came out wrong    | `docs/guides/debugging-extraction.md`  |
 | New board feature           | `docs/guides/adding-a-feature.md`      |
 | Change what is stored       | `docs/reference/storage.md`            |
+| Accounts, billing, database | `docs/guides/backend.md`               |
 | Understand the moving parts | `docs/architecture/overview.md`        |
 
 ## Gotchas

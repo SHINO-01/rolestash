@@ -5,7 +5,8 @@ import { Field, Input, Select } from '@/ui/components/field';
 import { Dialog } from '@/ui/components/overlay';
 import { useToast } from '@/ui/components/toast';
 import { useLiveJobs, useServices } from '@/ui/hooks/services';
-import { DuplicateJobError } from '@/services/job-service';
+import { limitMessage } from '@/features/account/plan-copy';
+import { DuplicateJobError, JobLimitError } from '@/services/job-service';
 
 /** Manual entry — for jobs heard about offline, by email, or on pages we can't read. */
 export function AddJobDialog({
@@ -59,9 +60,11 @@ export function AddJobDialog({
       setError(
         err instanceof DuplicateJobError
           ? 'That link is already on your board.'
-          : err instanceof Error
-            ? err.message
-            : 'Could not add job',
+          : err instanceof JobLimitError
+            ? limitMessage(err)
+            : err instanceof Error
+              ? err.message
+              : 'Could not add job',
       );
     } finally {
       setSaving(false);

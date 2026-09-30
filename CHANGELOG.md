@@ -6,6 +6,15 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Groundwork for Rolestash Pro, switched off in release builds until launch:
+  - sign-in with Google or an emailed code;
+  - a 30-day trial;
+  - a 25-active-job free plan (rejected and withdrawn jobs don't count);
+  - Paddle checkout and the billing portal;
+  - account deletion that keeps your local jobs.
+
 ### Changed
 
 - Renamed to **Rolestash**, with a new logo, icons and spruce-green theme.

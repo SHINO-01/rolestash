@@ -9,3 +9,4 @@ test-results/
 .env*
 !.env.example
 stats.html
+!.env.e2e

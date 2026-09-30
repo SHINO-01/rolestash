@@ -4,7 +4,7 @@ import type { Job } from '@/domain/job';
 import { findStage, type Stage } from '@/domain/stage';
 import type { ExtractionResult } from '@/extraction';
 import { getActiveTab, openBoard, type ActiveTab } from '@/platform/tabs';
-import { DuplicateJobError } from '@/services/job-service';
+import { DuplicateJobError, JobLimitError } from '@/services/job-service';
 import { Button, Spinner } from '@/ui/components/button';
 import { CompanyAvatar } from '@/ui/components/company-avatar';
 import { Logo } from '@/ui/components/misc';
@@ -27,6 +27,7 @@ export function CapturePopup() {
   const [state, setState] = useState<State>({ kind: 'loading' });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string>();
+  const [limited, setLimited] = useState<JobLimitError>();
   const started = useRef(false);
 
   const capture = useCallback(async () => {
@@ -87,6 +88,8 @@ export function CapturePopup() {
     } catch (e) {
       if (e instanceof DuplicateJobError && state.kind === 'ready') {
         setState({ ...state, duplicate: e.existing });
+      } else if (e instanceof JobLimitError) {
+        setLimited(e);
       } else {
         setError(e instanceof Error ? e.message : 'Could not save this job.');
       }
@@ -110,6 +113,25 @@ export function CapturePopup() {
       </header>
 
       <main className="flex-1 scrollbar-thin overflow-y-auto p-4">
+        {limited ? (
+          <div
+            role="alert"
+            className="bg-accent-soft text-accent-ink mb-3 flex flex-col gap-2 rounded-xl p-3 text-sm"
+          >
+            <p>
+              <strong>Free plan limit reached.</strong> You have {limited.check.active} of{' '}
+              {limited.check.limit} active jobs. Move finished ones to Rejected or Withdrawn, or try
+              Pro free for 30 days.
+            </p>
+            <Button
+              size="sm"
+              variant="primary"
+              onClick={() => void openBoard({ account: true }).then(() => window.close())}
+            >
+              Open account
+            </Button>
+          </div>
+        ) : null}
         {state.kind === 'loading' ? <Loading /> : null}
 
         {state.kind === 'failed' ? (

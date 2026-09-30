@@ -9,6 +9,7 @@
 | Docs drift    | Vitest                | `tests/unit/docs.test.ts`        | yes                                  |
 | End-to-end    | Playwright + Chromium | `tests/e2e/**` (project `e2e`)   | yes                                  |
 | Smoke         | Playwright + Chromium | `@smoke` tests (project `smoke`) | yes, here and in rolestash-extension |
+| Database      | pgTAP (Docker)        | `supabase/tests/database/**`     | yes (_Database_ job)                 |
 
 ## Unit tests
 
@@ -24,6 +25,19 @@ Each `tests/fixtures/sites/<adapter>/<case>.html` with a sibling
 provenance, structured-clone safety). The JSON format is documented in
 `tests/fixtures/README.md`. Fixtures marked `SYNTHETIC` model a site's markup;
 replace them with scrubbed real snapshots over time.
+
+## Accounts and backend tests
+
+- **Edge Functions:** `tests/unit/functions/` exercises the handlers in
+  `supabase/functions/_shared/` with `tests/unit/helpers/fake-fetch.ts`. It
+  routes by method and URL, records every call, and rejects anything
+  unexpected.
+- **Database:** `npm run test:db` (Docker) runs the pgTAP suite for RLS,
+  trials and billing events, plus the PL/pgSQL linter.
+- **E2E:** the E2E build reads `.env.e2e`, so it talks to the mock Supabase
+  in `tests/e2e/mock-backend.ts` (`backend` fixture). The production build has
+  no backend, and an `@smoke` test asserts that: no `identity` permission, no
+  account UI, no limit.
 
 ## E2E tests
 
