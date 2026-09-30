@@ -10,3 +10,4 @@ test-results/
 !.env.example
 stats.html
 !.env.e2e
+!.env.staging

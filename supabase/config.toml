@@ -424,17 +424,18 @@ enabled = true
 # and column/key alignment. Set to "null" to emit raw, unformatted SQL.
 # format_options = "{\"keywordCase\":\"upper\",\"indent\":2,\"maxWidth\":180,\"commaStyle\":\"trailing\"}"
 
-# Edge Functions (supabase/functions). User-facing ones require a valid user
-# JWT at the gateway; the webhook is called by Paddle and verifies its own
-# signature instead.
+# Edge Functions (supabase/functions). Gateway JWT checks are off for all of
+# them: they don't support the newer JWT signing keys, and every handler
+# enforces its own auth (user endpoints resolve the Bearer token with
+# /auth/v1/user; the webhook verifies Paddle-Signature). See ADR-0011.
 [functions.paddle-webhook]
 verify_jwt = false
 
 [functions.create-checkout]
-verify_jwt = true
+verify_jwt = false
 
 [functions.billing-portal]
-verify_jwt = true
+verify_jwt = false
 
 [functions.delete-account]
-verify_jwt = true
+verify_jwt = false

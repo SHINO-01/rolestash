@@ -82,7 +82,9 @@ export class SupabaseClient {
         method: init.method ?? (init.body === undefined ? 'GET' : 'POST'),
         headers: {
           apikey: this.config.anonKey,
-          Authorization: `Bearer ${init.token ?? this.config.anonKey}`,
+          // Publishable keys (sb_publishable_…) are not JWTs: they go only in
+          // `apikey`. Authorization carries a user's access token when there is one.
+          ...(init.token ? { Authorization: `Bearer ${init.token}` } : {}),
           ...(init.body === undefined ? {} : { 'Content-Type': 'application/json' }),
         },
         ...(init.body === undefined ? {} : { body: JSON.stringify(init.body) }),

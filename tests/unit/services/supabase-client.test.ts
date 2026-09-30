@@ -93,7 +93,7 @@ describe('SupabaseClient error mapping', () => {
     await c.sendEmailCode('a@b.c');
     await c.entitlement('user-token');
     expect(calls.map((x) => [x.headers.apikey, x.headers.Authorization])).toEqual([
-      ['anon', 'Bearer anon'],
+      ['anon', undefined],
       ['anon', 'Bearer user-token'],
     ]);
   });

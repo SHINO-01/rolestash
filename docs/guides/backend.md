@@ -30,6 +30,32 @@ Rules:
 - Clients hold only the anon key. Writes to billing state come only from
   Edge Functions using the service role.
 
+## Environments
+
+| Build                   | Backend                                                              | Use                                                                                            |
+| ----------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `npm run build`         | none: accounts off, no `identity` permission                         | What ships until go-live                                                                       |
+| `npm run build:e2e`     | mock (`.env.e2e` → `tests/e2e/mock-backend.ts`)                      | Automated E2E                                                                                  |
+| `npm run build:staging` | real project `fhclnxqumcdsqxyunelp` (`.env.staging`), Paddle sandbox | Manual testing of real sign-in and checkout, loaded unpacked from `.output/chrome-mv3-staging` |
+
+The production project lives in Sydney (`ap-southeast-2`). The extension uses
+its **publishable** key (`sb_publishable_…`). That key is not a JWT, so the
+client sends it only as `apikey`, and sends `Authorization` only with a
+user's access token.
+
+**Edge Function auth:** the gateway's `verify_jwt` is **off** for every
+function, because it doesn't support the newer JWT signing keys. Each
+handler enforces auth itself:
+
+- user endpoints resolve the Bearer token through `/auth/v1/user`;
+- the webhook verifies `Paddle-Signature`.
+
+Until the secrets are set, a function answers `503 not_configured`.
+
+**Migrations applied through the Supabase MCP connector** get a connector
+timestamp as their version. Rewrite it to the file's version in
+`supabase_migrations.schema_migrations`, so `supabase db push` stays in sync.
+
 ## Production project (one-time)
 
 1. Create a project on the free plan, region **ap-southeast-2 (Sydney)**

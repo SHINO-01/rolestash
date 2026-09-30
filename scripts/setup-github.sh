@@ -10,12 +10,35 @@
 set -euo pipefail
 
 OWNER="${OWNER:-SHINO-01}"
-SRC="${OWNER}/jobtrail"
+SRC="${OWNER}/rolestash"
 EXT="${OWNER}/rolestash-extension"
 
 say() { printf '\n\033[1m%s\033[0m\n' "$*"; }
-api() { gh api -H "X-GitHub-Api-Version: 2022-11-28" "$@"; }
-json() { api --input - "$@"; } # body from stdin
+# GitHub occasionally answers 502/503/504; retry those with backoff. Other
+# errors (403, 404, 422) are real and fail at once.
+api() {
+  local attempt err
+  err="$(mktemp)"
+  for attempt in 1 2 3 4 5; do
+    if if [[ -n "${API_BODY-}" ]]; then
+      printf '%s' "$API_BODY" | gh api -H "X-GitHub-Api-Version: 2022-11-28" --input - "$@" 2>"$err"
+    else
+      gh api -H "X-GitHub-Api-Version: 2022-11-28" "$@" 2>"$err"
+    fi; then
+      rm -f "$err"
+      return 0
+    fi
+    if grep -q 'HTTP 50[234]' "$err" && ((attempt < 5)); then
+      echo "  (GitHub returned a server error; retrying in $((attempt * 3))s)" >&2
+      sleep $((attempt * 3))
+      continue
+    fi
+    cat "$err" >&2
+    rm -f "$err"
+    return 1
+  done
+}
+json() { API_BODY="$(cat)" api "$@"; } # body from stdin
 soft() { "$@" >/dev/null 2>&1 || echo "  (skipped: $* — not available for this repo/plan)"; }
 
 command -v gh >/dev/null || { echo "Install the GitHub CLI first: https://cli.github.com"; exit 1; }

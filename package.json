@@ -12,6 +12,7 @@
     "dev": "wxt",
     "build": "wxt build",
     "build:e2e": "wxt build --mode e2e",
+    "build:staging": "wxt build --mode staging",
     "zip": "wxt zip",
     "postinstall": "wxt prepare",
     "typecheck": "tsc --noEmit",
