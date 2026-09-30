@@ -108,6 +108,140 @@ iCIMS, SEEK and LinkedIn notifications). A rule engine in
 - **Both:** a mini calendar badge and an **Add to calendar** (`.ics`)
   download.
 
+### 5. Accuracy: keeping updates out of "Unsorted"
+
+A miss is one of two things. Each has its own techniques, and all of them
+are deterministic and testable.
+
+**Matching an email to a job**, in order of strength:
+
+1. **Posting links.** Most recruiting-system emails link to the posting.
+   The capture engine's `canonicalUrl` (site adapters) normalises the link,
+   so it matches `job.source.url` exactly.
+2. **Recruiting-system IDs.** Job and requisition IDs from per-system
+   template readers.
+3. **Email threads.** `Message-ID`, `In-Reply-To` and `References`: once a
+   thread is matched, every later email in it follows.
+4. **Per-user taught matches.** When a user assigns an unsorted update, we
+   remember sender address → job for that user.
+5. **Shared knowledge** (section 6): sender domain → company, and known
+   email templates.
+6. **Company domains learned from postings**, e.g.
+   `boards.greenhouse.io/acme`, `acme.com/careers`, the apply URL domain.
+7. **Fuzzy names and titles.**
+   - Company names drop legal suffixes ("Pty Ltd", "Inc", "Group"), then
+     token-set and Jaro-Winkler similarity.
+   - Titles expand abbreviations ("Sr" → Senior, "SWE" → Software
+     Engineer), then n-gram overlap.
+
+**Guards:**
+
+- Only jobs the user has applied to recently, in a stage where the update
+  makes sense, are candidates.
+- The best candidate must beat the runner-up by a clear margin. Otherwise
+  the update goes to "Unsorted".
+
+**Understanding intent**, before any keyword scoring:
+
+1. **Structured signals decide outright:**
+   - calendar invites (`text/calendar`, `METHOD:REQUEST`);
+   - scheduling links (Calendly, GoodTime, recruiting-system schedulers);
+   - assessment platforms (HackerRank, Codility, TestGorilla, SHL).
+2. **One template reader per recruiting system** (Greenhouse, Lever, Workday,
+   SmartRecruiters, Ashby, iCIMS, SEEK, LinkedIn), like site adapters.
+   Templated emails are read exactly, not scored.
+3. **Cleaning:**
+   - HTML → text and Unicode normalisation;
+   - stripping quoted history, signatures, legal footers and
+     unsubscribe blocks;
+   - contraction expansion and stemming (Snowball).
+4. **Sentence-level scoring with context.**
+   - Each sentence is scored separately, and the subject and opening lines
+     weigh more.
+   - **NegEx-style negation and conditional scopes** ("not…",
+     "if you are unsuccessful…").
+   - Hedges ("we may be in touch") are handled separately.
+   - **Known traps have their own rules.** For example, "unfortunately we
+     can't reply to every applicant" inside a receipt is not a rejection.
+5. **Asymmetric thresholds:** `rejected` and `offer` need much stronger
+   evidence than `received`, because a wrong rejection is the costliest
+   mistake.
+6. **Dates relative to the email's `Date` header,** with the IANA time
+   zone, so "next Tuesday at 2pm AEST" becomes an exact instant.
+
+**Measurement:**
+
+- `tests/fixtures/emails/` holds anonymised real emails. Testers opt in to
+  donate redacted examples.
+- It reports precision of automatic changes, the suggestion rate and the
+  unsorted rate, per intent and per recruiting system.
+- CI fails if any of them get worse, like the coverage gate.
+- Targets are set once the corpus exists.
+
+**A possible later step, needing owner sign-off:** a small linear text
+classifier (TF-IDF n-grams + logistic regression) trained offline on our
+own labelled corpus, shipped as static weights in the Worker. It uses no
+vendor or API and sends no data anywhere. It is still statistical ML,
+though, which conflicts with the site's "plain rules (no AI)" wording. We
+consider it only if the rules plateau, and change that wording if we adopt
+it.
+
+### 6. Shared learning: one user's correction helps every user
+
+Corrections made by any Advanced user improve classification for everyone.
+Only **general, non-personal knowledge** is shared. The fact that a given
+user applied to a given company never leaves that user's own rows.
+
+**What gets shared:**
+
+| Knowledge                 | Key                                                                                                            | Value                                                            | Learned when                                                       |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Sender domain → company   | sender domain (e.g. `acme-careers.io`)                                                                         | normalised company key                                           | a user assigns an update from that domain to a job at that company |
+| Template → intent         | SHA-256 of the email's _skeleton_: names, dates, titles, numbers, links and addresses replaced by placeholders | intent label                                                     | a user accepts, corrects or dismisses a suggestion                 |
+| Template → role of fields | skeleton hash                                                                                                  | which placeholder holds the job title, company or interview time | the same corrections                                               |
+
+**Only hashes, domains and labels are stored centrally. Never email text,
+subjects or user identifiers.**
+
+**Promotion and poisoning resistance:**
+
+- An entry takes effect for everyone only after **K = 3 distinct Advanced
+  accounts** confirm it, with no conflicting votes above a margin.
+- Votes live in `email_knowledge_votes (kind, key, value, voter)`.
+  - `voter` is an HMAC of the user ID under a server-only secret, so votes
+    can be counted and removed, but not linked to accounts without the
+    secret.
+  - Only paying Advanced accounts vote, which makes mass fake accounts
+    expensive.
+  - Votes are rate-limited per account.
+- **Conflicting labels demote an entry to "suggest only".** An entry that
+  later drops below K (for example after account deletions) is demoted
+  automatically.
+- **Deleting an account deletes its votes.**
+
+**Applying it:** the Email Worker checks the shared template table before
+scoring. An exact skeleton match with a promoted label decides the intent,
+and promoted domain → company entries join the matching signals.
+
+**Controls:**
+
+- The account dialog has "Help improve automatic updates" (on by default,
+  disclosed in the privacy policy). Turning it off stops that account
+  voting; it still benefits from shared knowledge.
+- We can review and revoke entries.
+
+**What this can and can't guarantee:**
+
+- Once a template or sender domain is known, **every user** gets it right
+  first time. Only the first K sightings of a new template or domain across
+  the whole user base can need a human.
+- It can't match an update to a job that isn't on the user's board. That
+  update stays in "Unsorted" with a one-click "Add this job" instead.
+- A truly one-off email (a small company's hand-written reply with no
+  title, link or known domain) may still need one click.
+- The goal is that each distinct template or sender is classified by a
+  human once, for everyone, and never again.
+
 ## Consequences
 
 - **Accuracy is good but not perfect.** Structured signals (calendar
@@ -131,9 +265,10 @@ iCIMS, SEEK and LinkedIn notifications). A rule engine in
 
 ## Alternatives considered
 
-| Option                                | Why not                                                                                     |
-| ------------------------------------- | ------------------------------------------------------------------------------------------- |
-| Gmail/Outlook API (OAuth)             | Restricted scopes: a costly annual security assessment, and much broader access than needed |
-| LLM classification (any vendor)       | Excluded by requirement; also costs money per email and sends content to a third party      |
-| Storing emails for later reprocessing | Unnecessary privacy risk; the event is enough                                               |
-| Fully automatic, no suggestions       | A wrong "Rejected" is worse than a one-click confirmation                                   |
+| Option                                   | Why not                                                                                                                                 |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Gmail/Outlook API (OAuth)                | Restricted scopes: a costly annual security assessment, and much broader access than needed                                             |
+| LLM classification (any vendor)          | Excluded by requirement; also costs money per email and sends content to a third party                                                  |
+| Sharing each user's taught matches as-is | They reveal who applied where. Only non-personal knowledge (domains, template hashes, labels) is shared, after K distinct confirmations |
+| Storing emails for later reprocessing    | Unnecessary privacy risk; the event is enough                                                                                           |
+| Fully automatic, no suggestions          | A wrong "Rejected" is worse than a one-click confirmation                                                                               |
