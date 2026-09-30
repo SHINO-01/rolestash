@@ -35,7 +35,7 @@ feature on the pricing page is built. The site already advertises them all.
 
 ## Phase 1b: Free and Pro features
 
-- **CSV export** (Free).
+- ~~**CSV export** (Free)~~ done: board menu → _Export to CSV_ (`src/storage/csv-export.ts`).
 - **History** (Free: 30 days; Pro: everything):
   - an Archive action and an archived view;
   - a finished-jobs view (won and lost);

@@ -1,5 +1,6 @@
 import {
   Download,
+  FileSpreadsheet,
   Keyboard,
   Monitor,
   Moon,
@@ -14,6 +15,7 @@ import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } f
 import { browser } from 'wxt/browser';
 import type { Theme } from '@/domain/settings';
 import { createBackup } from '@/storage/backup';
+import { jobsToCsv } from '@/storage/csv-export';
 import { AccountDialog } from '@/features/account/account-dialog';
 import { PlanBanner } from '@/features/account/plan-banner';
 import { planChip } from '@/features/account/plan-copy';
@@ -89,15 +91,24 @@ export function BoardPage() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  async function exportBackup() {
-    const backup = await createBackup(services.jobs, services.settings);
-    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+  function download(contents: string, type: string, name: string, extension: string) {
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `rolestash-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.href = URL.createObjectURL(new Blob([contents], { type }));
+    a.download = `${name}-${new Date().toISOString().slice(0, 10)}.${extension}`;
     a.click();
     URL.revokeObjectURL(a.href);
-    toast({ message: `Exported ${backup.jobs.length} jobs`, tone: 'success' });
+  }
+
+  async function exportBackup() {
+    const backup = await createBackup(services.jobs, services.settings);
+    download(JSON.stringify(backup, null, 2), 'application/json', 'rolestash-backup', 'json');
+    toast({ message: `Exported ${String(backup.jobs.length)} jobs`, tone: 'success' });
+  }
+
+  async function exportCsv() {
+    const all = await services.jobs.list();
+    download(jobsToCsv(all, settings.stages), 'text/csv;charset=utf-8', 'rolestash-jobs', 'csv');
+    toast({ message: `Exported ${String(all.length)} jobs to CSV`, tone: 'success' });
   }
 
   const setTheme = (theme: Theme) => void services.settings.update({ theme });
@@ -148,6 +159,11 @@ export function BoardPage() {
             </IconButton>
           )}
           items={[
+            {
+              label: 'Export to CSV',
+              icon: <FileSpreadsheet className="size-4" />,
+              onSelect: () => void exportCsv(),
+            },
             {
               label: 'Export backup',
               icon: <Download className="size-4" />,

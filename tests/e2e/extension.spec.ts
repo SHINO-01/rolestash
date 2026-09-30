@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import type { ExtractionResult } from '@/extraction';
 import type { Job } from '@/domain/job';
 import type { Worker } from '@playwright/test';
@@ -163,5 +164,31 @@ test.describe('board @smoke', () => {
     await page.getByLabel('Search jobs').fill('atlassian');
     await expect(page.getByText('Designer')).toBeVisible();
     await expect(page.getByText('Platform Engineer')).toBeHidden();
+  });
+
+  test('exports the board to CSV', async ({ context, worker, extensionId }) => {
+    await seed(worker, [
+      { id: 'a', title: 'Platform Engineer', company: 'Northwind Labs', tags: ['go'] },
+      { id: 'b', title: 'Designer', company: 'Tidewater Studio', stageId: 'applied' },
+    ]);
+    const page = await context.newPage();
+    await page.goto(`chrome-extension://${extensionId}/board.html`);
+    await page.getByRole('button', { name: 'Board menu' }).click();
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.getByRole('menuitem', { name: 'Export to CSV' }).click(),
+    ]);
+    expect(download.suggestedFilename()).toMatch(/^rolestash-jobs-\d{4}-\d{2}-\d{2}\.csv$/);
+    const path = await download.path();
+    const text = readFileSync(path, 'utf8');
+    const lines = text
+      .replace(/^\uFEFF/, '')
+      .trim()
+      .split('\r\n');
+    expect(lines[0]).toMatch(/^Title,Company,Stage,/);
+    expect(lines.slice(1).map((l) => l.split(',').slice(0, 3).join(','))).toEqual([
+      'Platform Engineer,Northwind Labs,Saved',
+      'Designer,Tidewater Studio,Applied',
+    ]);
   });
 });

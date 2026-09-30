@@ -8,6 +8,10 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Export to CSV** from the board menu, on every plan: one row per job with
+  every field, in board order. It opens cleanly in Excel, Numbers and Google
+  Sheets (UTF-8 BOM), and cells that a spreadsheet would run as formulas are
+  neutralised.
 - Groundwork for Rolestash Pro, switched off in release builds until launch:
   - sign-in with Google or an emailed code;
   - a 30-day trial;
