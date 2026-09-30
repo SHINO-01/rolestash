@@ -25,9 +25,13 @@ All notable changes to this project are documented here. The format follows
   - an automatic acknowledgement email once confirmed;
   - a one-click launch-day announcement (**Actions → Announce launch**).
 
-  Unsubscribing, or sending the launch email, deletes the address. It's
-  built on Supabase and Resend, with no new vendors. The privacy policy has
-  a new "Launch updates" section.
+  - occasional product news (**Actions → Send product news**, from
+    `emails/news/`).
+
+  Every email has a one-click unsubscribe (link and mail-app button) that
+  deletes the address at once. It's built on Supabase and Resend, with no
+  new vendors. The privacy policy has a "Launch and product news emails"
+  section, and the terms a new §8, "Emails from us".
 
 - Redesigned rolestash.com: a framed product hero with responsive, art-directed
   board screenshots, a bento feature grid, an email-updates walkthrough for

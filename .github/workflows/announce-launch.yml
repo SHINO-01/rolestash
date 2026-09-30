@@ -1,4 +1,4 @@
-# Launch day: emails everyone on the confirmed launch list, then deletes the list.
+# Launch day: emails everyone on the confirmed updates list about the launch.
 # Run it by hand (Actions → Announce launch → Run workflow). Leave "send" off
 # first for a dry run that only counts recipients. docs/guides/launch-list.md
 name: Announce launch
@@ -30,12 +30,12 @@ jobs:
     steps:
       - name: Call the launch-list function
         env:
-          FUNCTION_URL: https://fhclnxqumcdsqxyunelp.supabase.co/functions/v1/launch-list?announce
+          FUNCTION_URL: https://fhclnxqumcdsqxyunelp.supabase.co/functions/v1/launch-list?send
           LAUNCH_ADMIN_SECRET: ${{ secrets.LAUNCH_ADMIN_SECRET }}
           STORE_URL: ${{ inputs.store_url }}
           SEND: ${{ inputs.send }}
         run: |
-          body=$(jq -n --arg url "$STORE_URL" --argjson send "$SEND" '{storeUrl: $url, dryRun: ($send | not)}')
+          body=$(jq -n --arg url "$STORE_URL" --argjson send "$SEND" '{campaign: "launch", storeUrl: $url, dryRun: ($send | not)}')
           curl --fail-with-body --silent --show-error \
             -H "Authorization: Bearer $LAUNCH_ADMIN_SECRET" \
             -H 'Content-Type: application/json' \

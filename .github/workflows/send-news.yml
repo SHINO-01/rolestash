@@ -1,0 +1,51 @@
+# Product news: emails a file from emails/news/ to everyone on the confirmed
+# updates list who hasn't had it yet. Run it by hand (Actions → Send product
+# news). Leave "send" off first for a dry run. docs/guides/launch-list.md
+name: Send product news
+
+on:
+  workflow_dispatch:
+    inputs:
+      campaign:
+        description: File name in emails/news/ without .md (e.g. 2026-11-custom-columns)
+        required: true
+        type: string
+      send:
+        description: Really send (off = dry run that only counts recipients)
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: send-news
+  cancel-in-progress: false
+
+jobs:
+  send:
+    name: Send product news
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Call the launch-list function
+        env:
+          FUNCTION_URL: https://fhclnxqumcdsqxyunelp.supabase.co/functions/v1/launch-list?send
+          LAUNCH_ADMIN_SECRET: ${{ secrets.LAUNCH_ADMIN_SECRET }}
+          CAMPAIGN: ${{ inputs.campaign }}
+          SEND: ${{ inputs.send }}
+        run: |
+          if ! [[ "$CAMPAIGN" =~ ^[a-z0-9][a-z0-9-]{0,63}$ ]] || [ ! -f "emails/news/$CAMPAIGN.md" ]; then
+            echo "::error::No emails/news/$CAMPAIGN.md (lowercase letters, digits and dashes only)"
+            exit 1
+          fi
+          body=$(jq -n --arg c "$CAMPAIGN" --rawfile src "emails/news/$CAMPAIGN.md" --argjson send "$SEND" \
+            '{campaign: $c, source: $src, dryRun: ($send | not)}')
+          curl --fail-with-body --silent --show-error \
+            -H "Authorization: Bearer $LAUNCH_ADMIN_SECRET" \
+            -H 'Content-Type: application/json' \
+            --data "$body" "$FUNCTION_URL" | tee -a "$GITHUB_STEP_SUMMARY"

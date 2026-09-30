@@ -1,7 +1,7 @@
 -- Run with: npm run test:db  (needs Docker; see docs/guides/backend.md)
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(19);
+select plan(21);
 
 create function pg_temp.act_as_anon() returns void language sql as $$
   select set_config('role', 'anon', true), set_config('request.jwt.claims', '{"role":"anon"}', true);
@@ -55,6 +55,14 @@ select is((select send from public.launch_signup('alice@example.com', 'free')), 
   'a confirmed address never gets another confirmation');
 select is((select plan from public.launch_subscribers where email = 'alice@example.com'), 'free',
   'but its plan interest updates');
+
+-- Campaigns ---------------------------------------------------------------------
+select public.launch_mark_sent('launch',
+  array[(select token from public.launch_subscribers where email = 'alice@example.com')]);
+select is((select last_campaign from public.launch_subscribers where email = 'alice@example.com'),
+  'launch', 'a send records its campaign');
+select is((select count(*)::int from public.launch_subscribers where email = 'alice@example.com'),
+  1, 'sending never deletes a confirmed address');
 
 -- Forgetting --------------------------------------------------------------------
 update public.launch_subscribers set created_at = now() - interval '31 days'

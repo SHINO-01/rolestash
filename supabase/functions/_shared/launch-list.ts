@@ -1,13 +1,20 @@
-import { confirmationEmail, launchEmail, welcomeEmail, type Email } from './launch-emails.ts';
+import {
+  confirmationEmail,
+  launchEmail,
+  newsEmail,
+  parseNews,
+  welcomeEmail,
+  type Email,
+} from './launch-emails.ts';
 
 /**
- * The launch list behind rolestash.com's "Notify me at launch" form
- * (docs/guides/launch-list.md). One Edge Function, four actions:
+ * The Rolestash updates list behind rolestash.com's "Notify me at launch"
+ * form (docs/guides/launch-list.md). One Edge Function, four actions:
  *
  *  - POST (form)                 sign up; sends a confirmation email
  *  - GET  ?confirm=<token>       confirm; sends the "you're on the list" email
  *  - GET/POST ?unsubscribe=<t>   delete the address (POST = RFC 8058 one-click)
- *  - POST ?announce  (admin)     send the launch email, then delete the list
+ *  - POST ?send  (admin)         email a campaign: the launch, or product news
  *
  * Browser-facing actions answer with 303 redirects to static pages on the
  * site, so the site needs no JavaScript.
@@ -101,7 +108,8 @@ class LaunchBackend {
     return this.functionUrl(`unsubscribe=${token}`);
   }
 
-  message(to: string, email: Email, unsubscribeUrl?: string) {
+  /** Every email carries a one-click unsubscribe, for mail apps and in the footer. */
+  message(to: string, email: Email, unsubscribeUrl: string) {
     return {
       from: this.env.from,
       to: [to],
@@ -109,14 +117,10 @@ class LaunchBackend {
       subject: email.subject,
       html: email.html,
       text: email.text,
-      ...(unsubscribeUrl
-        ? {
-            headers: {
-              'List-Unsubscribe': `<${unsubscribeUrl}>`,
-              'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
-            },
-          }
-        : {}),
+      headers: {
+        'List-Unsubscribe': `<${unsubscribeUrl}>`,
+        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+      },
     };
   }
 
@@ -158,8 +162,13 @@ async function signup(req: Request, backend: LaunchBackend, env: LaunchEnv): Pro
     p_plan: field('plan') || null,
   });
   if (result?.send) {
+    const remove = backend.unsubscribeUrl(result.token);
     await backend.send([
-      backend.message(email, confirmationEmail(backend.functionUrl(`confirm=${result.token}`))),
+      backend.message(
+        email,
+        confirmationEmail(backend.functionUrl(`confirm=${result.token}`), remove),
+        remove,
+      ),
     ]);
   }
   // The same answer whether or not an email was sent, so the form can't be
@@ -182,18 +191,43 @@ async function confirm(token: string, backend: LaunchBackend, env: LaunchEnv) {
   return redirect(`${env.siteUrl}/notify/confirmed/`);
 }
 
-async function announce(req: Request, backend: LaunchBackend, env: LaunchEnv) {
+const CAMPAIGN = /^[a-z0-9][a-z0-9-]{0,63}$/;
+
+/**
+ * POST ?send (admin): emails a campaign to every confirmed address that
+ * hasn't had it yet, 100 at a time, recording each batch as sent, so a retry
+ * picks up where it stopped. Body: { campaign, dryRun?, and either
+ * storeUrl (campaign "launch") or source (product news, see parseNews) }.
+ */
+async function sendCampaign(req: Request, backend: LaunchBackend, env: LaunchEnv) {
   const secret = /^Bearer (.+)$/.exec(req.headers.get('Authorization') ?? '')?.[1] ?? '';
   if (!sameSecret(secret, env.adminSecret)) return json(401, { error: 'unauthorized' });
-  const body = (await req.json().catch(() => ({}))) as { storeUrl?: unknown; dryRun?: unknown };
-  const storeUrl = typeof body.storeUrl === 'string' ? body.storeUrl : '';
-  if (!storeUrl.startsWith('https://chromewebstore.google.com/')) {
-    return json(400, { error: 'invalid_store_url' });
+  const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
+  const campaign = typeof body.campaign === 'string' ? body.campaign : '';
+  if (!CAMPAIGN.test(campaign)) return json(400, { error: 'invalid_campaign' });
+
+  let compose: (plan: string | null, unsubscribe: string) => Email;
+  if (campaign === 'launch') {
+    const storeUrl = typeof body.storeUrl === 'string' ? body.storeUrl : '';
+    if (!storeUrl.startsWith('https://chromewebstore.google.com/')) {
+      return json(400, { error: 'invalid_store_url' });
+    }
+    compose = (plan, unsubscribe) => launchEmail(plan, storeUrl, unsubscribe);
+  } else {
+    const news = parseNews(typeof body.source === 'string' ? body.source : '');
+    if (!news) return json(400, { error: 'invalid_news' });
+    compose = (_plan, unsubscribe) => newsEmail(news, unsubscribe);
   }
+
   const recipients = (await backend.rest(
-    'launch_subscribers?confirmed_at=not.is.null&select=email,plan,token&order=created_at',
+    'launch_subscribers?confirmed_at=not.is.null' +
+      `&or=(last_campaign.is.null,last_campaign.neq.${campaign})` +
+      '&select=email,plan,token&order=created_at',
   )) as { email: string; plan: string | null; token: string }[];
-  if (body.dryRun !== false) return json(200, { dryRun: true, recipients: recipients.length });
+  if (body.dryRun !== false) {
+    const preview = compose(null, backend.unsubscribeUrl('00000000-0000-0000-0000-000000000000'));
+    return json(200, { dryRun: true, recipients: recipients.length, subject: preview.subject });
+  }
 
   let sent = 0;
   for (let i = 0; i < recipients.length; i += BATCH) {
@@ -201,17 +235,15 @@ async function announce(req: Request, backend: LaunchBackend, env: LaunchEnv) {
     await backend.send(
       chunk.map((r) => {
         const unsubscribe = backend.unsubscribeUrl(r.token);
-        return backend.message(r.email, launchEmail(r.plan, storeUrl, unsubscribe), unsubscribe);
+        return backend.message(r.email, compose(r.plan, unsubscribe), unsubscribe);
       }),
     );
-    // Forget each batch as soon as it's sent, so a retry never emails twice.
-    await backend.rest(`launch_subscribers?token=in.(${chunk.map((r) => r.token).join(',')})`, {
-      method: 'DELETE',
+    await backend.rpc('launch_mark_sent', {
+      p_campaign: campaign,
+      p_tokens: chunk.map((r) => r.token),
     });
     sent += chunk.length;
   }
-  // Unconfirmed signups are no longer needed either.
-  await backend.rest('launch_subscribers?confirmed_at=is.null', { method: 'DELETE' });
   return json(200, { dryRun: false, sent });
 }
 
@@ -235,12 +267,12 @@ export async function handleLaunchList(req: Request, deps: LaunchDeps): Promise<
         ? await confirm(token, backend, env)
         : redirect(`${env.siteUrl}/notify/problem/`);
     }
-    if (params.has('announce') && req.method === 'POST') return await announce(req, backend, env);
+    if (params.has('send') && req.method === 'POST') return await sendCampaign(req, backend, env);
     if (req.method === 'POST') return await signup(req, backend, env);
     return json(405, { error: 'method_not_allowed' });
   } catch (error) {
     console.error('[rolestash] launch-list failed', error);
-    return req.method === 'GET' || !params.has('announce')
+    return req.method === 'GET' || !params.has('send')
       ? redirect(`${env.siteUrl}/notify/problem/`)
       : json(500, { error: 'server_error' });
   }

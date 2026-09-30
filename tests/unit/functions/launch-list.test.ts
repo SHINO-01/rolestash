@@ -3,6 +3,7 @@ import {
   readLaunchEnv,
   type LaunchDeps,
 } from '../../../supabase/functions/_shared/launch-list.ts';
+import { newsEmail, parseNews } from '../../../supabase/functions/_shared/launch-emails.ts';
 import { fakeFetch } from '../helpers/fake-fetch';
 
 const SB = 'https://ref.supabase.co';
@@ -72,7 +73,9 @@ describe('launch list: signing up', () => {
     expect(mail?.subject).toMatch(/Confirm/);
     expect(mail?.html).toContain(`${FN}?confirm=${TOKEN}`);
     expect(mail?.text).toContain(`${FN}?confirm=${TOKEN}`);
-    expect(mail?.headers).toBeUndefined(); // no unsubscribe before consent
+    // Even before consent, one click removes the address.
+    expect(mail?.headers?.['List-Unsubscribe']).toBe(`<${FN}?unsubscribe=${TOKEN}>`);
+    expect(mail?.text).toContain('Not you? Remove this address now');
   });
 
   it('answers the same way without emailing when the database says not to', async () => {
@@ -142,7 +145,7 @@ describe('launch list: confirming', () => {
     const res = await handleLaunchList(new Request(`${FN}?confirm=${TOKEN}`), d);
     expect(location(res)).toBe(`${SITE}/notify/confirmed/`);
     const [mail] = sent();
-    expect(mail?.subject).toMatch(/on the Rolestash launch list/);
+    expect(mail?.subject).toBe('You’re on the Rolestash list');
     expect(mail?.text).toContain('interested in Advanced');
     expect(mail?.html).toContain(`${FN}?unsubscribe=${TOKEN}`);
     expect(mail?.headers).toEqual({
@@ -208,7 +211,7 @@ describe('launch list: unsubscribing', () => {
   });
 });
 
-describe('launch list: announcing the launch', () => {
+describe('launch list: sending campaigns', () => {
   const recipients = Array.from({ length: 150 }, (_, i) => ({
     email: `u${String(i)}@example.com`,
     plan: i === 0 ? 'pro' : null,
@@ -216,55 +219,97 @@ describe('launch list: announcing the launch', () => {
   }));
   const routes = {
     [`GET ${SB}/rest/v1/launch_subscribers`]: { status: 200, body: recipients },
-    [`DELETE ${SB}/rest/v1/launch_subscribers`]: { status: 204, body: null },
+    [`POST ${SB}/rest/v1/rpc/launch_mark_sent`]: { status: 204, body: null },
     ...resendOk,
   };
-  const announce = (body: unknown, secret = 'admin-secret') =>
-    new Request(`${FN}?announce`, {
+  const send = (body: unknown, secret = 'admin-secret') =>
+    new Request(`${FN}?send`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${secret}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
+  const NEWS = [
+    'Subject: Custom columns are here',
+    'Button: See what’s new | https://rolestash.com/',
+    '',
+    'You can now add your own columns.',
+    '',
+    'Pro and Advanced',
+    'have them today.',
+  ].join('\n');
 
   it('needs the admin secret', async () => {
     const { deps: d, calls } = deps(routes);
     for (const secret of ['wrong', 'admin-secre', 'admin-secret-and-more']) {
-      const res = await handleLaunchList(announce({ storeUrl: STORE }, secret), d);
+      const res = await handleLaunchList(send({ campaign: 'launch', storeUrl: STORE }, secret), d);
       expect(res.status).toBe(401);
     }
     expect(calls).toHaveLength(0);
   });
 
-  it('needs a Chrome Web Store link', async () => {
+  it.each([
+    [{ campaign: 'Launch!', storeUrl: STORE }, 'invalid_campaign'],
+    [{ campaign: 'launch', storeUrl: 'https://evil.test/' }, 'invalid_store_url'],
+    [{ campaign: '2026-11-columns', source: 'no subject here' }, 'invalid_news'],
+  ])('rejects %j', async (body, error) => {
     const { deps: d } = deps(routes);
-    const res = await handleLaunchList(announce({ storeUrl: 'https://evil.test/' }), d);
+    const res = await handleLaunchList(send(body), d);
     expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error });
   });
 
   it('counts recipients without sending on a dry run (the default)', async () => {
     const { deps: d, sent, calls } = deps(routes);
-    const res = await handleLaunchList(announce({ storeUrl: STORE }), d);
-    expect(await res.json()).toEqual({ dryRun: true, recipients: 150 });
+    const res = await handleLaunchList(send({ campaign: 'launch', storeUrl: STORE }), d);
+    expect(await res.json()).toEqual({
+      dryRun: true,
+      recipients: 150,
+      subject: 'Rolestash is live on the Chrome Web Store',
+    });
     expect(sent()).toHaveLength(0);
-    expect(calls.find((c) => c.method === 'DELETE')).toBeUndefined();
+    // Only confirmed addresses that haven't had this campaign yet.
+    expect(decodeURIComponent(calls[0]?.url ?? '')).toContain(
+      'confirmed_at=not.is.null&or=(last_campaign.is.null,last_campaign.neq.launch)',
+    );
   });
 
-  it('emails confirmed subscribers in batches of 100, then deletes the list', async () => {
+  it('sends the launch in batches of 100, records each batch, and keeps the list', async () => {
     const { deps: d, sent, calls } = deps(routes);
-    const res = await handleLaunchList(announce({ storeUrl: STORE, dryRun: false }), d);
+    const res = await handleLaunchList(
+      send({ campaign: 'launch', storeUrl: STORE, dryRun: false }),
+      d,
+    );
     expect(await res.json()).toEqual({ dryRun: false, sent: 150 });
     const batches = calls.filter((c) => c.url.endsWith('/emails/batch'));
     expect(batches.map((b) => (b.body as unknown[]).length)).toEqual([100, 50]);
     const [first, second] = sent();
-    expect(first?.subject).toBe('Rolestash is live on the Chrome Web Store');
     expect(first?.html).toContain(STORE);
     expect(first?.text).toContain('30-day free trial, no card needed');
     expect(second?.text).toContain('free for up to 15 active jobs');
+    expect(first?.text).toContain('Unsubscribe in one click (no sign-in, no questions)');
     expect(first?.headers?.['List-Unsubscribe']).toContain(recipients[0]?.token);
-    const deletes = calls.filter((c) => c.method === 'DELETE').map((c) => c.url);
-    expect(deletes).toHaveLength(3);
-    expect(deletes[0]).toContain(`token=in.(${recipients[0]?.token ?? ''},`);
-    expect(deletes[2]).toContain('confirmed_at=is.null');
+    const marks = calls.filter((c) => c.url.endsWith('/rpc/launch_mark_sent'));
+    expect(marks.map((m) => (m.body as { p_tokens: string[] }).p_tokens.length)).toEqual([100, 50]);
+    expect(marks[0]?.body).toMatchObject({ p_campaign: 'launch' });
+    expect(calls.some((c) => c.method === 'DELETE')).toBe(false);
+  });
+
+  it('sends product news written as a small text file', async () => {
+    const one = [recipients[0]];
+    const { deps: d, sent } = deps({
+      ...routes,
+      [`GET ${SB}/rest/v1/launch_subscribers`]: { status: 200, body: one },
+    });
+    const res = await handleLaunchList(
+      send({ campaign: '2026-11-columns', source: NEWS, dryRun: false }),
+      d,
+    );
+    expect(await res.json()).toEqual({ dryRun: false, sent: 1 });
+    const [mail] = sent();
+    expect(mail?.subject).toBe('Custom columns are here');
+    expect(mail?.text).toContain('Pro and Advanced have them today.');
+    expect(mail?.html).toContain('See what’s new');
+    expect(mail?.html).toContain('Unsubscribe in one click');
   });
 
   it('reports a failed send as a server error', async () => {
@@ -272,8 +317,34 @@ describe('launch list: announcing the launch', () => {
       ...routes,
       'POST https://api.resend.com/emails/batch': { status: 429, body: {} },
     });
-    const res = await handleLaunchList(announce({ storeUrl: STORE, dryRun: false }), d);
+    const res = await handleLaunchList(
+      send({ campaign: 'launch', storeUrl: STORE, dryRun: false }),
+      d,
+    );
     expect(res.status).toBe(500);
+  });
+});
+
+describe('parseNews', () => {
+  it('reads the subject, an optional https button and paragraphs', () => {
+    expect(parseNews('Subject: Hi\n\nOne\ntwo.\n\nThree.')).toEqual({
+      subject: 'Hi',
+      paragraphs: ['One two.', 'Three.'],
+    });
+  });
+
+  it.each([
+    'Hello\n\nNo subject line.',
+    'Subject: Only a subject',
+    'Subject: Hi\nButton: Go | http://insecure.test\n\nBody.',
+    'Subject: Hi\nButton: no url\n\nBody.',
+  ])('rejects %j', (source) => {
+    expect(parseNews(source)).toBeNull();
+  });
+
+  it('escapes whatever it is given', () => {
+    const news = parseNews('Subject: <b>Hi</b>\n\n<script>x</script>');
+    expect(news && newsEmail(news, 'https://u').html).not.toContain('<script>');
   });
 });
 
