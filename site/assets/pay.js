@@ -4,7 +4,7 @@
 //
 // Client-side tokens are public by design (Paddle > Developer tools >
 // Authentication). Sandbox tokens start with test_, production with live_.
-const PADDLE = { environment: 'sandbox', token: '' };
+const PADDLE = { environment: 'sandbox', token: 'test_d7e463f467c037e2f530ec28c61' };
 
 const status = document.getElementById('pay-status');
 const show = (message) => {
@@ -23,7 +23,7 @@ if (!transaction) {
   window.Paddle.Initialize({
     token: PADDLE.token,
     checkout: {
-      settings: { displayMode: 'overlay', successUrl: 'https://rolestash.com/pay/success/' },
+      settings: { displayMode: 'overlay', successUrl: `${location.origin}/pay/success/` },
     },
     eventCallback(event) {
       if (event.name === 'checkout.closed') show('Checkout closed. You can close this tab.');

@@ -11,3 +11,4 @@ test-results/
 stats.html
 !.env.e2e
 !.env.staging
+secrets.env
