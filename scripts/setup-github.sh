@@ -11,7 +11,7 @@ set -euo pipefail
 
 OWNER="${OWNER:-SHINO-01}"
 SRC="${OWNER}/jobtrail"
-EXT="${OWNER}/jobtrail-extension"
+EXT="${OWNER}/rolestash-extension"
 
 say() { printf '\n\033[1m%s\033[0m\n' "$*"; }
 api() { gh api -H "X-GitHub-Api-Version: 2022-11-28" "$@"; }
@@ -115,7 +115,7 @@ soft json -X POST "repos/${EXT}/environments/chrome-web-store/deployment-branch-
 echo "  environment: chrome-web-store (approval by ${OWNER}, main branch only)"
 
 if [[ "${1:-}" == "--store" ]]; then
-  say "Chrome Web Store credentials (input is hidden; see jobtrail-extension README → One-time setup)"
+  say "Chrome Web Store credentials (input is hidden; see rolestash-extension README → One-time setup)"
   for name in CWS_PUBLISHER_ID CWS_CLIENT_ID CWS_CLIENT_SECRET CWS_REFRESH_TOKEN; do
     gh secret set "$name" --repo "$EXT" --env chrome-web-store
   done

@@ -5,7 +5,7 @@ import type { Options } from './tests/e2e/fixtures';
  * Two projects over one spec suite (see docs/guides/testing.md):
  *  - e2e:   everything, against the test build (`npm run test:e2e`)
  *  - smoke: tests tagged @smoke, against the real production build that ships
- *           (`npm run test:smoke`, also run by the jobtrail-extension release pipeline)
+ *           (`npm run test:smoke`, also run by the rolestash-extension release pipeline)
  */
 export default defineConfig<Options>({
   testDir: 'tests/e2e',

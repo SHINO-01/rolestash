@@ -27,8 +27,10 @@ costs the least.
   unchanged, because they don't carry the brand.
 - ADRs 0001–0008 and the 0.1.0 changelog entry keep the old name as
   historical records.
-- The GitHub repos are renamed separately. Until then, references to
-  `SHINO-01/jobtrail` and `jobtrail-extension` stay in the docs and scripts.
+- The GitHub repos were renamed on 2026-09-30: `SHINO-01/jobtrail` became
+  `SHINO-01/rolestash`, and `jobtrail-extension` became
+  `rolestash-extension`. GitHub redirects the old URLs, and the extension
+  repo's submodule points at the new URL.
 
 ## Consequences
 

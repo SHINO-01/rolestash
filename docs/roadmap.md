@@ -81,12 +81,10 @@ are the launch.
 
 ### 1c. Launch
 
-- **Rebrand to Rolestash** (ADR-0010). The product, manifest, UI, icons and
-  docs are done. Still to do: rename both GitHub repos and update their
-  references (CI badges, `setup-github.sh`, the extension repo's submodule
-  URL). GitHub redirects the old URLs.
+- ~~Rebrand to Rolestash~~ Done (ADR-0010): product, icons, docs and both
+  GitHub repos.
 
-- One-time Chrome Web Store setup (jobtrail-extension README → _One-time
+- One-time Chrome Web Store setup (rolestash-extension README → _One-time
   setup_).
   - The first listing goes in unlisted or with a small audience.
   - Then public.

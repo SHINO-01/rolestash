@@ -4,7 +4,7 @@ Two repositories, one path from a commit to the Chrome Web Store. The reasons
 behind each choice are in [ADR-0008](../adr/0008-two-repo-release-pipeline.md).
 
 ```
-SHINO-01/jobtrail (source)                         SHINO-01/jobtrail-extension (package)
+SHINO-01/rolestash (source)                         SHINO-01/rolestash-extension (package)
 ───────────────────────────                        ─────────────────────────────────────
 push to dev ─┬─ Quality ────────────┐              daily 06:17 Sydney, or "Run workflow"
              ├─ Unit tests ≥90% ────┼─► Promote          │
@@ -43,7 +43,7 @@ git commit -am "chore(release): v0.1.1" && git push
 
 CI promotes the commit and creates tag `v0.1.1` and a GitHub Release. The
 extension repo picks it up on its next daily run. To ship now, open
-jobtrail-extension → _Actions_ → _Release_ → _Run workflow_. Approve the
+rolestash-extension → _Actions_ → _Release_ → _Run workflow_. Approve the
 _Chrome Web Store_ deployment when asked. Google's review usually takes a few
 hours to a few days.
 
@@ -86,7 +86,7 @@ ruleset; `main` protected from force-push and deletion; environment
 
 ## One-time Chrome Web Store setup
 
-See jobtrail-extension's README → _One-time setup_. In short: upload the
+See rolestash-extension's README → _One-time setup_. In short: upload the
 first zip by hand in the developer dashboard to create the listing, create
 OAuth credentials, then add them as `chrome-web-store` environment secrets and
 set the `CWS_EXTENSION_ID` variable. From then on the publish step runs.

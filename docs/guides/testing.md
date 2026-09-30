@@ -2,13 +2,13 @@
 
 ## Layers
 
-| Suite         | Tool                  | Location                         | Runs in CI                          |
-| ------------- | --------------------- | -------------------------------- | ----------------------------------- |
-| Unit          | Vitest + happy-dom    | `tests/unit/**`                  | yes                                 |
-| Site fixtures | Vitest (data-driven)  | `tests/fixtures/sites/**`        | yes                                 |
-| Docs drift    | Vitest                | `tests/unit/docs.test.ts`        | yes                                 |
-| End-to-end    | Playwright + Chromium | `tests/e2e/**` (project `e2e`)   | yes                                 |
-| Smoke         | Playwright + Chromium | `@smoke` tests (project `smoke`) | yes, here and in jobtrail-extension |
+| Suite         | Tool                  | Location                         | Runs in CI                           |
+| ------------- | --------------------- | -------------------------------- | ------------------------------------ |
+| Unit          | Vitest + happy-dom    | `tests/unit/**`                  | yes                                  |
+| Site fixtures | Vitest (data-driven)  | `tests/fixtures/sites/**`        | yes                                  |
+| Docs drift    | Vitest                | `tests/unit/docs.test.ts`        | yes                                  |
+| End-to-end    | Playwright + Chromium | `tests/e2e/**` (project `e2e`)   | yes                                  |
+| Smoke         | Playwright + Chromium | `@smoke` tests (project `smoke`) | yes, here and in rolestash-extension |
 
 ## Unit tests
 

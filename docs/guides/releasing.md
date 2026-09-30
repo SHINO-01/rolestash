@@ -7,7 +7,7 @@ Releases are automated end to end. See [CI/CD](ci-cd.md) for the full pipeline.
    `package.json` + `package-lock.json` and dates the changelog section.
 3. Commit (`chore(release): vX.Y.Z`) and push to `dev`.
 4. CI promotes to `main` and creates tag `vX.Y.Z` + a GitHub Release.
-5. jobtrail-extension builds, verifies and releases it (daily, or run
+5. rolestash-extension builds, verifies and releases it (daily, or run
    _Release_ manually), then asks for your approval before submitting to the
    Chrome Web Store.
 
@@ -28,4 +28,4 @@ confirm the board and an old backup import both work.
 ## Store listing
 
 Listing text, screenshots, permission justifications and the privacy
-disclosure live in jobtrail-extension under `store/`.
+disclosure live in rolestash-extension under `store/`.

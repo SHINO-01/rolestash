@@ -1,7 +1,7 @@
 # Security policy
 
 Please report vulnerabilities privately through
-[GitHub private vulnerability reporting](https://github.com/SHINO-01/jobtrail/security/advisories/new),
+[GitHub private vulnerability reporting](https://github.com/SHINO-01/rolestash/security/advisories/new),
 not in public issues. You should get a reply within a week.
 
 Only the latest release published to the Chrome Web Store is supported.

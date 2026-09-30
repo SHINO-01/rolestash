@@ -106,7 +106,7 @@ jobs:
       - name: Fast-forward main
         run: git push origin "${GITHUB_SHA}:refs/heads/main"
       # A version bump (npm run release) on dev turns into a tagged GitHub Release.
-      # jobtrail-extension picks up new tags and ships them.
+      # rolestash-extension picks up new tags and ships them.
       - name: Tag release if the version is new
         env:
           GH_TOKEN: ${{ github.token }}

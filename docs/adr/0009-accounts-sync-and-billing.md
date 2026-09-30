@@ -140,7 +140,7 @@ on-device built-in AI (Gemini Nano via the Prompt API) and must be optional.
 | `optional_host_permissions` per site | Capturing from a pasted link, requested when the user first uses it                     |
 
 Each permission is justified in `docs/reference/permissions.md` and in
-jobtrail-extension's `policy/manifest-policy.json` / `store/listing.md` in the
+rolestash-extension's `policy/manifest-policy.json` / `store/listing.md` in the
 same release.
 
 ## Consequences

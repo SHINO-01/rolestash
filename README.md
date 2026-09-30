@@ -1,7 +1,7 @@
 <img src="brand/rolestash-logo.svg" alt="Rolestash" height="56">
 
-[![CI](https://github.com/SHINO-01/jobtrail/actions/workflows/ci.yml/badge.svg?branch=dev)](https://github.com/SHINO-01/jobtrail/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/SHINO-01/jobtrail)](https://github.com/SHINO-01/jobtrail/releases)
+[![CI](https://github.com/SHINO-01/rolestash/actions/workflows/ci.yml/badge.svg?branch=dev)](https://github.com/SHINO-01/rolestash/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/SHINO-01/rolestash)](https://github.com/SHINO-01/rolestash/releases)
 
 **Save any job posting to a Kanban board in one click.** Rolestash is a Chrome
 extension that reads the job page you're on, extracts the title, company,
@@ -35,7 +35,7 @@ Badge feedback for instant saves: **✓** saved, **=** already on your board,
 
 Requires Node 22.18+ (see `.nvmrc`). Work happens on `dev`; CI promotes green
 commits to `main` and tags releases. Packaging and Chrome Web Store releases live
-in [jobtrail-extension](https://github.com/SHINO-01/jobtrail-extension).
+in [rolestash-extension](https://github.com/SHINO-01/rolestash-extension).
 
 ```bash
 npm install
