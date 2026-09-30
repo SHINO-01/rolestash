@@ -29,6 +29,10 @@ All notable changes to this project are documented here. The format follows
   screenshots from the E2E build.
 - Links to rolestash.com now show a preview card (a 1200×630 PNG with Open
   Graph and Twitter tags); `npm run site:og` regenerates it.
+- Sync is on both paid plans: Pro syncs up to 3 computers, and Advanced syncs
+  up to 5 devices, including phones through the web board (ADR-0013
+  revision). The site, terms, privacy policy, support page and the
+  extension's plan copy say so.
 - The privacy policy and support page now say that accounts are for Pro and
   Advanced, and that sync is an Advanced feature.
 - Renamed to **Rolestash**, with a new logo, icons and spruce-green theme.

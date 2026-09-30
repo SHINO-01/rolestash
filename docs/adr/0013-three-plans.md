@@ -7,15 +7,22 @@
 
 The owner's pricing and features, 2026-10-01 (revised the same day):
 
-| Plan     | Price                    | Active jobs | Features                                                                                                                                                                                                                                        |
-| -------- | ------------------------ | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Free     | US$0, no account         | 15          | Capture from every supported site, board, CSV/JSON export, last 30 days of history                                                                                                                                                              |
-| Pro      | US$7/month, US$59/year   | 45          | Everything in Free, plus: full history (archived and finished jobs, every timeline entry), reminders and closing-date alerts, custom columns, capture from a pasted link. 30-day trial on sign-in, no card                                      |
-| Advanced | US$15/month, US$159/year | 95          | Everything in Pro, plus: sync across devices and the web board, automatic status updates from job emails (ADR-0014), interview details on cards, and all later features (autofill, contacts and documents, analytics, side panel, bulk actions) |
+| Plan     | Price                    | Active jobs | Features                                                                                                                                                                                                                                                               |
+| -------- | ------------------------ | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Free     | US$0, no account         | 15          | Capture from every supported site, board, CSV/JSON export, last 30 days of history                                                                                                                                                                                     |
+| Pro      | US$7/month, US$59/year   | 45          | Everything in Free, plus: full history (archived and finished jobs, every timeline entry), reminders and closing-date alerts, custom columns, capture from a pasted link, sync across up to 3 computers (no phone). 30-day trial on sign-in, no card                   |
+| Advanced | US$15/month, US$159/year | 95          | Everything in Pro, plus: sync across up to 5 devices including phones (the web board), automatic status updates from job emails (ADR-0014), interview details on cards, and all later features (autofill, contacts and documents, analytics, side panel, bulk actions) |
 
 Tips and tricks were dropped.
 
 When a paid plan lapses, the account drops to Free. No data is deleted.
+
+**Revision (2026-10-01): sync is on both paid plans, with device limits.**
+
+- **Pro:** up to 3 computers, meaning signed-in Chrome installs. There's no phone access.
+- **Advanced:** up to 5 devices, including phones through the web board.
+- `SYNC_DEVICE_LIMITS` in `src/domain/plan.ts` holds the numbers.
+- The server enforces them when a device registers (Phase 1c).
 
 We don't launch until every advertised feature of every plan is built, so
 the site advertises them all.
@@ -78,6 +85,6 @@ the site advertises them all.
 
 - **Limits enforced only on the server:** the board works offline and
   local-first, so the client checks. Server features (sync) will use
-  `plan_tier()`.
+  `plan_tier()`, including its per-plan device limit.
 - **Upgrades at renewal instead of immediately:** simpler billing, but
   users expect the bigger limit as soon as they pay.

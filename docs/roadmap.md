@@ -2,11 +2,11 @@
 
 Rolestash is a freemium product with three plans (ADR-0013):
 
-| Plan     | Price                | Active jobs | Features                                                                                                                                                                      |
-| -------- | -------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Free     | US$0, no account     | 15          | Capture from every supported site, board, CSV/JSON export, last 30 days of history                                                                                            |
-| Pro      | US$7/mo · US$59/yr   | 45          | Everything in Free, plus: full history, reminders and closing-date alerts, custom columns, capture from a pasted link. 30-day trial                                           |
-| Advanced | US$15/mo · US$159/yr | 95          | Everything in Pro, plus: sync across devices and a web board, email status updates and interview cards, autofill, contacts and documents, analytics, side panel, bulk actions |
+| Plan     | Price                | Active jobs | Features                                                                                                                                                                            |
+| -------- | -------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Free     | US$0, no account     | 15          | Capture from every supported site, board, CSV/JSON export, last 30 days of history                                                                                                  |
+| Pro      | US$7/mo · US$59/yr   | 45          | Everything in Free, plus: full history, reminders and closing-date alerts, custom columns, capture from a pasted link, sync on 3 computers. 30-day trial                            |
+| Advanced | US$15/mo · US$159/yr | 95          | Everything in Pro, plus: sync on 5 devices incl. phone (web board), email status updates and interview cards, autofill, contacts and documents, analytics, side panel, bulk actions |
 
 Local prices in the UK, Ireland and Australia. Every item follows AGENTS.md:
 no AI/LLM vendors, local-first, least privilege, and near-zero running cost
@@ -60,8 +60,9 @@ feature on the pricing page is built. The site already advertises them all.
 ## Phase 1c: Advanced features
 
 - **Sync across devices:**
-  - Supabase `jobs` and `settings` tables, with RLS
-    `plan_tier() = 'advanced'`;
+  - Supabase `jobs` and `settings` tables, with RLS for paid plans;
+  - a device registry enforcing `SYNC_DEVICE_LIMITS`: Pro up to 3 computers,
+    Advanced up to 5 devices including the web board;
   - a `SyncService` behind a `RemoteJobStore` port;
   - last writer wins per job, tombstones for deletes, compressed
     descriptions.

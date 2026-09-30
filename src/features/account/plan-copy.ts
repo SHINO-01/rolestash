@@ -1,4 +1,9 @@
-import { ACTIVE_JOB_LIMITS, type PaidPlan, type PlanState } from '@/domain/plan';
+import {
+  ACTIVE_JOB_LIMITS,
+  SYNC_DEVICE_LIMITS,
+  type PaidPlan,
+  type PlanState,
+} from '@/domain/plan';
 import type { BackendError } from '@/services/backend/supabase-client';
 import type { JobLimitError } from '@/services/job-service';
 import { formatDate } from '@/ui/format';
@@ -79,6 +84,6 @@ export const PLAN_PRICES: Record<PaidPlan, Record<'month' | 'year', string>> = {
 };
 
 export const PLAN_PITCH: Record<PaidPlan, string> = {
-  pro: `${String(ACTIVE_JOB_LIMITS.pro)} active jobs, full history, reminders, custom columns and capture from a pasted link.`,
-  advanced: `${String(ACTIVE_JOB_LIMITS.advanced)} active jobs, sync across devices, automatic status updates from your job emails, and interview details on every card.`,
+  pro: `${String(ACTIVE_JOB_LIMITS.pro)} active jobs, full history, reminders, custom columns, capture from a pasted link, and sync across ${String(SYNC_DEVICE_LIMITS.pro)} computers.`,
+  advanced: `${String(ACTIVE_JOB_LIMITS.advanced)} active jobs, sync across ${String(SYNC_DEVICE_LIMITS.advanced)} devices including your phone, automatic status updates from your job emails, and interview details on every card.`,
 };

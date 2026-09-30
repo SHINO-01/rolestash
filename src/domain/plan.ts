@@ -21,6 +21,18 @@ export const ACTIVE_JOB_LIMITS: Readonly<Record<Plan, number>> = {
   pro: 45,
   advanced: 95,
 };
+/**
+ * Devices that may sync one account (ADR-0013 revision). Pro: computers only
+ * (signed-in Chrome installs). Advanced: any device, including a phone through
+ * the web board.
+ */
+export const SYNC_DEVICE_LIMITS: Readonly<Record<Plan, number>> = {
+  free: 0,
+  pro: 3,
+  advanced: 5,
+};
+/** Only Advanced can use the web board (the way phones sync). */
+export const WEB_BOARD_PLANS: readonly Plan[] = ['advanced'];
 export const FREE_ACTIVE_JOB_LIMIT = ACTIVE_JOB_LIMITS.free;
 export const TRIAL_DAYS = 30;
 /** How long a cached Pro entitlement stays valid without reaching the server. */
