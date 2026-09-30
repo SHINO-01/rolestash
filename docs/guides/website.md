@@ -44,16 +44,24 @@ no JavaScript, no third-party requests. Cloudflare Pages serves it from
 python3 -m http.server 4321 --directory site
 ```
 
-## One-time Cloudflare Pages setup
+## Deployment
 
-1. Cloudflare dashboard → _Workers & Pages_ → _Create_ → _Pages_ →
-   _Connect to Git_ → choose `SHINO-01/rolestash`.
-2. Production branch: `main`. Framework preset: _None_. Build command:
-   empty. Build output directory: `site`.
-3. _Settings → Builds → Branch control_: turn off preview deployments, or
-   limit them to `dev`.
-4. _Custom domains_: add `rolestash.com` and `www.rolestash.com`. Cloudflare
-   creates the DNS records because the domain is on Cloudflare. Add a
-   redirect rule from `www` to the apex.
-5. Leave **Web Analytics off**. The privacy policy says the site has no
-   analytics.
+The Pages project uses **direct upload**, not Cloudflare's Git integration,
+so Cloudflare never needs access to the repo. CI deploys instead: the
+_Deploy rolestash.com_ job in `ci.yml` runs `wrangler pages deploy site`
+after _Promote to main_. The site therefore only ever serves tested commits
+from `main`.
+
+It is enabled by three repo settings:
+
+| Setting                 | Kind     | Value                                                                 |
+| ----------------------- | -------- | --------------------------------------------------------------------- |
+| `CF_PAGES_PROJECT`      | variable | The Pages project name                                                |
+| `CLOUDFLARE_ACCOUNT_ID` | secret   | Cloudflare account id                                                 |
+| `CLOUDFLARE_API_TOKEN`  | secret   | Custom token: **Account → Cloudflare Pages → Edit**, one account only |
+
+Without `CF_PAGES_PROJECT` the job is skipped.
+
+Domains: `rolestash.com` (primary) and `landing.rolestash.com`, with
+`www.rolestash.com` redirecting to the apex. Leave **Web Analytics off**:
+the privacy policy says the site has none.

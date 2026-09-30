@@ -114,7 +114,6 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: .nvmrc
@@ -136,3 +135,32 @@ jobs:
           node scripts/changelog.ts notes "${version}" > release-notes.md
           gh release create "v${version}" --target "${GITHUB_SHA}" --title "v${version}" --notes-file release-notes.md
           echo "Released **v${version}** from ${GITHUB_SHA}." >> "$GITHUB_STEP_SUMMARY"
+
+  deploy-site:
+    name: Deploy rolestash.com
+    # Only tested commits reach the site: runs after main was fast-forwarded.
+    # Stays off until the Pages project is configured (repo variable + secrets).
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev' && vars.CF_PAGES_PROJECT != ''
+    needs: [promote]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+      # Direct upload to Cloudflare Pages (docs/guides/website.md). Runs on every
+      # promoted push: wrangler uploads only changed files, and deploying always
+      # means a cancelled run can never leave the site behind main. Wrangler is
+      # pinned; the token is limited to "Cloudflare Pages: Edit" on one account.
+      - name: Deploy site/ to Cloudflare Pages
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PROJECT: ${{ vars.CF_PAGES_PROJECT }}
+        run: |
+          npx --yes wrangler@4.144.0 pages deploy site \
+            --project-name "$PROJECT" --branch main --commit-hash "$GITHUB_SHA" --commit-dirty=false
+          echo "Deployed site/ at ${GITHUB_SHA} to Cloudflare Pages (${PROJECT})." >> "$GITHUB_STEP_SUMMARY"
