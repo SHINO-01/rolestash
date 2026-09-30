@@ -7,3 +7,4 @@ playwright-report
 test-results
 tests/fixtures/**/*.html
 docs/reference/supported-sites.md
+supabase/.temp
