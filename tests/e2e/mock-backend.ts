@@ -72,6 +72,7 @@ export async function startMockBackend(): Promise<MockBackend> {
     requests: [],
     entitlement: {
       status: 'trialing',
+      tier: 'pro',
       trial_ends_at: new Date(Date.now() + 30 * 86_400_000).toISOString(),
       current_period_end: null,
       provider_customer_id: null,

@@ -24,6 +24,11 @@ async function sign(body: string, ts = TS, secret = SECRET): Promise<string> {
 }
 
 const USER = '11111111-1111-4111-8111-111111111111';
+const PRICE_TIERS: Record<string, 'pro' | 'advanced'> = {
+  pri_pro_month: 'pro',
+  pri_adv_month: 'advanced',
+};
+const TIERS = (id: string) => PRICE_TIERS[id];
 
 describe('verifyPaddleSignature', () => {
   const body = '{"event_type":"subscription.created"}';
@@ -56,7 +61,7 @@ describe('verifyPaddleSignature', () => {
 
 describe('toBillingEvent', () => {
   it('maps an active subscription', () => {
-    expect(toBillingEvent(subscriptionEvent())).toEqual({
+    expect(toBillingEvent(subscriptionEvent(), TIERS)).toEqual({
       userId: USER,
       occurredAt: '2026-10-01T00:00:00.000Z',
       status: 'active',
@@ -64,7 +69,19 @@ describe('toBillingEvent', () => {
       billingInterval: 'month',
       customerId: 'ctm_01',
       subscriptionId: 'sub_01',
+      tier: 'pro',
     });
+  });
+
+  it('takes the tier from our price map, then the price custom_data, else ignores it', () => {
+    const withPrice = (price: unknown) => subscriptionEvent({ items: [{ price }] });
+    expect(toBillingEvent(withPrice({ id: 'pri_adv_month' }), TIERS)?.tier).toBe('advanced');
+    expect(
+      toBillingEvent(withPrice({ id: 'pri_other', custom_data: { tier: 'advanced' } }), TIERS)
+        ?.tier,
+    ).toBe('advanced');
+    expect(toBillingEvent(withPrice({ id: 'pri_other' }), TIERS)).toBeNull();
+    expect(toBillingEvent(subscriptionEvent({ items: [] }), TIERS)).toBeNull();
   });
 
   it('ends access at cancellation when there is no current period', () => {
@@ -75,6 +92,7 @@ describe('toBillingEvent', () => {
         canceled_at: '2026-10-05T00:00:00Z',
         billing_cycle: { interval: 'year' },
       }),
+      TIERS,
     );
     expect(event).toMatchObject({
       status: 'canceled',
@@ -84,12 +102,14 @@ describe('toBillingEvent', () => {
   });
 
   it('ignores events we do not act on', () => {
-    expect(toBillingEvent({ event_type: 'transaction.completed', data: {} })).toBeNull();
-    expect(toBillingEvent(subscriptionEvent({ custom_data: null }))).toBeNull();
-    expect(toBillingEvent(subscriptionEvent({ custom_data: { user_id: 'nope' } }))).toBeNull();
-    expect(toBillingEvent(subscriptionEvent({ status: 'weird' }))).toBeNull();
-    expect(toBillingEvent(null)).toBeNull();
-    expect(toBillingEvent({ event_type: 'subscription.updated' })).toBeNull();
+    expect(toBillingEvent({ event_type: 'transaction.completed', data: {} }, TIERS)).toBeNull();
+    expect(toBillingEvent(subscriptionEvent({ custom_data: null }), TIERS)).toBeNull();
+    expect(
+      toBillingEvent(subscriptionEvent({ custom_data: { user_id: 'nope' } }), TIERS),
+    ).toBeNull();
+    expect(toBillingEvent(subscriptionEvent({ status: 'weird' }), TIERS)).toBeNull();
+    expect(toBillingEvent(null, TIERS)).toBeNull();
+    expect(toBillingEvent({ event_type: 'subscription.updated' }, TIERS)).toBeNull();
   });
 });
 

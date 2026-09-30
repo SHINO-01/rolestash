@@ -209,7 +209,7 @@ describe('AccountService session and entitlement', () => {
   it('signs out locally when the refresh token is rejected', async () => {
     const s = await signedIn({ [`POST ${SB}/auth/v1/token`]: { status: 400, body: {} } });
     s.ctx.advance(2 * 3600_000);
-    await expect(s.account.checkoutUrl('month')).rejects.toMatchObject({
+    await expect(s.account.checkoutUrl('pro', 'month')).rejects.toMatchObject({
       code: 'session_expired',
     });
     expect(await s.store.get([ACCOUNT_SESSION_KEY, ACCOUNT_ENTITLEMENT_KEY])).toEqual({});
@@ -265,7 +265,9 @@ describe('AccountService session and entitlement', () => {
       plan: { plan: 'pro', reason: 'subscribed', endsAt: '2026-11-01T00:00:00.000Z' },
       hasBillingAccount: true,
     });
-    expect(await s.account.checkoutUrl('year')).toBe('https://rolestash.com/pay/?_ptxn=year');
+    expect(await s.account.checkoutUrl('pro', 'year')).toBe(
+      'https://rolestash.com/pay/?_ptxn=year',
+    );
     expect(await s.account.billingPortalUrl()).toBe('https://portal');
   });
 
@@ -280,7 +282,7 @@ describe('AccountService session and entitlement', () => {
         body: { error: 'no_subscription' },
       },
     });
-    await expect(s.account.checkoutUrl('month')).rejects.toMatchObject({
+    await expect(s.account.checkoutUrl('pro', 'month')).rejects.toMatchObject({
       code: 'already_subscribed',
     });
     await expect(s.account.billingPortalUrl()).rejects.toMatchObject({ code: 'no_subscription' });

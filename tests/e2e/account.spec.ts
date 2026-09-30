@@ -93,30 +93,30 @@ test.describe('accounts', () => {
     expect(read?.headers.authorization).toBe('Bearer e2e-access');
   });
 
-  test('the free plan stops the 26th active job with a clear way forward', async ({
+  test('the free plan stops the 16th active job with a clear way forward', async ({
     context,
     worker,
     extensionId,
     backend: _backend,
   }) => {
-    await seedActiveJobs(worker, 25);
+    await seedActiveJobs(worker, 15);
     const page = await context.newPage();
     await page.goto(`chrome-extension://${extensionId}/board.html`);
     await expect(page.getByRole('status', { name: 'Plan notice' })).toContainText(
-      "You've reached the free plan's 25 active jobs",
+      "You've reached the Free plan's 15 active jobs",
     );
 
     await page.getByRole('button', { name: 'Add job' }).click();
     const dialog = page.getByRole('dialog');
     await dialog.getByLabel('Job title').fill('One too many');
     await dialog.getByRole('button', { name: /add/i }).last().click();
-    await expect(dialog).toContainText('The free plan holds 25 active jobs');
+    await expect(dialog).toContainText('Your plan holds 15 active jobs');
     const count = await worker.evaluate(
       async () =>
         Object.keys(await chrome.storage.local.get(null)).filter((k) => k.startsWith('job:'))
           .length,
     );
-    expect(count).toBe(25);
+    expect(count).toBe(15);
 
     // The banner leads signed-out users to the trial.
     await page.keyboard.press('Escape');
@@ -147,7 +147,7 @@ test.describe('accounts', () => {
     await checkout.waitForLoadState();
     expect(checkout.url()).toBe(`${MOCK_BACKEND}/pay/?_ptxn=txn_e2e`);
     const call = backend.requests.find((r) => r.path === '/functions/v1/create-checkout');
-    expect(call?.body).toEqual({ interval: 'month' });
+    expect(call?.body).toEqual({ tier: 'pro', interval: 'month' });
     expect(call?.headers.authorization).toBe('Bearer e2e-access');
   });
 

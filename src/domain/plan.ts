@@ -3,12 +3,25 @@ import type { Job } from './job';
 import { findStage, type Stage } from './stage';
 
 /**
- * Free vs Pro (ADR-0009). Pure rules only: where the entitlement comes from
- * (Supabase) and where the limit is enforced (JobService) live elsewhere.
+ * Free, Pro and Advanced (ADR-0009, ADR-0013). Pure rules only: where the
+ * entitlement comes from (Supabase) and where limits are enforced
+ * (JobService) live elsewhere.
  */
 
-/** Jobs outside a `lost` stage that the free plan may hold. */
-export const FREE_ACTIVE_JOB_LIMIT = 25;
+/** Plans, lowest first. Trials are Pro. */
+export const PLANS = ['free', 'pro', 'advanced'] as const;
+export type Plan = (typeof PLANS)[number];
+/** The paid plans a subscription can be on. */
+export type PaidPlan = Exclude<Plan, 'free'>;
+export const PAID_PLANS: readonly PaidPlan[] = ['pro', 'advanced'];
+
+/** Jobs outside a `lost` stage each plan may hold. */
+export const ACTIVE_JOB_LIMITS: Readonly<Record<Plan, number>> = {
+  free: 15,
+  pro: 45,
+  advanced: 95,
+};
+export const FREE_ACTIVE_JOB_LIMIT = ACTIVE_JOB_LIMITS.free;
 export const TRIAL_DAYS = 30;
 /** How long a cached Pro entitlement stays valid without reaching the server. */
 export const OFFLINE_GRACE_DAYS = 7;
@@ -34,12 +47,12 @@ export const EntitlementSchema = z.object({
   status: z.enum(ENTITLEMENT_STATUSES),
   trialEndsAt: IsoDateTime.optional(),
   currentPeriodEnd: IsoDateTime.optional(),
+  /** Which paid plan the trial or subscription is for. Trials are Pro. */
+  tier: z.enum(['pro', 'advanced']).default('pro'),
   /** When this snapshot was fetched; drives the offline grace period. */
   checkedAt: IsoDateTime,
 });
 export type Entitlement = z.infer<typeof EntitlementSchema>;
-
-export type Plan = 'free' | 'pro';
 
 export type PlanReason =
   /** Signed out, or no entitlement fetched yet. */
@@ -50,13 +63,13 @@ export type PlanReason =
   | 'ending'
   | 'trial-ended'
   | 'lapsed'
-  /** Pro on paper, but not confirmed with the server for too long. */
+  /** Paid on paper, but not confirmed with the server for too long. */
   | 'stale';
 
 export interface PlanState {
   plan: Plan;
   reason: PlanReason;
-  /** When Pro access ends, if known. */
+  /** When paid access ends or renews, if known. */
   endsAt?: string;
   /** Whole days of trial left (ceil), only while trialing. */
   trialDaysLeft?: number;
@@ -68,6 +81,7 @@ const before = (now: Date, iso: string | undefined, slackDays = 0) =>
 export function planOf(entitlement: Entitlement | undefined, now: Date): PlanState {
   if (!entitlement) return { plan: 'free', reason: 'no-account' };
   const { status, trialEndsAt, currentPeriodEnd, checkedAt } = entitlement;
+  const tier = entitlement.tier;
 
   let state: PlanState;
   switch (status) {
@@ -88,7 +102,7 @@ export function planOf(entitlement: Entitlement | undefined, now: Date): PlanSta
     case 'past_due':
       state = before(now, currentPeriodEnd, RENEWAL_LEEWAY_DAYS)
         ? {
-            plan: 'pro',
+            plan: tier,
             reason: 'subscribed',
             ...(currentPeriodEnd ? { endsAt: currentPeriodEnd } : {}),
           }
@@ -97,7 +111,7 @@ export function planOf(entitlement: Entitlement | undefined, now: Date): PlanSta
     case 'canceled':
       state = before(now, currentPeriodEnd)
         ? {
-            plan: 'pro',
+            plan: tier,
             reason: 'ending',
             ...(currentPeriodEnd ? { endsAt: currentPeriodEnd } : {}),
           }
@@ -109,13 +123,13 @@ export function planOf(entitlement: Entitlement | undefined, now: Date): PlanSta
       break;
   }
 
-  if (state.plan === 'pro' && !before(now, checkedAt, OFFLINE_GRACE_DAYS)) {
+  if (state.plan !== 'free' && !before(now, checkedAt, OFFLINE_GRACE_DAYS)) {
     return { plan: 'free', reason: 'stale' };
   }
   return state;
 }
 
-/** Jobs that count toward the free limit: anything not in a `lost` stage. */
+/** Jobs that count toward a plan's limit: anything not in a `lost` stage. */
 export function countActiveJobs(jobs: readonly Job[], stages: readonly Stage[]): number {
   return jobs.filter((job) => findStage(stages, job.stageId)?.kind !== 'lost').length;
 }
@@ -126,11 +140,17 @@ export interface LimitCheck {
   limit: number;
 }
 
-/** May `adding` more jobs be created? Existing jobs are never affected. */
+/**
+ * May `adding` more jobs be created on `plan`? Existing jobs are never
+ * affected: after a downgrade every job stays, and only new ones are blocked
+ * while the account is at or over its plan's limit.
+ */
 export function checkJobLimit(plan: Plan, active: number, adding = 1): LimitCheck {
-  return {
-    allowed: plan === 'pro' || active + adding <= FREE_ACTIVE_JOB_LIMIT,
-    active,
-    limit: FREE_ACTIVE_JOB_LIMIT,
-  };
+  const limit = ACTIVE_JOB_LIMITS[plan];
+  return { allowed: active + adding <= limit, active, limit };
+}
+
+/** The next plan up that holds more jobs, if any (for upgrade prompts). */
+export function nextPlan(plan: Plan): PaidPlan | undefined {
+  return plan === 'free' ? 'pro' : plan === 'pro' ? 'advanced' : undefined;
 }

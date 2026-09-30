@@ -34,10 +34,10 @@ export class DuplicateJobError extends Error {
   }
 }
 
-/** Thrown when a new job would exceed the free plan's active-job limit. */
+/** Thrown when a new job would exceed the current plan's active-job limit. */
 export class JobLimitError extends Error {
   constructor(readonly check: LimitCheck) {
-    super(`The free plan holds ${check.limit} active jobs.`);
+    super(`This plan holds ${check.limit} active jobs.`);
     this.name = 'JobLimitError';
   }
 }

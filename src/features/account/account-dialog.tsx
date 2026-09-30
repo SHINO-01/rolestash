@@ -1,7 +1,7 @@
 import { ArrowLeft, ExternalLink, LogOut, Mail, RefreshCw, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { browser } from 'wxt/browser';
-import { countActiveJobs, FREE_ACTIVE_JOB_LIMIT } from '@/domain/plan';
+import { ACTIVE_JOB_LIMITS, countActiveJobs, PAID_PLANS, type PaidPlan } from '@/domain/plan';
 import type { AccountService, AccountState } from '@/services/account-service';
 import { Button } from '@/ui/components/button';
 import { Chip } from '@/ui/components/chip';
@@ -9,7 +9,14 @@ import { Field, Input } from '@/ui/components/field';
 import { Dialog } from '@/ui/components/overlay';
 import { useToast } from '@/ui/components/toast';
 import { useJobs, useSettings } from '@/ui/hooks/services';
-import { backendErrorMessage, planChip, planSummary } from './plan-copy';
+import {
+  backendErrorMessage,
+  PLAN_NAMES,
+  PLAN_PITCH,
+  PLAN_PRICES,
+  planChip,
+  planSummary,
+} from './plan-copy';
 
 const SITE = 'https://rolestash.com';
 
@@ -238,7 +245,20 @@ function SignedIn({ account, state }: { account: AccountService; state: AccountS
   const { plan } = state;
   const chip = planChip(plan);
   const active = countActiveJobs(jobs, stages);
-  const paying = plan.reason === 'subscribed' || plan.reason === 'ending';
+  // A live subscription is switched in place; everyone else goes to checkout.
+  const subscribed = plan.reason === 'subscribed' && plan.plan !== 'free';
+  const limit = ACTIVE_JOB_LIMITS[plan.plan];
+
+  const checkout = (tier: PaidPlan, interval: 'month' | 'year') =>
+    void run(`${tier}-${interval}`, async () => {
+      await openTab(account.checkoutUrl(tier, interval));
+      setAwaitingPayment(true);
+    });
+  const switchTo = (tier: PaidPlan, interval: 'month' | 'year') =>
+    void run(`${tier}-${interval}`, async () => {
+      await account.changePlan(tier, interval);
+      toast({ message: `Switched to ${PLAN_NAMES[tier]}`, tone: 'success' });
+    });
 
   return (
     <div className="flex flex-col gap-4">
@@ -248,49 +268,42 @@ function SignedIn({ account, state }: { account: AccountService; state: AccountS
           <Chip tone={chip.tone}>{chip.label}</Chip>
         </div>
         <p className="text-muted mt-2 text-sm">{planSummary(plan)}</p>
-        {plan.plan === 'free' ? (
-          <p className="text-muted mt-1 text-sm">
-            {active} of {FREE_ACTIVE_JOB_LIMIT} active jobs used. Rejected and withdrawn jobs don't
-            count.
-          </p>
-        ) : null}
+        <p className="text-muted mt-1 text-sm">
+          {active} of {limit} active jobs used. Rejected and withdrawn jobs don't count.
+        </p>
       </section>
 
-      {!paying ? (
-        <section className="flex flex-col gap-2">
-          <span className="text-sm font-semibold">Upgrade to Pro</span>
-          <div className="grid grid-cols-2 gap-2">
-            <Button
-              variant="primary"
-              loading={busy === 'month'}
-              disabled={busy !== null}
-              onClick={() =>
-                void run('month', async () => {
-                  await openTab(account.checkoutUrl('month'));
-                  setAwaitingPayment(true);
-                })
-              }
-            >
-              US$7 / month
-            </Button>
-            <Button
-              loading={busy === 'year'}
-              disabled={busy !== null}
-              onClick={() =>
-                void run('year', async () => {
-                  await openTab(account.checkoutUrl('year'));
-                  setAwaitingPayment(true);
-                })
-              }
-            >
-              US$59 / year
-            </Button>
+      <section className="flex flex-col gap-3">
+        <span className="text-sm font-semibold">
+          {subscribed ? 'Change plan' : 'Choose a plan'}
+        </span>
+        {PAID_PLANS.filter((tier) => !(subscribed && tier === plan.plan)).map((tier) => (
+          <div key={tier} className="border-line flex flex-col gap-2 rounded-xl border p-3">
+            <div>
+              <span className="text-sm font-semibold">{PLAN_NAMES[tier]}</span>
+              <p className="text-muted text-sm">{PLAN_PITCH[tier]}</p>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {(['month', 'year'] as const).map((interval) => (
+                <Button
+                  key={interval}
+                  variant={interval === 'month' ? 'primary' : 'secondary'}
+                  loading={busy === `${tier}-${interval}`}
+                  disabled={busy !== null}
+                  onClick={() => (subscribed ? switchTo(tier, interval) : checkout(tier, interval))}
+                >
+                  {PLAN_PRICES[tier][interval]}
+                </Button>
+              ))}
+            </div>
           </div>
-          <p className="text-subtle text-xs">
-            Secure checkout by Paddle, our reseller, in a new tab. 14-day money-back guarantee.
-          </p>
-        </section>
-      ) : null}
+        ))}
+        <p className="text-subtle text-xs">
+          {subscribed
+            ? 'Paddle, our reseller, charges or credits the difference straight away.'
+            : 'Secure checkout by Paddle, our reseller, in a new tab. Local prices in the UK, Ireland and Australia. 14-day money-back guarantee.'}
+        </p>
+      </section>
 
       <div className="flex flex-wrap gap-2">
         {state.hasBillingAccount ? (

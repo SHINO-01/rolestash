@@ -1,4 +1,4 @@
-import { FREE_ACTIVE_JOB_LIMIT, type Plan } from '@/domain/plan';
+import { ACTIVE_JOB_LIMITS, FREE_ACTIVE_JOB_LIMIT, type Plan } from '@/domain/plan';
 import { JobLimitError, JobService, type PlanProvider } from '@/services/job-service';
 import { JobRepository } from '@/storage/job-repository';
 import { MemoryKeyValueStore } from '@/storage/key-value-store';
@@ -51,9 +51,12 @@ describe('free-plan limit in JobService', () => {
     await expect(service.createManual({ posting })).rejects.toBeInstanceOf(JobLimitError);
   });
 
-  it('never blocks Pro, and never blocks edits or moves on Free', async () => {
-    const pro = await setup('pro', { active: FREE_ACTIVE_JOB_LIMIT * 2 });
+  it('gives Pro 45 and Advanced 95, and never blocks edits or moves on Free', async () => {
+    const pro = await setup('pro', { active: ACTIVE_JOB_LIMITS.pro - 1 });
     await expect(pro.service.createManual({ posting })).resolves.toBeDefined();
+    await expect(pro.service.createManual({ posting })).rejects.toBeInstanceOf(JobLimitError);
+    const advanced = await setup('advanced', { active: ACTIVE_JOB_LIMITS.pro + 10 });
+    await expect(advanced.service.createManual({ posting })).resolves.toBeDefined();
 
     const free = await setup('free', { active: FREE_ACTIVE_JOB_LIMIT + 3 });
     await expect(free.service.update('a0', { notes: 'still editable' })).resolves.toMatchObject({

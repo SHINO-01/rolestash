@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ENTITLEMENT_STATUSES } from '@/domain/plan';
+import { ENTITLEMENT_STATUSES, type PaidPlan } from '@/domain/plan';
 
 /**
  * A small client for the Supabase endpoints Rolestash uses (ADR-0011):
@@ -30,6 +30,8 @@ export interface RemoteEntitlement {
   status: (typeof ENTITLEMENT_STATUSES)[number];
   trialEndsAt?: string;
   currentPeriodEnd?: string;
+  /** Plan of the trial or subscription (trials are Pro). */
+  tier: PaidPlan;
   /** True once a billing provider knows this customer (portal available). */
   hasBillingAccount: boolean;
 }
@@ -65,6 +67,7 @@ const EntitlementRow = z.object({
   trial_ends_at: z.string().nullish(),
   current_period_end: z.string().nullish(),
   provider_customer_id: z.string().nullish(),
+  tier: z.enum(['pro', 'advanced']).nullish(),
 });
 
 export class SupabaseClient {
@@ -180,7 +183,7 @@ export class SupabaseClient {
 
   async entitlement(accessToken: string): Promise<RemoteEntitlement | undefined> {
     const { status, data } = await this.request(
-      '/rest/v1/entitlements?select=status,trial_ends_at,current_period_end,provider_customer_id&limit=1',
+      '/rest/v1/entitlements?select=status,tier,trial_ends_at,current_period_end,provider_customer_id&limit=1',
       { token: accessToken },
     );
     if (status === 401) throw new BackendError('session_expired', status);
@@ -195,6 +198,7 @@ export class SupabaseClient {
       ...(row.current_period_end
         ? { currentPeriodEnd: new Date(row.current_period_end).toISOString() }
         : {}),
+      tier: row.tier ?? 'pro',
       hasBillingAccount: Boolean(row.provider_customer_id),
     };
   }
@@ -218,6 +222,19 @@ export class SupabaseClient {
     const url = (data as { url?: unknown } | null)?.url;
     if (status >= 300 || typeof url !== 'string') this.fail(status, data);
     return url;
+  }
+
+  /** Moves a live subscription to another plan/interval (prorated by Paddle). */
+  async changePlan(accessToken: string, body: { tier: PaidPlan; interval: 'month' | 'year' }) {
+    const { status, data } = await this.request('/functions/v1/change-plan', {
+      body,
+      token: accessToken,
+    });
+    const error = (data as { error?: unknown } | null)?.error;
+    if (status === 401) throw new BackendError('session_expired', status);
+    if (status === 404 && error === 'no_subscription')
+      throw new BackendError('no_subscription', status);
+    if (status >= 300) this.fail(status, data);
   }
 
   async deleteAccount(accessToken: string): Promise<void> {

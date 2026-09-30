@@ -1,14 +1,16 @@
 # Roadmap
 
-Jobtrail is moving from a free local tool to **freemium** (ADR-0009):
+Rolestash is a freemium product with three plans (ADR-0013):
 
-- **Free:** local-only, no account, up to 25 active jobs.
-- **Pro:** US$7/month or US$59/year, with a 30-day trial when you sign in. Every item still follows AGENTS.md:
+- **Free:** no account, up to 15 active jobs, capture from every site, CSV/JSON export.
+- **Pro:** US$7/month or US$59/year, 45 active jobs, full history, tips and
+  tricks. 30-day trial on sign-in, no card.
+- **Advanced:** US$15/month or US$159/year, 95 active jobs, automatic status
+  updates from job emails.
 
-- no AI/LLM vendors;
-- local-first;
-- least privilege;
-- close to zero running cost until revenue arrives.
+Local prices in the UK, Ireland and Australia. Every item still follows
+AGENTS.md: no AI/LLM vendors, local-first, least privilege, and close to
+zero running cost until revenue arrives.
 
 Phases are listed in order. Within a phase, items are in priority order.
 The Chrome Web Store launch comes at the end of **Phase 1**. We don't list
@@ -29,8 +31,7 @@ are the launch.
     one-time code fallback.
   - Custom SMTP through Resend (free: 3,000 emails/month, 100/day).
 - **Free tier and trial.**
-  - Enforce `FREE_ACTIVE_JOB_LIMIT` (25) at capture and at manual add, with an
-    upgrade prompt.
+  - ~~Per-plan limits (15 / 45 / 95)~~ done (ADR-0013).
   - The Pro trial starts at sign-in, with no card.
   - The extension caches a signed entitlement with a 7-day offline grace
     period.

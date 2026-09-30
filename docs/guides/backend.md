@@ -95,6 +95,7 @@ timestamp as their version. Rewrite it to the file's version in
 | `paddle-webhook`  | Paddle (signed, no JWT) | Verifies `Paddle-Signature`, applies `subscription.*` events                      |
 | `create-checkout` | Extension (user JWT)    | Creates a Paddle transaction with `custom_data.user_id`; returns its checkout URL |
 | `billing-portal`  | Extension (user JWT)    | Returns a one-time Paddle customer-portal link                                    |
+| `change-plan`     | Extension (user JWT)    | Moves a live subscription between Pro and Advanced (prorated)                     |
 | `delete-account`  | Extension (user JWT)    | Cancels a live subscription immediately, then deletes the user                    |
 
 All the logic is in `supabase/functions/_shared/`. It's plain TypeScript
@@ -106,7 +107,8 @@ coverage gate as the core. Each `index.ts` only wires a handler to
 
 ```bash
 npx supabase secrets set PADDLE_ENV=sandbox PADDLE_API_KEY=… PADDLE_WEBHOOK_SECRET=… \
-  PADDLE_PRICE_MONTHLY=pri_… PADDLE_PRICE_YEARLY=pri_…
+  PADDLE_PRICE_PRO_MONTHLY=pri_… PADDLE_PRICE_PRO_YEARLY=pri_… \
+  PADDLE_PRICE_ADVANCED_MONTHLY=pri_… PADDLE_PRICE_ADVANCED_YEARLY=pri_…
 npx supabase functions deploy
 ```
 

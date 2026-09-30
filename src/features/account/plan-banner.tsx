@@ -1,11 +1,12 @@
 import { Sparkles } from 'lucide-react';
-import { countActiveJobs, FREE_ACTIVE_JOB_LIMIT } from '@/domain/plan';
+import { ACTIVE_JOB_LIMITS, countActiveJobs, nextPlan } from '@/domain/plan';
 import type { AccountState } from '@/services/account-service';
 import { Button } from '@/ui/components/button';
 import { useJobs, useSettings } from '@/ui/hooks/services';
+import { PLAN_NAMES } from './plan-copy';
 
-/** Warn this many jobs before the free limit. */
-export const LIMIT_WARNING_AT = FREE_ACTIVE_JOB_LIMIT - 5;
+/** Warn this many jobs before a plan's limit. */
+export const LIMIT_WARNING_MARGIN = 5;
 const TRIAL_WARNING_DAYS = 5;
 
 /** A one-line nudge under the header, only when there's something to act on. */
@@ -20,21 +21,24 @@ export function PlanBanner({
   const { stages } = useSettings();
   const active = countActiveJobs(jobs, stages);
   const { plan } = state;
+  const limit = ACTIVE_JOB_LIMITS[plan.plan];
 
   let message: string | undefined;
-  let action = 'See Pro';
+  let action = 'Plans';
   if (plan.reason === 'stale') {
     message = "We couldn't confirm your Pro plan for over a week, so you're on Free for now.";
     action = 'Check plan';
   } else if (plan.reason === 'trial' && (plan.trialDaysLeft ?? 0) <= TRIAL_WARNING_DAYS) {
     message = `Your Pro trial ends in ${String(plan.trialDaysLeft ?? 0)} day${plan.trialDaysLeft === 1 ? '' : 's'}. Your jobs stay either way.`;
     action = 'Keep Pro';
-  } else if (plan.plan === 'free' && active >= FREE_ACTIVE_JOB_LIMIT) {
-    message = `You've reached the free plan's ${String(FREE_ACTIVE_JOB_LIMIT)} active jobs. Move finished ones to Rejected or Withdrawn, or upgrade for unlimited jobs.`;
-    action = state.signedIn ? 'Upgrade' : 'Try Pro free';
-  } else if (plan.plan === 'free' && active >= LIMIT_WARNING_AT) {
-    message = `${String(active)} of ${String(FREE_ACTIVE_JOB_LIMIT)} free active jobs used.`;
-    action = state.signedIn ? 'Upgrade' : 'Try Pro free';
+  } else if (active >= limit - LIMIT_WARNING_MARGIN) {
+    const name = PLAN_NAMES[plan.plan];
+    const next = nextPlan(plan.plan);
+    message =
+      active >= limit
+        ? `You've reached the ${name} plan's ${String(limit)} active jobs. Move finished ones to Rejected or Withdrawn${next ? `, or upgrade to ${PLAN_NAMES[next]} for ${String(ACTIVE_JOB_LIMITS[next])}` : ''}.`
+        : `${String(active)} of ${String(limit)} active jobs used on ${name}.`;
+    action = !next ? 'Plan' : state.signedIn ? `Get ${PLAN_NAMES[next]}` : 'Try Pro free';
   }
   if (!message) return null;
 

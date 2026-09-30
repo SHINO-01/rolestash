@@ -2,6 +2,8 @@ import {
   PaddleApiError,
   PaddleClient,
   toBillingEvent,
+  type BillingInterval,
+  type PaidTier,
   verifyPaddleSignature,
   type PaddleConfig,
 } from './paddle.ts';
@@ -16,7 +18,7 @@ export interface FunctionEnv {
   supabase: SupabaseAdminConfig;
   paddle: PaddleConfig & {
     webhookSecret: string;
-    prices: { month: string; year: string };
+    prices: Record<PaidTier, Record<BillingInterval, string>>;
   };
 }
 
@@ -42,6 +44,8 @@ export function json(status: number, body: unknown): Response {
 }
 
 const PAID = new Set(['active', 'past_due', 'paused']);
+/** Subscriptions that can still be changed (not paused or ended). */
+const LIVE = new Set(['active', 'past_due']);
 
 async function authenticate(req: Request, admin: SupabaseAdmin): Promise<AuthUser | Response> {
   const token = /^Bearer (.+)$/.exec(req.headers.get('Authorization') ?? '')?.[1];
@@ -76,11 +80,30 @@ function userEndpoint(
   };
 }
 
-/** POST /functions/v1/create-checkout  { interval: 'month' | 'year' } → { url } */
+/** Parses `{ tier?, interval }`; tier defaults to Pro for older clients. */
+function planChoice(body: { tier?: unknown; interval?: unknown }) {
+  const tier: PaidTier | null =
+    body.tier === undefined || body.tier === 'pro'
+      ? 'pro'
+      : body.tier === 'advanced'
+        ? 'advanced'
+        : null;
+  const interval: BillingInterval | null =
+    body.interval === 'year' ? 'year' : body.interval === 'month' ? 'month' : null;
+  return tier && interval ? { tier, interval } : null;
+}
+
+/** Reverse lookup for webhooks: which tier a price ID belongs to. */
+export function tierOfPrice(env: FunctionEnv, priceId: string): PaidTier | undefined {
+  for (const tier of ['pro', 'advanced'] as const)
+    if (Object.values(env.paddle.prices[tier]).includes(priceId)) return tier;
+  return undefined;
+}
+
+/** POST /functions/v1/create-checkout  { tier, interval } → { url } */
 export const handleCreateCheckout = userEndpoint(async ({ req, user, admin, paddle, env }) => {
-  const body = (await req.json().catch(() => ({}))) as { interval?: unknown };
-  const interval = body.interval === 'year' ? 'year' : body.interval === 'month' ? 'month' : null;
-  if (!interval) return json(400, { error: 'invalid_interval' });
+  const choice = planChoice((await req.json().catch(() => ({}))) as Record<string, unknown>);
+  if (!choice) return json(400, { error: 'invalid_plan' });
 
   const entitlement = await admin.entitlement(user.id);
   if (entitlement && PAID.has(entitlement.status) && entitlement.provider_subscription_id) {
@@ -92,11 +115,30 @@ export const handleCreateCheckout = userEndpoint(async ({ req, user, admin, padd
     entitlement?.provider_customer_id ??
     (user.email ? await paddle.customerForEmail(user.email) : null);
   const url = await paddle.createCheckout({
-    priceId: env.paddle.prices[interval],
+    priceId: env.paddle.prices[choice.tier][choice.interval],
     userId: user.id,
     customerId,
   });
   return json(200, { url });
+});
+
+/**
+ * POST /functions/v1/change-plan  { tier, interval } → { changed: true }.
+ * Moves a live subscription between Pro and Advanced (or monthly and yearly);
+ * Paddle prorates, and the webhook updates the entitlement.
+ */
+export const handleChangePlan = userEndpoint(async ({ req, user, admin, paddle, env }) => {
+  const choice = planChoice((await req.json().catch(() => ({}))) as Record<string, unknown>);
+  if (!choice) return json(400, { error: 'invalid_plan' });
+  const entitlement = await admin.entitlement(user.id);
+  if (!entitlement?.provider_subscription_id || !LIVE.has(entitlement.status)) {
+    return json(404, { error: 'no_subscription' });
+  }
+  await paddle.changePrice(
+    entitlement.provider_subscription_id,
+    env.paddle.prices[choice.tier][choice.interval],
+  );
+  return json(200, { changed: true });
 });
 
 /** POST /functions/v1/billing-portal → { url } */
@@ -146,7 +188,7 @@ export async function handlePaddleWebhook(req: Request, deps: Deps): Promise<Res
   } catch {
     return json(400, { error: 'bad_json' });
   }
-  const event = toBillingEvent(payload);
+  const event = toBillingEvent(payload, (priceId) => tierOfPrice(deps.env, priceId));
   if (!event) return json(200, { ignored: true });
   try {
     const applied = await new SupabaseAdmin(deps.env.supabase, deps.fetch).applyBillingEvent(

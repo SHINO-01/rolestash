@@ -119,9 +119,9 @@ export function CapturePopup() {
             className="bg-accent-soft text-accent-ink mb-3 flex flex-col gap-2 rounded-xl p-3 text-sm"
           >
             <p>
-              <strong>Free plan limit reached.</strong> You have {limited.check.active} of{' '}
-              {limited.check.limit} active jobs. Move finished ones to Rejected or Withdrawn, or try
-              Pro free for 30 days.
+              <strong>Plan limit reached.</strong> You have {limited.check.active} of{' '}
+              {limited.check.limit} active jobs. Move finished ones to Rejected or Withdrawn, or
+              open Account for a bigger plan.
             </p>
             <Button
               size="sm"

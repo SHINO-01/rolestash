@@ -1,8 +1,10 @@
 import {
   handleBillingPortal,
+  handleChangePlan,
   handleCreateCheckout,
   handleDeleteAccount,
   handlePaddleWebhook,
+  tierOfPrice,
   type Deps,
 } from '../../../supabase/functions/_shared/handlers.ts';
 import { readEnv } from '../../../supabase/functions/_shared/env.ts';
@@ -21,8 +23,10 @@ const ENV = readEnv(
       SUPABASE_SERVICE_ROLE_KEY: 'service',
       PADDLE_API_KEY: 'pdl_key',
       PADDLE_WEBHOOK_SECRET: 'whsec',
-      PADDLE_PRICE_MONTHLY: 'pri_month',
-      PADDLE_PRICE_YEARLY: 'pri_year',
+      PADDLE_PRICE_PRO_MONTHLY: 'pri_pro_month',
+      PADDLE_PRICE_PRO_YEARLY: 'pri_pro_year',
+      PADDLE_PRICE_ADVANCED_MONTHLY: 'pri_adv_month',
+      PADDLE_PRICE_ADVANCED_YEARLY: 'pri_adv_year',
     })[name],
 );
 
@@ -86,7 +90,7 @@ describe('user endpoints', () => {
     });
     const paddleCall = calls.find((c) => c.url.endsWith('/transactions'));
     expect(paddleCall?.body).toMatchObject({
-      items: [{ price_id: 'pri_year' }],
+      items: [{ price_id: 'pri_pro_year' }],
       custom_data: { user_id: USER.id },
       customer_id: 'ctm_new',
     });
@@ -141,6 +145,9 @@ describe('user endpoints', () => {
       }),
     });
     expect((await handleCreateCheckout(post({ interval: 'week' }), d)).status).toBe(400);
+    expect(
+      (await handleCreateCheckout(post({ tier: 'platinum', interval: 'month' }), d)).status,
+    ).toBe(400);
     const res = await handleCreateCheckout(post({ interval: 'month' }), d);
     expect(res.status).toBe(409);
     expect(await res.json()).toEqual({ error: 'already_subscribed' });
@@ -235,6 +242,68 @@ describe('user endpoints', () => {
   });
 });
 
+describe('plan choice and change-plan', () => {
+  it('create-checkout uses the price for the chosen tier and interval', async () => {
+    const { deps: d, calls } = deps({
+      [`GET ${SB}/rest/v1/entitlements`]: entitlementRoute({
+        status: 'expired',
+        provider_customer_id: 'ctm_1',
+      }),
+      'POST https://sandbox-api.paddle.com/transactions': {
+        status: 201,
+        body: { data: { checkout: { url: 'https://rolestash.com/pay/?_ptxn=txn_a' } } },
+      },
+    });
+    expect(
+      (await handleCreateCheckout(post({ tier: 'advanced', interval: 'year' }), d)).status,
+    ).toBe(200);
+    expect(calls.find((c) => c.url.endsWith('/transactions'))?.body).toMatchObject({
+      items: [{ price_id: 'pri_adv_year' }],
+    });
+  });
+
+  it('change-plan moves a live subscription to the new price with proration', async () => {
+    const { deps: d, calls } = deps({
+      [`GET ${SB}/rest/v1/entitlements`]: entitlementRoute({
+        status: 'active',
+        provider_subscription_id: 'sub_01',
+      }),
+      'PATCH https://sandbox-api.paddle.com/subscriptions/sub_01': {
+        status: 200,
+        body: { data: {} },
+      },
+    });
+    const res = await handleChangePlan(post({ tier: 'advanced', interval: 'month' }), d);
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ changed: true });
+    expect(calls.find((c) => c.method === 'PATCH')?.body).toEqual({
+      items: [{ price_id: 'pri_adv_month', quantity: 1 }],
+      proration_billing_mode: 'prorated_immediately',
+    });
+  });
+
+  it('change-plan needs a live subscription and a valid plan', async () => {
+    for (const row of [
+      null,
+      { status: 'trialing' },
+      { status: 'paused', provider_subscription_id: 'sub_01' },
+    ]) {
+      const { deps: d } = deps({ [`GET ${SB}/rest/v1/entitlements`]: entitlementRoute(row) });
+      expect((await handleChangePlan(post({ tier: 'pro', interval: 'month' }), d)).status).toBe(
+        404,
+      );
+    }
+    const { deps: d } = deps({});
+    expect((await handleChangePlan(post({ tier: 'pro' }), d)).status).toBe(400);
+  });
+
+  it('maps price IDs back to tiers', () => {
+    expect(tierOfPrice(ENV, 'pri_adv_year')).toBe('advanced');
+    expect(tierOfPrice(ENV, 'pri_pro_month')).toBe('pro');
+    expect(tierOfPrice(ENV, 'pri_unknown')).toBeUndefined();
+  });
+});
+
 describe('paddle-webhook', () => {
   async function signedRequest(payload: unknown, secret = 'whsec') {
     const body = JSON.stringify(payload);
@@ -271,6 +340,7 @@ describe('paddle-webhook', () => {
       p_provider: 'paddle',
       p_customer_id: 'ctm_01',
       p_subscription_id: 'sub_01',
+      p_tier: 'pro',
     });
     expect(calls[0]?.headers.apikey).toBe('service');
   });
@@ -283,6 +353,15 @@ describe('paddle-webhook', () => {
     expect((await handlePaddleWebhook(unsigned, d)).status).toBe(401);
     expect((await handlePaddleWebhook(new Request('https://fn'), d)).status).toBe(405);
     expect(calls).toHaveLength(0);
+  });
+
+  it('records the tier of the subscribed price', async () => {
+    const { deps: d, calls } = deps({
+      [`POST ${SB}/rest/v1/rpc/apply_billing_event`]: { status: 200, body: true },
+    });
+    const upgraded = subscriptionEvent({ items: [{ price: { id: 'pri_adv_year' } }] });
+    await handlePaddleWebhook(await signedRequest(upgraded), d);
+    expect(calls[0]?.body).toMatchObject({ p_tier: 'advanced' });
   });
 
   it('acknowledges events it ignores, and asks Paddle to retry on failure', async () => {

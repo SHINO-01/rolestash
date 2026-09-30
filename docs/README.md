@@ -23,6 +23,7 @@ Start with **Architecture → Overview**, then go by task.
 | [0010](adr/0010-rename-to-rolestash.md)             | Rename the product to Rolestash                                       |
 | [0011](adr/0011-accounts-implementation.md)         | Accounts: small client, server trials, off by default                 |
 | [0012](adr/0012-google-sign-in-via-id-token.md)     | Google sign-in via rolestash.com and an ID token; pinned extension ID |
+| [0013](adr/0013-three-plans.md)                     | Free, Pro and Advanced plans; per-plan limits; local prices           |
 
 New decision? Copy [the template](adr/0000-template.md).
 

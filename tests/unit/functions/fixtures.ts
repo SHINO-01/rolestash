@@ -15,6 +15,7 @@ export function subscriptionEvent(overrides: Record<string, unknown> = {}) {
         ends_at: '2026-11-01T00:00:00Z',
       },
       billing_cycle: { interval: 'month', frequency: 1 },
+      items: [{ price: { id: 'pri_pro_month', custom_data: null } }],
       ...overrides,
     },
   };

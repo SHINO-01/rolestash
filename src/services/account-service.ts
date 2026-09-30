@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { EntitlementSchema, planOf, type Plan, type PlanState } from '@/domain/plan';
+import { EntitlementSchema, planOf, type PaidPlan, type Plan, type PlanState } from '@/domain/plan';
 import type { KeyValueStore } from '@/storage/key-value-store';
 import { ACCOUNT_ENTITLEMENT_KEY, ACCOUNT_SESSION_KEY } from '@/storage/keys';
 import {
@@ -138,6 +138,7 @@ export class AccountService implements PlanProvider {
         status: remote.status,
         ...(remote.trialEndsAt ? { trialEndsAt: remote.trialEndsAt } : {}),
         ...(remote.currentPeriodEnd ? { currentPeriodEnd: remote.currentPeriodEnd } : {}),
+        tier: remote.tier,
         hasBillingAccount: remote.hasBillingAccount,
         checkedAt: this.now().toISOString(),
       };
@@ -159,8 +160,18 @@ export class AccountService implements PlanProvider {
     await this.refreshEntitlement().catch(() => undefined);
   }
 
-  async checkoutUrl(interval: 'month' | 'year'): Promise<string> {
-    return this.client.functionUrl('create-checkout', await this.accessToken(), { interval });
+  /** Checkout for a new subscription (Free, trial or lapsed accounts). */
+  async checkoutUrl(tier: PaidPlan, interval: 'month' | 'year'): Promise<string> {
+    return this.client.functionUrl('create-checkout', await this.accessToken(), {
+      tier,
+      interval,
+    });
+  }
+
+  /** Switches a live subscription between Pro and Advanced, then re-reads the plan. */
+  async changePlan(tier: PaidPlan, interval: 'month' | 'year'): Promise<void> {
+    await this.client.changePlan(await this.accessToken(), { tier, interval });
+    await this.refreshEntitlement();
   }
 
   async billingPortalUrl(): Promise<string> {

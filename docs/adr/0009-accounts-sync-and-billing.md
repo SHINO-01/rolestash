@@ -1,6 +1,6 @@
 # ADR-0009: Add accounts, cloud sync and paid subscriptions on Supabase + a merchant of record
 
-- **Status:** Accepted (supersedes the "no backend / no network" parts of ADR-0002)
+- **Status:** Accepted (pricing and plans superseded by ADR-0013) (supersedes the "no backend / no network" parts of ADR-0002)
 - **Date:** 2026-09-30
 
 ## Context

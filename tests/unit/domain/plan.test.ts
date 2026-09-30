@@ -1,5 +1,7 @@
 import {
+  ACTIVE_JOB_LIMITS,
   checkJobLimit,
+  nextPlan,
   countActiveJobs,
   FREE_ACTIVE_JOB_LIMIT,
   planOf,
@@ -12,6 +14,7 @@ const NOW = new Date('2026-10-15T00:00:00.000Z');
 const days = (n: number) => new Date(NOW.getTime() + n * 86_400_000).toISOString();
 const ent = (e: Partial<Entitlement>): Entitlement => ({
   status: 'trialing',
+  tier: 'pro',
   checkedAt: days(0),
   ...e,
 });
@@ -60,6 +63,24 @@ describe('planOf', () => {
     );
   });
 
+  it('follows the subscription tier, and trials are always Pro', () => {
+    const adv = { tier: 'advanced' as const, currentPeriodEnd: days(10) };
+    expect(planOf(ent({ ...adv, status: 'active' }), NOW).plan).toBe('advanced');
+    expect(planOf(ent({ ...adv, status: 'canceled' }), NOW)).toMatchObject({
+      plan: 'advanced',
+      reason: 'ending',
+    });
+    expect(planOf(ent({ ...adv, status: 'active', currentPeriodEnd: days(-4) }), NOW).plan).toBe(
+      'free',
+    );
+    expect(planOf(ent({ status: 'trialing', trialEndsAt: days(3) }), NOW).plan).toBe('pro');
+    // A stale Advanced snapshot drops to Free too, not to Pro.
+    expect(planOf(ent({ ...adv, status: 'active', checkedAt: days(-8) }), NOW)).toEqual({
+      plan: 'free',
+      reason: 'stale',
+    });
+  });
+
   it('treats paused and expired as Free', () => {
     expect(planOf(ent({ status: 'paused', currentPeriodEnd: days(5) }), NOW).plan).toBe('free');
     expect(planOf(ent({ status: 'expired' }), NOW).plan).toBe('free');
@@ -87,14 +108,24 @@ describe('free-plan job limit', () => {
     expect(countActiveJobs(jobs, DEFAULT_STAGES)).toBe(3);
   });
 
-  it('allows up to the limit on Free and anything on Pro', () => {
-    expect(checkJobLimit('free', FREE_ACTIVE_JOB_LIMIT - 1).allowed).toBe(true);
-    expect(checkJobLimit('free', FREE_ACTIVE_JOB_LIMIT)).toEqual({
-      allowed: false,
-      active: FREE_ACTIVE_JOB_LIMIT,
-      limit: FREE_ACTIVE_JOB_LIMIT,
-    });
-    expect(checkJobLimit('free', 20, 6).allowed).toBe(false);
-    expect(checkJobLimit('pro', 10_000).allowed).toBe(true);
+  it('holds 15 on Free, 45 on Pro and 95 on Advanced', () => {
+    expect(ACTIVE_JOB_LIMITS).toEqual({ free: 15, pro: 45, advanced: 95 });
+    expect(FREE_ACTIVE_JOB_LIMIT).toBe(15);
+    for (const [plan, limit] of Object.entries(ACTIVE_JOB_LIMITS) as [
+      keyof typeof ACTIVE_JOB_LIMITS,
+      number,
+    ][]) {
+      expect(checkJobLimit(plan, limit - 1).allowed).toBe(true);
+      expect(checkJobLimit(plan, limit)).toEqual({ allowed: false, active: limit, limit });
+    }
+    expect(checkJobLimit('free', 10, 6).allowed).toBe(false);
+    // After a downgrade, an account over the limit keeps its jobs but can't add.
+    expect(checkJobLimit('free', 60).allowed).toBe(false);
+  });
+
+  it('suggests the next plan up', () => {
+    expect(nextPlan('free')).toBe('pro');
+    expect(nextPlan('pro')).toBe('advanced');
+    expect(nextPlan('advanced')).toBeUndefined();
   });
 });

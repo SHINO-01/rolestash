@@ -75,6 +75,7 @@ export class SupabaseAdmin {
         p_provider: provider,
         p_customer_id: event.customerId,
         p_subscription_id: event.subscriptionId,
+        p_tier: event.tier,
       }),
     });
     if (!response.ok) throw new Error(`apply_billing_event failed: ${response.status}`);

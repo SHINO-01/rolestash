@@ -1,7 +1,7 @@
 -- Run with: npm run test:db  (needs Docker; see docs/guides/backend.md)
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(24);
+select plan(29);
 
 -- Helpers: act as a signed-in user, or as nobody.
 create function pg_temp.act_as(uid uuid) returns void language sql as $$
@@ -87,6 +87,24 @@ select ok(not pg_temp.pro_when('active', null, '-4 days'), 'beyond the 3-day lee
 select ok(pg_temp.pro_when('canceled', null, '5 days'), 'canceled keeps Pro until period end');
 select ok(not pg_temp.pro_when('canceled', null, '-1 minute'), '…then Free');
 select ok(not pg_temp.pro_when('paused', null, '30 days'), 'paused → Free');
+
+-- plan_tier() ------------------------------------------------------------------
+create function pg_temp.tier_when(s public.entitlement_status, t text, period interval)
+returns text language plpgsql as $$
+begin
+  perform pg_temp.act_as_admin();
+  update public.entitlements set status = s, tier = t, trial_ends_at = now() + period, current_period_end = now() + period
+   where user_id = '11111111-1111-4111-8111-111111111111';
+  perform pg_temp.act_as('11111111-1111-4111-8111-111111111111');
+  return public.plan_tier();
+end;
+$$;
+select is(pg_temp.tier_when('trialing', 'pro', '5 days'), 'pro', 'a trial is Pro');
+select is(pg_temp.tier_when('active', 'advanced', '5 days'), 'advanced', 'Advanced subscribers get advanced');
+select is(pg_temp.tier_when('active', 'advanced', '-5 days'), 'free', 'a lapsed Advanced account drops to free');
+select is(pg_temp.tier_when('canceled', 'pro', '2 days'), 'pro', 'canceled Pro keeps pro until period end');
+select pg_temp.act_as_anon();
+select throws_ok($$select public.plan_tier()$$, '42501', null, 'signed-out clients cannot call plan_tier');
 
 select pg_temp.act_as_admin();
 select ok(

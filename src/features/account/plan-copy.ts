@@ -1,4 +1,4 @@
-import type { PlanState } from '@/domain/plan';
+import { ACTIVE_JOB_LIMITS, type PaidPlan, type PlanState } from '@/domain/plan';
 import type { BackendError } from '@/services/backend/supabase-client';
 import type { JobLimitError } from '@/services/job-service';
 import { formatDate } from '@/ui/format';
@@ -13,7 +13,7 @@ export function planChip(plan: PlanState): {
       return { label: `Pro trial · ${String(plan.trialDaysLeft ?? 0)}d`, tone: 'accent' };
     case 'subscribed':
     case 'ending':
-      return { label: 'Pro', tone: 'accent' };
+      return { label: PLAN_NAMES[plan.plan], tone: 'accent' };
     case 'stale':
       return { label: 'Plan unconfirmed', tone: 'warning' };
     default:
@@ -28,9 +28,11 @@ export function planSummary(plan: PlanState): string {
     case 'trial':
       return `Pro trial: ${String(plan.trialDaysLeft ?? 0)} days left${ends ? `, until ${ends}` : ''}. No card needed.`;
     case 'subscribed':
-      return ends ? `Pro. Renews on ${ends}.` : 'Pro.';
+      return ends ? `${PLAN_NAMES[plan.plan]}. Renews on ${ends}.` : `${PLAN_NAMES[plan.plan]}.`;
     case 'ending':
-      return ends ? `Pro until ${ends}. Your subscription is canceled.` : 'Pro, canceled.';
+      return ends
+        ? `${PLAN_NAMES[plan.plan]} until ${ends}. Your subscription is canceled.`
+        : `${PLAN_NAMES[plan.plan]}, canceled.`;
     case 'trial-ended':
       return 'Your Pro trial has ended. You are on the free plan.';
     case 'lapsed':
@@ -65,5 +67,18 @@ export function backendErrorMessage(error: unknown): string {
 }
 
 export function limitMessage(error: JobLimitError): string {
-  return `The free plan holds ${String(error.check.limit)} active jobs, and you have ${String(error.check.active)}. Move finished jobs to Rejected or Withdrawn, or open Account to try Pro.`;
+  return `Your plan holds ${String(error.check.limit)} active jobs, and you have ${String(error.check.active)}. Move finished jobs to Rejected or Withdrawn, or open Account for a bigger plan.`;
 }
+
+export const PLAN_NAMES = { free: 'Free', pro: 'Pro', advanced: 'Advanced' } as const;
+
+/** Prices shown in the extension (USD). Checkout shows local prices where set. */
+export const PLAN_PRICES: Record<PaidPlan, Record<'month' | 'year', string>> = {
+  pro: { month: 'US$7 / month', year: 'US$59 / year' },
+  advanced: { month: 'US$15 / month', year: 'US$159 / year' },
+};
+
+export const PLAN_PITCH: Record<PaidPlan, string> = {
+  pro: `${String(ACTIVE_JOB_LIMITS.pro)} active jobs, plus full history and tips and tricks (coming soon).`,
+  advanced: `${String(ACTIVE_JOB_LIMITS.advanced)} active jobs and automatic status updates from your job emails (coming soon).`,
+};

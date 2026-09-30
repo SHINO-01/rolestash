@@ -4,6 +4,9 @@
  * code runs in Supabase Edge Functions (Deno) and in Vitest.
  */
 
+export type PaidTier = 'pro' | 'advanced';
+export type BillingInterval = 'month' | 'year';
+
 export type EntitlementStatus =
   'trialing' | 'active' | 'past_due' | 'paused' | 'canceled' | 'expired';
 
@@ -16,6 +19,7 @@ export interface BillingEvent {
   billingInterval: 'month' | 'year' | null;
   customerId: string | null;
   subscriptionId: string;
+  tier: PaidTier;
 }
 
 /** Replay window for signed webhooks. Paddle's SDK uses 5 s; we allow clock skew. */
@@ -86,6 +90,7 @@ interface PaddleSubscriptionEvent {
     custom_data?: { user_id?: unknown } | null;
     current_billing_period?: { ends_at?: unknown } | null;
     billing_cycle?: { interval?: unknown } | null;
+    items?: { price?: { id?: unknown; custom_data?: { tier?: unknown } | null } | null }[] | null;
     canceled_at?: unknown;
   };
 }
@@ -97,7 +102,11 @@ const str = (v: unknown): string | null => (typeof v === 'string' && v !== '' ? 
  * events we don't act on (other types, or subscriptions not started from our
  * checkout, which carry no user id).
  */
-export function toBillingEvent(payload: unknown): BillingEvent | null {
+export function toBillingEvent(
+  payload: unknown,
+  /** Maps our Paddle price IDs to tiers (from the PADDLE_PRICE_* secrets). */
+  tierOfPrice: (priceId: string) => PaidTier | undefined,
+): BillingEvent | null {
   if (typeof payload !== 'object' || payload === null) return null;
   const event = payload as PaddleSubscriptionEvent;
   const type = str(event.event_type);
@@ -109,6 +118,16 @@ export function toBillingEvent(payload: unknown): BillingEvent | null {
   const occurredAt = str(event.occurred_at);
   const status = STATUS_MAP[str(data.status) ?? ''];
   if (!userId || !UUID.test(userId) || !subscriptionId || !occurredAt || !status) return null;
+
+  // The tier comes from the subscribed price: our price map first, then the
+  // price's own custom_data. An unknown price is ignored rather than guessed.
+  const price = data.items?.[0]?.price;
+  const priceId = str(price?.id);
+  const tagged = str(price?.custom_data?.tier);
+  const tier =
+    (priceId ? tierOfPrice(priceId) : undefined) ??
+    (tagged === 'pro' || tagged === 'advanced' ? tagged : undefined);
+  if (!tier) return null;
 
   const interval = str(data.billing_cycle?.interval);
   return {
@@ -122,6 +141,7 @@ export function toBillingEvent(payload: unknown): BillingEvent | null {
     billingInterval: interval === 'month' || interval === 'year' ? interval : null,
     customerId: str(data.customer_id),
     subscriptionId,
+    tier,
   };
 }
 
@@ -209,6 +229,14 @@ export class PaddleClient {
       subscriptionId ? { subscription_ids: [subscriptionId] } : {},
     );
     return data.urls.general.overview;
+  }
+
+  /** Moves a subscription to another price now; Paddle prorates the difference. */
+  async changePrice(subscriptionId: string, priceId: string): Promise<void> {
+    await this.call('PATCH', `/subscriptions/${encodeURIComponent(subscriptionId)}`, {
+      items: [{ price_id: priceId, quantity: 1 }],
+      proration_billing_mode: 'prorated_immediately',
+    });
   }
 
   async cancelNow(subscriptionId: string): Promise<void> {

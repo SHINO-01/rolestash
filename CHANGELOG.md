@@ -11,7 +11,10 @@ All notable changes to this project are documented here. The format follows
 - Groundwork for Rolestash Pro, switched off in release builds until launch:
   - sign-in with Google or an emailed code;
   - a 30-day trial;
-  - a 25-active-job free plan (rejected and withdrawn jobs don't count);
+  - three plans: Free (15 active jobs), Pro (45) and Advanced (95), with
+    rejected and withdrawn jobs not counting and local prices in the UK,
+    Ireland and Australia;
+  - switching between Pro and Advanced at any time, prorated;
   - Paddle checkout and the billing portal;
   - account deletion that keeps your local jobs.
 
