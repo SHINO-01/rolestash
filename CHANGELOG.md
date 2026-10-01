@@ -89,6 +89,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- The privacy policy now says the checkout page loads Paddle.js and Paddle's
+  checkout, which may use its own cookies and services. It used to say the
+  site loads no third-party scripts at all.
 - **SEEK** captures on the new `au.seek.com` and `nz.seek.com` domains. They
   fell back to a generic guess, which read the company as "SEEK Australia".
   Links on the old and new domains are now treated as the same job.
