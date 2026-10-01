@@ -8,6 +8,16 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Email status updates, part 4** (Advanced; not switched on yet):
+  updates learn from everyone, privately.
+  - When you accept or correct a suggestion ("Something else…"), or file
+    an unsorted update, Rolestash shares two things: a one-way fingerprint
+    of the email's template, and which company the sender's domain belongs
+    to.
+  - Once three accounts agree, everyone's matching emails are understood
+    correctly from then on.
+  - Nothing personal is shared: no email text, subjects or jobs. Turn it
+    off any time with **Help improve automatic updates** in Account.
 - **Email status updates, part 3** (Advanced; not switched on yet): your
   board now updates itself from the job emails you forward.
   - **Confident updates move the card for you**, with the email's subject

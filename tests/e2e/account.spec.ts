@@ -411,6 +411,10 @@ test.describe('accounts', () => {
     await expect(unsorted).toContainText('Rejection');
     await unsorted.getByRole('button', { name: 'Add this job' }).click();
     await expect(unsorted).toContainText('All sorted');
+    // Filing it taught shared learning which company that sender domain is.
+    await expect
+      .poll(() => backend.votes)
+      .toContainEqual({ kind: 'domain', key: 'quokkahealth.example', value: 'quokka health' });
     await unsorted.getByRole('button', { name: 'Close' }).click();
     await expect(page.getByRole('button', { name: 'Product Designer application' })).toBeVisible();
 

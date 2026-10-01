@@ -229,6 +229,44 @@ stays, marked undone.
     Exact times are written in UTC, and floating times stay floating.
 - Only `http(s)` links are ever rendered (`safeHref`). Nothing is fetched.
 
+## Shared learning (ADR-0019)
+
+One user's confirmation teaches every user, with nothing personal shared:
+
+- **Fingerprints:** the Worker adds `template`, the SHA-256 of
+  `emailSkeleton()` (`src/email/skeleton.ts`). That's the email's wording
+  with names, companies, titles, numbers, dates, links and addresses
+  replaced by placeholders, and it needs at least 8 template words. The
+  skeleton itself never leaves the Worker.
+- **Votes** go to `vote_email_knowledge` from `EmailUpdateService`:
+
+  | When                                                    | Vote                                                            |
+  | ------------------------------------------------------- | --------------------------------------------------------------- |
+  | Accept a suggestion                                     | template → intent                                               |
+  | "Something else…" on a suggestion                       | template → the chosen intent (or `other`)                       |
+  | File an unsorted update ("File here" or "Add this job") | template → intent, and domain → `normalizeCompany(job.company)` |
+
+  Mail platforms and recruiting systems never get domain votes. Votes are
+  best effort: a failure never blocks the user.
+
+- **Promotion:** an entry decides at 3+ distinct voters with at least 3× the
+  runner-up, and only suggests when contested. `ingest_email_event` applies
+  it as mail arrives.
+- **The switch:** "Help improve automatic updates" in Account, on by
+  default (`set_email_sharing`). Turning it off withdraws that account's
+  votes.
+
+### Reviewing and revoking (owner, SQL editor)
+
+```sql
+-- What's promoted or close to it:
+select kind, key, value, count(*) as voters
+from private.email_knowledge_votes group by 1, 2, 3 having count(*) >= 2 order by 4 desc;
+
+-- Revoke an entry (it stops applying immediately):
+insert into private.email_knowledge_blocked (kind, key) values ('domain', 'example.com');
+```
+
 ## Fixing a miss
 
 1. Add `tests/fixtures/emails/<case>.json`, containing `description`, `input`

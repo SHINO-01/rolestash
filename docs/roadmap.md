@@ -72,7 +72,7 @@ feature on the pricing page is built. The site already advertises them all.
     descriptions.
 - ~~**Web board**~~ done (ADR-0017; rolestash.com/board/): a phone-first board with
   Today, columns, quick updates and quick add, syncing as a `web` device.
-- **Email status updates and interview cards** (ADR-0014):
+- ~~**Email status updates and interview cards**~~ done (ADR-0014, 0018, 0019):
   - ~~a personal `@in.rolestash.com` address~~ done (`my_inbox`,
     `rotate_inbox`);
   - ~~a Cloudflare Email Worker~~ done (`infra/email-worker/`, ADR-0018;
@@ -82,12 +82,13 @@ feature on the pricing page is built. The site already advertises them all.
   - ~~suggestions for low-confidence results~~ done (Accept / Dismiss on
     the card; Unsorted updates);
   - ~~Join, map and add-to-calendar actions on cards~~ done.
-  - accuracy work (ADR-0014 §5): posting-link, thread and taught matching,
-    per-recruiting-system template readers, negation and conditional scopes,
-    and a CI gate on precision and unsorted rate;
-  - a shared knowledge base (§6): sender domain → company and template
-    fingerprints, promoted after 3 distinct confirmations, with no personal
-    data.
+  - ~~accuracy work (ADR-0014 §5)~~ done: posting-link, thread and taught
+    matching, per-recruiting-system template readers, negation and
+    conditional scopes, and a CI gate on the corpus (every expected action,
+    100% precision for automatic changes);
+  - ~~a shared knowledge base (§6)~~ done (ADR-0019): sender domain →
+    company and template fingerprints, promoted after 3 distinct
+    confirmations, with no personal data.
 - **Application autofill:** a local profile and deterministic field mapping
   for Greenhouse, Lever, Workday, Ashby and SmartRecruiters.
 - **Contacts, interview notes and documents** per job (file names, not

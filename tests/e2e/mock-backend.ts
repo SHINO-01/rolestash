@@ -28,6 +28,8 @@ export interface MockBackend {
   revision: number;
   /** Email updates (ADR-0014): stored events, as the Email Worker writes them. */
   emailEvents: { id: number; event: unknown }[];
+  /** Shared-learning votes received (ADR-0014 §6). */
+  votes: unknown[];
   close(): Promise<void>;
 }
 
@@ -102,7 +104,13 @@ function route(
       ];
     case '/rest/v1/rpc/my_inbox':
     case '/rest/v1/rpc/rotate_inbox':
-      return [200, { ok: true, address: E2E_INBOX, created_at: '2026-10-01T00:00:00Z' }];
+      return [
+        200,
+        { ok: true, address: E2E_INBOX, created_at: '2026-10-01T00:00:00Z', share_learning: true },
+      ];
+    case '/rest/v1/rpc/vote_email_knowledge':
+      state.votes.push(...(b.p_votes as unknown[]));
+      return [200, { ok: true, recorded: (b.p_votes as unknown[]).length }];
     case '/rest/v1/email_events':
       if (method === 'DELETE') {
         state.emailEvents = [];
@@ -153,6 +161,7 @@ export async function startMockBackend(): Promise<MockBackend> {
     synced: new Map(),
     revision: 0,
     emailEvents: [],
+    votes: [],
     close: () => Promise.resolve(),
   };
 

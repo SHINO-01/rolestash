@@ -22,12 +22,12 @@ export function EmailSection({ plan }: { plan: Plan }) {
   const state = useEmailState();
   const toast = useToast();
   const [address, setAddress] = useState<string>();
-  const [busy, setBusy] = useState<'check' | 'rotate' | null>(null);
+  const [busy, setBusy] = useState<'check' | 'rotate' | 'share' | null>(null);
   const [confirmRotate, setConfirmRotate] = useState(false);
   const [verification, setVerification] = useState<{ code?: string; url?: string }>();
 
   const run = useCallback(
-    async (key: 'check' | 'rotate', task: () => Promise<void>) => {
+    async (key: 'check' | 'rotate' | 'share', task: () => Promise<void>) => {
       setBusy(key);
       try {
         await task();
@@ -95,6 +95,11 @@ export function EmailSection({ plan }: { plan: Plan }) {
       if (info.ok) setAddress(info.address);
       setConfirmRotate(false);
       toast({ message: 'New address ready. Update your mail filter to use it.', tone: 'success' });
+    });
+
+  const share = (on: boolean) =>
+    run('share', async () => {
+      await email.setSharing(on);
     });
 
   const copy = async () => {
@@ -241,6 +246,23 @@ export function EmailSection({ plan }: { plan: Plan }) {
           Mail to the current address stops arriving at once. Update your mail filter afterwards.
         </p>
       ) : null}
+      <label className="mt-4 flex items-start gap-2.5 text-sm">
+        <input
+          type="checkbox"
+          className="accent-accent mt-0.5 size-4"
+          checked={state?.shareLearning !== false}
+          disabled={busy !== null}
+          onChange={(e) => void share(e.target.checked)}
+        />
+        <span>
+          <span className="font-medium">Help improve automatic updates</span>
+          <span className="text-muted block text-[13px]">
+            When you accept or correct an update, share what it taught us: a one-way fingerprint of
+            the email’s template and which company a sender domain belongs to. Never the email, its
+            subject, or which jobs you applied for. Turning this off withdraws what you shared.
+          </span>
+        </span>
+      </label>
       <p className="text-subtle mt-3 text-xs">
         Results are deleted from our server once your board has them, and after 90 days at most. To
         stop, delete your mail filter or get a new address.

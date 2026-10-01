@@ -56,6 +56,11 @@ export const EmailEventSchema = z.object({
   verification: z
     .object({ code: z.string().max(40).optional(), url: z.url().max(2000).optional() })
     .optional(),
+  /** SHA-256 (hex) of the email's template skeleton, for shared learning (ADR-0014 §6). */
+  template: z
+    .string()
+    .regex(/^[0-9a-f]{64}$/)
+    .optional(),
   thread: z.object({
     messageId: z.string().max(998).optional(),
     inReplyTo: z.string().max(998).optional(),

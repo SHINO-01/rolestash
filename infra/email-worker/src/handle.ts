@@ -1,5 +1,5 @@
 import PostalMime, { type Address, type Email } from 'postal-mime';
-import { analyzeEmail } from '../../../src/email/analyze';
+import { analyzeEmail, emailSkeleton } from '../../../src/email/analyze';
 import type { EmailInput } from '../../../src/email/constants';
 import type { EmailEvent } from '../../../src/email/types';
 
@@ -112,6 +112,11 @@ async function store(
   return 'store_failed';
 }
 
+export async function sha256Hex(text: string): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
 export async function handleEmail(
   message: IncomingEmail,
   env: Env,
@@ -128,6 +133,10 @@ export async function handleEmail(
   } catch {
     return 'unparseable';
   }
-  const event = analyzeEmail(toEmailInput(email, now));
+  const input = toEmailInput(email, now);
+  const event = analyzeEmail(input);
+  // Shared learning (ADR-0014 §6): only a one-way fingerprint of the template.
+  const skeleton = emailSkeleton(input);
+  if (skeleton) event.template = await sha256Hex(skeleton);
   return store(env, token, event, fetchFn);
 }

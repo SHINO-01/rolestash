@@ -140,6 +140,11 @@ export const SuggestionSchema = z.object({
   toStageId: z.string().optional(),
   interview: JobInterviewSchema.optional(),
   email: EmailNoteSchema,
+  /** The email template's fingerprint, so a correction can teach everyone (ADR-0014 §6). */
+  template: z
+    .string()
+    .regex(/^[0-9a-f]{64}$/)
+    .optional(),
 });
 export type Suggestion = z.infer<typeof SuggestionSchema>;
 

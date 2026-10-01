@@ -123,12 +123,25 @@ const EntitlementRow = z.object({
 });
 
 const InboxResult = z.discriminatedUnion('ok', [
-  z.object({ ok: z.literal(true), address: z.email(), rotated_at: z.string().nullish() }),
+  z.object({
+    ok: z.literal(true),
+    address: z.email(),
+    rotated_at: z.string().nullish(),
+    share_learning: z.boolean().optional(),
+  }),
   z.object({ ok: z.literal(false), reason: z.literal('plan_required') }),
 ]);
 
 export type InboxInfo =
-  { ok: true; address: string; rotatedAt?: string } | { ok: false; reason: 'plan_required' };
+  | { ok: true; address: string; rotatedAt?: string; shareLearning: boolean }
+  | { ok: false; reason: 'plan_required' };
+
+/** One vote for shared knowledge (ADR-0014 §6). */
+export interface KnowledgeVote {
+  kind: 'template' | 'domain';
+  key: string;
+  value: string;
+}
 
 export interface EmailEventRow {
   id: number;
@@ -422,8 +435,20 @@ export class SupabaseClient {
           ...(parsed.data.rotated_at
             ? { rotatedAt: new Date(parsed.data.rotated_at).toISOString() }
             : {}),
+          shareLearning: parsed.data.share_learning ?? true,
         }
       : { ok: false, reason: parsed.data.reason };
+  }
+
+  /** Votes for shared knowledge; the server checks the plan, the switch and limits. */
+  async voteEmailKnowledge(accessToken: string, votes: readonly KnowledgeVote[]): Promise<void> {
+    if (votes.length === 0) return;
+    await this.rpc('vote_email_knowledge', accessToken, { p_votes: votes });
+  }
+
+  /** "Help improve automatic updates"; turning it off also withdraws your votes. */
+  async setEmailSharing(accessToken: string, on: boolean): Promise<void> {
+    await this.rpc('set_email_sharing', accessToken, { p_on: on });
   }
 
   /** Extracted email events after `after` (by id), oldest first. */

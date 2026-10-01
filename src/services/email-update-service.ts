@@ -3,18 +3,26 @@ import {
   EMAIL_UPDATE_INTENTS,
   JobInterviewSchema,
   type EmailNote,
+  type EmailUpdateIntent,
   type Job,
   type JobInterview,
 } from '@/domain/job';
 import type { DomainContext } from '@/domain/job-factory';
 import type { Plan } from '@/domain/plan';
 import { findStage } from '@/domain/stage';
-import { EmailEventSchema, matchEvent, targetStage, type EmailEvent } from '@/email';
+import {
+  EmailEventSchema,
+  isPlatformDomain,
+  matchEvent,
+  normalizeCompany,
+  targetStage,
+  type EmailEvent,
+} from '@/email';
 import type { JobRepository } from '@/storage/job-repository';
 import type { KeyValueStore } from '@/storage/key-value-store';
 import { EMAIL_LOCK_KEY, EMAIL_STATE_KEY } from '@/storage/keys';
 import type { SettingsRepository } from '@/storage/settings-repository';
-import { BackendError, type InboxInfo } from './backend/supabase-client';
+import { BackendError, type InboxInfo, type KnowledgeVote } from './backend/supabase-client';
 import { DuplicateJobError, type JobService } from './job-service';
 import type { EmailInbox } from './ports';
 
@@ -30,6 +38,11 @@ import type { EmailInbox } from './ports';
  * Processed events are deleted from the server, so another device doesn't
  * apply them again. Matched threads (Message-ID → job) and taught senders
  * are remembered here, so later emails in a thread follow.
+ *
+ * Shared learning (ADR-0014 §6): when the user accepts or corrects a
+ * suggestion, or files an unsorted update, this device votes for the email
+ * template's meaning and the sender domain's company. Only hashes, domains
+ * and labels are sent, and only while "Help improve automatic updates" is on.
  */
 
 const PAGE = 100;
@@ -52,6 +65,9 @@ const UnsortedSchema = z.object({
   postingUrl: z.string().optional(),
   interview: JobInterviewSchema.optional(),
   messageId: z.string().optional(),
+  /** Template fingerprint and sender domain, for shared learning. */
+  template: z.string().optional(),
+  senderDomain: z.string().optional(),
   /** Likely jobs, best first. */
   candidates: z.array(z.string()),
 });
@@ -67,6 +83,8 @@ const StateSchema = z.object({
     .object({ code: z.string().optional(), url: z.string().optional(), receivedAt: z.string() })
     .optional(),
   lastRunAt: z.string().optional(),
+  /** "Help improve automatic updates", as last read from the server. */
+  shareLearning: z.boolean().optional(),
   problem: z.enum(['offline', 'signed_out', 'error']).optional(),
 });
 export type EmailUpdateState = z.infer<typeof StateSchema>;
@@ -110,6 +128,24 @@ function interviewOf(interview: EmailEvent['interview']): JobInterview | undefin
   return rest.start || rest.meetingUrl || rest.schedulingUrl || rest.location ? rest : undefined;
 }
 
+function templateVote(
+  template: string | undefined,
+  intent: EmailUpdateIntent | 'other',
+): KnowledgeVote[] {
+  return template && /^[0-9a-f]{64}$/.test(template)
+    ? [{ kind: 'template', key: template, value: intent }]
+    : [];
+}
+
+/** Sender domain → company, never for mail platforms or recruiting systems. */
+function domainVote(domain: string | undefined, company: string): KnowledgeVote[] {
+  const key = domain?.toLowerCase();
+  const value = normalizeCompany(company);
+  if (!key || isPlatformDomain(key) || !/^[a-z0-9]+( [a-z0-9]+)*$/.test(value)) return [];
+  if (value.length < 2 || value.length > 100) return [];
+  return [{ kind: 'domain', key, value }];
+}
+
 export class EmailUpdateService {
   constructor(
     private readonly store: KeyValueStore,
@@ -143,8 +179,10 @@ export class EmailUpdateService {
   async address(rotate = false): Promise<InboxInfo> {
     const info = await this.inbox.address(rotate);
     const state = await this.state();
-    if (info.ok) state.address = info.address;
-    else delete state.address;
+    if (info.ok) {
+      state.address = info.address;
+      state.shareLearning = info.shareLearning;
+    } else delete state.address;
     await this.save(state);
     return info;
   }
@@ -229,6 +267,8 @@ export class EmailUpdateService {
           ...(event.postingUrls[0] ? { postingUrl: event.postingUrls[0] } : {}),
           ...(interviewOf(event.interview) ? { interview: interviewOf(event.interview) } : {}),
           ...(event.thread.messageId ? { messageId: event.thread.messageId } : {}),
+          ...(event.template ? { template: event.template } : {}),
+          ...(event.sender.domain ? { senderDomain: event.sender.domain } : {}),
           candidates: match.candidates.map((c) => c.jobId),
         },
       ].slice(-MAX_UNSORTED);
@@ -241,6 +281,7 @@ export class EmailUpdateService {
       noteOf(intent, event),
       intent === 'interview' ? interviewOf(event.interview) : undefined,
       event.action === 'apply',
+      event.template,
     );
     return changed ? (event.action === 'apply' ? 'applied' : 'suggested') : undefined;
   }
@@ -251,6 +292,7 @@ export class EmailUpdateService {
     email: EmailNote,
     interview: JobInterview | undefined,
     apply: boolean,
+    template?: string,
   ): Promise<boolean> {
     const { stages } = await this.settings.get();
     const toStageId = targetStage(email.intent, job, stages);
@@ -261,7 +303,11 @@ export class EmailUpdateService {
       email,
     };
     if (apply) await this.jobService.applyEmailUpdate(job.id, update);
-    else await this.jobService.suggestEmailUpdate(job.id, update);
+    else
+      await this.jobService.suggestEmailUpdate(job.id, {
+        ...update,
+        ...(template ? { template } : {}),
+      });
     return true;
   }
 
@@ -291,6 +337,10 @@ export class EmailUpdateService {
       item.intent === 'interview' ? item.interview : undefined,
       true,
     );
+    await this.vote([
+      ...templateVote(item.template, item.intent),
+      ...domainVote(item.senderDomain, job.company),
+    ]);
     return (await this.jobs.get(jobId)) ?? job;
   }
 
@@ -324,6 +374,60 @@ export class EmailUpdateService {
     const state = await this.state();
     state.unsorted = state.unsorted.filter((u) => u.id !== unsortedId);
     await this.save(state);
+  }
+
+  // ── Suggestions and shared learning ───────────────────────────────────────
+
+  /** Accepts a suggestion, and confirms its template's meaning for everyone. */
+  async acceptSuggestion(jobId: string): Promise<Job> {
+    const suggestion = (await this.jobs.get(jobId))?.suggestion;
+    const job = await this.jobService.acceptSuggestion(jobId);
+    if (suggestion) await this.vote(templateVote(suggestion.template, suggestion.email.intent));
+    return job;
+  }
+
+  /**
+   * "It's something else": applies the intent the user picked instead (or
+   * just clears the suggestion for "not an update"), and teaches it.
+   */
+  async correctSuggestion(jobId: string, intent: EmailUpdateIntent | 'other'): Promise<Job> {
+    const job = await this.jobs.get(jobId);
+    const suggestion = job?.suggestion;
+    if (!job || !suggestion) throw new Error('That suggestion no longer exists');
+    let next: Job;
+    if (intent === 'other') next = await this.jobService.dismissSuggestion(jobId);
+    else {
+      const { stages } = await this.settings.get();
+      const toStageId = targetStage(intent, job, stages);
+      const interview = intent === 'interview' ? suggestion.interview : undefined;
+      next = await this.jobService.applyEmailUpdate(jobId, {
+        ...(toStageId ? { toStageId } : {}),
+        ...(interview ? { interview } : {}),
+        email: { ...suggestion.email, intent },
+      });
+    }
+    await this.vote(templateVote(suggestion.template, intent));
+    return next;
+  }
+
+  /** "Help improve automatic updates". Off also withdraws this account's votes. */
+  async setSharing(on: boolean): Promise<void> {
+    await this.inbox.setSharing(on);
+    const state = await this.state();
+    state.shareLearning = on;
+    await this.save(state);
+  }
+
+  /** Best effort: a failed vote never gets in the user's way. */
+  private async vote(votes: KnowledgeVote[]): Promise<void> {
+    if (votes.length === 0) return;
+    if ((await this.state()).shareLearning === false) return;
+    if ((await this.account.currentPlan()) !== 'advanced') return;
+    try {
+      await this.inbox.vote(votes);
+    } catch {
+      // Shared learning is a bonus; never fail the user's action over it.
+    }
   }
 
   /** A storage lease, so the board and the background worker don't run at the same time. */

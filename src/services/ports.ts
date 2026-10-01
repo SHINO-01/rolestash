@@ -3,6 +3,7 @@ import type {
   DeviceRegistration,
   EmailEventRow,
   InboxInfo,
+  KnowledgeVote,
   PulledChange,
   RemoteDevice,
   SyncChange,
@@ -45,6 +46,9 @@ export interface EmailInbox {
   address(rotate?: boolean): Promise<InboxInfo>;
   events(after: number, limit: number): Promise<EmailEventRow[]>;
   remove(ids: readonly number[]): Promise<void>;
+  /** Shared learning (ADR-0014 §6). */
+  vote(votes: readonly KnowledgeVote[]): Promise<void>;
+  setSharing(on: boolean): Promise<void>;
 }
 
 /** Loads a pasted job link (Pro; capture from a link). */

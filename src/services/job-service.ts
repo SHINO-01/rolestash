@@ -269,7 +269,12 @@ export class JobService {
   /** Leaves a lower-confidence update on the card for the user to decide. */
   async suggestEmailUpdate(
     jobId: JobId,
-    suggestion: { toStageId?: StageId; interview?: JobInterview; email: EmailNote },
+    suggestion: {
+      toStageId?: StageId;
+      interview?: JobInterview;
+      email: EmailNote;
+      template?: string;
+    },
   ): Promise<Job> {
     const job = await this.require(jobId);
     return this.jobs.save(

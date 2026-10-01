@@ -225,17 +225,20 @@ describe('SupabaseClient email updates (ADR-0014)', () => {
           ok: true,
           address: 'newtokennewtokennewt@in.rolestash.com',
           rotated_at: '2026-10-01T00:00:00+00:00',
+          share_learning: false,
         },
       },
     });
     expect(await c.myInbox('tok')).toEqual({
       ok: true,
       address: 'k3x9q2w7m4p8r5t6abcd@in.rolestash.com',
+      shareLearning: true,
     });
     expect(await c.myInbox('tok', true)).toEqual({
       ok: true,
       address: 'newtokennewtokennewt@in.rolestash.com',
       rotatedAt: '2026-10-01T00:00:00.000Z',
+      shareLearning: false,
     });
     expect(calls[0]?.headers.Authorization).toBe('Bearer tok');
   });
@@ -290,5 +293,22 @@ describe('SupabaseClient email updates (ADR-0014)', () => {
     });
     expect(await code(down.c.emailEvents('tok', 0, 10))).toBe('server');
     expect(await code(down.c.deleteEmailEvents('tok', [1]))).toBe('server');
+  });
+});
+
+describe('SupabaseClient shared learning (ADR-0014 §6)', () => {
+  it('sends votes and the sharing switch', async () => {
+    const { c, calls } = client({
+      [`POST ${SB}/rest/v1/rpc/vote_email_knowledge`]: {
+        status: 200,
+        body: { ok: true, recorded: 1 },
+      },
+      [`POST ${SB}/rest/v1/rpc/set_email_sharing`]: { status: 200, body: { ok: true } },
+    });
+    const vote = { kind: 'template' as const, key: 'a'.repeat(64), value: 'rejected' };
+    await c.voteEmailKnowledge('tok', [vote]);
+    await c.voteEmailKnowledge('tok', []);
+    await c.setEmailSharing('tok', false);
+    expect(calls.map((x) => x.body)).toEqual([{ p_votes: [vote] }, { p_on: false }]);
   });
 });

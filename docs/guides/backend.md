@@ -126,6 +126,16 @@ Migration `…_email_updates.sql` adds two tables:
 Privileged bodies live in `private`, behind SECURITY INVOKER wrappers, like
 sync. `private.plan_tier_of(user)` is `plan_tier()` for any user.
 
+Shared learning (ADR-0019) adds:
+
+- `vote_email_knowledge(p_votes)` and `set_email_sharing(p_on)` for
+  Advanced users;
+- `private.email_knowledge_votes`, with HMAC voters keyed by
+  `private.email_knowledge_key`, which is generated in the database;
+- `private.knowledge_lookup()`, which `ingest_email_event` uses on
+  arrival;
+- a trigger on `auth.users` that deletes a deleted account's votes.
+
 The ingest secret's SHA-256 lives in `private.email_ingest_secret`. To set or
 rotate it, see [email-updates.md](email-updates.md#one-time-setup).
 

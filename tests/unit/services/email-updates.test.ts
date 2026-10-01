@@ -5,6 +5,7 @@ import {
   BackendError,
   type EmailEventRow,
   type InboxInfo,
+  type KnowledgeVote,
 } from '@/services/backend/supabase-client';
 import { EmailUpdateService } from '@/services/email-update-service';
 import { JobService } from '@/services/job-service';
@@ -22,13 +23,20 @@ class FakeInbox implements EmailInbox {
   nextId = 1;
   token = 'k3x9q2w7m4p8r5t6abcd';
   fail?: BackendError;
+  votes: KnowledgeVote[] = [];
+  sharing = true;
+  failVotes = false;
 
   add(event: unknown): void {
     this.rows.push({ id: this.nextId++, event });
   }
   address(rotate = false): Promise<InboxInfo> {
     if (rotate) this.token = 'newtokennewtokennewt';
-    return Promise.resolve({ ok: true, address: `${this.token}@in.rolestash.com` });
+    return Promise.resolve({
+      ok: true,
+      address: `${this.token}@in.rolestash.com`,
+      shareLearning: this.sharing,
+    });
   }
   events(after: number, limit: number): Promise<EmailEventRow[]> {
     if (this.fail) return Promise.reject(this.fail);
@@ -36,6 +44,16 @@ class FakeInbox implements EmailInbox {
   }
   remove(ids: readonly number[]): Promise<void> {
     this.rows = this.rows.filter((r) => !ids.includes(r.id));
+    return Promise.resolve();
+  }
+  vote(votes: readonly KnowledgeVote[]): Promise<void> {
+    if (this.failVotes) return Promise.reject(new BackendError('network'));
+    this.votes.push(...votes);
+    return Promise.resolve();
+  }
+  setSharing(on: boolean): Promise<void> {
+    this.sharing = on;
+    if (!on) this.votes = [];
     return Promise.resolve();
   }
 }
@@ -294,10 +312,12 @@ describe('EmailUpdateService', () => {
     expect(await service.address()).toEqual({
       ok: true,
       address: 'k3x9q2w7m4p8r5t6abcd@in.rolestash.com',
+      shareLearning: true,
     });
     expect(await service.address(true)).toEqual({
       ok: true,
       address: 'newtokennewtokennewt@in.rolestash.com',
+      shareLearning: true,
     });
     expect((await service.state()).address).toBe('newtokennewtokennewt@in.rolestash.com');
   });
@@ -349,5 +369,109 @@ describe('JobService email updates', () => {
     expect(accepted).toMatchObject({ stageId: 'applied', interview });
     expect(await jobService.acceptSuggestion('nw')).toEqual(accepted);
     expect(await jobService.dismissSuggestion('nw')).toEqual(accepted);
+  });
+});
+
+describe('shared learning (ADR-0014 §6)', () => {
+  const T = 'a'.repeat(64);
+
+  it('accepting a suggestion confirms its template', async () => {
+    const { jobs, inbox, service } = await setup();
+    await jobs.save(northwind());
+    inbox.add({ ...rejection(), action: 'suggest', template: T });
+    await service.run();
+    expect((await jobs.get('nw'))?.suggestion?.template).toBe(T);
+    const job = await service.acceptSuggestion('nw');
+    expect(job.stageId).toBe('rejected');
+    expect(inbox.votes).toEqual([{ kind: 'template', key: T, value: 'rejected' }]);
+  });
+
+  it('correcting a suggestion applies and teaches the right intent', async () => {
+    const { jobs, inbox, service } = await setup();
+    await jobs.save(northwind());
+    inbox.add({ ...rejection(), action: 'suggest', template: T });
+    await service.run();
+    const job = await service.correctSuggestion('nw', 'interview');
+    expect(job.stageId).toBe('interviewing');
+    expect(job.suggestion).toBeUndefined();
+    expect(job.activity.at(-1)).toMatchObject({
+      type: 'email_update',
+      email: { intent: 'interview' },
+    });
+    expect(inbox.votes).toEqual([{ kind: 'template', key: T, value: 'interview' }]);
+
+    inbox.add({ ...rejection('<r2>'), action: 'suggest', template: T });
+    await jobs.save({ ...job, stageId: 'applied' });
+    await service.run();
+    const cleared = await service.correctSuggestion('nw', 'other');
+    expect(cleared).toMatchObject({ stageId: 'applied' });
+    expect(cleared.suggestion).toBeUndefined();
+    expect(inbox.votes.at(-1)).toEqual({ kind: 'template', key: T, value: 'other' });
+    await expect(service.correctSuggestion('nw', 'offer')).rejects.toThrow();
+  });
+
+  it('filing an unsorted update teaches the template and the sender domain’s company', async () => {
+    const { jobs, inbox, service } = await setup();
+    await jobs.save(
+      makeJob({ id: 'q', ...applied, title: 'Designer', company: 'Quokka Health Pty Ltd' }),
+    );
+    inbox.add({ ...invite(), template: T });
+    await service.run();
+    const [item] = (await service.state()).unsorted;
+    await service.assign(item!.id, 'q');
+    expect(inbox.votes).toEqual([
+      { kind: 'template', key: T, value: 'interview' },
+      { kind: 'domain', key: 'northwindlabs.example', value: 'quokka health' },
+    ]);
+  });
+
+  it('never votes a mail platform or recruiting system domain', async () => {
+    const { jobs, inbox, service } = await setup();
+    await jobs.save(makeJob({ id: 'q', ...applied, company: 'Quokka Health' }));
+    inbox.add({
+      ...rejection(),
+      sender: { address: 'x@us.greenhouse-mail.io', domain: 'us.greenhouse-mail.io' },
+      postingUrls: [],
+      companyHint: undefined,
+    });
+    await service.run();
+    const [item] = (await service.state()).unsorted;
+    await service.assign(item!.id, 'q');
+    expect(inbox.votes).toEqual([]);
+  });
+
+  it('stops voting when sharing is off, and a failed vote never gets in the way', async () => {
+    const { jobs, inbox, service } = await setup();
+    await jobs.save(northwind());
+    await service.setSharing(false);
+    expect((await service.state()).shareLearning).toBe(false);
+    inbox.add({ ...rejection(), action: 'suggest', template: T });
+    await service.run();
+    await service.acceptSuggestion('nw');
+    expect(inbox.votes).toEqual([]);
+
+    await service.setSharing(true);
+    inbox.failVotes = true;
+    inbox.add({ ...rejection('<r3>'), action: 'suggest', template: T });
+    await jobs.save({ ...(await jobs.get('nw'))!, stageId: 'applied' });
+    await service.run();
+    await expect(service.acceptSuggestion('nw')).resolves.toMatchObject({ stageId: 'rejected' });
+  });
+
+  it('does not vote off Advanced', async () => {
+    const { jobs, jobService, inbox, service } = await setup('pro');
+    await jobs.save(northwind());
+    await jobService.suggestEmailUpdate('nw', {
+      toStageId: 'rejected',
+      template: T,
+      email: {
+        intent: 'rejected',
+        subject: 's',
+        sender: 'x',
+        receivedAt: '2026-10-01T00:00:00.000Z',
+      },
+    });
+    await service.acceptSuggestion('nw');
+    expect(inbox.votes).toEqual([]);
   });
 });

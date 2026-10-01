@@ -4,6 +4,7 @@ import { htmlToText, linksInText, type EmailLink } from './html';
 import { parseCalendar } from './ics';
 import { emptyScores, MARGIN, scoreIntents, THRESHOLDS } from './intent';
 import { classifyLinks } from './links';
+import { skeletonOf } from './skeleton';
 import { findDateTime } from './time';
 import {
   STATUS_INTENTS,
@@ -92,7 +93,18 @@ function decide(scores: Record<StatusIntent, number>): {
   return { intent: 'other', action: 'none', confidence: Math.round((1 - confidence) * 100) / 100 };
 }
 
-export function analyzeEmail(input: EmailInput): EmailEvent {
+interface Prepared {
+  sender: Sender;
+  subject: string;
+  /** The body before noise is stripped (Gmail's confirmation reads it). */
+  raw: string;
+  /** The words of this email: no quoted history, signature or footer. */
+  body: string;
+  html: ReturnType<typeof htmlToText> | undefined;
+}
+
+/** Cleaning shared by analyzeEmail and emailSkeleton. */
+function prepare(input: EmailInput): Prepared {
   let sender = parseSender(input.from);
   let subject = normalizeText(input.subject).trim();
   const html = input.html ? htmlToText(input.html) : undefined;
@@ -105,7 +117,23 @@ export function analyzeEmail(input: EmailInput): EmailEvent {
     if (forward.header.from) sender = parseSender(forward.header.from);
     if (forward.header.subject) subject = forward.header.subject.trim();
   }
-  const body = stripNoise(raw);
+  return { sender, subject, raw, body: stripNoise(raw), html };
+}
+
+/**
+ * The email's template skeleton for shared learning (ADR-0014 §6): its words
+ * with names, numbers, dates, links and addresses replaced by placeholders.
+ * The Worker stores only its SHA-256. Undefined for Gmail's confirmation and
+ * for emails too short to identify a template.
+ */
+export function emailSkeleton(input: EmailInput): string | undefined {
+  const { sender, subject, body } = prepare(input);
+  if (sender.address === GMAIL_VERIFIER) return undefined;
+  return skeletonOf(subject, body);
+}
+
+export function analyzeEmail(input: EmailInput): EmailEvent {
+  const { sender, subject, raw, body, html } = prepare(input);
   const links = [...(html?.links ?? []), ...linksInText(body)];
   const classified = classifyLinks(links);
   const reasons: string[] = [];

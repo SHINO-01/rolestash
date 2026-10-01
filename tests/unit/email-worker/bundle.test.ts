@@ -15,6 +15,7 @@ const WORKER_REACHABLE = [
   'ics',
   'intent',
   'links',
+  'skeleton',
   'time',
 ];
 

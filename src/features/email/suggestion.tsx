@@ -1,9 +1,15 @@
 import { Check, Mail, X } from 'lucide-react';
 import { useState } from 'react';
-import type { EmailNote, Job } from '@/domain/job';
+import {
+  EMAIL_UPDATE_INTENTS,
+  type EmailNote,
+  type EmailUpdateIntent,
+  type Job,
+} from '@/domain/job';
 import type { Stage } from '@/domain/stage';
 import { Button } from '@/ui/components/button';
 import { Chip } from '@/ui/components/chip';
+import { Select } from '@/ui/components/field';
 import { useToast } from '@/ui/components/toast';
 import { useLiveJobs, useServices } from '@/ui/hooks/services';
 import { formatInterviewTime, INTENT_LABEL, senderName } from './email-copy';
@@ -35,7 +41,8 @@ export function SuggestionBanner({ job, stages }: { job: Job; stages: readonly S
   const { jobService } = useServices();
   const live = useLiveJobs();
   const toast = useToast();
-  const [busy, setBusy] = useState<'accept' | 'dismiss' | null>(null);
+  const { email } = useServices();
+  const [busy, setBusy] = useState<'accept' | 'dismiss' | 'correct' | null>(null);
   const suggestion = job.suggestion;
   if (!suggestion) return null;
 
@@ -48,13 +55,17 @@ export function SuggestionBanner({ job, stages }: { job: Job; stages: readonly S
     .filter(Boolean)
     .join(' and ');
 
-  async function act(kind: 'accept' | 'dismiss') {
+  // Accepting and correcting go through email updates when it's there, so
+  // they can teach shared learning (ADR-0014 §6).
+  async function act(kind: 'accept' | 'dismiss' | 'correct', intent?: EmailUpdateIntent | 'other') {
     setBusy(kind);
     try {
       const next =
         kind === 'accept'
-          ? await jobService.acceptSuggestion(job.id)
-          : await jobService.dismissSuggestion(job.id);
+          ? await (email ? email.acceptSuggestion(job.id) : jobService.acceptSuggestion(job.id))
+          : kind === 'correct' && email && intent
+            ? await email.correctSuggestion(job.id, intent)
+            : await jobService.dismissSuggestion(job.id);
       live.applyLocal([next]);
     } catch {
       toast({ message: 'Could not update the job', tone: 'error' });
@@ -97,6 +108,27 @@ export function SuggestionBanner({ job, stages }: { job: Job; stages: readonly S
         >
           Dismiss
         </Button>
+        {email ? (
+          <label className="ml-auto">
+            <span className="sr-only">It’s something else</span>
+            <Select
+              className="h-8 text-[13px]"
+              value=""
+              disabled={busy !== null}
+              onChange={(e) =>
+                e.target.value && void act('correct', e.target.value as EmailUpdateIntent | 'other')
+              }
+            >
+              <option value="">Something else…</option>
+              {EMAIL_UPDATE_INTENTS.filter((i) => i !== suggestion.email.intent).map((i) => (
+                <option key={i} value={i}>
+                  {INTENT_LABEL[i]}
+                </option>
+              ))}
+              <option value="other">Not an update</option>
+            </Select>
+          </label>
+        ) : null}
       </div>
     </div>
   );

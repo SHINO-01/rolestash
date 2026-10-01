@@ -29,6 +29,7 @@ Start with **Architecture → Overview**, then go by task.
 | [0016](adr/0016-sync-protocol.md)                           | Sync through server-checked RPCs, last writer wins, revision cursor   |
 | [0017](adr/0017-web-board.md)                               | A phone-first web board at rolestash.com/board/, built in CI          |
 | [0018](adr/0018-email-worker-ingest.md)                     | Email Worker with a single-purpose ingest secret, not the service key |
+| [0019](adr/0019-email-shared-learning.md)                   | Shared learning: template fingerprints and HMAC votes, applied in SQL |
 
 New decision? Copy [the template](adr/0000-template.md).
 

@@ -131,8 +131,9 @@ describe('handleEmail', () => {
         references: ['<app-0@greenhouse-mail.io>', '<app-1@greenhouse-mail.io>'],
       },
     });
-    // The email body never leaves the Worker.
+    // The email body never leaves the Worker; its template only as a SHA-256.
     expect(call.init.body).not.toContain('Hi Sam');
+    expect(body.p_event.template).toMatch(/^[0-9a-f]{64}$/);
   });
 
   it('reads an .ics attachment and falls back to now for a bad Date', async () => {

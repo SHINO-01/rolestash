@@ -233,6 +233,8 @@ export class AccountService implements PlanProvider {
       address: (rotate = false) => call((t) => this.client.myInbox(t, rotate)),
       events: (after, limit) => call((t) => this.client.emailEvents(t, after, limit)),
       remove: (ids) => call((t) => this.client.deleteEmailEvents(t, ids)),
+      vote: (votes) => call((t) => this.client.voteEmailKnowledge(t, votes)),
+      setSharing: (on) => call((t) => this.client.setEmailSharing(t, on)),
     };
   }
 
