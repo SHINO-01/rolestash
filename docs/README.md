@@ -28,6 +28,7 @@ Start with **Architecture → Overview**, then go by task.
 | [0015](adr/0015-reminders-alarms-optional-notifications.md) | Reminders on `alarms`, with `notifications` as an optional permission |
 | [0016](adr/0016-sync-protocol.md)                           | Sync through server-checked RPCs, last writer wins, revision cursor   |
 | [0017](adr/0017-web-board.md)                               | A phone-first web board at rolestash.com/board/, built in CI          |
+| [0018](adr/0018-email-worker-ingest.md)                     | Email Worker with a single-purpose ingest secret, not the service key |
 
 New decision? Copy [the template](adr/0000-template.md).
 

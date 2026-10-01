@@ -1,0 +1,22 @@
+// The Email Worker for in.rolestash.com (ADR-0014, ADR-0018). Cloudflare
+// Email Routing hands it every message sent to *@in.rolestash.com; it reads
+// the message in memory, runs the rules in src/email and stores only the
+// extracted event, through ingest_email_event. Deployed by CI after
+// "Promote to main". The Email Routing rule that points at it is set up in
+// the dashboard (docs/guides/email-updates.md); this file declares no routes.
+{
+  "name": "rolestash-email",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-01",
+  // No HTTP surface: email only.
+  "workers_dev": false,
+  "preview_urls": false,
+  "vars": {
+    // Public values (the same as the extension's .env.staging).
+    "SUPABASE_URL": "https://fhclnxqumcdsqxyunelp.supabase.co",
+    "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_nqWSfXAG076gYMSj7sHvjw_UNPKnMJU",
+  },
+  // Secret, set once with `wrangler secret put EMAIL_INGEST_SECRET`:
+  // the only credential the Worker holds. It can call ingest_email_event and
+  // nothing else; the database keeps just its SHA-256.
+}

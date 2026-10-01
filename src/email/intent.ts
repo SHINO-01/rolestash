@@ -1,5 +1,5 @@
 import { canonicalWords, splitSentences } from './clean';
-import type { StatusIntent } from './types';
+import type { StatusIntent } from './constants';
 
 /**
  * Sentence-level intent scoring (ADR-0014 §5.4). Each phrase rule adds

@@ -3,7 +3,8 @@ import type { Stage, StageId } from '../domain/stage';
 import { findAdapterByHost } from '../extraction/adapters/registry';
 import { canonicalizeUrl, tryParseUrl } from '../extraction/normalize/url';
 import { isPlatformDomain } from './ats';
-import type { EmailEvent, StatusIntent } from './types';
+import type { StatusIntent } from './constants';
+import type { EmailEvent } from './types';
 
 /**
  * Matching an email event to a job (ADR-0014 §5). Pure; it runs in the

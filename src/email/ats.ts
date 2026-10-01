@@ -1,5 +1,5 @@
 import { tryParseUrl } from '../extraction/normalize/url';
-import type { AtsId, StatusIntent } from './types';
+import type { AtsId, StatusIntent } from './constants';
 
 /**
  * Template readers, one per recruiting system (ADR-0014 §5). Templated

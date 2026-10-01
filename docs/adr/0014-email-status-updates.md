@@ -257,6 +257,8 @@ Where it differs from the plan above:
 - **AEST/AEDT mean Sydney wall time:** people write "AEST" all year, so the
   time is read in Sydney's zone. A time without a zone is stored as
   floating, to be read in the user's zone.
+- **No service-role key in the Worker:** it holds a single-purpose ingest
+  secret instead; see [ADR-0018](0018-email-worker-ingest.md).
 - **Separate scheduling links:** interviews keep a scheduling link
   (`schedulingUrl`) apart from the meeting link (`meetingUrl`), so
   **Join** never opens a booking page.

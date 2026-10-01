@@ -3,8 +3,8 @@
 Advanced users forward job emails to a personal address, and the board
 updates itself (ADR-0014). This guide covers the **engine** in `src/email/`:
 how one email becomes an `EmailEvent`, how an event is matched to a job, and
-how to fix a miss. The server side (the Email Worker) and the extension UI
-come in later milestones.
+how to fix a miss. It also covers the server side: the
+database and the Email Worker. The extension UI comes in a later milestone.
 
 ## Rules, not AI
 
@@ -125,6 +125,65 @@ Matching runs in the extension, where the jobs are. Signals, strongest first:
 
 `targetStage(intent, job, stages)` picks the column. It never moves a card
 backwards, and it works with custom columns by kind and name.
+
+## Receiving mail: the Email Worker
+
+`infra/email-worker/` (ADR-0018) is a Cloudflare Email Worker for
+`*@in.rolestash.com`. For each message, it:
+
+1. reads the token from the envelope recipient: 20 characters, `+tags`
+   ignored, nothing else accepted;
+2. drops mail larger than 3 MiB unread;
+3. parses the MIME in memory with the bundled `postal-mime`, including any
+   `.ics` part;
+4. runs `analyzeEmail`;
+5. calls `ingest_email_event` with its ingest secret, and retries once on a
+   network error or 5xx.
+
+The database decides the rest: unknown or rotated address, account not on
+Advanced, rate limit (30 an hour, 200 a day per address), duplicate
+Message-ID. Mail is never bounced, and only the outcome is logged.
+
+Tests: `tests/unit/email-worker/` uses real MIME and a fake `fetch`. A
+bundle test keeps zod and the DOM out of the engine. Check the bundle with:
+
+```bash
+npx wrangler@4.144.0 deploy --config infra/email-worker/wrangler.jsonc --dry-run
+```
+
+It should be about 180 KiB.
+
+## One-time setup
+
+1. **Database:** push the migration. Then check the security advisor.
+2. **Deploy:** CI deploys `rolestash-email` after "Promote to main".
+3. **Ingest secret:** create it once, then rotate it the same way. The
+   plaintext goes only into the Worker; the database gets its SHA-256.
+
+   ```bash
+   set -a; . ./secrets.env; set +a
+   secret="$(openssl rand -base64 32)"
+   printf '%s' "$secret" | npx wrangler@4.144.0 secret put EMAIL_INGEST_SECRET --name rolestash-email
+   printf '%s' "$secret" | sha256sum | cut -d' ' -f1   # → <hex>
+   unset secret
+   ```
+
+   Then store the hash (SQL editor or the Supabase MCP):
+
+   ```sql
+   insert into private.email_ingest_secret (sha256) values (decode('<hex>', 'hex'))
+     on conflict (id) do update set sha256 = excluded.sha256;
+   ```
+
+4. **Email Routing (owner, Cloudflare dashboard):**
+   - zone `rolestash.com` → **Email → Email Routing**. Enable it for the
+     **subdomain** `in.rolestash.com` and add the MX and TXT records it
+     proposes;
+   - **Routing rules → Catch-all address** → action **Send to a Worker**
+     → `rolestash-email` → enabled.
+5. **Check:** forward a test email to your own address (from `my_inbox()`).
+   A row appears in `email_events`, and the Worker's logs show
+   `email: stored`.
 
 ## Fixing a miss
 

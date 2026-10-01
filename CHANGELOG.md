@@ -8,6 +8,13 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Email status updates, part 2** (Advanced; not switched on yet): your
+  personal forwarding address at `in.rolestash.com`, which you can replace
+  at any time.
+  - A receiving service reads each forwarded email in memory and keeps only
+    what it found (for example "interview, Thursday 10am, Zoom link"),
+    never the email itself.
+  - Those results are deleted after 90 days.
 - **Email status updates, part 1** (Advanced; not switched on yet): the
   rules engine that reads job emails.
   - It recognises application receipts, assessments, interviews,

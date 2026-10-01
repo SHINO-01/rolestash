@@ -107,6 +107,28 @@ the account dialog lists and removes devices. pgTAP covers limits, RLS,
 last-writer-wins, lapsed plans and account deletion
 (`supabase/tests/database/sync.test.sql`).
 
+## Email status updates (ADR-0014, ADR-0018)
+
+Migration `…_email_updates.sql` adds two tables:
+
+- `email_inboxes`: one forwarding address per Advanced user. It isn't
+  readable by clients.
+- `email_events`: extracted events only, never email bodies. Owners can
+  select and delete through RLS. Events are deleted after 90 days, by
+  `ingest_email_event` and by a daily `pg_cron` job.
+
+| RPC                                              | Who                         | What                                                 |
+| ------------------------------------------------ | --------------------------- | ---------------------------------------------------- |
+| `my_inbox()`                                     | signed in, Advanced         | the address, created on first call                   |
+| `rotate_inbox()`                                 | signed in, Advanced         | a new address; mail to the old one is dropped        |
+| `ingest_email_event(p_secret, p_token, p_event)` | the Email Worker (anon key) | stores one event: secret, plan and rate-limit checks |
+
+Privileged bodies live in `private`, behind SECURITY INVOKER wrappers, like
+sync. `private.plan_tier_of(user)` is `plan_tier()` for any user.
+
+The ingest secret's SHA-256 lives in `private.email_ingest_secret`. To set or
+rotate it, see [email-updates.md](email-updates.md#one-time-setup).
+
 ## Edge Functions
 
 | Function          | Caller                  | Does                                                                                      |

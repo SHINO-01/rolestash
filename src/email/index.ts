@@ -6,4 +6,5 @@
 export { analyzeEmail, parseSender } from './analyze';
 export { matchEvent, targetStage, canonicalPostingUrl, normalizeCompany } from './match';
 export type { MatchMemory, MatchResult, MatchCandidate } from './match';
+export * from './constants';
 export * from './types';

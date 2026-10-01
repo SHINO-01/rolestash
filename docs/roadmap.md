@@ -73,8 +73,10 @@ feature on the pricing page is built. The site already advertises them all.
 - ~~**Web board**~~ done (ADR-0017; rolestash.com/board/): a phone-first board with
   Today, columns, quick updates and quick add, syncing as a `web` device.
 - **Email status updates and interview cards** (ADR-0014):
-  - a personal `@in.rolestash.com` address;
-  - a Cloudflare Email Worker;
+  - ~~a personal `@in.rolestash.com` address~~ done (`my_inbox`,
+    `rotate_inbox`);
+  - ~~a Cloudflare Email Worker~~ done (`infra/email-worker/`, ADR-0018;
+    live once the owner turns on Email Routing);
   - ~~a deterministic intent engine with an email fixture suite~~ done
     (`src/email/`, 43 fixtures; [guide](guides/email-updates.md));
   - suggestions for low-confidence results;

@@ -96,6 +96,11 @@ export default tseslint.config(
     },
   },
   {
+    // The Email Worker logs its outcome (never content) to Workers logs.
+    files: ['infra/email-worker/**/*.ts'],
+    rules: { 'no-console': 'off' },
+  },
+  {
     files: ['*.config.js'],
     ...tseslint.configs.disableTypeChecked,
   },

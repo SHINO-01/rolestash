@@ -8,12 +8,11 @@ import { findDateTime } from './time';
 import {
   STATUS_INTENTS,
   type EmailAction,
-  type EmailEvent,
   type EmailInput,
   type EmailIntent,
-  type Interview,
   type StatusIntent,
-} from './types';
+} from './constants';
+import type { EmailEvent, Interview } from './types';
 
 /**
  * The email engine: one parsed email in, one `EmailEvent` out. Pure and
