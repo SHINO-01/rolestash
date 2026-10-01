@@ -121,6 +121,7 @@ function safeCanonical(adapter: SiteAdapter | undefined, url: URL): string {
 export function cleanCompany(value: string): string {
   return cleanText(value)
     .replace(/^(at|@)\s+/i, '')
+    .replace(/^[A-Z]{2}\d{2,4}\s+(?=\S)/, '') // Workday entity codes: "IL00 Mellanox Technologies"
     .replace(/\s*\d(?:\.\d)?\s*★+\s*$/, '') // "Acme 4.2 ★" (Glassdoor)
     .replace(/\s*★.*$/, '')
     .replace(/\s*(logo|company logo)$/i, '')

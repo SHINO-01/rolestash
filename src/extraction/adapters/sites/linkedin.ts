@@ -14,6 +14,7 @@ export default defineAdapter({
   kind: 'job-board',
   regions: ['global'],
   homepage: 'https://www.linkedin.com/jobs',
+  lastVerified: '2026-10-01',
   hosts: ['linkedin.com'],
   externalId: jobId,
   // Search/collection views (`/jobs/search?currentJobId=…`) resolve to the posting URL.

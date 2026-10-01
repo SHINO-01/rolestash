@@ -83,11 +83,15 @@ function addressToString(address: unknown): string | undefined {
   if (typeof address === 'string') return text(address);
   if (!address || typeof address !== 'object') return undefined;
   const a = address as Json;
+  // Split each part on commas, so "Israel, Raanana" + "Israel" doesn't repeat
+  // the country; the last mention of a place wins (city, region, country order).
   const parts = [a.addressLocality, a.addressRegion, a.addressCountry]
     .map((p) => text(p))
-    .filter((p): p is string => Boolean(p));
+    .filter((p): p is string => Boolean(p))
+    .flatMap((p) => p.split(/\s*,\s*/))
+    .filter(Boolean);
   const unique = parts.filter(
-    (p, i) => parts.findIndex((q) => q.toLowerCase() === p.toLowerCase()) === i,
+    (p, i) => parts.findLastIndex((q) => q.toLowerCase() === p.toLowerCase()) === i,
   );
   const joined = unique.join(', ');
   return joined !== '' ? joined : (text(a.streetAddress) ?? text(a.name));

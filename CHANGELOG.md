@@ -87,6 +87,23 @@ All notable changes to this project are documented here. The format follows
   Backups exported under the old name still import, and manually added jobs
   keep working.
 
+### Fixed
+
+- **SEEK** captures on the new `au.seek.com` and `nz.seek.com` domains. They
+  fell back to a generic guess, which read the company as "SEEK Australia".
+  Links on the old and new domains are now treated as the same job.
+- **Indeed's 2026 layout:** title, company, location, pay, job type and
+  description are read again.
+- **Greenhouse** uses the company's real name ("GitLab", not "Gitlab").
+- **Workday** drops entity codes from company names ("IL00 Mellanox…").
+- Locations no longer repeat a country ("Israel, Raanana, Israel").
+- **LinkedIn** dedupes by its own job id, not the employer's requisition
+  number.
+- Salary text no longer keeps labels like "Pay".
+- Live-site snapshots (October 2026) for SEEK, LinkedIn, Indeed, Greenhouse,
+  Lever and Workday now back the fixture suite
+  (`scripts/snapshot-job-page.ts`).
+
 ## [0.1.0] — 2026-09-30
 
 ### Added

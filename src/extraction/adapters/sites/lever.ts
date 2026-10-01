@@ -10,6 +10,7 @@ export default defineAdapter({
   kind: 'ats',
   regions: ['global'],
   homepage: 'https://www.lever.co',
+  lastVerified: '2026-10-01',
   hosts: ['lever.co'],
   externalId: (url) => UUID.exec(url.pathname)?.[1],
   // Drop the trailing `/apply` so the application form and posting dedupe together.

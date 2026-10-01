@@ -1,0 +1,27 @@
+{
+  "url": "https://au.indeed.com/jobs?q=software+engineer&l=Sydney+NSW&vjk=3ce026be84e7fadb",
+  "now": "2026-10-01T10:00:00+10:00",
+  "expected": {
+    "site": "indeed",
+    "canonicalUrl": "https://au.indeed.com/viewjob?jk=3ce026be84e7fadb",
+    "title": "Senior Software Engineer",
+    "company": "Transport For NSW",
+    "location": "Macquarie Park NSW 2113",
+    "employmentTypes": ["full-time"],
+    "salary": {
+      "min": 158393,
+      "max": 177399,
+      "currency": "AUD",
+      "period": "year",
+      "text": "$158,393 - $177,399 a year"
+    },
+    "externalId": "3ce026be84e7fadb",
+    "isJobPage": true,
+    "descriptionContains": "Job category: Information & Communication Technology",
+    "provenance": {
+      "title": "adapter:selector",
+      "location": "adapter:custom",
+      "salary": "adapter:selector"
+    }
+  }
+}

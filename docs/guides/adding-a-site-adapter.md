@@ -6,6 +6,30 @@ first: an adapter only needs to supply what structured data doesn't.
 
 ## 1. Capture a real page
 
+**Recommended: the snapshot script.** For public pages:
+
+```bash
+npx tsx scripts/snapshot-job-page.ts <site> <case> <url>
+```
+
+- It renders the page in a fresh Chromium profile, with no cookies and no
+  sign-in.
+- It scrubs the page before writing
+  `tests/fixtures/sites/<site>/<case>.html`. It keeps JSON-LD and drops
+  other scripts, styles, iframes, SVGs, comments, event handlers, form
+  values, token meta tags and tracking parameters.
+- It prints what the extractor reads from the snapshot. Compare that with
+  the live page, then write `<case>.expected.json` by hand.
+- **Boards that challenge headless browsers** (SEEK, Indeed): add `HEADED=1`.
+- **Indeed's posting page** often shows a verification wall to automated
+  browsers. Snapshot the search pane instead
+  (`/jobs?q=…&vjk=<id>`).
+- **Check for personal data before committing:** grep for profile links
+  (`linkedin.com/in/`), email addresses and phone numbers. Name live
+  snapshots `live-YYYY-MM`.
+
+**By hand** (for signed-in views):
+
 1. Load a dev build, open a posting on the site, click the Rolestash icon.
 2. Expand **Extraction details**. It shows the resolved adapter, and for every
    field the strategy that produced it and its confidence.

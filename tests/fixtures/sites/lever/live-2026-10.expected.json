@@ -1,0 +1,16 @@
+{
+  "url": "https://jobs.lever.co/palantir/6ed76ce8-4156-4b60-b120-403538bd66cd?lever-source=LinkedIn",
+  "now": "2026-10-01T10:00:00+10:00",
+  "expected": {
+    "site": "lever",
+    "canonicalUrl": "https://jobs.lever.co/palantir/6ed76ce8-4156-4b60-b120-403538bd66cd",
+    "title": "Administrative Business Partner",
+    "company": "Palantir Technologies",
+    "location": "Singapore",
+    "workplaceType": "hybrid",
+    "employmentTypes": ["full-time"],
+    "externalId": "6ed76ce8-4156-4b60-b120-403538bd66cd",
+    "isJobPage": true,
+    "descriptionContains": "Palantir builds the world’s leading software"
+  }
+}

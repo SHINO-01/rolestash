@@ -22,6 +22,7 @@ export default defineAdapter({
   kind: 'ats',
   regions: ['global'],
   homepage: 'https://www.greenhouse.com',
+  lastVerified: '2026-10-01',
   hosts: ['greenhouse.io'],
   externalId: jobId,
   // Embed URLs (`/embed/job_app?for=acme&token=123`) resolve to the hosted board URL.
@@ -40,6 +41,8 @@ export default defineAdapter({
     location: ['.job__location', '.location'],
     description: ['.job__description', '#content', '.job-post-content'],
   },
+  // "Job Application for AI Engineer at GitLab": the real company name, not the URL slug.
+  titlePatterns: [/^Job Application for (?<title>.+) at (?<company>[^|]+?)$/i],
   notes:
-    'Hosted boards live on boards.greenhouse.io and job-boards.greenhouse.io and include JSON-LD. Company career pages often embed Greenhouse in a cross-origin iframe, which the `activeTab` permission cannot read — open the posting on greenhouse.io to capture it.',
+    'Hosted boards live on boards.greenhouse.io and job-boards.greenhouse.io. Since 2026 the job-boards pages carry no JSON-LD, so selectors carry the load; the page title gives the company’s real name. Company career pages often embed Greenhouse in a cross-origin iframe, which the `activeTab` permission cannot read — open the posting on greenhouse.io to capture it.',
 });

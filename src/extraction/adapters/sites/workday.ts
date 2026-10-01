@@ -8,6 +8,7 @@ export default defineAdapter({
   kind: 'ats',
   regions: ['global'],
   homepage: 'https://www.workday.com',
+  lastVerified: '2026-10-01',
   hosts: [/\.myworkdayjobs\.com$/, /\.myworkdaysite\.com$/],
   // Many enterprises serve Workday on their own domain.
   detect: (doc) => doc.querySelector('[data-automation-id="jobPostingHeader"]') !== null,

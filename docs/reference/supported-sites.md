@@ -22,16 +22,16 @@ covered by synthetic tests only. See [adding a site adapter](../guides/adding-a-
 | [Glassdoor](https://www.glassdoor.com) | `glassdoor` | global | `/(^\|\.)glassdoor\.[a-z.]+$/` | canonical URL, job id, 5 selector fields | — |
 | [GradConnection](https://au.gradconnection.com) | `gradconnection` | AU, NZ, SEA | `gradconnection.com` | 5 selector fields, company from URL | — |
 | [Himalayas](https://himalayas.app) | `himalayas` | global | `himalayas.app` | 2 selector fields, company from URL, custom logic | — |
-| [Indeed](https://www.indeed.com) | `indeed` | global | `/(^\|\.)indeed\.(com\|co\.[a-z]{2}\|com\.[a-z]{2}\|[a-z]{2})$/` | canonical URL, job id, 6 selector fields, title pattern | — |
+| [Indeed](https://www.indeed.com) | `indeed` | global | `/(^\|\.)indeed\.(com\|co\.[a-z]{2}\|com\.[a-z]{2}\|[a-z]{2})$/` | canonical URL, job id, 6 selector fields, title pattern, custom logic | 2026-10-01 |
 | [JobStreet / Jobsdb](https://www.jobstreet.com) | `jobstreet` | SEA | `/(^\|\.)jobstreet\.(com\|com\.my\|com\.sg\|com\.ph\|co\.id\|vn)$/`, `jobsdb.com` | canonical URL, job id, 8 selector fields | — |
-| [LinkedIn](https://www.linkedin.com/jobs) | `linkedin` | global | `linkedin.com` | canonical URL, job id, 8 selector fields, title pattern, custom logic | — |
+| [LinkedIn](https://www.linkedin.com/jobs) | `linkedin` | global | `linkedin.com` | canonical URL, job id, 8 selector fields, title pattern, custom logic | 2026-10-01 |
 | [Monster](https://www.monster.com) | `monster` | US, UK, EU | `/(^\|\.)monster\.(com\|co\.uk\|ca\|de\|fr\|nl\|be\|at\|ie\|it\|es\|se\|ch)$/` | 5 selector fields | — |
 | [Naukri](https://www.naukri.com) | `naukri` | IN | `naukri.com` | job id, 5 selector fields | — |
 | [Prosple](https://au.prosple.com) | `prosple` | AU, NZ, UK, SEA | `prosple.com` | 2 selector fields, company from URL | — |
 | [Reed](https://www.reed.co.uk) | `reed` | UK | `reed.co.uk` | job id, 6 selector fields | — |
 | [Remote OK](https://remoteok.com) | `remote-ok` | global | `remoteok.com`, `remoteok.io` | canonical URL, job id, 3 selector fields, custom logic | — |
 | [Remotive](https://remotive.com) | `remotive` | global | `remotive.com`, `remotive.io` | job id, 2 selector fields, custom logic | — |
-| [SEEK](https://www.seek.com.au) | `seek` | AU, NZ | `seek.com.au`, `seek.co.nz` | canonical URL, job id, 8 selector fields, title pattern | — |
+| [SEEK](https://au.seek.com) | `seek` | AU, NZ | `seek.com`, `seek.com.au`, `seek.co.nz` | canonical URL, job id, 8 selector fields, title pattern | 2026-10-01 |
 | [StepStone](https://www.stepstone.de) | `stepstone` | EU, UK | `/(^\|\.)stepstone\.(de\|at\|be\|nl\|fr\|pl\|co\.uk)$/` | job id, 6 selector fields | — |
 | [Totaljobs](https://www.totaljobs.com) | `totaljobs` | UK | `totaljobs.com` | job id, 6 selector fields | — |
 | [We Work Remotely](https://weworkremotely.com) | `we-work-remotely` | global | `weworkremotely.com` | 4 selector fields, custom logic | — |
@@ -63,12 +63,12 @@ covered by synthetic tests only. See [adding a site adapter](../guides/adding-a-
 | [Ashby](https://www.ashbyhq.com) | `ashby` | global | `ashbyhq.com` | canonical URL, job id, 2 selector fields, title pattern, company from URL | — |
 | [BambooHR](https://www.bamboohr.com) | `bamboohr` | global | `bamboohr.com` | canonical URL, job id, 3 selector fields, company from URL | — |
 | [Breezy HR](https://breezy.hr) | `breezy` | global | `breezy.hr` | job id, 4 selector fields, company from URL | — |
-| [Greenhouse](https://www.greenhouse.com) | `greenhouse` | global | `greenhouse.io` | canonical URL, job id, 4 selector fields, company from URL | — |
+| [Greenhouse](https://www.greenhouse.com) | `greenhouse` | global | `greenhouse.io` | canonical URL, job id, 4 selector fields, title pattern, company from URL | 2026-10-01 |
 | [iCIMS](https://www.icims.com) | `icims` | global, US | `icims.com` | canonical URL, job id, 3 selector fields, company from URL | — |
 | [JazzHR](https://www.jazzhr.com) | `jazzhr` | US, global | `applytojob.com` | canonical URL, job id, 4 selector fields, company from URL | — |
 | [JobAdder](https://jobadder.com) | `jobadder` | AU, NZ, UK | `jobadder.com` | 4 selector fields | — |
 | [Jobvite](https://www.jobvite.com) | `jobvite` | US, global | `jobvite.com` | canonical URL, job id, 3 selector fields, company from URL | — |
-| [Lever](https://www.lever.co) | `lever` | global | `lever.co` | canonical URL, job id, 6 selector fields, company from URL | — |
+| [Lever](https://www.lever.co) | `lever` | global | `lever.co` | canonical URL, job id, 6 selector fields, company from URL | 2026-10-01 |
 | [Oracle Recruiting Cloud](https://www.oracle.com/human-capital-management/recruiting/) | `oracle-recruiting` | global | `/\.oraclecloud\.com$/` | canonical URL, job id, 3 selector fields | — |
 | [Oracle Taleo](https://www.oracle.com/human-capital-management/taleo/) | `taleo` | global | `taleo.net` | canonical URL, job id, 5 selector fields, company from URL | — |
 | [PageUp](https://www.pageuppeople.com) | `pageup` | AU, global | `/\.pageuppeople\.com$/` | job id, 5 selector fields | — |
@@ -78,7 +78,7 @@ covered by synthetic tests only. See [adding a site adapter](../guides/adding-a-
 | [SmartRecruiters](https://www.smartrecruiters.com) | `smartrecruiters` | global | `smartrecruiters.com` | job id, 5 selector fields, company from URL | — |
 | [Teamtailor](https://www.teamtailor.com) | `teamtailor` | EU, global | `teamtailor.com` | job id, 2 selector fields, company from URL, custom-domain detection | — |
 | [Workable](https://www.workable.com) | `workable` | global | `workable.com` | canonical URL, job id, 5 selector fields, company from URL | — |
-| [Workday](https://www.workday.com) | `workday` | global | `/\.myworkdayjobs\.com$/`, `/\.myworkdaysite\.com$/` | canonical URL, job id, 5 selector fields, company from URL, custom-domain detection | — |
+| [Workday](https://www.workday.com) | `workday` | global | `/\.myworkdayjobs\.com$/`, `/\.myworkdaysite\.com$/` | canonical URL, job id, 5 selector fields, company from URL, custom-domain detection | 2026-10-01 |
 
 ## Site notes
 
@@ -91,9 +91,9 @@ covered by synthetic tests only. See [adding a site adapter](../guides/adding-a-
 - **EthicalJobs** — Non-profit and for-purpose sector.
 - **Glassdoor** — Class names are CSS-module hashes, so selectors match on stable prefixes (`[class*="JobDetails_"]`). Employer names include the star rating, which the pipeline strips. Dedupe relies on the `jl` id.
 - **GradConnection** — Graduate and internship roles. Company is also derivable from the URL path.
-- **Greenhouse** — Hosted boards live on boards.greenhouse.io and job-boards.greenhouse.io and include JSON-LD. Company career pages often embed Greenhouse in a cross-origin iframe, which the `activeTab` permission cannot read — open the posting on greenhouse.io to capture it.
+- **Greenhouse** — Hosted boards live on boards.greenhouse.io and job-boards.greenhouse.io. Since 2026 the job-boards pages carry no JSON-LD, so selectors carry the load; the page title gives the company’s real name. Company career pages often embed Greenhouse in a cross-origin iframe, which the `activeTab` permission cannot read — open the posting on greenhouse.io to capture it.
 - **iCIMS** — The posting renders inside a same-origin iframe (`?in_iframe=1`). The extractor runs in every frame and keeps the best result, so this works without extra permissions.
-- **Indeed** — Indeed does not publish JSON-LD on most views, so selectors carry the load. Country sites live on subdomains (au.indeed.com). The search pane uses `vjk`, the posting page uses `jk`.
+- **Indeed** — Indeed does not publish JSON-LD on most views, so selectors carry the load. Country sites live on subdomains (au.indeed.com). The search pane uses `vjk`, the posting page uses `jk`. The 2026 layout uses `vj-job-title`, `company-info-metadata` and labelled Pay / Job type groups; location comes from the compact header. The posting page often shows a verification wall to automated browsers, so the live fixture is the search pane.
 - **JazzHR** — Formerly “The Resumator”; legacy `#resumator-*` ids are kept as fallbacks.
 - **JobAdder** — Recruitment-agency ATS popular in AU/NZ. Boards are usually embedded in agency sites; open the job on jobadder.com to capture it.
 - **JobStreet / Jobsdb** — Runs on the SEEK platform since the 2024 unification, so it reuses SEEK’s selectors. Country is a subdomain (my.jobstreet.com, hk.jobsdb.com).

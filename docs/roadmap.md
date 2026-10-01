@@ -57,7 +57,7 @@ feature on the pricing page is built. The site already advertises them all.
   - `fetch` + `DOMParser` in an offscreen document, running the same pure
     extractor;
   - a background tab as the fallback for JavaScript-rendered pages.
-- **Quality:** verify adapters against live sites. Replace synthetic
+- ~~**Quality:**~~ done 2026-10-01 (`scripts/snapshot-job-page.ts`, `live-2026-10` fixtures). Verify adapters against live sites. Replace synthetic
   fixtures with scrubbed real snapshots, starting with LinkedIn, SEEK,
   Indeed, Greenhouse, Lever and Workday.
 

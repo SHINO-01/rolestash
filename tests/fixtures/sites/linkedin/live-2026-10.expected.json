@@ -1,0 +1,15 @@
+{
+  "url": "https://au.linkedin.com/jobs/view/software-engineer-portfolio-engine-splunk-australia-at-cisco-4470914440?trk=public_jobs_topcard",
+  "now": "2026-10-01T10:00:00+10:00",
+  "expected": {
+    "site": "linkedin",
+    "canonicalUrl": "https://linkedin.com/jobs/view/4470914440",
+    "title": "Software Engineer, Portfolio Engine - Splunk, Australia",
+    "company": "Cisco",
+    "location": "Sydney, NSW, AU",
+    "employmentTypes": ["full-time"],
+    "externalId": "4470914440",
+    "isJobPage": true,
+    "descriptionContains": "Portfolio Engine (PE) team"
+  }
+}

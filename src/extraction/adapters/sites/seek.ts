@@ -1,4 +1,5 @@
-import { canonicalFromId, currencyFromHost, pathId, queryId } from '../helpers';
+import { buildUrl } from '../../normalize/url';
+import { currencyFromHost, pathId, queryId } from '../helpers';
 import { defineAdapter, type SiteAdapter } from '../types';
 
 /** Shared by every site on the SEEK platform (SEEK, JobStreet, Jobsdb). */
@@ -24,11 +25,18 @@ export default defineAdapter({
   name: 'SEEK',
   kind: 'job-board',
   regions: ['AU', 'NZ'],
-  homepage: 'https://www.seek.com.au',
-  hosts: ['seek.com.au', 'seek.co.nz'],
+  homepage: 'https://au.seek.com',
+  lastVerified: '2026-10-01',
+  // SEEK moved to au.seek.com and nz.seek.com in 2026; the old domains redirect.
+  hosts: ['seek.com', 'seek.com.au', 'seek.co.nz'],
   externalId: seekJobId,
-  // Search view (`/software-jobs?jobId=…`) resolves to the posting.
-  canonicalUrl: canonicalFromId(seekJobId, '/job/{id}'),
+  // Search view (`/software-jobs?jobId=…`) resolves to the posting, on the
+  // current domain, so old seek.com.au links match new au.seek.com ones.
+  canonicalUrl: (url) => {
+    const id = seekJobId(url);
+    const nz = /(^|\.)nz\.|\.nz$/.test(url.hostname);
+    return id ? buildUrl(nz ? 'nz.seek.com' : 'au.seek.com', `/job/${id}`) : undefined;
+  },
   defaultCurrency: currencyFromHost('AUD'),
   selectors: SEEK_PLATFORM_SELECTORS,
   titlePatterns: [/^(?<title>.+?) Job in (?<location>.+?) - SEEK$/i],

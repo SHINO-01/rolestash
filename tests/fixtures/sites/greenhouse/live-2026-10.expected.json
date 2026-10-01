@@ -1,0 +1,19 @@
+{
+  "url": "https://job-boards.greenhouse.io/gitlab/jobs/8556658002?gh_src=linkedin",
+  "now": "2026-10-01T10:00:00+10:00",
+  "expected": {
+    "site": "greenhouse",
+    "canonicalUrl": "https://job-boards.greenhouse.io/gitlab/jobs/8556658002",
+    "title": "AI Engineer",
+    "company": "GitLab",
+    "location": "Remote, Bangalore",
+    "workplaceType": "remote",
+    "externalId": "8556658002",
+    "isJobPage": true,
+    "descriptionContains": "GitLab is the intelligent orchestration platform for DevSecOps",
+    "provenance": {
+      "title": "adapter:selector",
+      "company": "adapter:title-pattern"
+    }
+  }
+}

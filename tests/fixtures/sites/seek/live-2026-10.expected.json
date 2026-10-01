@@ -1,0 +1,19 @@
+{
+  "url": "https://au.seek.com/job/94604943?type=promoted&ref=search-standalone#sol=ac5b7fd9ed49488d86288805dc159d1fb793d155",
+  "now": "2026-10-01T10:00:00+10:00",
+  "expected": {
+    "site": "seek",
+    "canonicalUrl": "https://au.seek.com/job/94604943",
+    "title": "Software Developer",
+    "company": "Francom Group",
+    "location": "Parramatta, Sydney NSW",
+    "employmentTypes": ["full-time"],
+    "externalId": "94604943",
+    "isJobPage": true,
+    "descriptionContains": "Francom is a leading financial services organisation",
+    "provenance": {
+      "title": "adapter:selector",
+      "company": "adapter:selector"
+    }
+  }
+}

@@ -49,6 +49,8 @@ describe('adapter registry', () => {
     ['https://uk.indeed.com/viewjob?jk=1', 'indeed'],
     ['https://www.indeed.co.uk/viewjob?jk=1', 'indeed'],
     ['https://www.seek.co.nz/job/1', 'seek'],
+    ['https://au.seek.com/job/1', 'seek'],
+    ['https://nz.seek.com/job/1', 'seek'],
     ['https://my.jobstreet.com/job/1', 'jobstreet'],
     ['https://hk.jobsdb.com/job/1', 'jobstreet'],
     ['https://acme.wd3.myworkdayjobs.com/External/job/X_R1', 'workday'],
@@ -92,7 +94,12 @@ describe('canonical URLs', () => {
       'https://linkedin.com/jobs/view/4000000002',
     ],
     ['https://au.indeed.com/jobs?q=dev&vjk=abc123', 'https://au.indeed.com/viewjob?jk=abc123'],
-    ['https://www.seek.com.au/dev-jobs?jobId=77', 'https://seek.com.au/job/77'],
+    ['https://www.seek.com.au/dev-jobs?jobId=77', 'https://au.seek.com/job/77'],
+    [
+      'https://au.seek.com/job/94604943?type=promoted&ref=search-standalone',
+      'https://au.seek.com/job/94604943',
+    ],
+    ['https://www.seek.co.nz/job/5', 'https://nz.seek.com/job/5'],
     [
       'https://boards.greenhouse.io/embed/job_app?for=acme&token=55',
       'https://boards.greenhouse.io/acme/jobs/55',

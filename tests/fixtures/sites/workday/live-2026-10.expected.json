@@ -1,0 +1,20 @@
+{
+  "url": "https://nvidia.wd5.myworkdayjobs.com/en-US/NVIDIAExternalCareerSite/job/Israel-Raanana/Senior-Release-Manager_JR2025269",
+  "now": "2026-10-01T10:00:00+10:00",
+  "expected": {
+    "site": "workday",
+    "canonicalUrl": "https://nvidia.wd5.myworkdayjobs.com/NVIDIAExternalCareerSite/job/Israel-Raanana/Senior-Release-Manager_JR2025269",
+    "title": "Senior Release Manager",
+    "company": "Mellanox Technologies, Ltd.",
+    "location": "Raanana, Israel",
+    "employmentTypes": ["full-time"],
+    "postedAt": "2026-10-01",
+    "externalId": "JR2025269",
+    "isJobPage": true,
+    "descriptionContains": "NVIDIA Networking team is looking for",
+    "provenance": {
+      "title": "json-ld",
+      "company": "json-ld"
+    }
+  }
+}

@@ -16,6 +16,8 @@ const DEFAULT_SELECTOR_CONFIDENCE = 0.85;
 const CUSTOM_CONFIDENCE = 0.85;
 const TITLE_PATTERN_CONFIDENCE = 0.7;
 const URL_CONFIDENCE = 0.5;
+/** Above JSON-LD (0.95): see runUrl. */
+const URL_ID_CONFIDENCE = 0.97;
 
 /** Fields whose value is spread over several chips/pills. */
 const MULTI_ELEMENT_FIELDS = new Set<SelectorField>(['employmentType', 'workplaceType', 'salary']);
@@ -72,11 +74,12 @@ function runSelectors(ctx: ExtractionContext, out: StrategyOutput): void {
 /** From "Hybrid · Full-time · $120K/yr - $140K/yr" keep the part with money in it. */
 function pickSalaryChunk(text: string): string {
   const chunks = text.split(/\s*·\s*/);
-  return (
+  const chunk =
     chunks.find(
       (c) => /\d/.test(c) && /[$£€₹¥]|\b[A-Z]{3}\b|\d\s?k\b|per|hour|year|annum/i.test(c),
-    ) ?? text
-  );
+    ) ?? text;
+  // Labelled groups ("Pay $90,000 a year", "Salary: …") keep only the amount.
+  return chunk.replace(/^\s*(?:pay|salary|wage|compensation|remuneration)\s*:?\s*/i, '');
 }
 
 function runCustom(ctx: ExtractionContext, out: StrategyOutput): void {
@@ -100,7 +103,12 @@ function runTitlePatterns(ctx: ExtractionContext, out: StrategyOutput): void {
     if (!groups) continue;
     for (const key of ['title', 'company', 'location'] as const) {
       const value = cleanText(groups[key]);
-      if (value && !isMeaningful(out[key]))
+      // Fills gaps, and beats weaker guesses (a company read from the URL slug).
+      const current = out[key];
+      if (
+        value &&
+        (!isMeaningful(current) || (current?.confidence ?? 0) < TITLE_PATTERN_CONFIDENCE)
+      )
         put(out, key, value, TITLE_PATTERN_CONFIDENCE, 'adapter:title-pattern');
     }
     return;
@@ -113,7 +121,10 @@ function runUrl(ctx: ExtractionContext, out: StrategyOutput): void {
   const company = adapter.companyFromUrl?.(ctx.url);
   if (company) put(out, 'company', company, URL_CONFIDENCE, 'adapter:url');
   const id = adapter.externalId?.(ctx.url);
-  if (id) put(out, 'externalId', id, 0.9, 'adapter:url');
+  // The board's own id (in its URL) is the stable key for spotting duplicates,
+  // so it outranks a JSON-LD identifier, which is often the employer's
+  // requisition number (LinkedIn).
+  if (id) put(out, 'externalId', id, URL_ID_CONFIDENCE, 'adapter:url');
 }
 
 /** Keeps the higher-confidence value when sub-steps overlap within this strategy. */
