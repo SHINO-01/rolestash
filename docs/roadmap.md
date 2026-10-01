@@ -63,7 +63,7 @@ feature on the pricing page is built. The site already advertises them all.
 
 ## Phase 1c: Advanced features
 
-- **Sync across devices:**
+- ~~**Sync across devices**~~ done (ADR-0016; Account → _Sync this browser_):
   - Supabase `jobs` and `settings` tables, with RLS for paid plans;
   - a device registry enforcing `SYNC_DEVICE_LIMITS`: Pro up to 3 computers,
     Advanced up to 5 devices including the web board;

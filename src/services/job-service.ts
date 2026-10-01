@@ -184,7 +184,9 @@ export class JobService {
       const ranks = evenRanks(ordered.length);
       const moved = ordered.map((j, i) => {
         const rank = ranks[i] ?? (i + 1) * RANK_STEP;
-        return j.id === jobId ? moveJob(j, stage, rank, this.ctx) : { ...j, rank };
+        return j.id === jobId
+          ? moveJob(j, stage, rank, this.ctx)
+          : { ...j, rank, updatedAt: this.ctx.now().toISOString() };
       });
       return this.jobs.saveMany(moved);
     }

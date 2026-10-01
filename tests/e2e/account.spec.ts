@@ -214,6 +214,63 @@ test.describe('accounts', () => {
     await expect(page.getByText('Backend Engineer (Payments)')).toBeVisible();
   });
 
+  test('syncs the board with other devices on Pro', async ({
+    context,
+    worker,
+    extensionId,
+    backend,
+  }) => {
+    await seedActiveJobs(worker, 1); // "Role 0" on this device
+    await seedSignedIn(worker, {
+      status: 'trialing',
+      trialEndsAt: new Date(Date.now() + 10 * 86_400_000).toISOString(),
+      hasBillingAccount: false,
+    });
+    // A job saved on another computer, already on the server.
+    const now = new Date().toISOString();
+    backend.synced.set('remote-1', {
+      data: {
+        id: 'remote-1',
+        title: 'Synced from laptop',
+        company: 'Harbour Analytics',
+        employmentTypes: [],
+        stageId: 'applied',
+        rank: 1024,
+        priority: 0,
+        tags: [],
+        notes: '',
+        activity: [],
+        createdAt: now,
+        updatedAt: now,
+        source: {
+          url: 'https://example.com/jobs/remote-1',
+          originalUrl: 'https://example.com/jobs/remote-1',
+          siteId: 'generic',
+          siteName: 'example.com',
+          capturedAt: now,
+        },
+      },
+      deleted: false,
+      updated_at: now,
+      revision: ++backend.revision,
+    });
+
+    const page = await context.newPage();
+    await page.goto(`chrome-extension://${extensionId}/board.html#account`);
+    const dialog = page.getByRole('dialog', { name: 'Your account' });
+    await dialog.getByRole('button', { name: 'Sync this browser' }).click();
+    await expect(dialog.getByRole('list', { name: 'Synced devices' })).toContainText(
+      'this browser',
+    );
+    await dialog.getByRole('button', { name: 'Close' }).click();
+
+    // Pulled: the other device's job is on this board; pushed: ours is on the server.
+    await expect(page.getByText('Synced from laptop')).toBeVisible();
+    await expect.poll(() => backend.synced.has('j0')).toBe(true);
+    expect(backend.devices).toHaveLength(1);
+    expect(backend.devices[0]?.kind).toBe('computer');
+  });
+
   test('deleting the account keeps jobs on this device', async ({
     context,
     worker,

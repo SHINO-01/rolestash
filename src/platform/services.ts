@@ -20,7 +20,30 @@ export function getServices(): Services {
             authFlow: new ChromeWebAuthFlow(),
           }
         : undefined,
+      { name: deviceName(), kind: 'computer' },
     );
   }
   return instance;
+}
+
+/** "Chrome on Windows": how this browser appears in the account's device list. */
+function deviceName(): string {
+  const ua = navigator.userAgent;
+  const os = ua.includes('Windows')
+    ? 'Windows'
+    : ua.includes('CrOS')
+      ? 'ChromeOS'
+      : ua.includes('Mac OS X')
+        ? 'macOS'
+        : ua.includes('Linux')
+          ? 'Linux'
+          : 'this computer';
+  const browser = ua.includes('Edg/')
+    ? 'Edge'
+    : ua.includes('OPR/')
+      ? 'Opera'
+      : ua.includes('Brave')
+        ? 'Brave'
+        : 'Chrome';
+  return `${browser} on ${os}`;
 }

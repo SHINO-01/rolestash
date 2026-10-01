@@ -20,13 +20,17 @@ export interface MockBackend {
   requests: MockRequest[];
   /** The entitlement row returned to the signed-in user. */
   entitlement: Record<string, unknown>;
+  /** Sync (ADR-0016): registered devices and synced rows, newest edit wins. */
+  devices: { id: string; name: string; kind: string }[];
+  synced: Map<string, { data: unknown; deleted: boolean; updated_at: string; revision: number }>;
+  revision: number;
   close(): Promise<void>;
 }
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, apikey, content-type',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
 };
 
 const TOKEN = {
@@ -37,8 +41,59 @@ const TOKEN = {
 };
 const PAGE = '<!doctype html><title>Mock checkout</title><h1>Checkout</h1>';
 
-function route(path: string, body: unknown, state: MockBackend): [number, unknown, string?] {
+function route(
+  method: string,
+  path: string,
+  body: unknown,
+  state: MockBackend,
+): [number, unknown, string?] {
+  const b = (body ?? {}) as Record<string, unknown>;
   switch (path) {
+    case '/rest/v1/rpc/register_device':
+      if (!state.devices.some((d) => d.id === b.p_id))
+        state.devices.push({ id: String(b.p_id), name: String(b.p_name), kind: String(b.p_kind) });
+      return [200, { ok: true }];
+    case '/rest/v1/devices':
+      if (method === 'DELETE') {
+        state.devices = [];
+        return [204, ''];
+      }
+      return [
+        200,
+        state.devices.map((d) => ({
+          ...d,
+          created_at: '2026-10-01T00:00:00Z',
+          last_seen_at: new Date().toISOString(),
+        })),
+      ];
+    case '/rest/v1/rpc/push_jobs': {
+      let applied = 0;
+      for (const c of b.p_changes as {
+        id: string;
+        updatedAt: string;
+        deleted?: boolean;
+        data?: unknown;
+      }[]) {
+        const current = state.synced.get(c.id);
+        if (current && current.updated_at >= c.updatedAt) continue;
+        state.synced.set(c.id, {
+          data: c.deleted ? null : c.data,
+          deleted: c.deleted ?? false,
+          updated_at: c.updatedAt,
+          revision: ++state.revision,
+        });
+        applied++;
+      }
+      return [200, applied];
+    }
+    case '/rest/v1/rpc/pull_jobs':
+      return [
+        200,
+        [...state.synced.entries()]
+          .filter(([, r]) => r.revision > Number(b.p_after))
+          .sort(([, x], [, y]) => x.revision - y.revision)
+          .map(([job_id, r]) => ({ job_id, ...r })),
+      ];
     case '/auth/v1/settings':
       return [200, { external: { email: true, google: true } }];
     case '/auth/v1/otp':
@@ -77,6 +132,9 @@ export async function startMockBackend(): Promise<MockBackend> {
       current_period_end: null,
       provider_customer_id: null,
     },
+    devices: [],
+    synced: new Map(),
+    revision: 0,
     close: () => Promise.resolve(),
   };
 
@@ -96,7 +154,12 @@ export async function startMockBackend(): Promise<MockBackend> {
         body = raw;
       }
       state.requests.push({ method: req.method ?? 'GET', path, headers: req.headers, body });
-      const [status, payload, type = 'application/json'] = route(path, body, state);
+      const [status, payload, type = 'application/json'] = route(
+        req.method ?? 'GET',
+        path,
+        body,
+        state,
+      );
       res.writeHead(status, { ...CORS, 'Content-Type': type });
       res.end(typeof payload === 'string' ? payload : JSON.stringify(payload));
     });

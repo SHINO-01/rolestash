@@ -29,6 +29,7 @@ import { Menu } from '@/ui/components/menu';
 import { Kbd, Logo } from '@/ui/components/misc';
 import { useToast } from '@/ui/components/toast';
 import { useAccount } from '@/ui/hooks/account';
+import { useAutoSync } from '@/ui/hooks/sync';
 import { useJobs, useServices, useSettings } from '@/ui/hooks/services';
 import { matchesQuery } from '@/ui/format';
 import { AddJobDialog } from './add-job-dialog';
@@ -55,6 +56,7 @@ export function BoardPage() {
   const deferredQuery = useDeferredValue(query);
   const [openJobId, setOpenJobId] = useState<string | undefined>(readJobFromHash);
   const { account, state: accountState } = useAccount();
+  useAutoSync();
   const [dialog, setDialog] = useState<'add' | 'import' | 'account' | 'history' | 'columns' | null>(
     () => (location.hash === '#account' ? 'account' : null),
   );

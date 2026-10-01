@@ -45,7 +45,8 @@ export function createJob(input: NewJobInput, ctx: DomainContext): Job {
 
 export function moveJob(job: Job, to: Stage, rank: number, ctx: DomainContext): Job {
   if (job.stageId === to.id) {
-    return job.rank === rank ? job : { ...job, rank };
+    // Reordering is a change too, so it syncs (ADR-0016).
+    return job.rank === rank ? job : { ...job, rank, updatedAt: ctx.now().toISOString() };
   }
   const at = ctx.now().toISOString();
   const entry: Activity = {

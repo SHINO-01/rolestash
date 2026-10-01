@@ -8,6 +8,7 @@ import type { SupabaseClient } from './backend/supabase-client';
 import { CaptureService } from './capture-service';
 import { ColumnService } from './column-service';
 import { JobService } from './job-service';
+import { SyncService, type ThisDevice } from './sync-service';
 import type { ExtractorRunner, WebAuthFlow } from './ports';
 
 /**
@@ -24,6 +25,8 @@ export interface Services {
   runner: ExtractorRunner;
   /** Present only in builds configured with a backend (ADR-0011). */
   account?: AccountService;
+  /** Sync across devices (ADR-0016); present with `account`. */
+  sync?: SyncService;
   /** Resolves once storage migrations have run in this context. */
   ready: Promise<void>;
 }
@@ -43,11 +46,15 @@ export function createServices(
   runner: ExtractorRunner,
   ctx: DomainContext = systemContext,
   backend?: BackendDeps,
+  device: ThisDevice = { name: 'This computer', kind: 'computer' },
 ): Services {
   const jobs = new JobRepository(store);
   const settings = new SettingsRepository(store);
   const account = backend
     ? new AccountService(store, backend.client, backend.authFlow, ctx.now)
+    : undefined;
+  const sync = account
+    ? new SyncService(store, jobs, settings, account.remoteJobStore(), account, ctx, device)
     : undefined;
   return {
     store,
@@ -55,6 +62,7 @@ export function createServices(
     settings,
     runner,
     ...(account ? { account } : {}),
+    ...(sync ? { sync } : {}),
     jobService: new JobService(jobs, settings, ctx, account),
     columns: new ColumnService(settings, jobs, ctx, account),
     capture: new CaptureService(runner),

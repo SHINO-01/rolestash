@@ -8,6 +8,13 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Sync across devices** (Pro: 3 computers; Advanced: 5 devices):
+  - Turn it on in _Account_, and your jobs and columns stay in step
+    between browsers. Your theme stays per device.
+  - The newest edit wins, deletions carry over, and everything still
+    works offline.
+  - The account dialog lists synced devices and removes them.
+  - The server enforces the plan and the device limit (ADR-0016).
 - **Capture from a pasted link** (Pro):
   - In _Add job_, paste a job link and choose _Fill in from link_.
   - Rolestash asks for access to that one site and reads the page with the

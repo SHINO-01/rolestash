@@ -26,6 +26,7 @@ Start with **Architecture → Overview**, then go by task.
 | [0013](adr/0013-three-plans.md)                             | Free, Pro and Advanced plans; per-plan limits; local prices           |
 | [0014](adr/0014-email-status-updates.md)                    | Email status updates via a forwarding address and rules (no AI)       |
 | [0015](adr/0015-reminders-alarms-optional-notifications.md) | Reminders on `alarms`, with `notifications` as an optional permission |
+| [0016](adr/0016-sync-protocol.md)                           | Sync through server-checked RPCs, last writer wins, revision cursor   |
 
 New decision? Copy [the template](adr/0000-template.md).
 

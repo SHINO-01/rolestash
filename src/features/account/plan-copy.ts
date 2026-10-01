@@ -64,6 +64,8 @@ export function backendErrorMessage(error: unknown): string {
       return 'You already have a subscription. Use "Manage subscription" to change it.';
     case 'no_subscription':
       return 'There is no subscription to manage yet.';
+    case 'sync_not_allowed':
+      return 'This browser can’t sync on your current plan, or it was removed from sync.';
     default:
       return error instanceof Error && error.message === 'Sign-in was cancelled'
         ? 'Sign-in was cancelled.'

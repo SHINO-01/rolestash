@@ -43,6 +43,8 @@ export type BackendErrorCode =
   | 'session_expired'
   | 'already_subscribed'
   | 'no_subscription'
+  /** The plan or this device may not sync (lapsed plan, removed device). */
+  | 'sync_not_allowed'
   | 'server';
 
 export class BackendError extends Error {
@@ -61,6 +63,56 @@ const TokenResponse = z.object({
   expires_in: z.number(),
   user: z.object({ id: z.string(), email: z.string().nullish() }),
 });
+
+export const DeviceKindSchema = z.enum(['computer', 'web']);
+
+const DeviceRow = z.object({
+  id: z.string(),
+  name: z.string(),
+  kind: DeviceKindSchema,
+  created_at: z.string(),
+  last_seen_at: z.string(),
+});
+export interface RemoteDevice {
+  id: string;
+  name: string;
+  kind: z.infer<typeof DeviceKindSchema>;
+  createdAt: string;
+  lastSeenAt: string;
+}
+
+const RegisterResult = z.union([
+  z.object({ ok: z.literal(true) }),
+  z.object({
+    ok: z.literal(false),
+    reason: z.enum(['device_limit', 'web_board_advanced', 'plan_required']),
+    limit: z.number(),
+  }),
+]);
+export type DeviceRegistration = z.infer<typeof RegisterResult>;
+
+/** One change pushed to the server (ADR-0016). */
+export interface SyncChange {
+  id: string;
+  updatedAt: string;
+  deleted?: boolean;
+  data?: unknown;
+}
+
+const PulledRow = z.object({
+  job_id: z.string(),
+  data: z.unknown(),
+  deleted: z.boolean(),
+  updated_at: z.string(),
+  revision: z.union([z.number(), z.string()]).transform(Number),
+});
+export interface PulledChange {
+  id: string;
+  data: unknown;
+  deleted: boolean;
+  updatedAt: string;
+  revision: number;
+}
 
 const EntitlementRow = z.object({
   status: z.enum(ENTITLEMENT_STATUSES),
@@ -235,6 +287,90 @@ export class SupabaseClient {
     if (status === 404 && error === 'no_subscription')
       throw new BackendError('no_subscription', status);
     if (status >= 300) this.fail(status, data);
+  }
+
+  /** Sync RPCs: maps auth and permission failures to typed errors. */
+  private async rpc(name: string, accessToken: string, body: unknown): Promise<unknown> {
+    const { status, data } = await this.request(`/rest/v1/rpc/${name}`, {
+      body,
+      token: accessToken,
+    });
+    if (status === 401) throw new BackendError('session_expired', status);
+    if (status === 403) throw new BackendError('sync_not_allowed', status);
+    if (status >= 300) this.fail(status, data);
+    return data;
+  }
+
+  async registerDevice(
+    accessToken: string,
+    device: { id: string; name: string; kind: RemoteDevice['kind'] },
+  ): Promise<DeviceRegistration> {
+    const data = await this.rpc('register_device', accessToken, {
+      p_id: device.id,
+      p_name: device.name,
+      p_kind: device.kind,
+    });
+    const parsed = RegisterResult.safeParse(data);
+    if (!parsed.success) throw new BackendError('server');
+    return parsed.data;
+  }
+
+  async listDevices(accessToken: string): Promise<RemoteDevice[]> {
+    const { status, data } = await this.request(
+      '/rest/v1/devices?select=id,name,kind,created_at,last_seen_at&order=last_seen_at.desc',
+      { token: accessToken },
+    );
+    if (status === 401) throw new BackendError('session_expired', status);
+    if (status >= 300) this.fail(status, data);
+    const rows = z.array(DeviceRow).safeParse(data);
+    if (!rows.success) throw new BackendError('server');
+    return rows.data.map((r) => ({
+      id: r.id,
+      name: r.name,
+      kind: r.kind,
+      createdAt: new Date(r.created_at).toISOString(),
+      lastSeenAt: new Date(r.last_seen_at).toISOString(),
+    }));
+  }
+
+  async removeDevice(accessToken: string, id: string): Promise<void> {
+    const { status, data } = await this.request(
+      `/rest/v1/devices?id=eq.${encodeURIComponent(id)}`,
+      { method: 'DELETE', token: accessToken },
+    );
+    if (status === 401) throw new BackendError('session_expired', status);
+    if (status >= 300) this.fail(status, data);
+  }
+
+  /** Returns how many changes the server applied (older ones lose). */
+  async pushJobs(accessToken: string, deviceId: string, changes: SyncChange[]): Promise<number> {
+    const data = await this.rpc('push_jobs', accessToken, {
+      p_device: deviceId,
+      p_changes: changes,
+    });
+    return typeof data === 'number' ? data : 0;
+  }
+
+  async pullJobs(
+    accessToken: string,
+    deviceId: string,
+    after: number,
+    limit: number,
+  ): Promise<PulledChange[]> {
+    const data = await this.rpc('pull_jobs', accessToken, {
+      p_device: deviceId,
+      p_after: after,
+      p_limit: limit,
+    });
+    const rows = z.array(PulledRow).safeParse(data);
+    if (!rows.success) throw new BackendError('server');
+    return rows.data.map((r) => ({
+      id: r.job_id,
+      data: r.data,
+      deleted: r.deleted,
+      updatedAt: new Date(r.updated_at).toISOString(),
+      revision: r.revision,
+    }));
   }
 
   async deleteAccount(accessToken: string): Promise<void> {

@@ -6,6 +6,7 @@
  *   job:<id>      Job           — one key per job so a move writes one record
  *   account:*     Session and cached entitlement (AccountService); never backed up
  *   reminders     What reminders were already sent (ReminderService); never backed up
+ *   sync:*        Sync state and lease (SyncService); never backed up
  */
 export const META_KEY = 'meta';
 export const SETTINGS_KEY = 'settings';
@@ -18,3 +19,7 @@ export const ACCOUNT_SESSION_KEY = 'account:session';
 export const ACCOUNT_ENTITLEMENT_KEY = 'account:entitlement';
 
 export const REMINDERS_KEY = 'reminders';
+
+/** Sync bookkeeping (ADR-0016); never backed up. */
+export const SYNC_STATE_KEY = 'sync:state';
+export const SYNC_LOCK_KEY = 'sync:lock';

@@ -2,14 +2,16 @@
 
 All data lives in `chrome.storage.local` (with `unlimitedStorage`).
 
-| Key                   | Value                                                   |
-| --------------------- | ------------------------------------------------------- |
-| `meta`                | `{ schemaVersion: number }`                             |
-| `settings`            | `Settings`                                              |
-| `job:<id>`            | `Job` (one key per job)                                 |
-| `account:session`     | Supabase session (accounts builds only; not backed up)  |
-| `account:entitlement` | Cached entitlement + `checkedAt` (accounts builds only) |
-| `reminders`           | Reminders already sent (ADR-0015); not backed up        |
+| Key                   | Value                                                                     |
+| --------------------- | ------------------------------------------------------------------------- |
+| `meta`                | `{ schemaVersion: number }`                                               |
+| `settings`            | `Settings`                                                                |
+| `job:<id>`            | `Job` (one key per job)                                                   |
+| `account:session`     | Supabase session (accounts builds only; not backed up)                    |
+| `account:entitlement` | Cached entitlement + `checkedAt` (accounts builds only)                   |
+| `reminders`           | Reminders already sent (ADR-0015); not backed up                          |
+| `sync:state`          | Sync cursor, device id and what was last synced (ADR-0016); not backed up |
+| `sync:lock`           | Short lease so two contexts don't sync at once                            |
 
 Access only through `JobRepository` / `SettingsRepository`
 (`src/storage/`), which depend on the `KeyValueStore` port.

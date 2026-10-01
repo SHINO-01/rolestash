@@ -1,4 +1,10 @@
 import type { ExtractionResult } from '@/extraction';
+import type {
+  DeviceRegistration,
+  PulledChange,
+  RemoteDevice,
+  SyncChange,
+} from './backend/supabase-client';
 
 /**
  * Ports the service layer depends on. Implementations live in src/platform
@@ -16,6 +22,19 @@ export interface ExtractorRunner {
   run(tabId: number): Promise<ExtractionResult[]>;
   /** Raw page HTML — used by the "download fixture" developer tool. */
   snapshot(tabId: number): Promise<PageSnapshot>;
+}
+
+/** The server side of sync (ADR-0016), already bound to the signed-in user. */
+export interface RemoteJobStore {
+  registerDevice(device: {
+    id: string;
+    name: string;
+    kind: RemoteDevice['kind'];
+  }): Promise<DeviceRegistration>;
+  listDevices(): Promise<RemoteDevice[]>;
+  removeDevice(id: string): Promise<void>;
+  push(deviceId: string, changes: SyncChange[]): Promise<number>;
+  pull(deviceId: string, after: number, limit: number): Promise<PulledChange[]>;
 }
 
 /** Loads a pasted job link (Pro; capture from a link). */

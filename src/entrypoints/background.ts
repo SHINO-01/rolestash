@@ -59,10 +59,13 @@ async function runReminders(): Promise<void> {
 export default defineBackground(() => {
   browser.runtime.onStartup.addListener(() => void ensureReminderAlarm());
   browser.alarms.onAlarm.addListener((alarm) => {
-    if (alarm.name === ALARM_REMINDERS)
-      runReminders().catch((error: unknown) =>
-        console.error('[rolestash] reminders failed', error),
-      );
+    if (alarm.name !== ALARM_REMINDERS) return;
+    runReminders().catch((error: unknown) => console.error('[rolestash] reminders failed', error));
+    // The same 15-minute tick keeps synced devices in step (ADR-0016). The
+    // board shows sync problems, so failures are not logged here.
+    getServices()
+      .sync?.sync()
+      .catch(() => undefined);
   });
   // The notifications API exists only once the optional permission is granted.
   listenForNotificationClicks();

@@ -111,3 +111,98 @@ describe('SupabaseClient error mapping', () => {
     ]);
   });
 });
+
+describe('SupabaseClient sync calls (ADR-0016)', () => {
+  const D = 'a0000000-0000-4000-8000-000000000001';
+
+  it('registers a device and reads the limit result', async () => {
+    const { c, calls } = client({
+      [`POST ${SB}/rest/v1/rpc/register_device`]: {
+        status: 200,
+        body: { ok: false, reason: 'device_limit', limit: 3 },
+      },
+    });
+    expect(
+      await c.registerDevice('tok', { id: D, name: 'Chrome on Linux', kind: 'computer' }),
+    ).toEqual({
+      ok: false,
+      reason: 'device_limit',
+      limit: 3,
+    });
+    expect(calls[0]?.body).toEqual({ p_id: D, p_name: 'Chrome on Linux', p_kind: 'computer' });
+    expect(calls[0]?.headers.Authorization).toBe('Bearer tok');
+  });
+
+  it('lists and removes devices', async () => {
+    const { c, calls } = client({
+      [`GET ${SB}/rest/v1/devices`]: {
+        status: 200,
+        body: [
+          {
+            id: D,
+            name: 'Laptop',
+            kind: 'computer',
+            created_at: '2026-10-01T00:00:00+00:00',
+            last_seen_at: '2026-10-01T01:00:00+00:00',
+          },
+        ],
+      },
+      [`DELETE ${SB}/rest/v1/devices`]: { status: 204, body: null },
+    });
+    expect(await c.listDevices('tok')).toEqual([
+      {
+        id: D,
+        name: 'Laptop',
+        kind: 'computer',
+        createdAt: '2026-10-01T00:00:00.000Z',
+        lastSeenAt: '2026-10-01T01:00:00.000Z',
+      },
+    ]);
+    await c.removeDevice('tok', D);
+    expect(calls[1]?.url).toBe(`${SB}/rest/v1/devices?id=eq.${D}`);
+  });
+
+  it('pushes changes and pulls rows, with revisions as numbers', async () => {
+    const { c, calls } = client({
+      [`POST ${SB}/rest/v1/rpc/push_jobs`]: { status: 200, body: 2 },
+      [`POST ${SB}/rest/v1/rpc/pull_jobs`]: {
+        status: 200,
+        body: [
+          {
+            job_id: 'j1',
+            data: { id: 'j1' },
+            deleted: false,
+            updated_at: '2026-10-01T00:00:00+00:00',
+            revision: '41',
+          },
+        ],
+      },
+    });
+    expect(await c.pushJobs('tok', D, [{ id: 'j1', updatedAt: 'x', data: {} }])).toBe(2);
+    expect(await c.pullJobs('tok', D, 40, 500)).toEqual([
+      {
+        id: 'j1',
+        data: { id: 'j1' },
+        deleted: false,
+        updatedAt: '2026-10-01T00:00:00.000Z',
+        revision: 41,
+      },
+    ]);
+    expect(calls[1]?.body).toEqual({ p_device: D, p_after: 40, p_limit: 500 });
+  });
+
+  it('maps sync refusals, expired sessions and bad payloads', async () => {
+    const { c } = client({
+      [`POST ${SB}/rest/v1/rpc/push_jobs`]: { status: 403, body: { code: '42501' } },
+      [`POST ${SB}/rest/v1/rpc/pull_jobs`]: { status: 401, body: {} },
+      [`POST ${SB}/rest/v1/rpc/register_device`]: { status: 200, body: { ok: 'maybe' } },
+      [`GET ${SB}/rest/v1/devices`]: { status: 200, body: [{ id: 1 }] },
+      [`DELETE ${SB}/rest/v1/devices`]: { status: 500, body: {} },
+    });
+    expect(await code(c.pushJobs('tok', D, []))).toBe('sync_not_allowed');
+    expect(await code(c.pullJobs('tok', D, 0, 10))).toBe('session_expired');
+    expect(await code(c.registerDevice('tok', { id: D, name: 'x', kind: 'web' }))).toBe('server');
+    expect(await code(c.listDevices('tok'))).toBe('server');
+    expect(await code(c.removeDevice('tok', D))).toBe('server');
+  });
+});

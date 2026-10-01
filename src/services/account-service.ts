@@ -11,7 +11,7 @@ import {
 } from './backend/supabase-client';
 import { googleAuthUrl, readGoogleResult, sha256Hex } from './backend/google';
 import type { PlanProvider } from './job-service';
-import type { WebAuthFlow } from './ports';
+import type { RemoteJobStore, WebAuthFlow } from './ports';
 
 /**
  * Sign-in, the cached entitlement and billing links (ADR-0011). Exists only
@@ -192,6 +192,19 @@ export class AccountService implements PlanProvider {
 
   private async clear(): Promise<void> {
     await this.store.remove([ACCOUNT_SESSION_KEY, ACCOUNT_ENTITLEMENT_KEY]);
+  }
+
+  /** Sync's server calls, made as the signed-in user (ADR-0016). */
+  remoteJobStore(): RemoteJobStore {
+    const call = async <T>(run: (token: string) => Promise<T>) => run(await this.accessToken());
+    return {
+      registerDevice: (device) => call((t) => this.client.registerDevice(t, device)),
+      listDevices: () => call((t) => this.client.listDevices(t)),
+      removeDevice: (id) => call((t) => this.client.removeDevice(t, id)),
+      push: (deviceId, changes) => call((t) => this.client.pushJobs(t, deviceId, changes)),
+      pull: (deviceId, after, limit) =>
+        call((t) => this.client.pullJobs(t, deviceId, after, limit)),
+    };
   }
 
   /** A valid access token, refreshing it first when close to expiry. */

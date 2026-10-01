@@ -17,6 +17,7 @@ import {
   planChip,
   planSummary,
 } from './plan-copy';
+import { SyncSection } from './sync-section';
 
 const SITE = 'https://rolestash.com';
 
@@ -272,6 +273,8 @@ function SignedIn({ account, state }: { account: AccountService; state: AccountS
           {active} of {limit} active jobs used. Rejected and withdrawn jobs don't count.
         </p>
       </section>
+
+      <SyncSection plan={plan.plan} />
 
       <section className="flex flex-col gap-3">
         <span className="text-sm font-semibold">

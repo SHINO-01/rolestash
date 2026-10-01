@@ -88,6 +88,25 @@ timestamp as their version. Rewrite it to the file's version in
      **Never** put the `service_role` key in the extension, the repo or chat.
      It belongs only in Edge Function secrets.
 
+## Sync (ADR-0016)
+
+Migration `…_sync.sql` adds `devices` and `synced_jobs`. Clients reach them
+only through these RPCs, which check the plan and the device:
+
+- `register_device`, which enforces the limits: Pro 3 computers, Advanced 5
+  devices including the web board;
+- `push_jobs`, where the newest edit wins;
+- `pull_jobs`, which pages by a revision cursor.
+
+The privileged bodies live in a `private` schema the Data API doesn't
+expose (`…_sync_private_schema.sql`). The public RPCs are thin
+`SECURITY INVOKER` wrappers, which keeps the security advisor clean.
+
+Users can read and delete their own `devices` rows directly; that's how
+the account dialog lists and removes devices. pgTAP covers limits, RLS,
+last-writer-wins, lapsed plans and account deletion
+(`supabase/tests/database/sync.test.sql`).
+
 ## Edge Functions
 
 | Function          | Caller                  | Does                                                                                      |
