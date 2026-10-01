@@ -116,6 +116,7 @@ last-writer-wins, lapsed plans and account deletion
 | `billing-portal`  | Extension (user JWT)    | Returns a one-time Paddle customer-portal link                                            |
 | `change-plan`     | Extension (user JWT)    | Moves a live subscription between Pro and Advanced (prorated)                             |
 | `delete-account`  | Extension (user JWT)    | Cancels a live subscription immediately, then deletes the user                            |
+| `web-handoff`     | Extension (user JWT)    | Single-use sign-in token for the web board (admin `generate_link`; ADR-0017)              |
 | `launch-list`     | rolestash.com form      | Updates-list signup, confirm, unsubscribe and campaign sends (docs/guides/launch-list.md) |
 
 All the logic is in `supabase/functions/_shared/`. It's plain TypeScript

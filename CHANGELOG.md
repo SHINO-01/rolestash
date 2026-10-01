@@ -8,6 +8,10 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **The web board signs you in by itself** when you're signed in to the
+  Rolestash extension in the same browser. It gets a single-use token, never
+  your extension's session. **Continue with Google** works there too,
+  alongside the emailed code.
 - **Web board for your phone** (Advanced) at rolestash.com/board/:
   - **Today:** follow-ups due, saved jobs closing soon, and where
     everything stands.

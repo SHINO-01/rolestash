@@ -117,6 +117,25 @@ export class AccountService implements PlanProvider {
     await this.signedIn(await this.client.signInWithIdToken(idToken, nonce));
   }
 
+  /**
+   * Finishes a Google sign-in whose redirect landed on a web page rather than
+   * in launchWebAuthFlow (the web board; ADR-0017). The caller has checked
+   * `state` and kept the raw nonce.
+   */
+  async completeGoogleSignIn(idToken: string, rawNonce: string): Promise<void> {
+    await this.signedIn(await this.client.signInWithIdToken(idToken, rawNonce));
+  }
+
+  /** Signs in with a single-use token minted by another signed-in client. */
+  async signInWithHandoff(tokenHash: string): Promise<void> {
+    await this.signedIn(await this.client.verifyTokenHash(tokenHash));
+  }
+
+  /** A single-use token for the web board, from this signed-in client. */
+  async webHandoffToken(): Promise<string> {
+    return this.client.webHandoff(await this.accessToken());
+  }
+
   private async signedIn(session: Session): Promise<void> {
     await this.store.set({ [ACCOUNT_SESSION_KEY]: session });
     await this.refreshEntitlement();

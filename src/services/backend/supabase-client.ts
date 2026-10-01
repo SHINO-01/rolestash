@@ -216,6 +216,27 @@ export class SupabaseClient {
     return this.toSession(data);
   }
 
+  /** Exchanges a single-use sign-in token (from web-handoff) for a session. */
+  async verifyTokenHash(tokenHash: string): Promise<Session> {
+    const { status, data } = await this.request('/auth/v1/verify', {
+      body: { type: 'magiclink', token_hash: tokenHash },
+    });
+    if (status >= 300) this.fail(status, data);
+    return this.toSession(data);
+  }
+
+  /** A single-use token that signs the web board in as this user (ADR-0017). */
+  async webHandoff(accessToken: string): Promise<string> {
+    const { status, data } = await this.request('/functions/v1/web-handoff', {
+      body: {},
+      token: accessToken,
+    });
+    if (status === 401) throw new BackendError('session_expired', status);
+    const token = (data as { tokenHash?: unknown } | null)?.tokenHash;
+    if (status >= 300 || typeof token !== 'string') this.fail(status, data);
+    return token;
+  }
+
   async refresh(refreshToken: string): Promise<Session> {
     const { status, data } = await this.request('/auth/v1/token?grant_type=refresh_token', {
       body: { refresh_token: refreshToken },

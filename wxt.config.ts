@@ -50,6 +50,18 @@ export default defineConfig({
       ],
       // E2E builds need host access so Playwright can inject into fixture pages
       // without a real user gesture. Production builds never ship this.
+      // Only the web board may message the extension, to sign itself in with this
+      // browser's account (ADR-0017). No install warning. Accounts builds only.
+      ...(accounts
+        ? {
+            externally_connectable: {
+              matches: [
+                'https://rolestash.com/board/*',
+                ...(mode === 'e2e' ? ['http://localhost/*'] : []),
+              ],
+            },
+          }
+        : {}),
       // Asked for only when someone turns reminders on, so there's no install warning (ADR-0015).
       optional_permissions: ['notifications'],
       // Capture from a pasted link (Pro): access to that one site, asked for in the click and

@@ -36,8 +36,26 @@ sign-in hand-off), under a strict CSP. The owner chose:
 
   Capture stays in the extension; a browser tab can't read other sites.
 
-- **Sign-in:** an emailed code (Supabase OTP), with the session in
-  IndexedDB. Pro and Free accounts see what Advanced adds, plus checkout.
+- **Sign-in:** three ways.
+  - **Emailed code:** Supabase OTP.
+  - **Google:** the existing flow (ADR-0012), with `state.e = "web"`, so
+    `/auth/google/` forwards the answer to `/board/` on the same site. The
+    board checks `state` against the attempt it saved in `sessionStorage`
+    before exchanging the ID token.
+  - **Automatically, from the extension:** when the board opens signed out,
+    it messages the Rolestash extension in this browser. The extension's
+    `externally_connectable` key allows only `rolestash.com/board/*`.
+    1. If the extension is signed in, it calls the `web-handoff` function
+       with its own session.
+    2. The function returns a single-use, 10-minute token minted with
+       Supabase's admin `generate_link`; no email is sent.
+    3. The board exchanges the token at `/auth/v1/verify` for **its own**
+       session. Sharing the extension's refresh token would break, because
+       Supabase rotates refresh tokens.
+
+  The session lives in IndexedDB. Pro and Free accounts see what Advanced
+  adds, plus checkout.
+
 - **Signing out clears the browser:** it removes this device from sync and
   deletes the local copy, so a shared or borrowed browser keeps nothing.
 - **Its own CSP on `/board/*`:**
@@ -57,9 +75,8 @@ sign-in hand-off), under a strict CSP. The owner chose:
 - **The site now has a build step,** but only for `/board/`. The
   hand-written pages stay script-free, and their tests skip the built
   directory.
-- **Google sign-in** isn't offered on the web board yet. The extension's
-  flow relies on `chrome.identity`; adding it for the web needs its own
-  redirect handling.
+- **Signing out of the board** sets a flag, so the extension doesn't sign
+  it straight back in. Signing in on the board clears the flag.
 - **No push notifications:** reminders still pop up from the extension. The
   web board shows them on Today.
 - **Privacy:** the policy covers the web board's local copy and how

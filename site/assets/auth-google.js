@@ -1,6 +1,7 @@
 // rolestash.com/auth/google/: Google returns here with an ID token in the URL
 // fragment (ADR-0012). This page forwards the fragment, unchanged, to the
-// Rolestash extension named in `state`, and only to Rolestash extensions.
+// Rolestash extension named in `state`, and only to Rolestash extensions, or
+// to this site's own web board when `state` says "web" (ADR-0017).
 // Fragments are never sent to any server, including this one.
 
 // Rolestash extension IDs allowed to receive sign-ins: the pinned
@@ -18,6 +19,8 @@ function forwardTarget(hash) {
   } catch {
     return null;
   }
+  // Same origin: the web board checks the state against what it stored.
+  if (extensionId === 'web') return `/board/#${fragment}`;
   if (!ALLOWED_EXTENSION_IDS.includes(extensionId)) return null;
   return `https://${extensionId}.chromiumapp.org/#${fragment}`;
 }

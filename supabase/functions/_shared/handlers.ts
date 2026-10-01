@@ -170,6 +170,16 @@ export const handleDeleteAccount = userEndpoint(async ({ user, admin, paddle }) 
   return json(200, { deleted: true });
 });
 
+/**
+ * POST /functions/v1/web-handoff → { tokenHash }. Lets a signed-in extension
+ * sign the web board in without a second sign-in (ADR-0017): the token is
+ * single-use, short-lived, and only works for this user.
+ */
+export const handleWebHandoff = userEndpoint(async ({ user, admin }) => {
+  if (!user.email) return json(400, { error: 'no_email' });
+  return json(200, { tokenHash: await admin.signInTokenFor(user.email) });
+});
+
 /** POST /functions/v1/paddle-webhook (called by Paddle, signed; no user JWT). */
 export async function handlePaddleWebhook(req: Request, deps: Deps): Promise<Response> {
   if (req.method !== 'POST') return json(405, { error: 'method_not_allowed' });

@@ -5,6 +5,7 @@ import { getServices } from '@/platform/services';
 import { openBoard } from '@/platform/tabs';
 import { DuplicateJobError, JobLimitError } from '@/services/job-service';
 import { FOLLOW_UP_PREFIX, ReminderService } from '@/services/reminder-service';
+import { WEB_HANDOFF_MESSAGE, type WebHandoffReply } from '@/services/web-handoff';
 
 /**
  * Background service worker. Deliberately thin: it wires browser events to
@@ -14,12 +15,15 @@ import { FOLLOW_UP_PREFIX, ReminderService } from '@/services/reminder-service';
  *  - Alt+Shift+J                    → same
  *  - Right-click the toolbar icon → "Open board"
  *  - Every 15 minutes             → follow-up reminders, closing-soon digest (ADR-0015)
+ *  - The web board asks to sign in → a single-use token for this account (ADR-0017)
  */
 
 const MENU_TRACK = 'rolestash.track';
 const MENU_OPEN_BOARD = 'rolestash.openBoard';
 const COMMAND_TRACK = 'track-current-tab';
 const ALARM_REMINDERS = 'rolestash.reminders';
+/** Where the web board may message from (also limited by externally_connectable). */
+const BOARD_ORIGINS = new Set(['https://rolestash.com', 'http://localhost']);
 const REMINDER_PERIOD_MINUTES = 15;
 
 /** Idempotent: keeps an existing alarm's schedule. */
@@ -71,6 +75,16 @@ export default defineBackground(() => {
   listenForNotificationClicks();
   browser.permissions.onAdded.addListener(() => listenForNotificationClicks());
 
+  browser.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
+    if (
+      (message as { type?: unknown } | null)?.type !== WEB_HANDOFF_MESSAGE ||
+      !fromBoard(sender.url)
+    )
+      return false;
+    void webHandoff().then(sendResponse);
+    return true; // responds asynchronously
+  });
+
   browser.runtime.onInstalled.addListener(() => {
     void getServices().ready;
     void ensureReminderAlarm();
@@ -118,5 +132,28 @@ async function quickSave(tabId: number, tabUrl: string | undefined): Promise<voi
       console.error('[rolestash] quick save failed', error);
       await flashBadge(tabId, '!', 'error');
     }
+  }
+}
+
+function fromBoard(url: string | undefined): boolean {
+  if (!url) return false;
+  try {
+    const u = new URL(url);
+    return BOARD_ORIGINS.has(`${u.protocol}//${u.hostname}`) && u.pathname.startsWith('/board/');
+  } catch {
+    return false;
+  }
+}
+
+/** A single-use sign-in token when this browser is signed in; nothing otherwise. */
+async function webHandoff(): Promise<WebHandoffReply> {
+  const services = getServices();
+  await services.ready;
+  const account = services.account;
+  if (!account || !(await account.state()).signedIn) return {};
+  try {
+    return { tokenHash: await account.webHandoffToken() };
+  } catch {
+    return {};
   }
 }

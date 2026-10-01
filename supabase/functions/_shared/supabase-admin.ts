@@ -82,6 +82,27 @@ export class SupabaseAdmin {
     return (await response.json()) === true;
   }
 
+  /**
+   * A single-use sign-in token for this user (no email is sent): the
+   * extension hands it to the web board, which exchanges it for its own
+   * session (ADR-0017). Expires with the project's OTP expiry (10 minutes).
+   */
+  async signInTokenFor(email: string): Promise<string> {
+    const response = await this.fetchFn(`${this.config.url}/auth/v1/admin/generate_link`, {
+      method: 'POST',
+      headers: this.serviceHeaders(),
+      body: JSON.stringify({ type: 'magiclink', email }),
+    });
+    if (!response.ok) throw new Error(`generate_link failed: ${response.status}`);
+    const data = (await response.json()) as {
+      hashed_token?: unknown;
+      properties?: { hashed_token?: unknown };
+    };
+    const token = data.properties?.hashed_token ?? data.hashed_token;
+    if (typeof token !== 'string' || !token) throw new Error('generate_link returned no token');
+    return token;
+  }
+
   /** Deletes the auth user; entitlements cascade (trial_claims stay, by design). */
   async deleteUser(userId: string): Promise<void> {
     const response = await this.fetchFn(

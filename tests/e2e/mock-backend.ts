@@ -8,6 +8,8 @@ import { createServer, type IncomingMessage, type Server } from 'node:http';
 export const MOCK_BACKEND_PORT = 54399;
 export const MOCK_BACKEND = `http://127.0.0.1:${String(MOCK_BACKEND_PORT)}`;
 export const E2E_CODE = '123456';
+/** What the mock's web-handoff function mints, and its verify accepts once. */
+export const E2E_HANDOFF = 'e2e-handoff-hash';
 
 export interface MockRequest {
   method: string;
@@ -99,9 +101,11 @@ function route(
     case '/auth/v1/otp':
       return [200, {}];
     case '/auth/v1/verify':
-      return (body as { token?: string } | null)?.token === E2E_CODE
+      return b.token === E2E_CODE || b.token_hash === E2E_HANDOFF
         ? [200, TOKEN]
         : [403, { error_code: 'otp_expired' }];
+    case '/functions/v1/web-handoff':
+      return [200, { tokenHash: E2E_HANDOFF }];
     case '/auth/v1/token':
       return [200, TOKEN];
     case '/auth/v1/logout':

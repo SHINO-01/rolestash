@@ -1,6 +1,7 @@
 import type { Worker } from '@playwright/test';
 import { expect, test } from './fixtures';
 import { E2E_CODE, MOCK_BACKEND } from './mock-backend';
+import { serveBoard } from '../web/serve-board';
 
 /**
  * Accounts (ADR-0011). The E2E build is configured with the mock backend
@@ -269,6 +270,50 @@ test.describe('accounts', () => {
     await expect.poll(() => backend.synced.has('j0')).toBe(true);
     expect(backend.devices).toHaveLength(1);
     expect(backend.devices[0]?.kind).toBe('computer');
+  });
+
+  test('the web board signs itself in from the extension, without a second sign-in', async ({
+    context,
+    worker,
+    backend,
+  }) => {
+    backend.entitlement = {
+      status: 'active',
+      tier: 'advanced',
+      trial_ends_at: null,
+      current_period_end: new Date(Date.now() + 20 * 86_400_000).toISOString(),
+      provider_customer_id: 'ctm_1',
+    };
+    await seedSignedIn(worker, {
+      status: 'active',
+      tier: 'advanced',
+      currentPeriodEnd: new Date(Date.now() + 20 * 86_400_000).toISOString(),
+      hasBillingAccount: true,
+    });
+    const board = await serveBoard();
+    try {
+      const page = await context.newPage();
+      await page.goto(`${board.origin}/board/`);
+      await expect(page.getByRole('heading', { name: 'Today' })).toBeVisible();
+      // The extension minted a single-use token with its own session...
+      const minted = backend.requests.find((r) => r.path === '/functions/v1/web-handoff');
+      expect(minted?.headers.authorization).toBe('Bearer e2e-access');
+      // ...and the board exchanged it for a session of its own.
+      expect(
+        backend.requests.some(
+          (r) => r.path === '/auth/v1/verify' && (r.body as { token_hash?: string }).token_hash,
+        ),
+      ).toBe(true);
+
+      // Signing out of the board sticks: no automatic sign-in again.
+      await page.getByRole('button', { name: 'Account' }).click();
+      await page.getByRole('button', { name: 'Sign out and clear this browser' }).click();
+      await expect(page.getByRole('heading', { name: 'Your board, on your phone' })).toBeVisible();
+      await page.reload();
+      await expect(page.getByRole('heading', { name: 'Your board, on your phone' })).toBeVisible();
+    } finally {
+      await board.close();
+    }
   });
 
   test('deleting the account keeps jobs on this device', async ({

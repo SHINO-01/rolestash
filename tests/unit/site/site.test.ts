@@ -247,6 +247,10 @@ describe('rolestash.com static site', () => {
     expect(forwardTarget(`#id_token=t&state=${state(ours)}`)).toBe(
       `https://${ours}.chromiumapp.org/#id_token=t&state=${state(ours)}`,
     );
+    // The web board (ADR-0017) gets its sign-ins on this same site.
+    expect(forwardTarget(`#id_token=t&state=${state('web')}`)).toBe(
+      `/board/#id_token=t&state=${state('web')}`,
+    );
     // Errors are forwarded too, so the extension can report a cancelled sign-in.
     expect(forwardTarget(`#error=access_denied&state=${state(ours)}`)).toContain(
       `${ours}.chromiumapp.org/#error=access_denied`,
@@ -271,6 +275,13 @@ describe('rolestash.com static site', () => {
       .join('');
     expect(id).toBe('bdajnmkjahhphadpdbbkibljcheonejp');
     expect(readFileSync(join(SITE, 'assets/auth-google.js'), 'utf8')).toContain(`'${id}'`);
+  });
+
+  it('lists the same extension IDs in the Google forwarder and the web board', async () => {
+    const { ROLESTASH_EXTENSION_IDS } = await import('../../../src/services/web-handoff');
+    const code = readFileSync(join(SITE, 'assets/auth-google.js'), 'utf8');
+    const listed = /ALLOWED_EXTENSION_IDS = (\[[^\]]*\])/.exec(code)?.[1] ?? '[]';
+    expect(JSON.parse(listed.replace(/'/g, '"')) as string[]).toEqual([...ROLESTASH_EXTENSION_IDS]);
   });
 
   it('keeps the Google hand-off page private: own script only, no referrer, not cached', () => {

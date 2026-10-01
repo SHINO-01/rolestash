@@ -449,3 +449,6 @@ verify_jwt = false
 # handler checks the Origin, and announcing needs LAUNCH_ADMIN_SECRET.
 [functions.launch-list]
 verify_jwt = false
+
+[functions.web-handoff]
+verify_jwt = false

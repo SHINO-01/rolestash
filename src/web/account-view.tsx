@@ -7,6 +7,7 @@ import { useAccount } from '@/ui/hooks/account';
 import { useServices } from '@/ui/hooks/services';
 import { DEFAULT_SETTINGS } from '@/domain/settings';
 import { SYNC_STATE_KEY } from '@/storage/keys';
+import { blockExtensionSignIn } from './sign-in';
 
 /** Account on the web board: plan, synced devices, sign out (ADR-0017). */
 export function AccountView() {
@@ -21,6 +22,7 @@ export function AccountView() {
     await services.jobs.deleteAll();
     await services.settings.replace(structuredClone(DEFAULT_SETTINGS));
     await services.store.remove([SYNC_STATE_KEY]);
+    blockExtensionSignIn();
     await account?.signOut();
   }
 

@@ -20,7 +20,13 @@ Not requested, on purpose:
 - **`tabs`**: not needed; `activeTab` exposes the current tab's URL after a
   gesture, and `runtime.getContexts` finds our own board tab.
 - **`favicon`**: tried and removed (see ADR-0002).
-  Optional permissions (requested at the moment of use):
+  Manifest keys that aren't permissions:
+
+| Key                                        | Why                                                                                                                                                       |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `externally_connectable` (accounts builds) | Lets **only** `https://rolestash.com/board/*` message the extension, to sign the web board in from this browser's account (ADR-0017). No install warning. |
+
+Optional permissions (requested at the moment of use):
 
 | Permission                                              | Why                                                                                                                                          | Asked when                                                        |
 | ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |

@@ -4,6 +4,7 @@ import {
   handleCreateCheckout,
   handleDeleteAccount,
   handlePaddleWebhook,
+  handleWebHandoff,
   tierOfPrice,
   type Deps,
 } from '../../../supabase/functions/_shared/handlers.ts';
@@ -388,5 +389,36 @@ describe('readEnv', () => {
     expect(readEnv((n) => (n === 'PADDLE_ENV' ? 'production' : 'x')).paddle.environment).toBe(
       'production',
     );
+  });
+});
+
+describe('web-handoff', () => {
+  it('returns a single-use sign-in token for the signed-in user', async () => {
+    const { deps: d, calls } = deps({
+      [`POST ${SB}/auth/v1/admin/generate_link`]: {
+        status: 200,
+        body: { properties: { hashed_token: 'hash-123' } },
+      },
+    });
+    const res = await handleWebHandoff(post({}), d);
+    expect(await res.json()).toEqual({ tokenHash: 'hash-123' });
+    const call = calls.find((c) => c.url.endsWith('/admin/generate_link'));
+    expect(call?.body).toEqual({ type: 'magiclink', email: USER.email });
+    expect(call?.headers.Authorization).toBe('Bearer service');
+  });
+
+  it('accepts the flat response shape and rejects strangers', async () => {
+    const { deps: d } = deps({
+      [`POST ${SB}/auth/v1/admin/generate_link`]: { status: 200, body: { hashed_token: 'h2' } },
+    });
+    expect(await (await handleWebHandoff(post({}), d)).json()).toEqual({ tokenHash: 'h2' });
+    expect((await handleWebHandoff(post({}, 'bad-token'), d)).status).toBe(401);
+  });
+
+  it('fails cleanly when Supabase does', async () => {
+    const { deps: d } = deps({
+      [`POST ${SB}/auth/v1/admin/generate_link`]: { status: 500, body: {} },
+    });
+    expect((await handleWebHandoff(post({}), d)).status).toBe(500);
   });
 });

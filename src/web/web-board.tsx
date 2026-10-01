@@ -15,6 +15,13 @@ import { BoardView } from './board-view';
 import { JobSheet } from './job-sheet';
 import { QuickAdd } from './quick-add';
 import { TodayView } from './today-view';
+import { webConfig } from './config';
+import {
+  allowExtensionSignIn,
+  completeGoogleSignIn,
+  signInFromExtension,
+  startGoogleSignIn,
+} from './sign-in';
 
 type Tab = 'today' | 'board' | 'account';
 
@@ -66,6 +73,26 @@ function WebSignIn({ account }: { account: AccountService }) {
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
+  // First: finish a Google return, or sign in from the extension in this browser.
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    const live = { active: true };
+    void (async () => {
+      try {
+        if (await completeGoogleSignIn(account)) return;
+        await signInFromExtension(account);
+      } catch (e) {
+        if (live.active)
+          setError(e instanceof Error && !('code' in e) ? e.message : backendErrorMessage(e));
+      } finally {
+        if (live.active) setChecking(false);
+      }
+    })();
+    return () => {
+      live.active = false;
+    };
+  }, [account]);
 
   async function run(task: () => Promise<void>) {
     setBusy(true);
@@ -79,15 +106,35 @@ function WebSignIn({ account }: { account: AccountService }) {
     }
   }
 
+  if (checking)
+    return (
+      <Centered>
+        <Spinner /> Signing you in…
+      </Centered>
+    );
+
   return (
     <Shell>
       <div>
         <h1 className="text-xl font-semibold">Your board, on your phone</h1>
         <p className="text-muted mt-1 text-sm">
-          Sign in with the email you use in the Rolestash extension. The web board is part of
+          Sign in with the account you use in the Rolestash extension. The web board is part of
           Advanced.
         </p>
       </div>
+      {webConfig.googleClientId ? (
+        <>
+          <Button
+            variant="secondary"
+            className="h-11"
+            loading={busy}
+            onClick={() => void run(() => startGoogleSignIn(webConfig.googleClientId ?? ''))}
+          >
+            Continue with Google
+          </Button>
+          <p className="text-subtle text-center text-xs">or get a code by email</p>
+        </>
+      ) : null}
       {!sent ? (
         <form
           className="flex flex-col gap-3"
@@ -120,7 +167,10 @@ function WebSignIn({ account }: { account: AccountService }) {
           className="flex flex-col gap-3"
           onSubmit={(e) => {
             e.preventDefault();
-            void run(() => account.verifyEmailCode(email, code.trim()));
+            void run(async () => {
+              await account.verifyEmailCode(email, code.trim());
+              allowExtensionSignIn();
+            });
           }}
         >
           <Field label={`Code sent to ${email}`}>
@@ -148,6 +198,9 @@ function WebSignIn({ account }: { account: AccountService }) {
         </form>
       )}
       {error ? <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p> : null}
+      <p className="text-subtle text-xs">
+        Signed in to the Rolestash extension on this computer? This page signs you in by itself.
+      </p>
     </Shell>
   );
 }

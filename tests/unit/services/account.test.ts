@@ -373,3 +373,48 @@ describe('token helpers', () => {
       expect(decodeState(bad)).toBeUndefined();
   });
 });
+
+describe('AccountService on the web board (ADR-0017)', () => {
+  it('finishes a Google sign-in started by a web page', async () => {
+    const { account, calls } = setup({ [`POST ${SB}/auth/v1/token`]: token('g1') });
+    await account.completeGoogleSignIn('google-id-token', 'raw-nonce');
+    expect(calls[0]?.body).toEqual({
+      provider: 'google',
+      id_token: 'google-id-token',
+      nonce: 'raw-nonce',
+    });
+    expect((await account.state()).signedIn).toBe(true);
+  });
+
+  it('mints a handoff token when signed in, and signs another client in with it', async () => {
+    const extension = setup({
+      [`POST ${SB}/functions/v1/web-handoff`]: { status: 200, body: { tokenHash: 'hash-1' } },
+    });
+    await extension.account.verifyEmailCode('jo@example.com', '123456');
+    const hash = await extension.account.webHandoffToken();
+    expect(hash).toBe('hash-1');
+    expect(extension.calls.at(-1)?.headers.Authorization).toBe('Bearer a1');
+
+    const web = setup({
+      [`POST ${SB}/auth/v1/verify`]: (c) =>
+        (c.body as { token_hash?: string }).token_hash === 'hash-1'
+          ? token('w1')
+          : { status: 403, body: { error_code: 'otp_expired' } },
+    });
+    await web.account.signInWithHandoff('hash-1');
+    expect(web.calls[0]?.body).toEqual({ type: 'magiclink', token_hash: 'hash-1' });
+    expect(await web.account.state()).toMatchObject({ signedIn: true, email: 'jo@example.com' });
+    await expect(web.account.signInWithHandoff('used')).rejects.toMatchObject({
+      code: 'invalid_code',
+    });
+  });
+
+  it('cannot mint a handoff token when signed out or rejected', async () => {
+    const { account } = setup({
+      [`POST ${SB}/functions/v1/web-handoff`]: { status: 500, body: {} },
+    });
+    await expect(account.webHandoffToken()).rejects.toMatchObject({ code: 'session_expired' });
+    await account.verifyEmailCode('jo@example.com', '123456');
+    await expect(account.webHandoffToken()).rejects.toMatchObject({ code: 'server' });
+  });
+});

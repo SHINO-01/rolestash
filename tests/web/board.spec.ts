@@ -1,38 +1,8 @@
-import { createServer, type Server } from 'node:http';
-import { existsSync, readFileSync } from 'node:fs';
-import { extname, join, normalize, resolve } from 'node:path';
 import { expect, test as base, type Page } from '@playwright/test';
-import { E2E_CODE, MOCK_BACKEND, startMockBackend, type MockBackend } from '../e2e/mock-backend';
+import { E2E_CODE, startMockBackend, type MockBackend } from '../e2e/mock-backend';
+import { serveBoard } from './serve-board';
 
-/**
- * The web board (ADR-0017) in a plain browser, against the mock backend. The
- * page is served with the board's real CSP from site/_headers (pointed at the
- * mock), so any inline script or stray request would fail the test.
- */
-const ROOT = resolve(import.meta.dirname, '../..');
-const BUILD = join(ROOT, '.output/web-e2e');
-const TYPES: Record<string, string> = {
-  '.html': 'text/html; charset=utf-8',
-  '.js': 'text/javascript',
-  '.css': 'text/css',
-  '.woff2': 'font/woff2',
-  '.png': 'image/png',
-  '.svg': 'image/svg+xml',
-  '.webmanifest': 'application/manifest+json',
-};
-
-function boardCsp(): string {
-  const headers = readFileSync(join(ROOT, 'site/_headers'), 'utf8');
-  const csp = /Content-Security-Policy: (.+)$/m.exec(
-    headers.slice(headers.indexOf('/board/*')),
-  )?.[1];
-  if (!csp) throw new Error('No board CSP');
-  // Same policy, with connect-src pointed at the mock backend.
-  return csp
-    .replace(/connect-src [^;]+;/, `connect-src ${MOCK_BACKEND};`)
-    .replace(' upgrade-insecure-requests', '');
-}
-
+/** The web board (ADR-0017) in a plain browser, against the mock backend. */
 const test = base.extend<{ backend: MockBackend; site: string }>({
   // eslint-disable-next-line no-empty-pattern
   backend: async ({}, use) => {
@@ -42,33 +12,9 @@ const test = base.extend<{ backend: MockBackend; site: string }>({
   },
   // eslint-disable-next-line no-empty-pattern
   site: async ({}, use) => {
-    if (!existsSync(BUILD)) throw new Error('Run `npm run build:web:e2e` first.');
-    const csp = boardCsp();
-    const server: Server = createServer((req, res) => {
-      const path = decodeURIComponent((req.url ?? '/').split('?')[0] ?? '/');
-      const file = path.startsWith('/board/')
-        ? normalize(join(BUILD, path.slice('/board/'.length) || 'index.html'))
-        : normalize(join(ROOT, 'site', path));
-      if (!file.startsWith(BUILD) && !file.startsWith(join(ROOT, 'site')))
-        return void res.writeHead(403).end();
-      try {
-        const body = readFileSync(file);
-        res.writeHead(200, {
-          'Content-Type': TYPES[extname(file)] ?? 'application/octet-stream',
-          'Content-Security-Policy': csp,
-        });
-        res.end(body);
-      } catch {
-        res.writeHead(404).end();
-      }
-    });
-    await new Promise<void>((r) => server.listen(0, '127.0.0.1', r));
-    const address = server.address();
-    await use(
-      `http://127.0.0.1:${String(typeof address === 'object' && address ? address.port : 0)}`,
-    );
-    server.closeAllConnections();
-    await new Promise((r) => server.close(r));
+    const board = await serveBoard();
+    await use(board.origin);
+    await board.close();
   },
 });
 
@@ -201,4 +147,48 @@ test('Advanced: Today, the board, quick updates and quick add, synced back', asy
     )
     .toBe('interviewing|Panel on Thursday|true');
   expect(errors).toEqual([]);
+});
+
+const ADVANCED = {
+  status: 'active',
+  tier: 'advanced',
+  trial_ends_at: null,
+  current_period_end: new Date(Date.now() + 20 * 86_400_000).toISOString(),
+  provider_customer_id: 'ctm_1',
+};
+const encodeState = (state: object) => Buffer.from(JSON.stringify(state)).toString('base64url');
+
+test('Google: goes to Google for this site, and signs in on the way back', async ({
+  page,
+  site,
+  backend,
+}) => {
+  backend.entitlement = ADVANCED;
+  let googleUrl: URL | undefined;
+  await page.route('https://accounts.google.com/**', async (route) => {
+    googleUrl = new URL(route.request().url());
+    await route.fulfill({ status: 200, contentType: 'text/html', body: '<title>Google</title>' });
+  });
+  await page.goto(`${site}/board/`);
+  await page.getByRole('button', { name: 'Continue with Google' }).click();
+  await expect
+    .poll(() => googleUrl?.searchParams.get('redirect_uri'))
+    .toBe('https://rolestash.com/auth/google/');
+  const state = JSON.parse(
+    Buffer.from(googleUrl?.searchParams.get('state') ?? '', 'base64url').toString(),
+  ) as { e: string; s: string };
+  expect(state.e).toBe('web');
+
+  // rolestash.com/auth/google/ forwards Google's answer to /board/ (same tab).
+  await page.goto(`${site}/board/#id_token=google-id-token&state=${encodeState(state)}`);
+  await expect(page.getByRole('heading', { name: 'Today' })).toBeVisible();
+  expect(page.url()).not.toContain('id_token'); // never left in the address bar
+  const exchange = backend.requests.find((r) => r.path === '/auth/v1/token');
+  expect(exchange?.body).toMatchObject({ provider: 'google', id_token: 'google-id-token' });
+});
+
+test('Google: refuses an answer this tab did not ask for', async ({ page, site, backend }) => {
+  await page.goto(`${site}/board/#id_token=forged&state=${encodeState({ e: 'web', s: 'other' })}`);
+  await expect(page.getByText('That sign-in link has expired. Please try again.')).toBeVisible();
+  expect(backend.requests.some((r) => r.path === '/auth/v1/token')).toBe(false);
 });
