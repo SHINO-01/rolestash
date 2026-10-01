@@ -43,11 +43,15 @@ export default defineConfig({
         'unlimitedStorage',
         // "Track this job" in the page right-click menu.
         'contextMenus',
+        // Wakes the worker every 15 minutes to check follow-up reminders (ADR-0015). No install warning.
+        'alarms',
         // Google sign-in via chrome.identity.launchWebAuthFlow; accounts builds only.
         ...(accounts ? ['identity'] : []),
       ],
       // E2E builds need host access so Playwright can inject into fixture pages
       // without a real user gesture. Production builds never ship this.
+      // Asked for only when someone turns reminders on, so there's no install warning (ADR-0015).
+      optional_permissions: ['notifications'],
       ...(mode === 'e2e' ? { host_permissions: ['<all_urls>'] } : {}),
       action: {
         default_title: 'Track this job',

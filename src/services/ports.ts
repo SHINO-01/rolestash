@@ -18,6 +18,14 @@ export interface ExtractorRunner {
   snapshot(tabId: number): Promise<PageSnapshot>;
 }
 
+/** System notifications (chrome.notifications, optional permission; ADR-0015). */
+export interface Notifier {
+  /** Whether the user has granted notifications. */
+  granted(): Promise<boolean>;
+  /** Shows (or replaces) the notification with this id. */
+  notify(id: string, title: string, message: string): Promise<void>;
+}
+
 /** Browser-driven OAuth (chrome.identity.launchWebAuthFlow in production). */
 export interface WebAuthFlow {
   /** Where the provider redirects back to, e.g. https://<id>.chromiumapp.org/ */

@@ -42,7 +42,8 @@ feature on the pricing page is built. The site already advertises them all.
   - a finished-jobs view (won and lost);
   - timeline entries older than 30 days behind Pro.
   - Exports always include everything.
-- **Reminders and closing-date alerts** (Pro):
+- ~~**Reminders and closing-date alerts**~~ done (ADR-0015; the drawer's _Follow-up_,
+  board menu → _Closing-date alerts_) (Pro):
   - a `followUpAt` field, with a migration;
   - `chrome.alarms` + `chrome.notifications` (new permissions, with
     justifications);

@@ -23,6 +23,7 @@ import { visibleActivity } from '@/domain/history';
 import type { Stage } from '@/domain/stage';
 import { JobLimitError } from '@/services/job-service';
 import { limitMessage } from '@/features/account/plan-copy';
+import { FollowUp } from './follow-up';
 import { HistoryLimitNote } from './history-dialog';
 import { formatSalary, parseSalaryText } from '@/extraction';
 import { Button, IconButton } from '@/ui/components/button';
@@ -46,12 +47,17 @@ export function JobDrawer({
   job,
   stages,
   historyFrom,
+  remindersAllowed = true,
+  onSeePlans,
   onClose,
 }: {
   job: Job | undefined;
   stages: readonly Stage[];
   /** Start of the plan's visible history (Free: 30 days); undefined shows all. */
   historyFrom?: Date | undefined;
+  /** Whether follow-up reminders are available (Pro and up, or no accounts). */
+  remindersAllowed?: boolean;
+  onSeePlans?: (() => void) | undefined;
   onClose: () => void;
 }) {
   return (
@@ -66,6 +72,8 @@ export function JobDrawer({
           job={job}
           stages={stages}
           historyFrom={historyFrom}
+          remindersAllowed={remindersAllowed}
+          onSeePlans={onSeePlans}
           onClose={onClose}
         />
       ) : null}
@@ -77,11 +85,15 @@ function DrawerBody({
   job,
   stages,
   historyFrom,
+  remindersAllowed,
+  onSeePlans,
   onClose,
 }: {
   job: Job;
   stages: readonly Stage[];
   historyFrom: Date | undefined;
+  remindersAllowed: boolean;
+  onSeePlans: (() => void) | undefined;
   onClose: () => void;
 }) {
   const { jobService } = useServices();
@@ -317,6 +329,10 @@ function DrawerBody({
             {job.postedAt ? <Detail label="Posted">{formatDate(job.postedAt)}</Detail> : null}
             {job.appliedAt ? <Detail label="Applied">{formatDate(job.appliedAt)}</Detail> : null}
           </dl>
+        </Section>
+
+        <Section title="Follow-up">
+          <FollowUp job={job} allowed={remindersAllowed} onPatch={patch} onSeePlans={onSeePlans} />
         </Section>
 
         <Section title="Tags">
@@ -607,7 +623,7 @@ function Timeline({
               ) : entry.type === 'unarchived' ? (
                 <>Restored to the board</>
               ) : (
-                <>Edited {entry.fields?.join(', ')}</>
+                <>Edited {entry.fields?.map((f) => FIELD_LABEL[f] ?? f).join(', ')}</>
               )}
             </span>
             <span className="text-subtle ml-2 text-xs" title={new Date(entry.at).toLocaleString()}>
@@ -631,6 +647,16 @@ function Timeline({
     </>
   );
 }
+
+/** Readable names for edited fields in the timeline. */
+const FIELD_LABEL: Record<string, string> = {
+  followUpAt: 'follow-up',
+  closesAt: 'closing date',
+  postedAt: 'posted date',
+  applyUrl: 'apply link',
+  workplaceType: 'workplace',
+  employmentTypes: 'employment type',
+};
 
 /** Timeline entries shown before "Show all". */
 const TIMELINE_PREVIEW = 30;

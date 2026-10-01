@@ -8,6 +8,13 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Follow-up reminders and closing-date alerts** (Pro):
+  - Set a follow-up on any job: tomorrow, in 3 days, a week, 2 weeks, or a
+    date. Rolestash notifies you when it's due, and the card shows it.
+  - A daily notification lists saved jobs closing within 3 days. It can be
+    turned off from the board menu.
+  - Notifications are an optional permission, asked for only when you turn
+    reminders on (ADR-0015).
 - **History and archiving:**
   - Archive any job from its menu. It leaves the board, stops counting toward
     your plan's active jobs, and can be restored any time (subject to the

@@ -10,6 +10,7 @@ usually an ADR) because it changes the install prompt and store review.
 | `storage`          | Save jobs and settings locally                                                                                     | none                  |
 | `unlimitedStorage` | Description snapshots can exceed the 10 MB default quota over time                                                 | none                  |
 | `contextMenus`     | "Track this job" on the page; "Open board" on the toolbar icon                                                     | none                  |
+| `alarms`           | Wakes the worker every 15 minutes to check follow-up reminders and the closing digest (ADR-0015)                   | none                  |
 | `identity`         | **Accounts builds only** (ADR-0011): Google sign-in via `launchWebAuthFlow`. Absent from builds without a backend. | none                  |
 
 Not requested, on purpose:
@@ -19,8 +20,11 @@ Not requested, on purpose:
 - **`tabs`**: not needed; `activeTab` exposes the current tab's URL after a
   gesture, and `runtime.getContexts` finds our own board tab.
 - **`favicon`**: tried and removed (see ADR-0002).
-- **`notifications` / `alarms`**: will be needed for follow-up reminders
-  (roadmap); add them with that feature.
+  Optional permissions (requested at the moment of use):
+
+| Permission      | Why                                                                                                   | Asked when                                                        |
+| --------------- | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| `notifications` | Follow-up reminders and the closing-soon digest (Pro; ADR-0015). Optional so installs show no warning | Setting a first follow-up, or turning on closing alerts (a click) |
 
 Future "paste a link" capture will use `optional_host_permissions`, requested
 at the moment of use for the specific site.

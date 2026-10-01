@@ -1,5 +1,6 @@
 import {
   Download,
+  BellRing,
   History,
   FileSpreadsheet,
   Keyboard,
@@ -18,6 +19,7 @@ import { boardView, historyStart } from '@/domain/history';
 import type { Theme } from '@/domain/settings';
 import { createBackup } from '@/storage/backup';
 import { jobsToCsv } from '@/storage/csv-export';
+import { requestNotifications } from '@/platform/notifications';
 import { AccountDialog } from '@/features/account/account-dialog';
 import { PlanBanner } from '@/features/account/plan-banner';
 import { planChip } from '@/features/account/plan-copy';
@@ -125,6 +127,12 @@ export function BoardPage() {
 
   const setTheme = (theme: Theme) => void services.settings.update({ theme });
 
+  async function toggleClosingAlerts() {
+    const on = settings.closingAlerts === false;
+    if (on) await requestNotifications();
+    await services.settings.update({ closingAlerts: on });
+  }
+
   return (
     <div className="flex h-dvh flex-col">
       <header className="flex h-16 shrink-0 items-center gap-4 px-6">
@@ -193,6 +201,17 @@ export function BoardPage() {
               icon: <Upload className="size-4" />,
               onSelect: () => setDialog('import'),
             },
+            ...(plan !== 'free'
+              ? [
+                  'separator' as const,
+                  {
+                    label: 'Closing-date alerts',
+                    icon: <BellRing className="size-4" />,
+                    checked: settings.closingAlerts !== false,
+                    onSelect: () => void toggleClosingAlerts(),
+                  },
+                ]
+              : []),
             'separator',
             { heading: 'Theme' },
             {
@@ -257,6 +276,8 @@ export function BoardPage() {
         job={openJob}
         stages={settings.stages}
         historyFrom={historyFrom}
+        remindersAllowed={plan !== 'free'}
+        onSeePlans={account ? () => setDialog('account') : undefined}
         onClose={() => openCard(undefined)}
       />
       <HistoryDialog

@@ -1,13 +1,14 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import clsx from 'clsx';
-import { CalendarClock, MapPin } from 'lucide-react';
+import { BellRing, CalendarClock, MapPin } from 'lucide-react';
 import { memo, type CSSProperties } from 'react';
 import type { Job } from '@/domain/job';
 import { formatSalary } from '@/extraction';
 import { Chip } from '@/ui/components/chip';
 import { CompanyAvatar } from '@/ui/components/company-avatar';
 import { PriorityBadge } from '@/ui/components/misc';
+import { daysUntilClose } from '@/domain/reminders';
 import { daysUntil, relativeTime, WORKPLACE_LABEL } from '@/ui/format';
 
 export function SortableJobCard({ job, onOpen }: { job: Job; onOpen: (id: string) => void }) {
@@ -46,6 +47,7 @@ export const JobCard = memo(function JobCard({
 }) {
   const salary = formatSalary(job.salary);
   const closesIn = daysUntil(job.closesAt);
+  const followUpIn = job.followUpAt ? daysUntilClose(job.followUpAt, new Date()) : undefined;
   const timeLabel = job.appliedAt
     ? `Applied ${relativeTime(job.appliedAt)}`
     : `Saved ${relativeTime(job.createdAt)}`;
@@ -67,7 +69,12 @@ export const JobCard = memo(function JobCard({
         </div>
       </div>
 
-      {job.location || job.workplaceType || salary || closesIn !== undefined || job.tags.length ? (
+      {job.location ||
+      job.workplaceType ||
+      salary ||
+      closesIn !== undefined ||
+      followUpIn !== undefined ||
+      job.tags.length ? (
         <div className="mt-2.5 flex flex-wrap gap-1">
           {job.location ? (
             <Chip
@@ -88,6 +95,18 @@ export const JobCard = memo(function JobCard({
               icon={<CalendarClock className="size-3" />}
             >
               {closesIn < 0 ? 'Closed' : closesIn === 0 ? 'Closes today' : `Closes in ${closesIn}d`}
+            </Chip>
+          ) : null}
+          {followUpIn !== undefined && followUpIn <= 7 ? (
+            <Chip
+              tone={followUpIn <= 0 ? 'danger' : 'accent'}
+              icon={<BellRing className="size-3" />}
+            >
+              {followUpIn < 0
+                ? 'Follow-up overdue'
+                : followUpIn === 0
+                  ? 'Follow up today'
+                  : `Follow up in ${String(followUpIn)}d`}
             </Chip>
           ) : null}
           {job.tags.slice(0, 2).map((tag) => (

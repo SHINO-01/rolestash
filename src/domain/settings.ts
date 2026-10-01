@@ -10,6 +10,8 @@ export const SettingsSchema = z
     /** Stage that new captures land in. */
     defaultStageId: z.string().min(1),
     theme: z.enum(THEMES),
+    /** Daily "closing soon" notification (Pro; ADR-0015). Absent means on. */
+    closingAlerts: z.boolean().optional(),
   })
   .refine((s) => s.stages.some((stage) => stage.id === s.defaultStageId), {
     message: 'defaultStageId must reference an existing stage',

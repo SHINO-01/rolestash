@@ -225,3 +225,60 @@ test.describe('board @smoke', () => {
     ]);
   });
 });
+
+// Needs an accounts build (Free vs Pro), so not part of @smoke.
+test.describe('reminders', () => {
+  const seed = (worker: Worker, jobs: Partial<Job>[]) =>
+    worker.evaluate(async (items) => {
+      const now = new Date().toISOString();
+      await chrome.storage.local.set(
+        Object.fromEntries(
+          items.map((j, i) => [
+            `job:${String(j.id)}`,
+            {
+              title: 'Untitled',
+              company: '',
+              employmentTypes: [],
+              stageId: 'saved',
+              rank: (i + 1) * 1024,
+              priority: 0,
+              tags: [],
+              notes: '',
+              activity: [],
+              createdAt: now,
+              updatedAt: now,
+              source: {
+                url: `https://example.com/jobs/${String(j.id)}`,
+                originalUrl: `https://example.com/jobs/${String(j.id)}`,
+                siteId: 'generic',
+                siteName: 'example.com',
+                capturedAt: now,
+              },
+              ...j,
+            },
+          ]),
+        ),
+      );
+    }, jobs);
+
+  test('schedules reminder checks and offers follow-ups on Pro', async ({
+    context,
+    worker,
+    extensionId,
+  }) => {
+    await expect
+      .poll(() =>
+        worker.evaluate(
+          async () => (await chrome.alarms.get('rolestash.reminders'))?.periodInMinutes,
+        ),
+      )
+      .toBe(15);
+    await seed(worker, [{ id: 'a', title: 'Platform Engineer', company: 'Northwind Labs' }]);
+    const page = await context.newPage();
+    await page.goto(`chrome-extension://${extensionId}/board.html`);
+    await page.getByText('Platform Engineer').click();
+    const drawer = page.getByRole('dialog', { name: 'Platform Engineer details' });
+    // Signed out is the Free plan: reminders are offered, not active.
+    await expect(drawer.getByText(/Pro reminds you when it's time to follow up/)).toBeVisible();
+  });
+});

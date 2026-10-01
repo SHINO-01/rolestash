@@ -129,6 +129,8 @@ export const JobSchema = PostingSchema.extend({
   createdAt: IsoDateTime,
   updatedAt: IsoDateTime,
   appliedAt: IsoDateTime.optional(),
+  /** When to remind the user to follow up (Pro; ADR-0015). */
+  followUpAt: IsoDateTime.optional(),
   /** Set while the job is archived: off the board, in History, not counted as active. */
   archivedAt: IsoDateTime.optional(),
 });
@@ -150,6 +152,7 @@ export const EDITABLE_FIELDS = [
   'priority',
   'tags',
   'notes',
+  'followUpAt',
 ] as const satisfies readonly (keyof Job)[];
 export type EditableField = (typeof EDITABLE_FIELDS)[number];
 export type JobPatch = Partial<Pick<Job, EditableField>>;

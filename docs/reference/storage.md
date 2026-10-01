@@ -9,6 +9,7 @@ All data lives in `chrome.storage.local` (with `unlimitedStorage`).
 | `job:<id>`            | `Job` (one key per job)                                 |
 | `account:session`     | Supabase session (accounts builds only; not backed up)  |
 | `account:entitlement` | Cached entitlement + `checkedAt` (accounts builds only) |
+| `reminders`           | Reminders already sent (ADR-0015); not backed up        |
 
 Access only through `JobRepository` / `SettingsRepository`
 (`src/storage/`), which depend on the `KeyValueStore` port.
@@ -35,8 +36,11 @@ Rules:
 5. **Test it** in `tests/unit/storage/storage.test.ts`: seed the old shape,
    migrate, assert the new shape.
 
-Optional fields added without a migration: `archivedAt` (History, and the
-`archived`/`unarchived` activity types).
+Optional fields added without a migration:
+
+- `archivedAt`: History, with the `archived` and `unarchived` activity types.
+- `followUpAt`: reminders.
+- `settings.closingAlerts`: absent means on.
 
 When do you need one? Adding an **optional** field: no. Renaming, removing,
 changing a type, making a field required, or changing semantics: yes.
