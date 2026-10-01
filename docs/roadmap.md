@@ -98,8 +98,8 @@ feature on the pricing page is built. The site already advertises them all.
   and typical wait, applications unanswered after 21 days, and results by
   source.
 - ~~**Side panel**~~ done (ADR-0021: one-click access, Today and board docked
-  beside the page) and **bulk actions** (multi-select,
-  archive, tag).
+  beside the page) and ~~**bulk actions**~~ done (select mode or Ctrl/⌘-click;
+  move, tag, archive, delete with undo).
 
 ## Phase 1d: Launch
 

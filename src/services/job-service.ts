@@ -242,6 +242,55 @@ export class JobService {
     return this.jobs.save(job);
   }
 
+  // ── Bulk actions (Advanced) ──────────────────────────────────────────────
+
+  /**
+   * Moves several jobs to the top of a column, keeping their order relative
+   * to each other. Returns every job written.
+   */
+  async moveMany(jobIds: readonly JobId[], toStageId: StageId): Promise<Job[]> {
+    const written = new Map<string, Job>();
+    // Each goes to the top, so going backwards leaves them in their original order.
+    for (const id of [...jobIds].reverse()) {
+      for (const job of await this.move(id, toStageId, 0)) written.set(job.id, job);
+    }
+    return [...written.values()];
+  }
+
+  async archiveMany(jobIds: readonly JobId[]): Promise<Job[]> {
+    const out: Job[] = [];
+    for (const id of jobIds) out.push(await this.archive(id));
+    return out;
+  }
+
+  /** Adds a tag to several jobs (jobs that already have it, or have 30 tags, are left alone). */
+  async tagMany(jobIds: readonly JobId[], tag: string): Promise<Job[]> {
+    const clean = tag.trim().replace(/^#/, '').slice(0, 40);
+    if (!clean) return [];
+    const out: Job[] = [];
+    for (const id of jobIds) {
+      const job = await this.require(id);
+      if (job.tags.includes(clean) || job.tags.length >= 30) out.push(job);
+      else out.push(await this.update(id, { tags: [...job.tags, clean] }));
+    }
+    return out;
+  }
+
+  /** Deletes several jobs; returns them as they were, for undo. */
+  async removeMany(jobIds: readonly JobId[]): Promise<Job[]> {
+    const removed: Job[] = [];
+    for (const id of jobIds) {
+      const job = await this.remove(id);
+      if (job) removed.push(job);
+    }
+    return removed;
+  }
+
+  /** Puts deleted jobs back exactly as they were (undo). */
+  restoreMany(jobs: readonly Job[]): Promise<Job[]> {
+    return this.jobs.saveMany([...jobs]);
+  }
+
   // ── Email updates (Advanced; ADR-0014) ───────────────────────────────────
 
   /**

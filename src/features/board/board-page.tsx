@@ -6,6 +6,7 @@ import {
   Columns3,
   History,
   FileSpreadsheet,
+  ListChecks,
   Inbox,
   Keyboard,
   Monitor,
@@ -52,6 +53,8 @@ import { ImportDialog } from './import-dialog';
 import { JobDrawer } from './job-drawer';
 import { Kanban } from './kanban';
 import { BoardStats } from './board-stats';
+import { BulkBar } from './bulk-bar';
+import { SelectionContext, type Selection } from './selection';
 
 function readJobFromHash(): string | undefined {
   const m = /job=([^&]+)/.exec(location.hash);
@@ -172,6 +175,53 @@ export function BoardPage() {
   // Advanced (or a build without accounts): interviews, rounds, follow-ups and closing dates.
   const recordsAllowed = plan === undefined || plan === 'advanced';
 
+  // Bulk actions (Advanced): select mode, or Ctrl/⌘-click a card.
+  const [selecting, setSelecting] = useState(false);
+  const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
+  const clearSelection = useCallback(() => {
+    setSelected(new Set());
+    setSelecting(false);
+  }, []);
+  const pitchSelect = useCallback(() => {
+    toast({
+      message: 'Selecting several jobs at once is part of Advanced.',
+      ...(account ? { action: { label: 'See plans', onClick: () => setDialog('account') } } : {}),
+    });
+  }, [toast, account]);
+  const selection = useMemo<Selection>(
+    () => ({
+      active: selecting,
+      selected,
+      toggle: (id) => {
+        if (!recordsAllowed) {
+          pitchSelect();
+          return;
+        }
+        setSelected((current) => {
+          const next = new Set(current);
+          if (next.has(id)) next.delete(id);
+          else next.add(id);
+          return next;
+        });
+      },
+    }),
+    [selecting, selected, recordsAllowed, pitchSelect],
+  );
+  // Selected cards that are still on the board (filtered or deleted ones drop out).
+  const selectedIds = useMemo(
+    () => onBoard.filter((j) => selected.has(j.id)).map((j) => j.id),
+    [onBoard, selected],
+  );
+  useEffect(() => {
+    if (!selecting && selected.size === 0) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !(e.target as HTMLElement).closest('dialog[open], input'))
+        clearSelection();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [selecting, selected, clearSelection]);
+
   function exportCalendar() {
     const events = boardEvents(jobs);
     download(
@@ -219,7 +269,7 @@ export function BoardPage() {
     <div className="flex h-dvh flex-col">
       <header className="flex h-16 shrink-0 items-center gap-4 px-6">
         <Logo />
-        <div className="relative ml-4 w-full max-w-sm">
+        <div className="relative ml-4 w-full max-w-sm min-w-48">
           <Search className="text-subtle pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" />
           <input
             ref={searchRef}
@@ -247,18 +297,39 @@ export function BoardPage() {
           </Button>
         ) : null}
         <Button
+          variant={selecting ? 'secondary' : 'ghost'}
+          icon={<ListChecks className="size-4" />}
+          aria-pressed={selecting}
+          aria-label={selecting ? 'Done selecting' : 'Select'}
+          title={selecting ? 'Done selecting' : 'Select several jobs'}
+          onClick={() => {
+            if (!recordsAllowed) {
+              pitchSelect();
+              return;
+            }
+            if (selecting) clearSelection();
+            else setSelecting(true);
+          }}
+        >
+          <span className="hidden 2xl:inline">{selecting ? 'Done' : 'Select'}</span>
+        </Button>
+        <Button
           variant="ghost"
           icon={<BarChart3 className="size-4" />}
           onClick={() => setDialog('insights')}
+          aria-label="Insights"
+          title="Insights"
         >
-          Insights
+          <span className="hidden 2xl:inline">Insights</span>
         </Button>
         <Button
           variant="ghost"
           icon={<History className="size-4" />}
           onClick={() => setDialog('history')}
+          aria-label="History"
+          title="History"
         >
-          History
+          <span className="hidden 2xl:inline">History</span>
         </Button>
         <Button
           variant="primary"
@@ -392,16 +463,21 @@ export function BoardPage() {
         ) : jobs.length === 0 ? (
           <EmptyBoard onAdd={() => setDialog('add')} />
         ) : (
-          <Kanban
-            settings={settings}
-            allJobs={onBoard}
-            visibleJobs={visibleJobs}
-            filtered={deferredQuery.trim() !== ''}
-            onOpen={openCard}
-          />
+          <SelectionContext.Provider value={selection}>
+            <Kanban
+              settings={settings}
+              allJobs={onBoard}
+              visibleJobs={visibleJobs}
+              filtered={deferredQuery.trim() !== ''}
+              onOpen={openCard}
+            />
+          </SelectionContext.Provider>
         )}
       </main>
 
+      {selectedIds.length ? (
+        <BulkBar selected={selectedIds} stages={settings.stages} onDone={clearSelection} />
+      ) : null}
       <JobDrawer
         job={openJob}
         stages={settings.stages}

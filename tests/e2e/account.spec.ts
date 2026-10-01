@@ -720,6 +720,83 @@ test.describe('accounts', () => {
     await expect(dialog.getByRole('tooltip')).toContainText('Week of');
   });
 
+  test('bulk actions: select, move, tag, delete and undo (Advanced)', async ({
+    context,
+    worker,
+    extensionId,
+    backend,
+  }) => {
+    const end = new Date(Date.now() + 20 * 86_400_000).toISOString();
+    await seedActiveJobs(worker, 3);
+    await seedSignedIn(worker, {
+      status: 'active',
+      tier: 'advanced',
+      currentPeriodEnd: end,
+      hasBillingAccount: false,
+    });
+    backend.entitlement = {
+      status: 'active',
+      tier: 'advanced',
+      trial_ends_at: null,
+      current_period_end: end,
+      provider_customer_id: null,
+    };
+    const page = await context.newPage();
+    await page.goto(`chrome-extension://${extensionId}/board.html`);
+    const card = (n: number) => page.getByRole('button', { name: `Role ${String(n)} at Acme` });
+
+    await page.getByRole('button', { name: 'Select' }).click();
+    await card(0).click();
+    await card(2).click();
+    const bar = page.getByRole('toolbar', { name: 'Bulk actions' });
+    await expect(bar).toContainText('2 selected');
+    await bar.getByLabel('Move to').selectOption({ label: 'Applied' });
+    await expect(page.getByText('Moved 2 jobs to Applied')).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Applied column' })).toContainText('Role 0');
+    await expect(page.getByRole('region', { name: 'Applied column' })).toContainText('Role 2');
+    await expect(bar).toBeHidden();
+
+    // Ctrl-click selects without select mode.
+    await card(1).click({ modifiers: ['Control'] });
+    await card(2).click({ modifiers: ['Control'] });
+    await bar.getByRole('button', { name: 'Add tag' }).click();
+    await bar.getByLabel('Tag').fill('shortlist');
+    await bar.getByRole('button', { name: 'Add', exact: true }).click();
+    await expect(page.getByText('Tagged 2 jobs #shortlist')).toBeVisible();
+    const tags = await worker.evaluate(async () => {
+      const all = await chrome.storage.local.get(['job:j1', 'job:j2']);
+      return [all['job:j1'], all['job:j2']].map((j) => (j as { tags: string[] }).tags);
+    });
+    expect(tags).toEqual([['shortlist'], ['shortlist']]);
+
+    await card(1).click({ modifiers: ['Control'] });
+    await bar.getByRole('button', { name: 'Delete' }).click();
+    await expect(card(1)).toHaveCount(0);
+    await page.getByRole('button', { name: 'Undo' }).click();
+    await expect(card(1)).toBeVisible();
+  });
+
+  test('on Pro, selecting several jobs is offered as Advanced', async ({
+    context,
+    worker,
+    extensionId,
+  }) => {
+    await seedActiveJobs(worker, 2);
+    await seedSignedIn(worker, {
+      status: 'trialing',
+      trialEndsAt: new Date(Date.now() + 10 * 86_400_000).toISOString(),
+      hasBillingAccount: false,
+    });
+    const page = await context.newPage();
+    await page.goto(`chrome-extension://${extensionId}/board.html`);
+    await page.getByRole('button', { name: 'Select' }).click();
+    await expect(
+      page.getByText('Selecting several jobs at once is part of Advanced.'),
+    ).toBeVisible();
+    await page.getByRole('button', { name: 'Role 0 at Acme' }).click({ modifiers: ['Control'] });
+    await expect(page.getByRole('toolbar', { name: 'Bulk actions' })).toHaveCount(0);
+  });
+
   test('deleting the account keeps jobs on this device', async ({
     context,
     worker,

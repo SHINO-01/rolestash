@@ -1,7 +1,7 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import clsx from 'clsx';
-import { BellRing, CalendarClock, MapPin } from 'lucide-react';
+import { BellRing, CalendarClock, Check, MapPin } from 'lucide-react';
 import { memo, type CSSProperties } from 'react';
 import type { Job } from '@/domain/job';
 import { formatSalary } from '@/extraction';
@@ -13,29 +13,52 @@ import { isUpcoming } from '@/domain/interview';
 import { InterviewChip } from '@/features/email/interview';
 import { SuggestionChip } from '@/features/email/suggestion';
 import { daysUntil, relativeTime, WORKPLACE_LABEL } from '@/ui/format';
+import { useSelection } from './selection';
 
 export function SortableJobCard({ job, onOpen }: { job: Job; onOpen: (id: string) => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: job.id,
   });
   const style: CSSProperties = { transform: CSS.Translate.toString(transform), transition };
+  const selection = useSelection();
+  const selected = selection?.selected.has(job.id) ?? false;
+  // In select mode, or with Ctrl/⌘, a click selects the card instead of opening it.
+  const activate = (withModifier: boolean) => {
+    if (selection && (selection.active || withModifier)) selection.toggle(job.id);
+    else onOpen(job.id);
+  };
   return (
     <div
       ref={setNodeRef}
       style={style}
       {...attributes}
       {...listeners}
-      onClick={() => onOpen(job.id)}
+      onClick={(e) => activate(e.metaKey || e.ctrlKey)}
       onKeyDown={(e) => {
         listeners?.onKeyDown?.(e);
-        if (e.key === 'Enter') onOpen(job.id);
+        if (e.key === 'Enter') activate(e.metaKey || e.ctrlKey);
       }}
       aria-label={`${job.title} at ${job.company || 'unknown company'}`}
+      {...(selection?.active || selected ? { 'aria-pressed': selected } : {})}
       className={clsx(
-        'focus-visible:ring-accent rounded-xl outline-none focus-visible:ring-2',
+        'focus-visible:ring-accent relative rounded-xl outline-none focus-visible:ring-2',
         isDragging && 'opacity-40',
+        selected && 'ring-accent ring-2',
       )}
     >
+      {selection?.active || selected ? (
+        <span
+          aria-hidden
+          className={clsx(
+            'absolute top-2 right-2 z-10 flex size-4 items-center justify-center rounded border',
+            selected
+              ? 'bg-accent border-accent text-white dark:text-zinc-950'
+              : 'border-line-strong bg-surface',
+          )}
+        >
+          {selected ? <Check className="size-3" /> : null}
+        </span>
+      ) : null}
       <JobCard job={job} />
     </div>
   );

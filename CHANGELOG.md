@@ -8,6 +8,15 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Bulk actions** (Advanced): select several cards, then move them to a
+  column, add a tag, archive or delete them in one go (deleting can be
+  undone). Select them with **Select** in the board header, or Ctrl/⌘-click
+  cards at any time; Esc clears the selection.
+
+### Changed
+
+- **Board header:** Select, Insights and History show as icons on narrower
+  screens, so the search box keeps its room.
 - **Insights** (Advanced): how your search is going, from the board's new
   **Insights** button.
   - Applications per week, and how far applications get (applied →
