@@ -7,7 +7,7 @@
  *
  * Renders the page in Chromium (no extension, no cookies, a fresh profile),
  * scrubs it like the job-page snapshots (scripts/lib/scrub.ts), keeps only
- * the application form, and replaces each `Real=Fictional` name (case-sensitive; pass each spelling) so fixtures
+ * the application form (dropdowns trimmed to 25 options), and replaces each `Real=Fictional` name (case-sensitive; pass each spelling) so fixtures
  * only ever show fictional companies. Writes tests/fixtures/forms/<ats>/<case>.html
  * and prints what the autofill matcher finds, to check before writing
  * <case>.expected.json by hand. Set HEADED=1 for sites that challenge
@@ -50,6 +50,9 @@ try {
       a.querySelectorAll('input, select, textarea').length,
   );
   const form = forms[0];
+  // Long dropdowns (every university, every country) only slow tests down: keep 25 options.
+  for (const select of (form ?? doc).querySelectorAll('select'))
+    [...select.querySelectorAll('option')].slice(25).forEach((o) => o.remove());
   let html = `<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><title>Application</title></head><body>\n${form ? form.outerHTML : doc.body.innerHTML}\n</body></html>\n`;
   for (const pair of pairs) {
     const [real, fictional] = pair.split('=');
