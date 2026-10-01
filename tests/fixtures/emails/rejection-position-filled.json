@@ -1,0 +1,13 @@
+{
+  "description": "Rejection: position filled",
+  "input": {
+    "from": "Fernhill Studios <hello@fernhillstudios.example>",
+    "subject": "Re: Junior Animator",
+    "date": "2026-10-01T14:00:00+01:00",
+    "text": "Hi Sam,\n\nThanks for getting in touch. Unfortunately the Junior Animator position has now been filled, so we will not be progressing your application.\n\nBest of luck,\nFernhill Studios"
+  },
+  "expected": {
+    "intent": "rejected",
+    "action": "apply"
+  }
+}

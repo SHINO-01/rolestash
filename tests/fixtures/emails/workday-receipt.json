@@ -1,0 +1,16 @@
+{
+  "description": "Workday receipt with a requisition number",
+  "input": {
+    "from": "Harbourline Logistics <harbourline@myworkday.com>",
+    "subject": "Application Received - Operations Analyst",
+    "date": "2026-09-28T21:30:00-04:00",
+    "text": "Dear Sam,\n\nThank you for applying for the Operations Analyst position (Req ID: R-04512) at Harbourline Logistics. This email confirms that we have received your application.\n\nOur recruiters will review your qualifications. Only shortlisted candidates will be contacted.\n\nHarbourline Logistics Talent Acquisition\nThis is an automated message, please do not reply."
+  },
+  "expected": {
+    "intent": "received",
+    "action": "apply",
+    "ats": "workday",
+    "atsJobId": "R-04512",
+    "titleHint": "Operations Analyst"
+  }
+}

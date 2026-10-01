@@ -1,0 +1,13 @@
+{
+  "description": "Codility assessment link",
+  "input": {
+    "from": "Kestrel Robotics <talent@kestrelrobotics.example>",
+    "subject": "Next step: technical assessment",
+    "date": "2026-10-01T09:00:00-07:00",
+    "text": "Hi Sam,\n\nThanks for your interest in Kestrel Robotics. The next step is a short technical assessment.\n\nhttps://app.codility.com/c/candidate/ABC123-XYZ/\n\nGood luck!"
+  },
+  "expected": {
+    "intent": "assessment",
+    "action": "apply"
+  }
+}

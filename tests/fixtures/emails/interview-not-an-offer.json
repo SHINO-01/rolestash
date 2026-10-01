@@ -1,0 +1,13 @@
+{
+  "description": "Interview invite with a 'this is not an offer of employment' disclaimer",
+  "input": {
+    "from": "Ironbark Finance Careers <careers@ironbarkfinance.example>",
+    "subject": "Invitation to interview: Graduate Accountant",
+    "date": "2026-10-01T10:00:00+10:00",
+    "text": "Dear Sam,\n\nCongratulations, we are pleased to invite you to an interview for the Graduate Accountant program.\n\nPlease book a time using the portal by Friday. This invitation is not an offer of employment.\n\nIronbark Finance Graduate Recruitment"
+  },
+  "expected": {
+    "intent": "interview",
+    "action": "apply"
+  }
+}

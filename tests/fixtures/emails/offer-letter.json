@@ -1,0 +1,13 @@
+{
+  "description": "A formal offer with an offer letter",
+  "input": {
+    "from": "Quokka Health HR <hr@quokkahealth.example>",
+    "subject": "Offer of employment - Product Designer",
+    "date": "2026-10-01T10:00:00+10:00",
+    "text": "Dear Sam,\n\nWe are delighted to offer you the position of Product Designer at Quokka Health.\n\nPlease find your offer letter attached, which outlines your compensation package and start date. Kindly sign and return the offer letter by 10 October.\n\nWelcome to the team!\n\nQuokka Health People & Culture"
+  },
+  "expected": {
+    "intent": "offer",
+    "action": "apply"
+  }
+}

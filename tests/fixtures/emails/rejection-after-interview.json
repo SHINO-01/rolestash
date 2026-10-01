@@ -1,0 +1,13 @@
+{
+  "description": "Rejection after interviewing, mentioning the interview",
+  "input": {
+    "from": "Kestrel Robotics <talent@kestrelrobotics.example>",
+    "subject": "Robotics Software Engineer",
+    "date": "2026-10-01T09:00:00-07:00",
+    "text": "Hi Sam,\n\nThank you for taking the time to interview with our team last week. We enjoyed our conversations.\n\nAfter a lot of discussion, we have decided to move forward with another candidate for this role.\n\nWe wish you every success in your search.\n\nKestrel Robotics"
+  },
+  "expected": {
+    "intent": "rejected",
+    "action": "apply"
+  }
+}

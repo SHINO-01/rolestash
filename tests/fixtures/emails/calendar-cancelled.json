@@ -1,0 +1,14 @@
+{
+  "description": "A cancelled calendar event changes nothing",
+  "input": {
+    "from": "Alex Chen <alex.chen@northwindlabs.example>",
+    "subject": "Cancelled: Data Analyst interview",
+    "date": "2026-10-02T11:00:00+10:00",
+    "text": "This event has been cancelled.",
+    "calendar": "BEGIN:VCALENDAR\nMETHOD:CANCEL\nBEGIN:VEVENT\nDTSTART:20261003T000000Z\nSUMMARY:Data Analyst interview\nEND:VEVENT\nEND:VCALENDAR\n"
+  },
+  "expected": {
+    "intent": "other",
+    "action": "none"
+  }
+}

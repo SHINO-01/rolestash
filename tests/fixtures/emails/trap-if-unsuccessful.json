@@ -1,0 +1,14 @@
+{
+  "description": "Receipt with conditional 'if shortlisted we'll arrange an interview' and 'if unsuccessful'",
+  "input": {
+    "from": "Larkspur Media <jobs@larkspurmedia.example>",
+    "subject": "Application received: Content Producer",
+    "date": "2026-09-29T15:00:00+10:00",
+    "text": "Hi Sam,\n\nThanks for applying for the Content Producer role at Larkspur Media.\n\nIf you are shortlisted, we will contact you to arrange an interview. If you have not heard from us within three weeks, please assume your application has been unsuccessful on this occasion.\n\nCheers,\nLarkspur Media"
+  },
+  "expected": {
+    "intent": "received",
+    "action": "apply",
+    "titleHint": "Content Producer"
+  }
+}

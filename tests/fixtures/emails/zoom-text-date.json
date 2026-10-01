@@ -1,0 +1,21 @@
+{
+  "description": "Interview invitation with a Zoom link and a written date in AEST",
+  "input": {
+    "from": "Jordan Lee <jordan@bluegumanalytics.example>",
+    "subject": "Interview invitation - Senior Data Engineer",
+    "date": "2026-10-01T16:05:00+10:00",
+    "text": "Hi Sam,\n\nThank you for your application. We would like to invite you to a video interview with our engineering manager.\n\nTime: Thursday 9 October at 10am AEST (45 minutes)\nZoom: https://us02web.zoom.us/j/81234567890?pwd=abc123\n\nPlease reply to confirm this works for you.\n\nJordan\nTalent Partner, Bluegum Analytics"
+  },
+  "expected": {
+    "intent": "interview",
+    "action": "apply",
+    "titleHint": "Senior Data Engineer",
+    "interview": {
+      "start": "2026-10-08T23:00:00.000Z",
+      "floating": false,
+      "timeZone": "Australia/Sydney",
+      "meetingUrl": "https://us02web.zoom.us/j/81234567890?pwd=abc123",
+      "source": "text"
+    }
+  }
+}

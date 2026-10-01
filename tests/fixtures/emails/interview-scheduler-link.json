@@ -1,0 +1,18 @@
+{
+  "description": "Self-scheduling link (GoodTime) decides interview",
+  "input": {
+    "from": "Kestrel Robotics <scheduling@kestrelrobotics.example>",
+    "subject": "Kestrel Robotics: please pick a time",
+    "date": "2026-10-01T18:00:00-07:00",
+    "html": "<p>Hi Sam,</p><p>The team enjoyed reviewing your application. Please use the link below to choose a time for your conversation with the hiring manager.</p>\n<p><a href=\"https://app.goodtime.io/candidate/schedule/abc123\">Choose a time</a></p>"
+  },
+  "expected": {
+    "intent": "interview",
+    "action": "apply",
+    "interview": {
+      "floating": true,
+      "schedulingUrl": "https://app.goodtime.io/candidate/schedule/abc123",
+      "source": "text"
+    }
+  }
+}

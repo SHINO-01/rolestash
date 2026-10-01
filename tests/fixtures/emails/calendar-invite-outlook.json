@@ -1,0 +1,22 @@
+{
+  "description": "Outlook invite with a Windows time zone and a Teams link, in person",
+  "input": {
+    "from": "Priya Nair <priya.nair@harbourline.example>",
+    "subject": "Operations Analyst - panel interview",
+    "date": "2026-10-01T09:00:00+10:00",
+    "text": "Hi Sam, please find the invite for your panel interview attached.",
+    "calendar": "BEGIN:VCALENDAR\r\nMETHOD:REQUEST\r\nPRODID:Microsoft Exchange Server 2010\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nSUMMARY;LANGUAGE=en-AU:Operations Analyst - panel interview\r\nDTSTART;TZID=AUS Eastern Standard Time:20261007T143000\r\nDTEND;TZID=AUS Eastern Standard Time:20261007T153000\r\nLOCATION;LANGUAGE=en-AU:Level 4\\, 100 Example Street\\, Sydney NSW 2000\r\nX-MICROSOFT-SKYPETEAMSMEETINGURL:https://teams.microsoft.com/l/meetup-join/19%3ameeting_abc%40thread.v2/0\r\nBEGIN:VALARM\r\nTRIGGER:-PT15M\r\nEND:VALARM\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+  },
+  "expected": {
+    "intent": "interview",
+    "action": "apply",
+    "interview": {
+      "start": "2026-10-07T03:30:00.000Z",
+      "floating": false,
+      "timeZone": "Australia/Sydney",
+      "location": "Level 4, 100 Example Street, Sydney NSW 2000",
+      "meetingUrl": "https://teams.microsoft.com/l/meetup-join/19%3ameeting_abc%40thread.v2/0",
+      "source": "calendar"
+    }
+  }
+}

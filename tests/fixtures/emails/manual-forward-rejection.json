@@ -1,0 +1,14 @@
+{
+  "description": "A manually forwarded rejection: inner sender and subject are used",
+  "input": {
+    "from": "Sam Example <sam@example.com>",
+    "subject": "Fwd: Your application to Fernhill Studios",
+    "date": "2026-10-02T08:00:00+10:00",
+    "text": "---------- Forwarded message ---------\nFrom: Fernhill Studios <hello@fernhillstudios.example>\nDate: Wed, 1 Oct 2026 at 14:00\nSubject: Your application to Fernhill Studios\nTo: <sam@example.com>\n\nHi Sam,\n\nThank you for applying. After careful consideration we have decided not to proceed with your application.\n\nFernhill Studios"
+  },
+  "expected": {
+    "intent": "rejected",
+    "action": "apply",
+    "companyHint": "Fernhill Studios"
+  }
+}

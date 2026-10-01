@@ -1,0 +1,13 @@
+{
+  "description": "HackerRank coding challenge",
+  "input": {
+    "from": "Tidewater Software <no-reply@hackerrankforwork.com>",
+    "subject": "Tidewater Software has invited you to a coding challenge",
+    "date": "2026-10-01T09:00:00+02:00",
+    "html": "<p>Hi Sam,</p><p>Tidewater Software has invited you to take a coding challenge as the next step for the QA Engineer role. You will have 7 days to complete it.</p>\n<p><a href=\"https://www.hackerrank.com/test/abc123def/login?b=xyz\">Start the test</a></p>"
+  },
+  "expected": {
+    "intent": "assessment",
+    "action": "apply"
+  }
+}

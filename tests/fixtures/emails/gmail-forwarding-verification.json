@@ -1,0 +1,17 @@
+{
+  "description": "Gmail's forwarding confirmation: code and link, no status change",
+  "input": {
+    "from": "Gmail Team <forwarding-noreply@google.com>",
+    "subject": "(#123456789) Gmail Forwarding Confirmation - Receive Mail from sam@example.com",
+    "date": "2026-10-01T09:00:00+00:00",
+    "text": "sam@example.com has requested to automatically forward mail to your email address k3x9q2w7m4p8r5t1@in.rolestash.com.\nConfirmation code: 123456789\n\nTo allow sam@example.com to automatically forward mail to your address, please click the link below to confirm the request:\n\nhttps://mail-settings.google.com/mail/vf-%5BANGjdJ8abc%5D-xyz\n\nIf you click the link and it appears to be broken, please copy and paste it into a new browser window."
+  },
+  "expected": {
+    "intent": "forwarding_verification",
+    "action": "none",
+    "verification": {
+      "code": "123456789",
+      "url": "https://mail-settings.google.com/mail/vf-%5BANGjdJ8abc%5D-xyz"
+    }
+  }
+}

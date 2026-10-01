@@ -1,0 +1,13 @@
+{
+  "description": "Receipt that 'may be in touch to arrange an interview'",
+  "input": {
+    "from": "Coralbay Games <talent@coralbaygames.example>",
+    "subject": "Thanks for applying!",
+    "date": "2026-09-29T12:00:00+10:00",
+    "text": "Hey Sam,\n\nThanks for applying to Coralbay Games. We're reviewing applications now and we may be in touch to arrange an interview in the coming weeks.\n\nCoralbay Games"
+  },
+  "expected": {
+    "intent": "received",
+    "action": "apply"
+  }
+}

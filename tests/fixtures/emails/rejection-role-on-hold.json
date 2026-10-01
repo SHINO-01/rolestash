@@ -1,0 +1,13 @@
+{
+  "description": "Weak: role put on hold → suggestion only",
+  "input": {
+    "from": "Wattle & Co <recruitment@wattleandco.example>",
+    "subject": "Marketing Coordinator update",
+    "date": "2026-10-01T09:00:00+10:00",
+    "text": "Hi Sam,\n\nA quick update: the Marketing Coordinator role has been put on hold while we review our team structure.\n\nThanks for your patience,\nWattle & Co"
+  },
+  "expected": {
+    "intent": "rejected",
+    "action": "suggest"
+  }
+}

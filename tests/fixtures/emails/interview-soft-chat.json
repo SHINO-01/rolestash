@@ -1,0 +1,13 @@
+{
+  "description": "Hand-written 'keen to chat further' → suggestion",
+  "input": {
+    "from": "Casey <casey@larkspurmedia.example>",
+    "subject": "Content Producer",
+    "date": "2026-10-01T13:00:00+10:00",
+    "text": "Hi Sam,\n\nYour reel stood out. Keen to chat further.\n\nCasey"
+  },
+  "expected": {
+    "intent": "interview",
+    "action": "suggest"
+  }
+}

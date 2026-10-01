@@ -1,0 +1,13 @@
+{
+  "description": "'Unfortunately we need to reschedule your interview' is not a rejection",
+  "input": {
+    "from": "Priya Nair <priya.nair@harbourline.example>",
+    "subject": "Operations Analyst interview",
+    "date": "2026-10-02T09:00:00+10:00",
+    "text": "Hi Sam,\n\nUnfortunately we need to reschedule your interview, as one of the panel members is unwell. Could you share your availability for Thursday or Friday?\n\nPriya"
+  },
+  "expected": {
+    "intent": "interview",
+    "action": "apply"
+  }
+}

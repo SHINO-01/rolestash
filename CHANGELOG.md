@@ -8,6 +8,15 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Email status updates, part 1** (Advanced; not switched on yet): the
+  rules engine that reads job emails.
+  - It recognises application receipts, assessments, interviews,
+    rejections and offers, and Gmail's forwarding confirmation.
+  - It reads interview times from calendar invites and from text
+    ("Thursday 9 October at 10am AEST", "tomorrow at 2pm"), plus Join links
+    and addresses.
+  - It matches each email to the right job on your board.
+  - Plain rules (no AI), checked against a suite of 43 sample emails.
 - **The web board signs you in by itself** when you're signed in to the
   Rolestash extension in the same browser. It gets a single-use token, never
   your extension's session. **Continue with Google** works there too,

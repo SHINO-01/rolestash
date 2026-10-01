@@ -1,0 +1,22 @@
+{
+  "description": "Google Calendar invite with a TZID and Meet link",
+  "input": {
+    "from": "Alex Chen <alex.chen@northwindlabs.example>",
+    "subject": "Invitation: Northwind Labs - Data Analyst interview @ Fri 3 Oct 2026 10am - 11am (AEST)",
+    "date": "2026-10-01T11:00:00+10:00",
+    "text": "You have been invited to the following event.\n\nNorthwind Labs - Data Analyst interview\nJoin with Google Meet: https://meet.google.com/abc-defg-hij",
+    "calendar": "BEGIN:VCALENDAR\nPRODID:-//Google Inc//Google Calendar 70.9054//EN\nVERSION:2.0\nMETHOD:REQUEST\nBEGIN:VTIMEZONE\nTZID:Australia/Sydney\nEND:VTIMEZONE\nBEGIN:VEVENT\nDTSTART;TZID=Australia/Sydney:20261003T100000\nDTEND;TZID=Australia/Sydney:20261003T110000\nSUMMARY:Northwind Labs - Data Analyst interview\nLOCATION:https://meet.google.com/abc-defg-hij\nDESCRIPTION:Join with Google Meet: https://meet.google.com/abc-defg-hij\\n\n Looking forward to chatting\\, Alex\nX-GOOGLE-CONFERENCE:https://meet.google.com/abc-defg-hij\nEND:VEVENT\nEND:VCALENDAR"
+  },
+  "expected": {
+    "intent": "interview",
+    "action": "apply",
+    "interview": {
+      "start": "2026-10-03T00:00:00.000Z",
+      "end": "2026-10-03T01:00:00.000Z",
+      "floating": false,
+      "timeZone": "Australia/Sydney",
+      "meetingUrl": "https://meet.google.com/abc-defg-hij",
+      "source": "calendar"
+    }
+  }
+}

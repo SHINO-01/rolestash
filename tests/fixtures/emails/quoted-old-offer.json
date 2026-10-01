@@ -1,0 +1,13 @@
+{
+  "description": "A follow-up whose quoted history contains an earlier offer",
+  "input": {
+    "from": "Quokka Health HR <hr@quokkahealth.example>",
+    "subject": "Re: Offer of employment - Product Designer",
+    "date": "2026-10-05T10:00:00+10:00",
+    "text": "Hi Sam,\n\nJust checking whether you had a chance to look over the paperwork. Let me know if anything is unclear.\n\nThanks,\nDana\n\nOn Wed, 1 Oct 2026 at 10:00, Quokka Health HR <hr@quokkahealth.example> wrote:\n> Dear Sam,\n>\n> We are delighted to offer you the position of Product Designer at Quokka Health.\n> Please find your offer letter attached."
+  },
+  "expected": {
+    "intent": "other",
+    "action": "none"
+  }
+}

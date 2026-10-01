@@ -1,0 +1,14 @@
+{
+  "description": "LinkedIn job alert that says 'apply' and 'offer'",
+  "input": {
+    "from": "LinkedIn Job Alerts <jobalerts-noreply@linkedin.com>",
+    "subject": "30+ new jobs for 'data analyst' - Northwind Labs is hiring",
+    "date": "2026-10-01T07:00:00+00:00",
+    "html": "<p>Northwind Labs is hiring a Data Analyst. Easy Apply.</p><p>Wattle &amp; Co offers flexible hours and a competitive salary package.</p>"
+  },
+  "expected": {
+    "intent": "other",
+    "action": "none",
+    "ats": "linkedin"
+  }
+}

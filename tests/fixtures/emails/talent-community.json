@@ -1,0 +1,13 @@
+{
+  "description": "A talent-community newsletter is not a status update",
+  "input": {
+    "from": "Saltbush Energy Careers <careers@saltbushenergy.example>",
+    "subject": "Stay connected with Saltbush Energy",
+    "date": "2026-10-01T09:00:00+10:00",
+    "text": "Hi Sam,\n\nThanks for joining the Saltbush Energy talent community. We'll share new roles and company news from time to time.\n\nSaltbush Energy"
+  },
+  "expected": {
+    "intent": "other",
+    "action": "none"
+  }
+}

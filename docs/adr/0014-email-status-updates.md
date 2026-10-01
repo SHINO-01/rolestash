@@ -242,6 +242,25 @@ and promoted domain → company entries join the matching signals.
 - The goal is that each distinct template or sender is classified by a
   human once, for everyone, and never again.
 
+## Implementation notes (2026-10-01)
+
+The engine is built in `src/email/` ([guide](../guides/email-updates.md)).
+Where it differs from the plan above:
+
+- **Not in `src/extraction/`:** it's its own pure module, with no DOM,
+  because it also runs in the Email Worker.
+- **Its own date parser:** dates come from `src/email/time.ts`, not
+  `normalize/dates.ts`. Interviews need a time of day and a time zone, and
+  posting dates need neither.
+- **No stemming yet:** cleaning expands contractions and the phrase rules
+  spell out word forms, which was enough for the corpus.
+- **AEST/AEDT mean Sydney wall time:** people write "AEST" all year, so the
+  time is read in Sydney's zone. A time without a zone is stored as
+  floating, to be read in the user's zone.
+- **Separate scheduling links:** interviews keep a scheduling link
+  (`schedulingUrl`) apart from the meeting link (`meetingUrl`), so
+  **Join** never opens a booking page.
+
 ## Consequences
 
 - **Accuracy is good but not perfect.** Structured signals (calendar

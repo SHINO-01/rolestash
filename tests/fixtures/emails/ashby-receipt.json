@@ -1,0 +1,15 @@
+{
+  "description": "Ashby receipt",
+  "input": {
+    "from": "Kestrel Robotics <no-reply@ashbyhq.com>",
+    "subject": "Thanks for applying to Kestrel Robotics",
+    "date": "2026-09-25T16:20:00-07:00",
+    "text": "Hi Sam,\n\nThanks for applying to the Robotics Software Engineer role at Kestrel Robotics. We've got your application and someone from our team will be reviewing it.\n\nKestrel Robotics"
+  },
+  "expected": {
+    "intent": "received",
+    "action": "apply",
+    "ats": "ashby",
+    "companyHint": "Kestrel Robotics"
+  }
+}

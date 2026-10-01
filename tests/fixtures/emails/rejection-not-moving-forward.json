@@ -1,0 +1,15 @@
+{
+  "description": "Standard rejection",
+  "input": {
+    "from": "Northwind Labs Recruiting <no-reply@us.greenhouse-mail.io>",
+    "subject": "Your application to Northwind Labs",
+    "date": "2026-10-01T09:40:00+10:00",
+    "text": "Hi Sam,\n\nThank you for your interest in the Data Analyst position at Northwind Labs and for the time you put into your application.\n\nUnfortunately, we will not be moving forward with your application at this time. We received many strong applications and it was a difficult decision.\n\nWe wish you the best of luck in your job search.\n\nNorthwind Labs Recruiting"
+  },
+  "expected": {
+    "intent": "rejected",
+    "action": "apply",
+    "ats": "greenhouse",
+    "companyHint": "Northwind Labs"
+  }
+}

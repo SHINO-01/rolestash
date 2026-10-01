@@ -1,0 +1,16 @@
+{
+  "description": "LinkedIn Easy Apply confirmation",
+  "input": {
+    "from": "LinkedIn <jobs-noreply@linkedin.com>",
+    "subject": "Sam, your application was sent to Quokka Health",
+    "date": "2026-09-30T02:11:00+00:00",
+    "html": "<table><tr><td><h2>Your application was sent to Quokka Health</h2></td></tr>\n<tr><td><a href=\"https://www.linkedin.com/comm/jobs/view/4123456789/?trackingId=abc&refId=x\">Product Designer</a><br>Quokka Health · Melbourne VIC (Hybrid)</td></tr>\n<tr><td>Applied on 30 September 2026</td></tr>\n<tr><td><a href=\"https://www.linkedin.com/comm/psettings/email-unsubscribe?x=1\">Unsubscribe</a></td></tr></table>"
+  },
+  "expected": {
+    "intent": "received",
+    "action": "apply",
+    "ats": "linkedin",
+    "atsJobId": "4123456789",
+    "companyHint": "Quokka Health"
+  }
+}

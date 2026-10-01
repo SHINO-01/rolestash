@@ -1,0 +1,15 @@
+{
+  "description": "iCIMS receipt",
+  "input": {
+    "from": "Mapleway Insurance Careers <mapleway@talent.icims.com>",
+    "subject": "Application Confirmation",
+    "date": "2026-09-24T13:00:00-05:00",
+    "text": "Dear Sam,\n\nThank you for your interest in Mapleway Insurance. This message confirms receipt of your application for Claims Specialist (Job ID: 2026-1187).\n\nWe will review your application and contact you if your qualifications match our needs.\n\nSincerely,\nMapleway Insurance Talent Acquisition"
+  },
+  "expected": {
+    "intent": "received",
+    "action": "apply",
+    "ats": "icims",
+    "atsJobId": "2026-1187"
+  }
+}

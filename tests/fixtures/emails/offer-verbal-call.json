@@ -1,0 +1,13 @@
+{
+  "description": "Soft offer: 'would like to move forward with an offer' → suggestion",
+  "input": {
+    "from": "Jordan Lee <jordan@bluegumanalytics.example>",
+    "subject": "Good news",
+    "date": "2026-10-01T16:05:00+10:00",
+    "text": "Hi Sam,\n\nThe team would like to move forward with an offer. Can we jump on a call tomorrow to talk through the details?\n\nJordan"
+  },
+  "expected": {
+    "intent": "offer",
+    "action": "suggest"
+  }
+}

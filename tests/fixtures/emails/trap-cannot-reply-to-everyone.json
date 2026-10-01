@@ -1,0 +1,13 @@
+{
+  "description": "Receipt that says 'unfortunately we can't reply to every applicant'",
+  "input": {
+    "from": "Saltbush Energy <careers@saltbushenergy.example>",
+    "subject": "Your application to Saltbush Energy",
+    "date": "2026-09-30T09:12:00+10:00",
+    "text": "Hi Sam,\n\nThank you for your application for the Field Technician role. We have received it and will be reviewing applications over the next two weeks.\n\nUnfortunately, due to the high volume of applications we receive, we are unable to respond to every applicant individually.\n\nKind regards,\nSaltbush Energy People Team"
+  },
+  "expected": {
+    "intent": "received",
+    "action": "apply"
+  }
+}

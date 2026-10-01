@@ -1,0 +1,13 @@
+{
+  "description": "A negated offer: 'not able to offer you the role'",
+  "input": {
+    "from": "Tidewater Software <people@tidewater.example>",
+    "subject": "QA Engineer - outcome",
+    "date": "2026-10-01T10:00:00+02:00",
+    "text": "Hi Sam,\n\nThanks for completing all three interviews with us. Although the panel was impressed, we are not able to offer you the role on this occasion.\n\nWe would be glad to hear from you again in future.\n\nTidewater Software"
+  },
+  "expected": {
+    "intent": "rejected",
+    "action": "apply"
+  }
+}

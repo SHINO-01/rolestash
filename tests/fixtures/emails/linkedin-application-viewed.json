@@ -1,0 +1,14 @@
+{
+  "description": "LinkedIn: application viewed is not a status change",
+  "input": {
+    "from": "LinkedIn <jobs-noreply@linkedin.com>",
+    "subject": "Your application was viewed by Quokka Health",
+    "date": "2026-10-01T07:00:00+00:00",
+    "text": "Quokka Health viewed your application for Product Designer."
+  },
+  "expected": {
+    "intent": "other",
+    "action": "none",
+    "ats": "linkedin"
+  }
+}

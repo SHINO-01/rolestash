@@ -1,0 +1,15 @@
+{
+  "description": "SEEK application submitted",
+  "input": {
+    "from": "SEEK <noreply@s.seek.com.au>",
+    "subject": "Your application for Graduate Accountant was successfully submitted",
+    "date": "2026-09-27T09:00:00+10:00",
+    "html": "<p>Your application for <a href=\"https://www.seek.com.au/job/78123456?type=standard\">Graduate Accountant</a> at Ironbark Finance was successfully submitted.</p>\n<p>Good luck! The employer may view your application soon.</p>"
+  },
+  "expected": {
+    "intent": "received",
+    "action": "apply",
+    "ats": "seek",
+    "atsJobId": "78123456"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "description": "'Pleased to offer you an interview' is an interview, not an offer",
+  "input": {
+    "from": "Wattle & Co <recruitment@wattleandco.example>",
+    "subject": "Marketing Coordinator - interview",
+    "date": "2026-10-01T09:00:00+10:00",
+    "text": "Hi Sam,\n\nWe are pleased to offer you an interview for the Marketing Coordinator role. Please let us know your availability for next week.\n\nWe offer flexible working and a generous salary package.\n\nWattle & Co"
+  },
+  "expected": {
+    "intent": "interview",
+    "action": "apply"
+  }
+}

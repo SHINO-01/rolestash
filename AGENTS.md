@@ -34,8 +34,9 @@ entrypoints ─► features ─► ui
                   └──────► extraction ─┘
 ```
 
-- `domain/` and `extraction/` are **pure**: no `chrome`/`browser`, no React, no
-  storage. ESLint blocks those imports.
+- `domain/`, `extraction/` and `email/` are **pure**: no `chrome`/`browser`, no
+  React, no storage. ESLint blocks those imports. `email/` also runs in a
+  Cloudflare Worker, so it must not use the DOM either.
 - Only `platform/` talks to `chrome.*`. Everything else depends on ports
   (`KeyValueStore`, `ExtractorRunner`) so it runs in unit tests.
 - All job mutations go through `JobService`. UI never writes storage directly.
@@ -51,6 +52,9 @@ entrypoints ─► features ─► ui
   entrypoints, platform code or the board's drag-and-drop.
 - Every behaviour change ships with a test. Extraction changes ship with a
   fixture (`tests/fixtures/sites/<adapter>/<case>.html` + `.expected.json`).
+- Changed the email rules? Add a fixture to `tests/fixtures/emails/` for the
+  case (fictional companies only); the corpus test needs 100% precision for
+  automatic changes (`docs/guides/email-updates.md`).
 - Changed adapters? Run `npm run docs:sites` (a test fails if you forget).
 - Changed the stored shape of a Job or Settings? Add a migration
   (`src/storage/migrations.ts`) **and** a backup upgrade step, plus tests. See

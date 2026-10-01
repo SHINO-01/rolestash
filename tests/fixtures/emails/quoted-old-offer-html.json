@@ -1,0 +1,13 @@
+{
+  "description": "HTML reply quoting an earlier offer in a gmail_quote block",
+  "input": {
+    "from": "Quokka Health HR <hr@quokkahealth.example>",
+    "subject": "Re: Offer of employment",
+    "date": "2026-10-05T10:00:00+10:00",
+    "html": "<div dir=\"ltr\">Hi Sam, just following up on the start date paperwork. Thanks, Dana</div><br><div class=\"gmail_quote\"><div class=\"gmail_attr\">On Wed, 1 Oct 2026 Quokka Health HR wrote:</div><blockquote>We are delighted to offer you the position of Product Designer. Please find your offer letter attached and sign the contract.</blockquote></div>"
+  },
+  "expected": {
+    "intent": "other",
+    "action": "none"
+  }
+}

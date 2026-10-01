@@ -1,0 +1,13 @@
+{
+  "description": "Rejection: 'unable to offer you a position'",
+  "input": {
+    "from": "Quokka Health HR <hr@quokkahealth.example>",
+    "subject": "Product Designer application",
+    "date": "2026-10-01T10:00:00+10:00",
+    "text": "Dear Sam,\n\nThank you for meeting with our team last week. We enjoyed learning about your work.\n\nWe are unable to offer you a position at this time, as we have selected a candidate whose portfolio is more closely aligned with the role.\n\nAll the best,\nQuokka Health"
+  },
+  "expected": {
+    "intent": "rejected",
+    "action": "apply"
+  }
+}

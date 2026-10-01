@@ -75,7 +75,8 @@ feature on the pricing page is built. The site already advertises them all.
 - **Email status updates and interview cards** (ADR-0014):
   - a personal `@in.rolestash.com` address;
   - a Cloudflare Email Worker;
-  - a deterministic intent engine with an email fixture suite;
+  - ~~a deterministic intent engine with an email fixture suite~~ done
+    (`src/email/`, 43 fixtures; [guide](guides/email-updates.md));
   - suggestions for low-confidence results;
   - Join, map and add-to-calendar actions on cards.
   - accuracy work (ADR-0014 §5): posting-link, thread and taught matching,

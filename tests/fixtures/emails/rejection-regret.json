@@ -1,0 +1,13 @@
+{
+  "description": "Rejection: 'regret to inform you ... not been successful'",
+  "input": {
+    "from": "Ironbark Finance Careers <careers@ironbarkfinance.example>",
+    "subject": "Graduate Accountant - Application Outcome",
+    "date": "2026-10-01T08:00:00+10:00",
+    "text": "Dear Sam,\n\nWe regret to inform you that your application for the Graduate Accountant program has not been successful.\n\nThank you for your interest in Ironbark Finance.\n\nIronbark Finance Graduate Recruitment"
+  },
+  "expected": {
+    "intent": "rejected",
+    "action": "apply"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "description": "SmartRecruiters receipt",
+  "input": {
+    "from": "Tidewater Software <noreply@smartrecruiters.com>",
+    "subject": "Thank you for applying for QA Engineer at Tidewater Software",
+    "date": "2026-09-26T11:00:00+02:00",
+    "text": "Hello Sam,\n\nThank you for applying for QA Engineer at Tidewater Software! We've received your application and will review it shortly.\n\nhttps://jobs.smartrecruiters.com/TidewaterSoftware/744000012345678-qa-engineer"
+  },
+  "expected": {
+    "intent": "received",
+    "action": "apply",
+    "ats": "smartrecruiters",
+    "atsJobId": "744000012345678",
+    "companyHint": "Tidewater Software",
+    "titleHint": "QA Engineer"
+  }
+}

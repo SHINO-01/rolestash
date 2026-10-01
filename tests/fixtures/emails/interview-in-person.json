@@ -1,0 +1,19 @@
+{
+  "description": "In-person interview with an address and no time zone (floating)",
+  "input": {
+    "from": "Morgan Patel <morgan@saltbushenergy.example>",
+    "subject": "Field Technician - next steps",
+    "date": "2026-10-01T09:30:00+10:00",
+    "text": "Hi Sam,\n\nGreat news: we'd like to invite you to an interview for the Field Technician role.\n\nWhen: Tuesday, 14 October 2026 at 2:30pm\nLocation: 22 Sample Road, Newcastle NSW 2300\n\nPlease bring photo ID. Looking forward to meeting you.\n\nMorgan\nSaltbush Energy"
+  },
+  "expected": {
+    "intent": "interview",
+    "action": "apply",
+    "interview": {
+      "start": "2026-10-14T14:30:00",
+      "floating": true,
+      "location": "22 Sample Road, Newcastle NSW 2300",
+      "source": "text"
+    }
+  }
+}

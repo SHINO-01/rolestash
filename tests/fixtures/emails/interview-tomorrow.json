@@ -1,0 +1,19 @@
+{
+  "description": "Relative date: 'tomorrow at 2pm' resolved from the email's Date",
+  "input": {
+    "from": "Riley Ng <riley@coralbaygames.example>",
+    "subject": "Quick chat tomorrow?",
+    "date": "2026-10-06T17:45:00+10:00",
+    "text": "Hi Sam,\n\nThanks for your application to Coralbay Games. We'd love to speak with you about the Gameplay Programmer role. Would a phone interview tomorrow at 2pm AEST work?\n\nRiley"
+  },
+  "expected": {
+    "intent": "interview",
+    "action": "apply",
+    "interview": {
+      "start": "2026-10-07T03:00:00.000Z",
+      "floating": false,
+      "timeZone": "Australia/Sydney",
+      "source": "text"
+    }
+  }
+}

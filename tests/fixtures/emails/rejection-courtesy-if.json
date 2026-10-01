@@ -1,0 +1,13 @@
+{
+  "description": "Rejection with a courtesy 'if you have any questions' in the same sentence",
+  "input": {
+    "from": "Larkspur Media <jobs@larkspurmedia.example>",
+    "subject": "Your Larkspur Media application",
+    "date": "2026-10-01T09:00:00+10:00",
+    "text": "Hi Sam,\n\nWe will not be moving forward with your application, but if you have any questions please reach out.\n\nLarkspur Media"
+  },
+  "expected": {
+    "intent": "rejected",
+    "action": "apply"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "description": "Lever receipt",
+  "input": {
+    "from": "Bluegum Analytics <no-reply@hire.lever.co>",
+    "subject": "Thank you for your application to Bluegum Analytics",
+    "date": "2026-09-30T08:01:00+00:00",
+    "text": "Hi Sam,\n\nThank you for your interest in the Senior Data Engineer role at Bluegum Analytics. We have received your application and our hiring team is reviewing it.\n\nIf your experience is a match, we'll be in touch about next steps.\n\nBest,\nBluegum Analytics Talent\n\nhttps://jobs.lever.co/bluegum/8a1f2c3d-4e5f-4a6b-9c8d-7e6f5a4b3c2d"
+  },
+  "expected": {
+    "intent": "received",
+    "action": "apply",
+    "ats": "lever",
+    "atsJobId": "8a1f2c3d-4e5f-4a6b-9c8d-7e6f5a4b3c2d",
+    "titleHint": "Senior Data Engineer"
+  }
+}

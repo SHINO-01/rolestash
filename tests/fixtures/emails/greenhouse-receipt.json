@@ -1,0 +1,17 @@
+{
+  "description": "Greenhouse receipt with a posting link",
+  "input": {
+    "from": "Northwind Labs Recruiting <no-reply@us.greenhouse-mail.io>",
+    "subject": "Thank you for applying to Northwind Labs",
+    "date": "2026-09-29T10:14:00+10:00",
+    "messageId": "<gh-1@greenhouse-mail.io>",
+    "html": "<html><body><p>Hi Sam,</p>\n<p>Thanks for applying to Northwind Labs. Your application has been received and our team will review it over the coming week.</p>\n<p>You can view the <a href=\"https://job-boards.greenhouse.io/northwindlabs/jobs/4012345?gh_src=email\">Data Analyst</a> posting at any time.</p>\n<p>Regards,<br>The Northwind Labs Recruiting Team</p>\n<p style=\"font-size:11px\">Powered by Greenhouse. <a href=\"https://app.greenhouse.io/unsubscribe/abc\">Unsubscribe</a></p></body></html>"
+  },
+  "expected": {
+    "intent": "received",
+    "action": "apply",
+    "ats": "greenhouse",
+    "atsJobId": "4012345",
+    "companyHint": "Northwind Labs"
+  }
+}

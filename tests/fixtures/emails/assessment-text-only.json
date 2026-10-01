@@ -1,0 +1,13 @@
+{
+  "description": "An online assessment request without a known platform link",
+  "input": {
+    "from": "Mapleway Insurance Careers <mapleway@talent.icims.com>",
+    "subject": "Next step in your application",
+    "date": "2026-10-01T09:00:00-05:00",
+    "text": "Dear Sam,\n\nThank you for your application for Claims Specialist. As the next step, please complete the online assessment within five days using the link in your candidate portal.\n\nMapleway Insurance Talent Acquisition"
+  },
+  "expected": {
+    "intent": "assessment",
+    "action": "apply"
+  }
+}
