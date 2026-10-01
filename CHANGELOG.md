@@ -8,6 +8,13 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Custom columns** (Pro): board menu → _Edit columns…_.
+  - Rename, recolour, reorder, add, and archive columns.
+  - Choose which column new jobs go to.
+  - New columns can be in progress (optionally counting as applied) or
+    finished.
+  - A column with jobs on it can't be archived until they're moved.
+  - On Free your columns stay as they are.
 - **Follow-up reminders and closing-date alerts** (Pro):
   - Set a follow-up on any job: tomorrow, in 3 days, a week, 2 weeks, or a
     date. Rolestash notifies you when it's due, and the card shows it.

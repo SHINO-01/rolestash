@@ -22,6 +22,8 @@ export const StageSchema = z.object({
   kind: z.enum(STAGE_KINDS),
   /** When true, moving a job into this stage stamps `appliedAt` if unset. */
   marksApplied: z.boolean().default(false),
+  /** Hidden from the board and pickers, kept so old jobs and History still name it. */
+  archived: z.boolean().optional(),
 });
 export type Stage = z.infer<typeof StageSchema>;
 export type StageId = Stage['id'];
@@ -37,6 +39,11 @@ export const DEFAULT_STAGES: readonly Stage[] = [
 ];
 
 export const DEFAULT_STAGE_ID: StageId = 'saved';
+
+/** The columns shown on the board and offered in pickers. */
+export function visibleStages(stages: readonly Stage[]): Stage[] {
+  return stages.filter((s) => !s.archived);
+}
 
 export function findStage(stages: readonly Stage[], id: StageId): Stage | undefined {
   return stages.find((s) => s.id === id);

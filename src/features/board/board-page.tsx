@@ -1,6 +1,7 @@
 import {
   Download,
   BellRing,
+  Columns3,
   History,
   FileSpreadsheet,
   Keyboard,
@@ -32,6 +33,7 @@ import { useJobs, useServices, useSettings } from '@/ui/hooks/services';
 import { matchesQuery } from '@/ui/format';
 import { AddJobDialog } from './add-job-dialog';
 import { EmptyBoard } from './empty-board';
+import { ColumnsDialog } from './columns-dialog';
 import { HistoryDialog, HistoryLimitNote } from './history-dialog';
 import { ImportDialog } from './import-dialog';
 import { JobDrawer } from './job-drawer';
@@ -53,8 +55,8 @@ export function BoardPage() {
   const deferredQuery = useDeferredValue(query);
   const [openJobId, setOpenJobId] = useState<string | undefined>(readJobFromHash);
   const { account, state: accountState } = useAccount();
-  const [dialog, setDialog] = useState<'add' | 'import' | 'account' | 'history' | null>(() =>
-    location.hash === '#account' ? 'account' : null,
+  const [dialog, setDialog] = useState<'add' | 'import' | 'account' | 'history' | 'columns' | null>(
+    () => (location.hash === '#account' ? 'account' : null),
   );
   const searchRef = useRef<HTMLInputElement>(null);
 
@@ -187,6 +189,12 @@ export function BoardPage() {
           )}
           items={[
             {
+              label: 'Edit columns…',
+              icon: <Columns3 className="size-4" />,
+              onSelect: () => setDialog('columns'),
+            },
+            'separator',
+            {
               label: 'Export to CSV',
               icon: <FileSpreadsheet className="size-4" />,
               onSelect: () => void exportCsv(),
@@ -279,6 +287,12 @@ export function BoardPage() {
         remindersAllowed={plan !== 'free'}
         onSeePlans={account ? () => setDialog('account') : undefined}
         onClose={() => openCard(undefined)}
+      />
+      <ColumnsDialog
+        open={dialog === 'columns'}
+        onClose={() => setDialog(null)}
+        settings={settings}
+        onSeePlans={account ? () => setDialog('account') : undefined}
       />
       <HistoryDialog
         open={dialog === 'history'}

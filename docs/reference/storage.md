@@ -41,6 +41,8 @@ Optional fields added without a migration:
 - `archivedAt`: History, with the `archived` and `unarchived` activity types.
 - `followUpAt`: reminders.
 - `settings.closingAlerts`: absent means on.
+- `stage.archived`: custom columns. Archived columns are hidden from the
+  board and pickers, but kept so jobs and History still name them.
 
 When do you need one? Adding an **optional** field: no. Renaming, removing,
 changing a type, making a field required, or changing semantics: yes.

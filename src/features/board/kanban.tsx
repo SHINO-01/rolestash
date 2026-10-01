@@ -15,6 +15,7 @@ import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { useMemo, useState } from 'react';
 import type { Job } from '@/domain/job';
 import type { Settings } from '@/domain/settings';
+import { visibleStages } from '@/domain/stage';
 import { useToast } from '@/ui/components/toast';
 import { useLiveJobs, useServices } from '@/ui/hooks/services';
 import { BoardColumn } from './board-column';
@@ -43,7 +44,7 @@ export function Kanban({
   const toast = useToast();
 
   const baseColumns = useMemo(
-    () => groupIntoColumns(settings.stages, visibleJobs, settings.defaultStageId),
+    () => groupIntoColumns(visibleStages(settings.stages), visibleJobs, settings.defaultStageId),
     [settings, visibleJobs],
   );
   const jobsById = useMemo(() => new Map(allJobs.map((j) => [j.id, j])), [allJobs]);
@@ -156,7 +157,7 @@ export function Kanban({
       onDragCancel={reset}
     >
       <div className="flex h-full scrollbar-thin items-start gap-3 overflow-x-auto px-6 pb-6">
-        {settings.stages.map((stage) => (
+        {visibleStages(settings.stages).map((stage) => (
           <BoardColumn
             key={stage.id}
             stage={stage}

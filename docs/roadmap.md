@@ -48,8 +48,9 @@ feature on the pricing page is built. The site already advertises them all.
   - `chrome.alarms` + `chrome.notifications` (new permissions, with
     justifications);
   - a daily "closing soon" digest.
-- **Custom columns** (Pro): rename, recolor, reorder, add and archive
-  stages. Stages are already data in settings.
+- ~~**Custom columns**~~ done (board menu → _Edit columns…_; `src/domain/columns.ts`)
+  (Pro): rename, recolor, reorder, add and archive stages. Stages are already
+  data in settings.
 - **Capture from a pasted link** (Pro):
   - `optional_host_permissions` per site;
   - `fetch` + `DOMParser` in an offscreen document, running the same pure

@@ -1,5 +1,6 @@
 import { useState, type SyntheticEvent } from 'react';
 import type { Settings } from '@/domain/settings';
+import { visibleStages } from '@/domain/stage';
 import { Button } from '@/ui/components/button';
 import { Field, Input, Select } from '@/ui/components/field';
 import { Dialog } from '@/ui/components/overlay';
@@ -112,7 +113,7 @@ export function AddJobDialog({
         <Field label="Column" className="col-span-2">
           {(id) => (
             <Select id={id} value={form.stageId} onChange={set('stageId')}>
-              {settings.stages.map((s) => (
+              {visibleStages(settings.stages).map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.name}
                 </option>

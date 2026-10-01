@@ -6,6 +6,7 @@ import { SettingsRepository } from '@/storage/settings-repository';
 import { AccountService } from './account-service';
 import type { SupabaseClient } from './backend/supabase-client';
 import { CaptureService } from './capture-service';
+import { ColumnService } from './column-service';
 import { JobService } from './job-service';
 import type { ExtractorRunner, WebAuthFlow } from './ports';
 
@@ -18,6 +19,7 @@ export interface Services {
   jobs: JobRepository;
   settings: SettingsRepository;
   jobService: JobService;
+  columns: ColumnService;
   capture: CaptureService;
   runner: ExtractorRunner;
   /** Present only in builds configured with a backend (ADR-0011). */
@@ -54,6 +56,7 @@ export function createServices(
     runner,
     ...(account ? { account } : {}),
     jobService: new JobService(jobs, settings, ctx, account),
+    columns: new ColumnService(settings, jobs, ctx, account),
     capture: new CaptureService(runner),
     ready: migrate(store).then(() => undefined),
   };

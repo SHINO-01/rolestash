@@ -225,11 +225,13 @@ function DrawerBody({
               value={job.stageId}
               onChange={(e) => void moveTo(e.target.value)}
             >
-              {stages.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
+              {stages
+                .filter((s) => !s.archived || s.id === job.stageId)
+                .map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
             </Select>
           </label>
           <PriorityInput value={job.priority} onChange={(priority) => void patch({ priority })} />

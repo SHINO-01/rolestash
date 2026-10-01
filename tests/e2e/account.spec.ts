@@ -151,6 +151,44 @@ test.describe('accounts', () => {
     expect(call?.headers.authorization).toBe('Bearer e2e-access');
   });
 
+  test('custom columns: offered on Free, editable on Pro', async ({
+    context,
+    worker,
+    extensionId,
+  }) => {
+    await seedActiveJobs(worker, 1); // an empty board shows a welcome, not columns
+    const page = await context.newPage();
+    await page.goto(`chrome-extension://${extensionId}/board.html`);
+    await page.getByRole('button', { name: 'Board menu' }).click();
+    await page.getByRole('menuitem', { name: 'Edit columns…' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Edit columns' });
+    await expect(dialog.getByText('Custom columns are part of Pro.')).toBeVisible();
+    await expect(dialog.getByLabel('Name of Saved')).toBeDisabled();
+    await dialog.getByRole('button', { name: 'Close' }).click();
+
+    await seedSignedIn(worker, {
+      status: 'trialing',
+      trialEndsAt: new Date(Date.now() + 10 * 86_400_000).toISOString(),
+      hasBillingAccount: false,
+    });
+    await page.reload();
+    await page.getByRole('button', { name: 'Board menu' }).click();
+    await page.getByRole('menuitem', { name: 'Edit columns…' }).click();
+    await dialog.getByLabel('Name of Saved').fill('Wishlist');
+    await dialog.getByLabel('Name of Saved').press('Enter');
+    await expect(dialog.getByLabel('Name of Wishlist')).toHaveValue('Wishlist');
+    await dialog.getByPlaceholder('e.g. Take-home task').fill('Take-home');
+    await dialog.getByRole('button', { name: 'Add column' }).click();
+    await expect(dialog.getByLabel('Name of Take-home')).toBeVisible();
+    await dialog.getByRole('button', { name: 'Archive Withdrawn' }).click();
+    await expect(dialog.getByText('Archived columns')).toBeVisible();
+    await dialog.getByRole('button', { name: 'Close' }).click();
+
+    await expect(page.getByRole('region', { name: 'Wishlist column' })).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Take-home column' })).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Withdrawn column' })).toBeHidden();
+  });
+
   test('deleting the account keeps jobs on this device', async ({
     context,
     worker,
