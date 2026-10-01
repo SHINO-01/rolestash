@@ -103,7 +103,11 @@ feature on the pricing page is built. The site already advertises them all.
    - the live client token in `site/assets/pay.js`.
 2. **Chrome Web Store:**
    - one-time setup and an unlisted first upload, to get the store ID;
-   - add that ID to `site/assets/auth-google.js`;
+   - add that ID to `ROLESTASH_EXTENSION_IDS` in
+     `src/services/web-handoff.ts` **and** to `site/assets/auth-google.js`
+     (a test keeps the two lists equal);
+   - point the plan CTAs on rolestash.com (now `/#notify`) at the store
+     listing;
    - accounts build variables in the extension repo's release workflow;
    - a manifest policy covering `identity`, `alarms`, `notifications` and
      the optional hosts;

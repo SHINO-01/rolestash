@@ -1,6 +1,6 @@
 // rolestash.com: an assets-only Cloudflare Worker serving ../site
 // (docs/guides/website.md). Deployed by CI after "Promote to main".
-// Custom domains (rolestash.com, www, landing) are managed in the dashboard;
+// Custom domains are managed in the dashboard (docs/guides/website.md);
 // this file deliberately declares no routes so a deploy never changes them.
 {
   "name": "rolestash-v001",

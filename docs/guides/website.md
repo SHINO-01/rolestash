@@ -149,6 +149,23 @@ It is enabled by three repo settings:
 | `CLOUDFLARE_ACCOUNT_ID` | secret   | `49cd45db57a5ff345b63cea810ae7bae`                                    |
 | `CLOUDFLARE_API_TOKEN`  | secret   | Custom token: **Account → Workers Scripts → Edit**, this account only |
 
-Domains (on the Worker): `rolestash.com` (primary), `landing.rolestash.com`
-and `www.rolestash.com`, which should redirect to the apex. Leave **Web Analytics off**:
-the privacy policy says the site has none.
+**Domains.** Checked live on 2026-10-01: only `rolestash.com` is attached to
+the Worker. `www.rolestash.com` and `landing.rolestash.com` have no DNS
+record, so they don't resolve. Leave **Web Analytics off**, because the
+privacy policy says the site has none.
+
+**Owner task: send `www` to the apex.** These are dashboard steps, because the
+CI token can't edit DNS or rules.
+
+1. **Workers & Pages → `rolestash-v001` → Settings → Domains & Routes →
+   Add → Custom domain:** `www.rolestash.com`. This creates the proxied DNS
+   record and the certificate.
+2. **`rolestash.com` zone → Rules → Redirect Rules → Create from template
+   → "Redirect from WWW to root":**
+   - status 301;
+   - keep the path and the query string.
+
+   Redirect Rules run before the Worker, so the Worker never serves `www`.
+
+3. **Check:** `curl -sI https://www.rolestash.com/privacy/` returns a 301
+   with `location: https://rolestash.com/privacy/`.
