@@ -1,0 +1,144 @@
+{
+  "fields": [
+    {
+      "label": "Given name",
+      "kind": "text",
+      "key": "firstName",
+      "sensitive": false,
+      "required": true
+    },
+    {
+      "label": "Surname",
+      "kind": "text",
+      "key": "lastName",
+      "sensitive": false,
+      "required": true
+    },
+    {
+      "label": "Email address",
+      "kind": "text",
+      "key": "email",
+      "sensitive": false,
+      "required": true
+    },
+    {
+      "label": "Mobile number",
+      "kind": "text",
+      "key": "phone",
+      "sensitive": false,
+      "required": false
+    },
+    {
+      "label": "State",
+      "kind": "select",
+      "key": "region",
+      "sensitive": false,
+      "required": false
+    },
+    {
+      "label": "Country",
+      "kind": "select",
+      "key": "country",
+      "sensitive": false,
+      "required": false
+    },
+    {
+      "label": "Street address",
+      "kind": "text",
+      "key": "addressLine1",
+      "sensitive": false,
+      "required": false
+    },
+    {
+      "label": "Postcode",
+      "kind": "text",
+      "key": "postcode",
+      "sensitive": false,
+      "required": false
+    },
+    {
+      "label": "Do you have the right to work in Australia?",
+      "kind": "radio",
+      "key": "workAuthorization",
+      "sensitive": false,
+      "required": false
+    },
+    {
+      "label": "Will you require visa sponsorship now or in the future?",
+      "kind": "radio",
+      "key": "needsSponsorship",
+      "sensitive": false,
+      "required": false
+    },
+    {
+      "label": "What are your salary expectations?",
+      "kind": "text",
+      "key": "salaryExpectation",
+      "sensitive": false,
+      "required": false
+    },
+    {
+      "label": "Notice period",
+      "kind": "text",
+      "key": "noticePeriod",
+      "sensitive": false,
+      "required": false
+    },
+    {
+      "label": "How did you hear about this role?",
+      "kind": "select",
+      "key": "howHeard",
+      "sensitive": false,
+      "required": false
+    },
+    {
+      "label": "Why do you want to work at Saltbush Energy?",
+      "kind": "textarea",
+      "key": null,
+      "sensitive": false,
+      "required": false
+    },
+    {
+      "label": "How do you pronounce your name?",
+      "kind": "text",
+      "key": null,
+      "sensitive": false,
+      "required": false
+    },
+    {
+      "label": "LinkedIn profile URL",
+      "kind": "text",
+      "key": "linkedin",
+      "sensitive": false,
+      "required": false
+    },
+    {
+      "label": "Gender",
+      "kind": "select",
+      "key": null,
+      "sensitive": true,
+      "required": false
+    },
+    {
+      "label": "Do you identify as Aboriginal or Torres Strait Islander?",
+      "kind": "select",
+      "key": null,
+      "sensitive": true,
+      "required": false
+    },
+    {
+      "label": "Date of birth",
+      "kind": "text",
+      "key": null,
+      "sensitive": true,
+      "required": false
+    },
+    {
+      "label": "Upload your resume",
+      "kind": "file",
+      "key": null,
+      "sensitive": false,
+      "required": false
+    }
+  ]
+}

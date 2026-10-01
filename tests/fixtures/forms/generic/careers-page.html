@@ -1,0 +1,64 @@
+<!doctype html>
+<!-- A company's own careers form (fictional): labels, autocomplete, yes/no
+     radios, selects, an equal-opportunity section and a saved-answer question. -->
+<html lang="en">
+  <head><meta charset="utf-8" /><title>Apply - Saltbush Energy</title></head>
+  <body>
+    <form id="apply">
+      <label>Given name * <input name="fname" required /></label>
+      <label>Surname * <input name="lname" required /></label>
+      <label for="mail">Email address *</label><input id="mail" name="mail" type="email" required />
+      <label for="mob">Mobile number</label><input id="mob" name="mob" type="tel" />
+      <label for="st">State</label>
+      <select id="st" name="st">
+        <option value="">Please select</option>
+        <option value="NSW">New South Wales</option>
+        <option value="VIC">Victoria</option>
+      </select>
+      <label for="ctry">Country</label>
+      <select id="ctry" name="ctry">
+        <option value="">Choose…</option>
+        <option value="AU">Australia</option>
+        <option value="NZ">New Zealand</option>
+      </select>
+      <input name="address-line" autocomplete="street-address" aria-label="Street address" />
+      <label for="pc">Postcode</label><input id="pc" name="pc" />
+      <fieldset>
+        <legend>Do you have the right to work in Australia?</legend>
+        <label><input type="radio" name="rtw" value="1" /> Yes</label>
+        <label><input type="radio" name="rtw" value="0" /> No</label>
+      </fieldset>
+      <fieldset>
+        <legend>Will you require visa sponsorship now or in the future?</legend>
+        <label><input type="radio" name="spons" value="y" /> Yes</label>
+        <label><input type="radio" name="spons" value="n" /> No</label>
+      </fieldset>
+      <label for="sal">What are your salary expectations?</label><input id="sal" name="sal" />
+      <label for="np">Notice period</label><input id="np" name="np" />
+      <label for="src">How did you hear about this role?</label>
+      <select id="src" name="src">
+        <option value="">Select</option>
+        <option>LinkedIn</option>
+        <option>SEEK</option>
+        <option>Referral</option>
+      </select>
+      <label for="why">Why do you want to work at Saltbush Energy?</label>
+      <textarea id="why" name="why"></textarea>
+      <label for="pron">How do you pronounce your name?</label><input id="pron" name="pron" />
+      <label for="prefilled">LinkedIn profile URL</label>
+      <input id="prefilled" name="li" value="https://linkedin.com/in/already-typed" />
+      <h3>Equal opportunity (optional)</h3>
+      <label for="g">Gender</label>
+      <select id="g" name="g"><option value="">Select</option><option>Woman</option><option>Man</option></select>
+      <label for="ab">Do you identify as Aboriginal or Torres Strait Islander?</label>
+      <select id="ab" name="ab"><option value="">Select</option><option>Yes</option><option>No</option></select>
+      <label for="dob">Date of birth</label><input id="dob" name="dob" />
+      <input type="hidden" name="token" value="x" />
+      <input type="password" name="pw" aria-label="Create a password" />
+      <textarea name="g-recaptcha-response" style="display: none"></textarea>
+      <div style="display: none"><label>Company <input name="hp_company" /></label></div>
+      <label for="cv">Upload your resume</label><input id="cv" type="file" name="cv" />
+      <button type="submit">Submit application</button>
+    </form>
+  </body>
+</html>

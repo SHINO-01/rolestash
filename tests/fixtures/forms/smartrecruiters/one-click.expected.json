@@ -1,0 +1,74 @@
+{
+  "fields": [
+    {
+      "label": "First name",
+      "kind": "text",
+      "key": "firstName",
+      "sensitive": false,
+      "required": true
+    },
+    {
+      "label": "Last name",
+      "kind": "text",
+      "key": "lastName",
+      "sensitive": false,
+      "required": true
+    },
+    {
+      "label": "Email",
+      "kind": "text",
+      "key": "email",
+      "sensitive": false,
+      "required": true
+    },
+    {
+      "label": "Confirm your email",
+      "kind": "text",
+      "key": "email",
+      "sensitive": false,
+      "required": true
+    },
+    {
+      "label": "City",
+      "kind": "text",
+      "key": "city",
+      "sensitive": false,
+      "required": false
+    },
+    {
+      "label": "Phone",
+      "kind": "text",
+      "key": "phone",
+      "sensitive": false,
+      "required": false
+    },
+    {
+      "label": "LinkedIn profile",
+      "kind": "text",
+      "key": "linkedin",
+      "sensitive": false,
+      "required": false
+    },
+    {
+      "label": "Website",
+      "kind": "text",
+      "key": "website",
+      "sensitive": false,
+      "required": false
+    },
+    {
+      "label": "Resume",
+      "kind": "file",
+      "key": null,
+      "sensitive": false,
+      "required": false
+    },
+    {
+      "label": "Message to the Hiring Team",
+      "kind": "textarea",
+      "key": null,
+      "sensitive": false,
+      "required": false
+    }
+  ]
+}

@@ -32,7 +32,7 @@ export default defineConfig({
       // the E2E suite covers) must keep ≥90% line/statement/function coverage.
       // Branches start at 80% and should only ever be ratcheted up.
       thresholds: {
-        'src/{domain,extraction,email,storage,services}/**': {
+        'src/{domain,extraction,email,autofill,storage,services}/**': {
           lines: 90,
           statements: 90,
           functions: 90,

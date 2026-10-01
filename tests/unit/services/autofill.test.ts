@@ -1,0 +1,93 @@
+import type { FillReport } from '@/autofill';
+import type { Plan } from '@/domain/plan';
+import { EMPTY_PROFILE, type Profile } from '@/domain/profile';
+import { AutofillBlockedError, AutofillService } from '@/services/autofill-service';
+import type { AutofillRunner } from '@/services/ports';
+import { MemoryKeyValueStore } from '@/storage/key-value-store';
+import { PROFILE_KEY } from '@/storage/keys';
+import { ProfileRepository } from '@/storage/profile-repository';
+
+function setup(plan?: Plan, reports: FillReport[] = []) {
+  const store = new MemoryKeyValueStore();
+  const profiles = new ProfileRepository(store);
+  const calls: { tabId: number; profile: Profile }[] = [];
+  const runner: AutofillRunner = {
+    fill: (tabId, profile) => {
+      calls.push({ tabId, profile });
+      return Promise.resolve(reports);
+    },
+  };
+  const service = new AutofillService(
+    profiles,
+    runner,
+    plan ? { currentPlan: () => Promise.resolve(plan) } : undefined,
+  );
+  return { store, profiles, service, calls };
+}
+
+describe('ProfileRepository', () => {
+  it('starts empty, saves with a timestamp, and survives bad data', async () => {
+    const { store, profiles } = setup();
+    expect(await profiles.get()).toEqual(EMPTY_PROFILE);
+    const saved = await profiles.save(
+      { ...EMPTY_PROFILE, firstName: 'Sam' },
+      new Date('2026-10-02T00:00:00Z'),
+    );
+    expect(saved).toEqual({ answers: [], firstName: 'Sam', updatedAt: '2026-10-02T00:00:00.000Z' });
+    expect(await profiles.get()).toEqual(saved);
+    let changed = 0;
+    const off = profiles.subscribe(() => changed++);
+    await profiles.save(saved);
+    off();
+    expect(changed).toBe(1);
+    await store.set({ [PROFILE_KEY]: { email: 42 } });
+    expect(await profiles.get()).toEqual(EMPTY_PROFILE);
+    await profiles.clear();
+    expect(await store.get([PROFILE_KEY])).toEqual({});
+  });
+
+  it('rejects an invalid profile', async () => {
+    const { profiles } = setup();
+    await expect(profiles.save({ ...EMPTY_PROFILE, email: 'x'.repeat(300) })).rejects.toThrow();
+  });
+});
+
+describe('AutofillService', () => {
+  const report = (n: number): FillReport => ({
+    filled: Array.from({ length: n }, (_, i) => ({ key: 'email', label: `f${String(i)}` })),
+    skipped: [{ label: 'Gender', reason: 'sensitive', required: false }],
+    files: ['Resume'],
+    ats: 'greenhouse',
+  });
+
+  it('is Advanced only, and needs a profile', async () => {
+    const pro = setup('pro');
+    expect(await pro.service.blocked()).toBe('plan');
+    await expect(pro.service.fill(1)).rejects.toBeInstanceOf(AutofillBlockedError);
+
+    const adv = setup('advanced');
+    expect(await adv.service.blocked()).toBe('no_profile');
+    await expect(adv.service.fill(1)).rejects.toMatchObject({ reason: 'no_profile' });
+
+    // A build without accounts isn't limited.
+    expect(await setup().service.allowed()).toBe(true);
+  });
+
+  it('fills every frame and merges the reports', async () => {
+    const { service, calls } = setup('advanced', [
+      report(2),
+      { filled: [], skipped: [], files: [] },
+    ]);
+    await service.saveProfile({ ...EMPTY_PROFILE, email: 'sam@example.com' });
+    expect(await service.blocked()).toBeUndefined();
+    const outcome = await service.fill(7);
+    expect(outcome).toEqual({
+      filled: report(2).filled,
+      skipped: report(2).skipped,
+      files: ['Resume'],
+      ats: 'greenhouse',
+    });
+    expect(calls[0]).toMatchObject({ tabId: 7, profile: { email: 'sam@example.com' } });
+    expect((await service.profile()).email).toBe('sam@example.com');
+  });
+});

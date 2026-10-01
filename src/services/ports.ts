@@ -1,3 +1,5 @@
+import type { FillReport } from '@/autofill';
+import type { Profile } from '@/domain/profile';
 import type { ExtractionResult } from '@/extraction';
 import type {
   DeviceRegistration,
@@ -38,6 +40,11 @@ export interface RemoteJobStore {
   removeDevice(id: string): Promise<void>;
   push(deviceId: string, changes: SyncChange[]): Promise<number>;
   pull(deviceId: string, after: number, limit: number): Promise<PulledChange[]>;
+}
+
+/** Fills the application form in a tab (ADR-0020); one report per frame it could reach. */
+export interface AutofillRunner {
+  fill(tabId: number, profile: Profile): Promise<FillReport[]>;
 }
 
 /** The server side of email updates (ADR-0014), bound to the signed-in user. */

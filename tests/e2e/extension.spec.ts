@@ -46,6 +46,56 @@ test.describe('extractor injection', () => {
   });
 });
 
+test.describe('autofill injection (ADR-0020)', () => {
+  test('fills a real application form from the profile, and leaves the rest', async ({
+    context,
+    worker,
+    fixtureServer,
+  }) => {
+    const page = await context.newPage();
+    const url = fixtureServer.url('forms/generic/careers-page.html');
+    await page.goto(url);
+    const reports = await worker.evaluate(async (target) => {
+      const [tab] = await chrome.tabs.query({ url: target });
+      const tabId = tab!.id!;
+      await chrome.scripting.executeScript({ target: { tabId }, files: ['/autofill.js'] });
+      const results = await chrome.scripting.executeScript({
+        target: { tabId },
+        func: (profile: unknown) =>
+          (
+            globalThis as unknown as { __rolestashAutofill: (p: unknown) => Promise<unknown> }
+          ).__rolestashAutofill(profile),
+        args: [
+          {
+            firstName: 'Sam',
+            lastName: 'Taylor',
+            email: 'sam@example.com',
+            region: 'Victoria',
+            needsSponsorship: 'no',
+            answers: [],
+          },
+        ],
+      });
+      return results.map(
+        (r) => r.result as { filled: { key: string }[]; skipped: { reason: string }[] },
+      );
+    }, url);
+
+    expect(reports[0]?.filled.map((f) => f.key)).toEqual([
+      'firstName',
+      'lastName',
+      'email',
+      'region',
+      'needsSponsorship',
+    ]);
+    await expect(page.locator('[name="fname"]')).toHaveValue('Sam');
+    await expect(page.locator('[name="st"]')).toHaveValue('VIC');
+    await expect(page.locator('[name="spons"][value="n"]')).toBeChecked();
+    await expect(page.locator('[name="g"]')).toHaveValue('');
+    await expect(page.locator('[name="li"]')).toHaveValue('https://linkedin.com/in/already-typed');
+  });
+});
+
 // @smoke: also runs against the production build (npm run test:smoke).
 test.describe('board @smoke', () => {
   const seed = (worker: Worker, jobs: Partial<Job>[]) =>

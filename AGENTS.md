@@ -34,7 +34,7 @@ entrypoints ─► features ─► ui
                   └──────► extraction ─┘
 ```
 
-- `domain/`, `extraction/` and `email/` are **pure**: no `chrome`/`browser`, no
+- `domain/`, `extraction/`, `email/` and `autofill/` are **pure**: no `chrome`/`browser`, no
   React, no storage. ESLint blocks those imports. `email/` also runs in a
   Cloudflare Worker, so it must not use the DOM either.
 - Only `platform/` talks to `chrome.*`. Everything else depends on ports

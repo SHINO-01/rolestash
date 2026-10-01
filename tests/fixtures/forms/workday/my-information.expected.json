@@ -1,0 +1,88 @@
+{
+  "fields": [
+    {
+      "label": "How Did You Hear About Us?",
+      "kind": "text",
+      "key": "howHeard",
+      "sensitive": false,
+      "required": true
+    },
+    {
+      "label": "Have you previously worked for Harbourline Logistics?",
+      "kind": "radio",
+      "key": null,
+      "sensitive": false,
+      "required": true
+    },
+    {
+      "label": "Given Name(s)",
+      "kind": "text",
+      "key": "firstName",
+      "sensitive": false,
+      "required": true
+    },
+    {
+      "label": "Family Name",
+      "kind": "text",
+      "key": "lastName",
+      "sensitive": false,
+      "required": true
+    },
+    {
+      "label": "Address Line 1",
+      "kind": "text",
+      "key": "addressLine1",
+      "sensitive": false,
+      "required": false
+    },
+    {
+      "label": "City or Suburb",
+      "kind": "text",
+      "key": "city",
+      "sensitive": false,
+      "required": false
+    },
+    {
+      "label": "Postcode",
+      "kind": "text",
+      "key": "postcode",
+      "sensitive": false,
+      "required": false
+    },
+    {
+      "label": "Email Address",
+      "kind": "text",
+      "key": "email",
+      "sensitive": false,
+      "required": false
+    },
+    {
+      "label": "Phone Number",
+      "kind": "text",
+      "key": "phone",
+      "sensitive": false,
+      "required": true
+    },
+    {
+      "label": "Gender",
+      "kind": "select",
+      "key": null,
+      "sensitive": true,
+      "required": false
+    },
+    {
+      "label": "Do you identify as a person with a disability?",
+      "kind": "select",
+      "key": null,
+      "sensitive": true,
+      "required": false
+    },
+    {
+      "label": "Resume/CV",
+      "kind": "file",
+      "key": null,
+      "sensitive": false,
+      "required": false
+    }
+  ]
+}

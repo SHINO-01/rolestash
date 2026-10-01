@@ -12,6 +12,9 @@ Rolestash collects nothing.
   salary, dates, description text, the posting URL) plus your own notes, tags
   and board state. Stored in your browser's extension storage
   (`chrome.storage.local`) on this device only.
+- **Autofill profile (Advanced):** the details you save for filling
+  applications stay in extension storage on this device. They go only into
+  the application page you choose, when you click "Fill this application".
 - **What is sent anywhere:** nothing. Apart from loading a job page you asked
   it to read, the extension makes no network requests, and it has no
   analytics and no crash reporting. Optional accounts are described in the

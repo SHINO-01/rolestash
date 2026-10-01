@@ -1,0 +1,88 @@
+{
+  "fields": [
+    {
+      "label": "",
+      "kind": "file",
+      "key": null,
+      "sensitive": false,
+      "required": false
+    },
+    {
+      "label": "Name",
+      "kind": "text",
+      "key": "fullName",
+      "sensitive": false,
+      "required": true
+    },
+    {
+      "label": "Email",
+      "kind": "text",
+      "key": "email",
+      "sensitive": false,
+      "required": true
+    },
+    {
+      "label": "Resume",
+      "kind": "file",
+      "key": null,
+      "sensitive": false,
+      "required": false
+    },
+    {
+      "label": "LinkedIn Profile",
+      "kind": "text",
+      "key": "linkedin",
+      "sensitive": false,
+      "required": true
+    },
+    {
+      "label": "Do you currently live in the EMEA timezone? If not, please explain why you're applying to this role",
+      "kind": "text",
+      "key": null,
+      "sensitive": false,
+      "required": false
+    },
+    {
+      "label": "Which country do you intend to work from?",
+      "kind": "combobox",
+      "key": "country",
+      "sensitive": false,
+      "required": false
+    },
+    {
+      "label": "Describe the best engineer you've worked with, someone else in your top 5, and the difference between the two.",
+      "kind": "textarea",
+      "key": null,
+      "sensitive": false,
+      "required": true
+    },
+    {
+      "label": "What's the most recent thing you've built or shipped? Walk us through what it was and why you did it.",
+      "kind": "textarea",
+      "key": null,
+      "sensitive": false,
+      "required": true
+    },
+    {
+      "label": "How do you typically communicate a difficult decision or a change in direction to your team? Give us a specific example.",
+      "kind": "textarea",
+      "key": null,
+      "sensitive": false,
+      "required": true
+    },
+    {
+      "label": "What is your current age?",
+      "kind": "radio",
+      "key": null,
+      "sensitive": true,
+      "required": false
+    },
+    {
+      "label": "What is your gender identity?",
+      "kind": "radio",
+      "key": null,
+      "sensitive": true,
+      "required": false
+    }
+  ]
+}

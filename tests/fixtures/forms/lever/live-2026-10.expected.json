@@ -1,0 +1,137 @@
+{
+  "fields": [
+    {
+      "label": "Resume/CV",
+      "kind": "file",
+      "key": null,
+      "sensitive": false,
+      "required": true
+    },
+    {
+      "label": "Full name",
+      "kind": "text",
+      "key": "fullName",
+      "sensitive": false,
+      "required": true
+    },
+    {
+      "label": "Email",
+      "kind": "text",
+      "key": "email",
+      "sensitive": false,
+      "required": true
+    },
+    {
+      "label": "Phone",
+      "kind": "text",
+      "key": "phone",
+      "sensitive": false,
+      "required": false
+    },
+    {
+      "label": "Current location",
+      "kind": "text",
+      "key": "location",
+      "sensitive": false,
+      "required": true
+    },
+    {
+      "label": "Current company",
+      "kind": "text",
+      "key": "currentCompany",
+      "sensitive": false,
+      "required": false
+    },
+    {
+      "label": "LinkedIn URL",
+      "kind": "text",
+      "key": "linkedin",
+      "sensitive": false,
+      "required": false
+    },
+    {
+      "label": "GitHub URL",
+      "kind": "text",
+      "key": "github",
+      "sensitive": false,
+      "required": false
+    },
+    {
+      "label": "Portfolio URL",
+      "kind": "text",
+      "key": "website",
+      "sensitive": false,
+      "required": false
+    },
+    {
+      "label": "Preferred Name | What would you like us to call you?",
+      "kind": "text",
+      "key": "preferredName",
+      "sensitive": false,
+      "required": false
+    },
+    {
+      "label": "Name Pronunciation | How do you pronounce your name?",
+      "kind": "text",
+      "key": null,
+      "sensitive": false,
+      "required": false
+    },
+    {
+      "label": "Are you legally authorized to work in the country for which you are applying?",
+      "kind": "radio",
+      "key": "workAuthorization",
+      "sensitive": false,
+      "required": true
+    },
+    {
+      "label": "Will you now or in the future require sponsorship for employment visa status (e.g., H-1B, etc.)?",
+      "kind": "radio",
+      "key": "needsSponsorship",
+      "sensitive": false,
+      "required": true
+    },
+    {
+      "label": "Which university are you currently attending or did you last attend? Please select \"Other (School Not Listed)\" if your school is not listed.",
+      "kind": "select",
+      "key": null,
+      "sensitive": false,
+      "required": true
+    },
+    {
+      "label": "Please tell us how you heard about this opportunity.",
+      "kind": "select",
+      "key": "howHeard",
+      "sensitive": false,
+      "required": true
+    },
+    {
+      "label": "What has been your favorite project or proudest accomplishment? Why?",
+      "kind": "textarea",
+      "key": null,
+      "sensitive": false,
+      "required": false
+    },
+    {
+      "label": "Why do you want to work at Bluegum?",
+      "kind": "textarea",
+      "key": null,
+      "sensitive": false,
+      "required": false
+    },
+    {
+      "label": "As part of our interview process, we may use AI notetakers to transcribe conversations for accuracy and efficiency. Please see our candidate privacy policy for more information on how we process your ",
+      "kind": "radio",
+      "key": null,
+      "sensitive": false,
+      "required": true
+    },
+    {
+      "label": "Additional information",
+      "kind": "textarea",
+      "key": null,
+      "sensitive": false,
+      "required": false
+    }
+  ]
+}

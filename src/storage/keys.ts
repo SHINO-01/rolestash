@@ -8,6 +8,7 @@
  *   reminders     What reminders were already sent (ReminderService); never backed up
  *   sync:*        Sync state and lease (SyncService); never backed up
  *   email:*       Email updates state and lease (EmailUpdateService); never backed up
+ *   profile       Autofill profile (ADR-0020); this device only: never synced or backed up
  */
 export const META_KEY = 'meta';
 export const SETTINGS_KEY = 'settings';
@@ -28,3 +29,6 @@ export const SYNC_LOCK_KEY = 'sync:lock';
 /** Email updates bookkeeping (ADR-0014); never backed up. */
 export const EMAIL_STATE_KEY = 'email:state';
 export const EMAIL_LOCK_KEY = 'email:lock';
+
+/** The autofill profile (ADR-0020): this device only, never synced or backed up. */
+export const PROFILE_KEY = 'profile';

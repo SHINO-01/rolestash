@@ -3,6 +3,7 @@ import { flashBadge } from '@/platform/badge';
 import { ChromeNotifier } from '@/platform/notifications';
 import { getServices } from '@/platform/services';
 import { openBoard } from '@/platform/tabs';
+import { AutofillBlockedError } from '@/services/autofill-service';
 import { DuplicateJobError, JobLimitError } from '@/services/job-service';
 import { FOLLOW_UP_PREFIX, ReminderService } from '@/services/reminder-service';
 import { WEB_HANDOFF_MESSAGE, type WebHandoffReply } from '@/services/web-handoff';
@@ -13,6 +14,7 @@ import { WEB_HANDOFF_MESSAGE, type WebHandoffReply } from '@/services/web-handof
  *
  *  - Right-click "Track this job"   → capture + save straight to the board
  *  - Alt+Shift+J                    → same
+ *  - Right-click "Fill this application" → fill the form from the profile (Advanced; ADR-0020)
  *  - Right-click the toolbar icon → "Open board"
  *  - Every 15 minutes             → follow-up reminders, closing-soon digest (ADR-0015),
  *                                   email updates (ADR-0014) and sync (ADR-0016)
@@ -21,6 +23,7 @@ import { WEB_HANDOFF_MESSAGE, type WebHandoffReply } from '@/services/web-handof
 
 const MENU_TRACK = 'rolestash.track';
 const MENU_OPEN_BOARD = 'rolestash.openBoard';
+const MENU_AUTOFILL = 'rolestash.autofill';
 const COMMAND_TRACK = 'track-current-tab';
 const ALARM_REMINDERS = 'rolestash.reminders';
 /** Where the web board may message from (also limited by externally_connectable). */
@@ -102,6 +105,11 @@ export default defineBackground(() => {
         contexts: ['page', 'frame', 'selection'],
       });
       browser.contextMenus.create({
+        id: MENU_AUTOFILL,
+        title: 'Fill this application with Rolestash',
+        contexts: ['page', 'frame', 'editable'],
+      });
+      browser.contextMenus.create({
         id: MENU_OPEN_BOARD,
         title: 'Open Rolestash board',
         contexts: ['action'],
@@ -111,6 +119,7 @@ export default defineBackground(() => {
 
   browser.contextMenus.onClicked.addListener((info, tab) => {
     if (info.menuItemId === MENU_OPEN_BOARD) void openBoard();
+    else if (info.menuItemId === MENU_AUTOFILL && tab?.id !== undefined) void autofill(tab.id);
     else if (info.menuItemId === MENU_TRACK && tab?.id !== undefined)
       void quickSave(tab.id, tab.url);
   });
@@ -119,6 +128,25 @@ export default defineBackground(() => {
     if (command === COMMAND_TRACK && tab?.id !== undefined) void quickSave(tab.id, tab.url);
   });
 });
+
+/** Fills the form in the tab; the badge shows how many fields were filled. */
+async function autofill(tabId: number): Promise<void> {
+  const services = getServices();
+  await services.ready;
+  if (!services.autofill) return;
+  try {
+    const outcome = await services.autofill.fill(tabId);
+    await flashBadge(
+      tabId,
+      String(outcome.filled.length),
+      outcome.filled.length ? 'success' : 'info',
+    );
+  } catch (error) {
+    if (error instanceof AutofillBlockedError)
+      await openBoard(error.reason === 'plan' ? { account: true } : { profile: true });
+    else await flashBadge(tabId, '!', 'error');
+  }
+}
 
 /** One-gesture save with badge feedback; the popup is the path for reviewing first. */
 async function quickSave(tabId: number, tabUrl: string | undefined): Promise<void> {

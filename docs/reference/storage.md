@@ -13,6 +13,7 @@ All data lives in `chrome.storage.local` (with `unlimitedStorage`).
 | `sync:state`          | Sync cursor, device id and what was last synced (ADR-0016); not backed up                                    |
 | `sync:lock`           | Short lease so two contexts don't sync at once                                                               |
 | `email:state`         | Email updates: event cursor, threads, taught senders, unsorted updates, Gmail code (ADR-0014); not backed up |
+| `profile`             | Autofill profile (ADR-0020); this device only: not synced, not backed up                                     |
 | `email:lock`          | Short lease so two contexts don't apply email updates at once                                                |
 
 Access only through `JobRepository` / `SettingsRepository`

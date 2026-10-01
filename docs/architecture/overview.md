@@ -33,13 +33,14 @@ entrypoints ─► features ─► ui
 | `domain/`     | Zod schemas (Job, Stage, Settings), pure state transitions, ranking | nothing (zod only)                |
 | `extraction/` | Strategies, normalisers, site adapters, pipeline                    | `domain` types                    |
 | `email/`      | Email status updates engine: intent rules, dates, matching          | `domain`, `extraction`            |
+| `autofill/`   | Application autofill: reading and filling forms (injected on click) | `domain`                          |
 | `storage/`    | `KeyValueStore` port, repositories, migrations, backup format       | `domain`                          |
 | `services/`   | Use cases (`JobService`, `CaptureService`), ports, composition root | `domain`, `extraction`, `storage` |
 | `platform/`   | `chrome.*` adapters: storage, scripting, tabs, badge                | everything below                  |
 | `ui/`         | Design tokens, primitives, React bindings to services               | `services`, `domain`              |
 | `features/`   | Board and capture screens                                           | `ui`, `services`, `platform`      |
 
-`domain/`, `extraction/` and `email/` are pure; ESLint's
+`domain/`, `extraction/`, `email/` and `autofill/` are pure; ESLint's
 `no-restricted-imports` and `no-restricted-globals` enforce it. `email/` also
 uses no DOM at all, because it runs in a Cloudflare Email Worker
 ([email updates guide](../guides/email-updates.md)). Purity is what lets the extractor run in
@@ -103,7 +104,8 @@ src/
     strategies/    json-ld.ts, microdata.ts, adapter.ts, meta.ts, shared.ts
     normalize/     text.ts, salary.ts, dates.ts, classifiers.ts, url.ts
     adapters/      types.ts, helpers.ts, registry.ts, sites/*.ts (50)
-  email/           analyze.ts (entry), intent.ts, ats.ts, links.ts, ics.ts, time.ts, clean.ts, html.ts, match.ts
+  email/           analyze.ts (entry), intent.ts, ats.ts, links.ts, ics.ts, time.ts, clean.ts, html.ts, match.ts, skeleton.ts
+  autofill/        fields.ts (reading a form), fill.ts (filling it)
   storage/         key-value-store.ts, job-repository.ts, settings-repository.ts, migrations.ts, backup.ts
   services/        job-service.ts, capture-service.ts, ports.ts, container.ts
   platform/        chrome-storage.ts, extractor-runner.ts, tabs.ts, badge.ts, services.ts

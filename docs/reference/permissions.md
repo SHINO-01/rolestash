@@ -6,10 +6,10 @@ usually an ADR) because it changes the install prompt and store review.
 | Permission         | Why                                                                                                                | Install warning       |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------ | --------------------- |
 | `activeTab`        | Read the job page the user is looking at, only after they click the icon / menu / shortcut                         | none                  |
-| `scripting`        | Inject the bundled extractor into that tab                                                                         | none (with activeTab) |
+| `scripting`        | Inject the bundled extractor, or the autofill filler (Advanced; ADR-0020), into that tab                           | none (with activeTab) |
 | `storage`          | Save jobs and settings locally                                                                                     | none                  |
 | `unlimitedStorage` | Description snapshots can exceed the 10 MB default quota over time                                                 | none                  |
-| `contextMenus`     | "Track this job" on the page; "Open board" on the toolbar icon                                                     | none                  |
+| `contextMenus`     | "Track this job" and "Fill this application" on the page; "Open board" on the toolbar icon                         | none                  |
 | `alarms`           | Wakes the worker every 15 minutes to check follow-up reminders and the closing digest (ADR-0015)                   | none                  |
 | `identity`         | **Accounts builds only** (ADR-0011): Google sign-in via `launchWebAuthFlow`. Absent from builds without a backend. | none                  |
 

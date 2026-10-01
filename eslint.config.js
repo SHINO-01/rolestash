@@ -50,7 +50,12 @@ export default tseslint.config(
   {
     // The extraction engine, email engine and domain model are pure: no
     // extension APIs, no UI. src/email also runs in a Cloudflare Worker.
-    files: ['src/extraction/**/*.ts', 'src/domain/**/*.ts', 'src/email/**/*.ts'],
+    files: [
+      'src/extraction/**/*.ts',
+      'src/domain/**/*.ts',
+      'src/email/**/*.ts',
+      'src/autofill/**/*.ts',
+    ],
     rules: {
       'no-restricted-imports': [
         'error',
@@ -68,7 +73,7 @@ export default tseslint.config(
                 'react-dom',
               ],
               message:
-                'domain/, extraction/ and email/ must stay pure (no browser, storage or UI imports). See docs/architecture/overview.md.',
+                'domain/, extraction/, email/ and autofill/ must stay pure (no browser, storage or UI imports). See docs/architecture/overview.md.',
             },
           ],
         },

@@ -1,0 +1,137 @@
+{
+  "fields": [
+    {
+      "label": "First Name",
+      "kind": "text",
+      "key": "firstName",
+      "sensitive": false,
+      "required": true
+    },
+    {
+      "label": "Last Name",
+      "kind": "text",
+      "key": "lastName",
+      "sensitive": false,
+      "required": true
+    },
+    {
+      "label": "Email",
+      "kind": "text",
+      "key": "email",
+      "sensitive": false,
+      "required": true
+    },
+    {
+      "label": "Country",
+      "kind": "combobox",
+      "key": "country",
+      "sensitive": false,
+      "required": false
+    },
+    {
+      "label": "Search",
+      "kind": "combobox",
+      "key": null,
+      "sensitive": false,
+      "required": false
+    },
+    {
+      "label": "Phone",
+      "kind": "text",
+      "key": "phone",
+      "sensitive": false,
+      "required": false
+    },
+    {
+      "label": "Attach",
+      "kind": "file",
+      "key": null,
+      "sensitive": false,
+      "required": false
+    },
+    {
+      "label": "Attach",
+      "kind": "file",
+      "key": null,
+      "sensitive": false,
+      "required": false
+    },
+    {
+      "label": "LinkedIn Profile",
+      "kind": "text",
+      "key": "linkedin",
+      "sensitive": false,
+      "required": false
+    },
+    {
+      "label": "What's the name you'd prefer us to use throughout the interview process?",
+      "kind": "text",
+      "key": "preferredName",
+      "sensitive": false,
+      "required": false
+    },
+    {
+      "label": "Please choose the country in which you are located.",
+      "kind": "combobox",
+      "key": "country",
+      "sensitive": false,
+      "required": false
+    },
+    {
+      "label": "Are you subject to any employment agreements and/or post-employment restrictions with your current employer or a past employer?",
+      "kind": "combobox",
+      "key": null,
+      "sensitive": false,
+      "required": true
+    },
+    {
+      "label": "It is important to us to create an accessible and inclusive interview experience. Please let us know if there are any adjustments we can make to assist you during the hiring and interview process.",
+      "kind": "text",
+      "key": null,
+      "sensitive": false,
+      "required": false
+    },
+    {
+      "label": "Will you now or in the future require sponsorship for a visa to remain in your current location?",
+      "kind": "combobox",
+      "key": "needsSponsorship",
+      "sensitive": false,
+      "required": true
+    },
+    {
+      "label": "Have you previously worked at or consulted for Northwind?",
+      "kind": "combobox",
+      "key": null,
+      "sensitive": false,
+      "required": true
+    },
+    {
+      "label": "What is your current country of residence?",
+      "kind": "combobox",
+      "key": "country",
+      "sensitive": false,
+      "required": true
+    },
+    {
+      "label": "Gender",
+      "kind": "combobox",
+      "key": null,
+      "sensitive": true,
+      "required": false
+    },
+    {
+      "label": "Are you Hispanic/Latino?",
+      "kind": "combobox",
+      "key": null,
+      "sensitive": true,
+      "required": false
+    },
+    {
+      "label": "Veteran Status",
+      "kind": "combobox",
+      "key": null,
+      "sensitive": true,
+      "required": false
+    }
+  ]
+}

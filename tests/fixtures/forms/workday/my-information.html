@@ -1,0 +1,67 @@
+<!doctype html>
+<!--
+  Hand-built from Workday's documented "My Information" and "Voluntary
+  Disclosures" steps (data-automation-id attributes). Workday forms sit
+  behind a candidate sign-in, so this isn't a live capture.
+-->
+<html lang="en">
+  <head><meta charset="utf-8" /><title>Apply - Harbourline Logistics</title></head>
+  <body>
+    <form data-automation-id="applyFlowMyInfoPage">
+      <div data-automation-id="formField-sourcePrompt">
+        <label for="input-1">How Did You Hear About Us?<abbr title="required">*</abbr></label>
+        <input id="input-1" type="text" data-automation-id="searchBox" aria-required="true" />
+      </div>
+      <fieldset data-automation-id="formField-candidateIsPreviousWorker">
+        <legend>Have you previously worked for Harbourline Logistics?<abbr>*</abbr></legend>
+        <label><input type="radio" name="candidateIsPreviousWorker" value="true" /> Yes</label>
+        <label><input type="radio" name="candidateIsPreviousWorker" value="false" /> No</label>
+      </fieldset>
+      <div data-automation-id="formField-legalNameSection_firstName">
+        <label for="input-4">Given Name(s)<abbr>*</abbr></label>
+        <input id="input-4" type="text" data-automation-id="legalNameSection_firstName" aria-required="true" />
+      </div>
+      <div data-automation-id="formField-legalNameSection_lastName">
+        <label for="input-5">Family Name<abbr>*</abbr></label>
+        <input id="input-5" type="text" data-automation-id="legalNameSection_lastName" aria-required="true" />
+      </div>
+      <div data-automation-id="formField-addressSection_addressLine1">
+        <label for="input-7">Address Line 1</label>
+        <input id="input-7" type="text" data-automation-id="addressSection_addressLine1" />
+      </div>
+      <div data-automation-id="formField-addressSection_city">
+        <label for="input-8">City or Suburb</label>
+        <input id="input-8" type="text" data-automation-id="addressSection_city" />
+      </div>
+      <div data-automation-id="formField-addressSection_postalCode">
+        <label for="input-9">Postcode</label>
+        <input id="input-9" type="text" data-automation-id="addressSection_postalCode" />
+      </div>
+      <div data-automation-id="formField-email">
+        <label for="input-10">Email Address</label>
+        <input id="input-10" type="text" data-automation-id="email" />
+      </div>
+      <div data-automation-id="formField-phone-number">
+        <label for="input-12">Phone Number<abbr>*</abbr></label>
+        <input id="input-12" type="text" data-automation-id="phone-number" aria-required="true" />
+      </div>
+      <div data-automation-id="formField-gender">
+        <label for="input-20">Gender</label>
+        <select id="input-20" data-automation-id="gender">
+          <option value="">Select One</option>
+          <option value="f">Female</option>
+          <option value="m">Male</option>
+          <option value="x">Prefer not to say</option>
+        </select>
+      </div>
+      <div data-automation-id="formField-disability">
+        <label for="input-21">Do you identify as a person with a disability?</label>
+        <select id="input-21"><option value="">Select One</option><option>Yes</option><option>No</option></select>
+      </div>
+      <div data-automation-id="formField-resume">
+        <label for="input-30">Resume/CV</label>
+        <input id="input-30" type="file" data-automation-id="file-upload-input-ref" />
+      </div>
+    </form>
+  </body>
+</html>

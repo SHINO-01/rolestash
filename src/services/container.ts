@@ -3,14 +3,16 @@ import type { KeyValueStore } from '@/storage/key-value-store';
 import { JobRepository } from '@/storage/job-repository';
 import { migrate } from '@/storage/migrations';
 import { SettingsRepository } from '@/storage/settings-repository';
+import { ProfileRepository } from '@/storage/profile-repository';
 import { AccountService } from './account-service';
+import { AutofillService } from './autofill-service';
 import type { SupabaseClient } from './backend/supabase-client';
 import { CaptureService } from './capture-service';
 import { ColumnService } from './column-service';
 import { EmailUpdateService } from './email-update-service';
 import { JobService } from './job-service';
 import { SyncService, type ThisDevice } from './sync-service';
-import type { ExtractorRunner, WebAuthFlow } from './ports';
+import type { AutofillRunner, ExtractorRunner, WebAuthFlow } from './ports';
 
 /**
  * Composition root. Each extension context (background, popup, board) builds
@@ -23,6 +25,8 @@ export interface Services {
   jobService: JobService;
   columns: ColumnService;
   capture: CaptureService;
+  /** Application autofill (Advanced; ADR-0020); present where pages can be filled. */
+  autofill?: AutofillService;
   runner: ExtractorRunner;
   /** Present only in builds configured with a backend (ADR-0011). */
   account?: AccountService;
@@ -50,6 +54,7 @@ export function createServices(
   ctx: DomainContext = systemContext,
   backend?: BackendDeps,
   device: ThisDevice = { name: 'This computer', kind: 'computer' },
+  autofillRunner?: AutofillRunner,
 ): Services {
   const jobs = new JobRepository(store);
   const settings = new SettingsRepository(store);
@@ -71,6 +76,9 @@ export function createServices(
     ...(account ? { account } : {}),
     ...(sync ? { sync } : {}),
     ...(email ? { email } : {}),
+    ...(autofillRunner
+      ? { autofill: new AutofillService(new ProfileRepository(store), autofillRunner, account) }
+      : {}),
     jobService,
     columns: new ColumnService(settings, jobs, ctx, account),
     capture: new CaptureService(runner),

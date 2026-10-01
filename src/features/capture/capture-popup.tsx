@@ -13,6 +13,7 @@ import { STAGE_STYLE } from '@/ui/stage-style';
 import { draftFromResult, emptyDraft, postingFromDraft, type Draft } from './capture-draft';
 import { CaptureForm } from './capture-form';
 import { DebugPanel } from './debug-panel';
+import { AutofillBar } from '@/features/autofill/autofill-bar';
 
 type State =
   | { kind: 'loading' }
@@ -113,6 +114,9 @@ export function CapturePopup() {
       </header>
 
       <main className="flex-1 scrollbar-thin overflow-y-auto p-4">
+        {state.kind !== 'loading' && state.kind !== 'saved' ? (
+          <AutofillBar tabId={state.tab?.id} />
+        ) : null}
         {limited ? (
           <div
             role="alert"

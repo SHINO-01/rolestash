@@ -8,6 +8,17 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Application autofill** (Advanced; not switched on yet): save your
+  details once in **Autofill profile…** on the board, then click **Fill this
+  application** in the popup (or right-click the page).
+  - **Fills** Greenhouse, Lever, Ashby, Workday and SmartRecruiters forms,
+    and most company careers pages: name, contact, address, links, current
+    role, work rights, salary, notice period, and your saved answers to
+    common questions.
+  - **Leaves alone** anything you've already typed, equal-opportunity and
+    demographic questions, and file uploads, and it never submits. The
+    popup lists what's left for you.
+  - **Your profile stays on this device:** it isn't synced or sent anywhere.
 - **Email status updates, part 4** (Advanced; not switched on yet):
   updates learn from everyone, privately.
   - When you accept or correct a suggestion ("Something else…"), or file

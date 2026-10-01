@@ -21,6 +21,7 @@ import { join, resolve } from 'node:path';
 import { chromium } from '@playwright/test';
 import { Window } from 'happy-dom';
 import { extractJob } from '../src/extraction';
+import { scrubDocument } from './lib/scrub';
 
 const [site, name, url] = process.argv.slice(2);
 if (!site || !name || !url) {
@@ -48,56 +49,7 @@ try {
   await page.waitForTimeout(SETTLE_MS);
   const finalUrl = page.url();
 
-  const html = await page.evaluate(() => {
-    const TRACKING =
-      /^(utm_|gclid|fbclid|msclkid|mc_|_hs|ref|refId|trackingId|trk|ttk|tk|from|source|src|campaign|sid|session|token|eid|lipi|position|pageNum|origin|gh_src|lever-|t$)/i;
-    const doc = document.cloneNode(true) as Document;
-    doc
-      .querySelectorAll(
-        'script:not([type="application/ld+json"]), style, link[rel="stylesheet"], link[rel="preload"], link[rel="prefetch"], link[rel="modulepreload"], iframe, svg, noscript, template, canvas, video, audio, object, embed',
-      )
-      .forEach((el) => el.remove());
-    doc
-      .querySelectorAll(
-        'meta[name*="csrf" i], meta[name*="token" i], meta[name*="verification" i], meta[name*="nonce" i], meta[http-equiv]',
-      )
-      .forEach((el) => el.remove());
-    const walker = doc.createTreeWalker(doc, NodeFilter.SHOW_COMMENT);
-    const comments: Node[] = [];
-    while (walker.nextNode()) comments.push(walker.currentNode);
-    comments.forEach((c) => c.parentNode?.removeChild(c));
-    doc.querySelectorAll('*').forEach((el) => {
-      for (const attr of [...el.attributes]) {
-        const n = attr.name.toLowerCase();
-        if (
-          n.startsWith('on') ||
-          n === 'style' ||
-          n === 'srcset' ||
-          n === 'nonce' ||
-          n === 'integrity' ||
-          n.startsWith('data-tracking') ||
-          n.startsWith('data-impression') ||
-          (n === 'value' && el.tagName !== 'OPTION')
-        )
-          el.removeAttribute(attr.name);
-      }
-      for (const key of ['href', 'src', 'action']) {
-        const value = el.getAttribute(key);
-        if (!value || !/^https?:|^\//.test(value)) continue;
-        try {
-          const u = new URL(value, location.href);
-          for (const p of [...u.searchParams.keys()])
-            if (TRACKING.test(p)) u.searchParams.delete(p);
-          el.setAttribute(key, u.href);
-        } catch {
-          // leave unparseable values alone
-        }
-      }
-      if (el.tagName === 'IMG' && el.getAttribute('src')?.startsWith('data:'))
-        el.setAttribute('src', '');
-    });
-    return `<!doctype html>\n${doc.documentElement.outerHTML}`;
-  });
+  const html = await page.evaluate(scrubDocument);
 
   const dir = join(ROOT, 'tests/fixtures/sites', site);
   mkdirSync(dir, { recursive: true });

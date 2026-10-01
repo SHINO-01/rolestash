@@ -14,6 +14,7 @@ import {
   Sun,
   Upload,
   UserRound,
+  Wand2,
 } from 'lucide-react';
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { browser } from 'wxt/browser';
@@ -25,6 +26,7 @@ import { requestNotifications } from '@/platform/notifications';
 import { AccountDialog } from '@/features/account/account-dialog';
 import { PlanBanner } from '@/features/account/plan-banner';
 import { UnsortedDialog } from '@/features/email/unsorted-dialog';
+import { ProfileDialog } from '@/features/autofill/profile-dialog';
 import { useAutoEmailUpdates, useEmailState } from '@/ui/hooks/email';
 import { planChip } from '@/features/account/plan-copy';
 import { Button, IconButton, Spinner } from '@/ui/components/button';
@@ -61,8 +63,10 @@ export function BoardPage() {
   const { account, state: accountState } = useAccount();
   useAutoSync();
   const [dialog, setDialog] = useState<
-    'add' | 'import' | 'account' | 'history' | 'columns' | 'unsorted' | null
-  >(() => (location.hash === '#account' ? 'account' : null));
+    'add' | 'import' | 'account' | 'history' | 'columns' | 'unsorted' | 'profile' | null
+  >(() =>
+    location.hash === '#account' ? 'account' : location.hash === '#profile' ? 'profile' : null,
+  );
   const searchRef = useRef<HTMLInputElement>(null);
 
   // History (ADR-0013): Free shows 30 days of finished and archived jobs.
@@ -108,6 +112,7 @@ export function BoardPage() {
     const onHash = () => {
       setOpenJobId(readJobFromHash());
       if (location.hash === '#account') setDialog('account');
+      if (location.hash === '#profile') setDialog('profile');
     };
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
@@ -230,6 +235,15 @@ export function BoardPage() {
               icon: <Columns3 className="size-4" />,
               onSelect: () => setDialog('columns'),
             },
+            ...(services.autofill
+              ? [
+                  {
+                    label: 'Autofill profile…',
+                    icon: <Wand2 className="size-4" />,
+                    onSelect: () => setDialog('profile'),
+                  },
+                ]
+              : []),
             'separator',
             {
               label: 'Export to CSV',
@@ -351,6 +365,14 @@ export function BoardPage() {
       />
       <ImportDialog open={dialog === 'import'} onClose={() => setDialog(null)} />
       <UnsortedDialog open={dialog === 'unsorted'} onClose={() => setDialog(null)} />
+      <ProfileDialog
+        open={dialog === 'profile'}
+        onClose={() => {
+          setDialog(null);
+          if (location.hash === '#profile') history.replaceState(null, '', location.pathname);
+        }}
+        onSeePlans={account ? () => setDialog('account') : undefined}
+      />
       {account ? (
         <AccountDialog
           open={dialog === 'account'}

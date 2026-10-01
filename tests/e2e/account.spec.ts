@@ -422,6 +422,50 @@ test.describe('accounts', () => {
     await expect(page.getByLabel('Your forwarding address')).toHaveText(E2E_INBOX);
   });
 
+  test('saves the autofill profile on this device (Advanced)', async ({
+    context,
+    worker,
+    extensionId,
+    backend,
+  }) => {
+    const end = new Date(Date.now() + 20 * 86_400_000).toISOString();
+    await seedSignedIn(worker, {
+      status: 'active',
+      tier: 'advanced',
+      currentPeriodEnd: end,
+      hasBillingAccount: false,
+    });
+    backend.entitlement = {
+      status: 'active',
+      tier: 'advanced',
+      trial_ends_at: null,
+      current_period_end: end,
+      provider_customer_id: null,
+    };
+    const page = await context.newPage();
+    await page.goto(`chrome-extension://${extensionId}/board.html#profile`);
+    const dialog = page.getByRole('dialog', { name: 'Autofill profile' });
+    await dialog.getByLabel('First name').fill('Sam');
+    await dialog.getByLabel('Email').fill('sam@example.com');
+    await dialog.getByLabel('Need visa sponsorship?').selectOption('no');
+    await dialog.getByRole('button', { name: 'Add a saved answer' }).click();
+    await dialog.getByLabel('Question 1').fill('Why do you want to work here?');
+    await dialog.getByLabel('Answer 1').fill('The mission.');
+    await dialog.getByRole('button', { name: 'Save profile' }).click();
+    await expect(dialog).toBeHidden();
+    const stored = await worker.evaluate(
+      async () => (await chrome.storage.local.get('profile')).profile,
+    );
+    expect(stored).toMatchObject({
+      firstName: 'Sam',
+      email: 'sam@example.com',
+      needsSponsorship: 'no',
+      answers: [{ question: 'Why do you want to work here?', answer: 'The mission.' }],
+    });
+    // It never leaves the device: no request carries it.
+    expect(JSON.stringify(backend.requests)).not.toContain('sam@example.com');
+  });
+
   test('deleting the account keeps jobs on this device', async ({
     context,
     worker,

@@ -2,6 +2,7 @@ import { createServices, type Services } from '@/services/container';
 import { SupabaseClient } from '@/services/backend/supabase-client';
 import { backendConfig, ChromeWebAuthFlow } from './backend';
 import { ChromeKeyValueStore } from './chrome-storage';
+import { ScriptingAutofillRunner } from './autofill-runner';
 import { ScriptingExtractorRunner } from './extractor-runner';
 
 let instance: Services | undefined;
@@ -21,6 +22,7 @@ export function getServices(): Services {
           }
         : undefined,
       { name: deviceName(), kind: 'computer' },
+      new ScriptingAutofillRunner(),
     );
   }
   return instance;
