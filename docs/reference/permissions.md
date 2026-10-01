@@ -10,6 +10,7 @@ usually an ADR) because it changes the install prompt and store review.
 | `storage`          | Save jobs and settings locally                                                                                     | none                  |
 | `unlimitedStorage` | Description snapshots can exceed the 10 MB default quota over time                                                 | none                  |
 | `contextMenus`     | "Track this job" and "Fill this application" on the page; "Open board" on the toolbar icon                         | none                  |
+| `sidePanel`        | The docked side panel for one-click access (ADR-0021); no access to pages                                          | none                  |
 | `alarms`           | Wakes the worker every 15 minutes to check follow-up reminders and the closing digest (ADR-0015)                   | none                  |
 | `identity`         | **Accounts builds only** (ADR-0011): Google sign-in via `launchWebAuthFlow`. Absent from builds without a backend. | none                  |
 

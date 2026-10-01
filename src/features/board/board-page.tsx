@@ -10,6 +10,7 @@ import {
   Monitor,
   Moon,
   MoreHorizontal,
+  PanelRight,
   Plus,
   Search,
   Sun,
@@ -25,6 +26,8 @@ import type { Theme } from '@/domain/settings';
 import { createBackup } from '@/storage/backup';
 import { jobsToCsv } from '@/storage/csv-export';
 import { requestNotifications } from '@/platform/notifications';
+import { setIconOpensPanel } from '@/platform/side-panel';
+import { PinTip } from './pin-tip';
 import { AccountDialog } from '@/features/account/account-dialog';
 import { PlanBanner } from '@/features/account/plan-banner';
 import { UnsortedDialog } from '@/features/email/unsorted-dialog';
@@ -183,6 +186,19 @@ export function BoardPage() {
 
   const setTheme = (theme: Theme) => void services.settings.update({ theme });
 
+  // One-click access (ADR-0021): the toolbar icon opens the docked panel.
+  async function toggleIconOpensPanel() {
+    const on = settings.iconOpensPanel !== true;
+    await services.settings.update({ iconOpensPanel: on });
+    await setIconOpensPanel(on);
+    toast({
+      message: on
+        ? 'Clicking the Rolestash icon now opens the side panel'
+        : 'Clicking the Rolestash icon now opens the popup',
+      tone: 'success',
+    });
+  }
+
   async function toggleClosingAlerts() {
     const on = settings.closingAlerts === false;
     if (on) await requestNotifications();
@@ -302,6 +318,13 @@ export function BoardPage() {
                 ]
               : []),
             'separator',
+            {
+              label: 'Toolbar icon opens the side panel',
+              icon: <PanelRight className="size-4" />,
+              checked: settings.iconOpensPanel === true,
+              onSelect: () => void toggleIconOpensPanel(),
+            },
+            'separator',
             { heading: 'Theme' },
             {
               label: 'System',
@@ -331,6 +354,7 @@ export function BoardPage() {
         />
       </header>
 
+      <PinTip />
       {accountState ? (
         <PlanBanner state={accountState} onOpenAccount={() => setDialog('account')} />
       ) : null}

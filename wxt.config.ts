@@ -45,6 +45,8 @@ export default defineConfig({
         'contextMenus',
         // Wakes the worker every 15 minutes to check follow-up reminders (ADR-0015). No install warning.
         'alarms',
+        // The docked side panel for one-click access (ADR-0021). No install warning, no page access.
+        'sidePanel',
         // Google sign-in via chrome.identity.launchWebAuthFlow; accounts builds only.
         ...(accounts ? ['identity'] : []),
       ],

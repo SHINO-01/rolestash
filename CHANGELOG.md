@@ -8,6 +8,17 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Side panel:** Rolestash docks on the right of the browser and stays
+  open as you switch tabs.
+  - **Opening it:** the button in the popup, or right-click the Rolestash
+    icon → **Open side panel**. Or turn on **Toolbar icon opens the side
+    panel** in the board menu, so it's always one click.
+  - **On every plan:** save the page you're on and open the board.
+  - **On Advanced:** also Today, your board, a job's details and autofill,
+    without leaving the page.
+  - No new access to web pages.
+- **Pin tip:** until Rolestash is pinned, the board shows how to pin it for
+  one-click access.
 - **Contacts, interview rounds and documents** on every job (Advanced; not
   switched on yet).
   - **Contacts:** keep the recruiter's and interviewers' details, with

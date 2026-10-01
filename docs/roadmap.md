@@ -95,7 +95,8 @@ feature on the pricing page is built. The site already advertises them all.
   uploads), plus an `.ics` export.
 - **Analytics:** funnel by stage, response time, source site, applications
   per week.
-- **Side panel** (`chrome.sidePanel`) and **bulk actions** (multi-select,
+- ~~**Side panel**~~ done (ADR-0021: one-click access, Today and board docked
+  beside the page) and **bulk actions** (multi-select,
   archive, tag).
 
 ## Phase 1d: Launch

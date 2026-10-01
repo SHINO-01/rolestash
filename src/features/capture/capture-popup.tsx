@@ -1,11 +1,12 @@
-import { AlertCircle, Check, LayoutGrid, PenLine } from 'lucide-react';
+import { AlertCircle, Check, LayoutGrid, PanelRight, PenLine } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Job } from '@/domain/job';
 import { findStage, type Stage } from '@/domain/stage';
 import type { ExtractionResult } from '@/extraction';
+import { openSidePanel } from '@/platform/side-panel';
 import { getActiveTab, openBoard, type ActiveTab } from '@/platform/tabs';
 import { DuplicateJobError, JobLimitError } from '@/services/job-service';
-import { Button, Spinner } from '@/ui/components/button';
+import { Button, IconButton, Spinner } from '@/ui/components/button';
 import { CompanyAvatar } from '@/ui/components/company-avatar';
 import { Logo } from '@/ui/components/misc';
 import { useServices, useSettings } from '@/ui/hooks/services';
@@ -103,14 +104,23 @@ export function CapturePopup() {
     <div className="bg-canvas flex max-h-[600px] w-[380px] flex-col">
       <header className="bg-surface border-line flex h-12 shrink-0 items-center justify-between border-b px-4">
         <Logo />
-        <Button
-          variant="ghost"
-          size="sm"
-          icon={<LayoutGrid className="size-4" />}
-          onClick={() => void openBoard()}
-        >
-          Open board
-        </Button>
+        <div className="flex items-center gap-1">
+          <IconButton
+            size="sm"
+            label="Open side panel"
+            onClick={() => void openSidePanel().then(() => window.close())}
+          >
+            <PanelRight className="size-4" />
+          </IconButton>
+          <Button
+            variant="ghost"
+            size="sm"
+            icon={<LayoutGrid className="size-4" />}
+            onClick={() => void openBoard()}
+          >
+            Open board
+          </Button>
+        </div>
       </header>
 
       <main className="flex-1 scrollbar-thin overflow-y-auto p-4">

@@ -562,6 +562,83 @@ test.describe('accounts', () => {
     await expect(drawer.getByRole('button', { name: 'Add a contact' })).toHaveCount(0);
   });
 
+  test('the side panel: Today and a job on Advanced, save and a pitch on Pro (ADR-0021)', async ({
+    context,
+    worker,
+    extensionId,
+    backend,
+  }) => {
+    const end = new Date(Date.now() + 20 * 86_400_000).toISOString();
+    await seedActiveJobs(worker, 1);
+    await worker.evaluate(async () => {
+      const job = (await chrome.storage.local.get('job:j0'))['job:j0'] as Record<string, unknown>;
+      await chrome.storage.local.set({
+        'job:j0': { ...job, followUpAt: new Date().toISOString() },
+      });
+    });
+    await seedSignedIn(worker, {
+      status: 'active',
+      tier: 'advanced',
+      currentPeriodEnd: end,
+      hasBillingAccount: false,
+    });
+    backend.entitlement = {
+      status: 'active',
+      tier: 'advanced',
+      trial_ends_at: null,
+      current_period_end: end,
+      provider_customer_id: null,
+    };
+    const panel = await context.newPage();
+    await panel.setViewportSize({ width: 380, height: 800 });
+    await panel.goto(`chrome-extension://${extensionId}/sidepanel.html`);
+    await expect(panel.getByRole('button', { name: 'Save this page' })).toBeVisible();
+    await expect(panel.getByRole('button', { name: 'Today', pressed: true })).toBeVisible();
+    await panel
+      .getByRole('button', { name: /Role 0/ })
+      .first()
+      .click();
+    await expect(panel.getByRole('dialog', { name: 'Role 0 details' })).toBeVisible();
+    // The panel itself can't be saved; it says how to give access.
+    await panel
+      .getByRole('dialog', { name: 'Role 0 details' })
+      .getByRole('button', { name: 'Close' })
+      .click();
+    await panel.getByRole('button', { name: 'Save this page' }).click();
+    await expect(panel.getByText(/click the Rolestash icon/)).toBeVisible();
+
+    await seedSignedIn(worker, {
+      status: 'trialing',
+      tier: 'pro',
+      trialEndsAt: new Date(Date.now() + 10 * 86_400_000).toISOString(),
+      hasBillingAccount: false,
+    });
+    await panel.reload();
+    await expect(panel.getByText('Your whole board, right here')).toBeVisible();
+    await expect(panel.getByRole('button', { name: 'Today' })).toHaveCount(0);
+  });
+
+  test('the board can make the toolbar icon open the side panel (ADR-0021)', async ({
+    context,
+    worker,
+    extensionId,
+  }) => {
+    await seedActiveJobs(worker, 1);
+    const page = await context.newPage();
+    await page.goto(`chrome-extension://${extensionId}/board.html`);
+    await page.getByRole('button', { name: 'Board menu' }).click();
+    await page.getByRole('menuitem', { name: 'Toolbar icon opens the side panel' }).click();
+    await expect(page.getByText('now opens the side panel')).toBeVisible();
+    const behaviour = await worker.evaluate(async () => ({
+      popup: await chrome.action.getPopup({}),
+      panel: (await chrome.sidePanel.getPanelBehavior()).openPanelOnActionClick,
+      setting: (
+        (await chrome.storage.local.get('settings')).settings as { iconOpensPanel?: boolean }
+      ).iconOpensPanel,
+    }));
+    expect(behaviour).toEqual({ popup: '', panel: true, setting: true });
+  });
+
   test('deleting the account keeps jobs on this device', async ({
     context,
     worker,

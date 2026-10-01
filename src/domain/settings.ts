@@ -12,6 +12,8 @@ export const SettingsSchema = z
     theme: z.enum(THEMES),
     /** Daily "closing soon" notification (Pro; ADR-0015). Absent means on. */
     closingAlerts: z.boolean().optional(),
+    /** Clicking the toolbar icon opens the side panel instead of the popup. Per device. */
+    iconOpensPanel: z.boolean().optional(),
   })
   .refine((s) => s.stages.some((stage) => stage.id === s.defaultStageId), {
     message: 'defaultStageId must reference an existing stage',
