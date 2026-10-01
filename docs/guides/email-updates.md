@@ -3,8 +3,9 @@
 Advanced users forward job emails to a personal address, and the board
 updates itself (ADR-0014). This guide covers the **engine** in `src/email/`:
 how one email becomes an `EmailEvent`, how an event is matched to a job, and
-how to fix a miss. It also covers the server side: the
-database and the Email Worker. The extension UI comes in a later milestone.
+how to fix a miss. It also covers the server side (the
+database and the Email Worker) and what the extension and web board do with
+events.
 
 ## Rules, not AI
 
@@ -184,6 +185,49 @@ It should be about 180 KiB.
 5. **Check:** forward a test email to your own address (from `my_inbox()`).
    A row appears in `email_events`, and the Worker's logs show
    `email: stored`.
+
+## On the board: `EmailUpdateService`
+
+`src/services/email-update-service.ts` runs on any client with the account:
+the extension's 15-minute background tick (just before sync), and an open
+board or web board on open, on focus and every 5 minutes. A storage lease
+stops two contexts running at once. Each run:
+
+1. **Pulls events** after its cursor (`email_events`, owner RLS) and
+   validates them with `EmailEventSchema`.
+2. **Matches locally** (`matchEvent`), with this device's memory:
+   - Message-ID → job, so replies in a thread follow;
+   - sender → job, taught when the user files an unsorted update.
+3. **Acts:**
+
+   | Result                          | What happens                                                                                                                                                      |
+   | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+   | Matched, `apply`                | `JobService.applyEmailUpdate`: move (via `targetStage`, never backwards) and/or set `interview`, as one `email_update` timeline entry with the subject and sender |
+   | Matched, `suggest`              | `job.suggestion`, with Accept / Dismiss on the card                                                                                                               |
+   | Not matched (none or ambiguous) | "Unsorted updates": file under a job, **Add this job**, or dismiss                                                                                                |
+   | Gmail confirmation              | The code is shown in Account for 7 days                                                                                                                           |
+
+4. **Deletes** the processed events from the server, so another device
+   doesn't apply them twice.
+
+Undo: every `email_update` entry in the timeline has **Undo**
+(`JobService.undoEmailUpdate`). It moves the job back, if it's still where
+the update put it, and removes the interview the update set. The entry
+stays, marked undone.
+
+### The UI (`src/features/email/`)
+
+- **Account:** the address with Copy, Gmail and Outlook filter guides, the
+  Gmail confirmation code, **Check now** and **Get a new address**. The
+  extension and the web board share this.
+- **Card:** an interview badge (`InterviewChip`), and a "Rejection?"-style
+  badge while a suggestion waits.
+- **Details:** the suggestion banner, and the interview panel:
+  - **Join** (meeting link) or **Pick a time** (booking link);
+  - **Open in Google Maps**, a plain search link for physical locations;
+  - **Add to calendar**, a `.ics` built locally by `domain/interview.ts`.
+    Exact times are written in UTC, and floating times stay floating.
+- Only `http(s)` links are ever rendered (`safeHref`). Nothing is fetched.
 
 ## Fixing a miss
 

@@ -79,8 +79,9 @@ feature on the pricing page is built. The site already advertises them all.
     live once the owner turns on Email Routing);
   - ~~a deterministic intent engine with an email fixture suite~~ done
     (`src/email/`, 43 fixtures; [guide](guides/email-updates.md));
-  - suggestions for low-confidence results;
-  - Join, map and add-to-calendar actions on cards.
+  - ~~suggestions for low-confidence results~~ done (Accept / Dismiss on
+    the card; Unsorted updates);
+  - ~~Join, map and add-to-calendar actions on cards~~ done.
   - accuracy work (ADR-0014 §5): posting-link, thread and taught matching,
     per-recruiting-system template readers, negation and conditional scopes,
     and a CI gate on precision and unsorted rate;

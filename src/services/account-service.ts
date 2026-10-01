@@ -11,7 +11,7 @@ import {
 } from './backend/supabase-client';
 import { googleAuthUrl, readGoogleResult, sha256Hex } from './backend/google';
 import type { PlanProvider } from './job-service';
-import type { RemoteJobStore, WebAuthFlow } from './ports';
+import type { EmailInbox, RemoteJobStore, WebAuthFlow } from './ports';
 
 /**
  * Sign-in, the cached entitlement and billing links (ADR-0011). Exists only
@@ -223,6 +223,16 @@ export class AccountService implements PlanProvider {
       push: (deviceId, changes) => call((t) => this.client.pushJobs(t, deviceId, changes)),
       pull: (deviceId, after, limit) =>
         call((t) => this.client.pullJobs(t, deviceId, after, limit)),
+    };
+  }
+
+  /** Email updates' server calls, made as the signed-in user (ADR-0014). */
+  emailInbox(): EmailInbox {
+    const call = async <T>(run: (token: string) => Promise<T>) => run(await this.accessToken());
+    return {
+      address: (rotate = false) => call((t) => this.client.myInbox(t, rotate)),
+      events: (after, limit) => call((t) => this.client.emailEvents(t, after, limit)),
+      remove: (ids) => call((t) => this.client.deleteEmailEvents(t, ids)),
     };
   }
 

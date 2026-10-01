@@ -1,6 +1,8 @@
 import type { ExtractionResult } from '@/extraction';
 import type {
   DeviceRegistration,
+  EmailEventRow,
+  InboxInfo,
   PulledChange,
   RemoteDevice,
   SyncChange,
@@ -35,6 +37,14 @@ export interface RemoteJobStore {
   removeDevice(id: string): Promise<void>;
   push(deviceId: string, changes: SyncChange[]): Promise<number>;
   pull(deviceId: string, after: number, limit: number): Promise<PulledChange[]>;
+}
+
+/** The server side of email updates (ADR-0014), bound to the signed-in user. */
+export interface EmailInbox {
+  /** The forwarding address; `rotate` replaces it first. */
+  address(rotate?: boolean): Promise<InboxInfo>;
+  events(after: number, limit: number): Promise<EmailEventRow[]>;
+  remove(ids: readonly number[]): Promise<void>;
 }
 
 /** Loads a pasted job link (Pro; capture from a link). */

@@ -23,6 +23,9 @@ import { visibleActivity } from '@/domain/history';
 import type { Stage } from '@/domain/stage';
 import { JobLimitError } from '@/services/job-service';
 import { limitMessage } from '@/features/account/plan-copy';
+import { InterviewPanel } from '@/features/email/interview';
+import { INTENT_LABEL } from '@/features/email/email-copy';
+import { EmailLine, SuggestionBanner } from '@/features/email/suggestion';
 import { FollowUp } from './follow-up';
 import { HistoryLimitNote } from './history-dialog';
 import { formatSalary, parseSalaryText } from '@/extraction';
@@ -156,6 +159,15 @@ function DrawerBody({
     }
   }
 
+  async function undoEmail(activityId: string) {
+    try {
+      live.applyLocal([await jobService.undoEmailUpdate(job.id, activityId)]);
+      toast({ message: 'Email update undone', tone: 'success' });
+    } catch {
+      toast({ message: 'Could not undo', tone: 'error' });
+    }
+  }
+
   const stage = stages.find((s) => s.id === job.stageId);
 
   return (
@@ -251,6 +263,12 @@ function DrawerBody({
 
       {/* Body */}
       <div className="flex-1 scrollbar-thin space-y-7 overflow-y-auto px-6 py-5">
+        {job.suggestion ? <SuggestionBanner job={job} stages={stages} /> : null}
+        {job.interview ? (
+          <Section title="Interview">
+            <InterviewPanel job={job} />
+          </Section>
+        ) : null}
         <Section title="Details">
           <dl className="grid grid-cols-2 gap-x-4 gap-y-3.5">
             <Detail label="Location">
@@ -350,7 +368,12 @@ function DrawerBody({
         </Section>
 
         <Section title="Activity">
-          <Timeline activity={job.activity} stages={stages} historyFrom={historyFrom} />
+          <Timeline
+            activity={job.activity}
+            stages={stages}
+            historyFrom={historyFrom}
+            onUndoEmail={(activityId) => void undoEmail(activityId)}
+          />
         </Section>
 
         <p className="text-subtle border-line border-t pt-4 text-xs">
@@ -595,10 +618,12 @@ function Timeline({
   activity,
   stages,
   historyFrom,
+  onUndoEmail,
 }: {
   activity: Activity[];
   stages: readonly Stage[];
   historyFrom: Date | undefined;
+  onUndoEmail: (activityId: string) => void;
 }) {
   const [all, setAll] = useState(false);
   const name = (id: string | undefined) => stages.find((s) => s.id === id)?.name ?? id ?? '—';
@@ -624,6 +649,37 @@ function Timeline({
                 <>Archived</>
               ) : entry.type === 'unarchived' ? (
                 <>Restored to the board</>
+              ) : entry.type === 'email_update' ? (
+                <span className="inline-flex flex-col gap-0.5">
+                  <span
+                    className={clsx(
+                      'inline-flex flex-wrap items-center gap-1',
+                      entry.undone && 'line-through',
+                    )}
+                  >
+                    {entry.email ? INTENT_LABEL[entry.email.intent] : 'Email update'}
+                    {entry.toStageId ? (
+                      <>
+                        : moved {name(entry.fromStageId)} <ArrowRight className="size-3" />
+                        <b className="text-ink font-medium">{name(entry.toStageId)}</b>
+                      </>
+                    ) : entry.setInterview ? (
+                      <>: interview added</>
+                    ) : null}
+                  </span>
+                  {entry.email ? <EmailLine email={entry.email} /> : null}
+                  {entry.undone ? (
+                    <span className="text-subtle text-xs">Undone</span>
+                  ) : (
+                    <button
+                      type="button"
+                      className="text-accent self-start text-xs font-medium hover:underline"
+                      onClick={() => onUndoEmail(entry.id)}
+                    >
+                      Undo
+                    </button>
+                  )}
+                </span>
               ) : (
                 <>Edited {entry.fields?.map((f) => FIELD_LABEL[f] ?? f).join(', ')}</>
               )}

@@ -93,7 +93,55 @@ export const ACTIVITY_TYPES = [
   'edited',
   'archived',
   'unarchived',
+  /** A change made from a forwarded email (Advanced; ADR-0014). Undoable. */
+  'email_update',
 ] as const;
+
+/** What an email update says happened (src/email's status intents). */
+export const EMAIL_UPDATE_INTENTS = [
+  'received',
+  'assessment',
+  'interview',
+  'rejected',
+  'offer',
+] as const;
+export type EmailUpdateIntent = (typeof EMAIL_UPDATE_INTENTS)[number];
+
+/** The email behind an update, kept as its reason. Never the email's text. */
+export const EmailNoteSchema = z.object({
+  intent: z.enum(EMAIL_UPDATE_INTENTS),
+  subject: z.string().max(500),
+  /** Sender address, or "Name <address>". */
+  sender: z.string().max(400),
+  receivedAt: IsoDateTime,
+});
+export type EmailNote = z.infer<typeof EmailNoteSchema>;
+
+/**
+ * The next interview, from a calendar invite or the email's text. `start` is
+ * an instant with an offset, or a local wall time (`floating`) when the email
+ * named no time zone, which is then read in the user's own zone.
+ */
+export const JobInterviewSchema = z.object({
+  start: z.string().max(40).optional(),
+  end: z.string().max(40).optional(),
+  floating: z.boolean(),
+  timeZone: z.string().max(64).optional(),
+  location: z.string().max(300).optional(),
+  meetingUrl: z.url().max(2000).optional(),
+  schedulingUrl: z.url().max(2000).optional(),
+});
+export type JobInterview = z.infer<typeof JobInterviewSchema>;
+
+/** A lower-confidence email update, waiting for one-click Accept or Dismiss. */
+export const SuggestionSchema = z.object({
+  id: z.string().min(1),
+  createdAt: IsoDateTime,
+  toStageId: z.string().optional(),
+  interview: JobInterviewSchema.optional(),
+  email: EmailNoteSchema,
+});
+export type Suggestion = z.infer<typeof SuggestionSchema>;
 
 export const ActivitySchema = z.object({
   id: z.string().min(1),
@@ -103,6 +151,12 @@ export const ActivitySchema = z.object({
   toStageId: z.string().optional(),
   /** For `edited`: which fields changed. */
   fields: z.array(z.string()).optional(),
+  /** For `email_update`: the email it came from. */
+  email: EmailNoteSchema.optional(),
+  /** For `email_update`: it set the interview. */
+  setInterview: z.boolean().optional(),
+  /** For `email_update`: the user undid it. */
+  undone: z.boolean().optional(),
 });
 export type Activity = z.infer<typeof ActivitySchema>;
 
@@ -133,6 +187,10 @@ export const JobSchema = PostingSchema.extend({
   followUpAt: IsoDateTime.optional(),
   /** Set while the job is archived: off the board, in History, not counted as active. */
   archivedAt: IsoDateTime.optional(),
+  /** The next interview, from email updates (Advanced; ADR-0014). */
+  interview: JobInterviewSchema.optional(),
+  /** A pending email update for the user to accept or dismiss. */
+  suggestion: SuggestionSchema.optional(),
 });
 export type Job = z.infer<typeof JobSchema>;
 export type JobId = Job['id'];

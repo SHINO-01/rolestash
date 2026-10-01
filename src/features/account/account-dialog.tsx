@@ -17,6 +17,7 @@ import {
   planChip,
   planSummary,
 } from './plan-copy';
+import { EmailSection } from '@/features/email/email-section';
 import { SyncSection } from './sync-section';
 
 const SITE = 'https://rolestash.com';
@@ -275,6 +276,7 @@ function SignedIn({ account, state }: { account: AccountService; state: AccountS
       </section>
 
       <SyncSection plan={plan.plan} />
+      <EmailSection plan={plan.plan} />
 
       <section className="flex flex-col gap-3">
         <span className="text-sm font-semibold">

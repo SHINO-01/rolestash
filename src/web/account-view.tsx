@@ -1,12 +1,13 @@
 import { LogOut } from 'lucide-react';
 import { planChip, planSummary } from '@/features/account/plan-copy';
 import { SyncSection } from '@/features/account/sync-section';
+import { EmailSection } from '@/features/email/email-section';
 import { Button } from '@/ui/components/button';
 import { Chip } from '@/ui/components/chip';
 import { useAccount } from '@/ui/hooks/account';
 import { useServices } from '@/ui/hooks/services';
 import { DEFAULT_SETTINGS } from '@/domain/settings';
-import { SYNC_STATE_KEY } from '@/storage/keys';
+import { EMAIL_STATE_KEY, SYNC_STATE_KEY } from '@/storage/keys';
 import { blockExtensionSignIn } from './sign-in';
 
 /** Account on the web board: plan, synced devices, sign out (ADR-0017). */
@@ -21,7 +22,7 @@ export function AccountView() {
     await services.sync?.disable().catch(() => undefined);
     await services.jobs.deleteAll();
     await services.settings.replace(structuredClone(DEFAULT_SETTINGS));
-    await services.store.remove([SYNC_STATE_KEY]);
+    await services.store.remove([SYNC_STATE_KEY, EMAIL_STATE_KEY]);
     blockExtensionSignIn();
     await account?.signOut();
   }
@@ -41,6 +42,7 @@ export function AccountView() {
         </p>
       </section>
       <SyncSection plan={state.plan.plan} />
+      <EmailSection plan={state.plan.plan} />
       <Button variant="ghost" icon={<LogOut className="size-4" />} onClick={() => void signOut()}>
         Sign out and clear this browser
       </Button>

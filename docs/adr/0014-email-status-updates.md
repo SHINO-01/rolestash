@@ -257,6 +257,11 @@ Where it differs from the plan above:
 - **AEST/AEDT mean Sydney wall time:** people write "AEST" all year, so the
   time is read in Sydney's zone. A time without a zone is stored as
   floating, to be read in the user's zone.
+- **Events are deleted once a device has them:** the device that applies
+  an event deletes it from the server, so other devices don't apply it
+  again. The 90-day retention only catches events no device fetched.
+- **One interview per job:** a newer interview replaces the card's
+  interview.
 - **No service-role key in the Worker:** it holds a single-purpose ingest
   secret instead; see [ADR-0018](0018-email-worker-ingest.md).
 - **Separate scheduling links:** interviews keep a scheduling link

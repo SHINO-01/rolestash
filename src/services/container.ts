@@ -7,6 +7,7 @@ import { AccountService } from './account-service';
 import type { SupabaseClient } from './backend/supabase-client';
 import { CaptureService } from './capture-service';
 import { ColumnService } from './column-service';
+import { EmailUpdateService } from './email-update-service';
 import { JobService } from './job-service';
 import { SyncService, type ThisDevice } from './sync-service';
 import type { ExtractorRunner, WebAuthFlow } from './ports';
@@ -27,6 +28,8 @@ export interface Services {
   account?: AccountService;
   /** Sync across devices (ADR-0016); present with `account`. */
   sync?: SyncService;
+  /** Email status updates (Advanced; ADR-0014); present with `account`. */
+  email?: EmailUpdateService;
   /** Resolves once storage migrations have run in this context. */
   ready: Promise<void>;
 }
@@ -56,6 +59,10 @@ export function createServices(
   const sync = account
     ? new SyncService(store, jobs, settings, account.remoteJobStore(), account, ctx, device)
     : undefined;
+  const jobService = new JobService(jobs, settings, ctx, account);
+  const email = account
+    ? new EmailUpdateService(store, jobs, settings, jobService, account.emailInbox(), account, ctx)
+    : undefined;
   return {
     store,
     jobs,
@@ -63,7 +70,8 @@ export function createServices(
     runner,
     ...(account ? { account } : {}),
     ...(sync ? { sync } : {}),
-    jobService: new JobService(jobs, settings, ctx, account),
+    ...(email ? { email } : {}),
+    jobService,
     columns: new ColumnService(settings, jobs, ctx, account),
     capture: new CaptureService(runner),
     ready: migrate(store).then(() => undefined),

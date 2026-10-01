@@ -1,4 +1,14 @@
-import type { Activity, ExtractionMeta, Job, JobPatch, JobSource, Posting } from './job';
+import type {
+  Activity,
+  EmailNote,
+  ExtractionMeta,
+  Job,
+  JobInterview,
+  JobPatch,
+  JobSource,
+  Posting,
+  Suggestion,
+} from './job';
 import type { Stage } from './stage';
 
 /**
@@ -131,4 +141,98 @@ function stripUndefined<T extends object>(obj: T): Partial<T> {
 
 function isEqual(a: unknown, b: unknown): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
+}
+
+// ── Email updates (Advanced; ADR-0014) ─────────────────────────────────────
+
+export interface EmailUpdate {
+  /** Column to move to, with its rank there; omitted when the job stays put. */
+  to?: { stage: Stage; rank: number };
+  interview?: JobInterview;
+  email: EmailNote;
+}
+
+/**
+ * Applies an update from an email: a move and/or the next interview, with an
+ * `email_update` entry naming the email. Clears any pending suggestion,
+ * which this supersedes. Returns the job unchanged when nothing would change.
+ */
+export function applyEmailUpdate(job: Job, update: EmailUpdate, ctx: DomainContext): Job {
+  const moves = update.to !== undefined && update.to.stage.id !== job.stageId;
+  const interview =
+    update.interview && !isEqual(update.interview, job.interview) ? update.interview : undefined;
+  if (!moves && !interview) return job.suggestion ? clearSuggestion(job, ctx) : job;
+
+  const at = ctx.now().toISOString();
+  const entry: Activity = { id: ctx.newId(), at, type: 'email_update', email: update.email };
+  const { suggestion: _suggestion, ...rest } = job;
+  const next: Job = { ...rest, updatedAt: at };
+  if (moves && update.to) {
+    entry.fromStageId = job.stageId;
+    entry.toStageId = update.to.stage.id;
+    next.stageId = update.to.stage.id;
+    next.rank = update.to.rank;
+    if (update.to.stage.marksApplied && !job.appliedAt) next.appliedAt = at;
+  }
+  if (interview) {
+    next.interview = interview;
+    entry.setInterview = true;
+  }
+  next.activity = [...job.activity, entry];
+  return next;
+}
+
+/** Puts a lower-confidence update on the card for the user to decide. */
+export function setSuggestion(job: Job, suggestion: Suggestion, ctx: DomainContext): Job {
+  return { ...job, suggestion, updatedAt: ctx.now().toISOString() };
+}
+
+export function clearSuggestion(job: Job, ctx: DomainContext): Job {
+  if (!job.suggestion) return job;
+  const { suggestion: _suggestion, ...rest } = job;
+  return { ...rest, updatedAt: ctx.now().toISOString() };
+}
+
+/**
+ * Undoes an email update: moves the job back to where it was (when it's
+ * still where the update put it) and removes the interview it set. The entry
+ * stays in the timeline, marked undone. Returns the job unchanged when the
+ * entry can't be undone.
+ */
+export function undoEmailUpdate(
+  job: Job,
+  activityId: string,
+  back: { stage: Stage; rank: number } | undefined,
+  ctx: DomainContext,
+): Job {
+  const entry = job.activity.find((a) => a.id === activityId);
+  if (entry?.type !== 'email_update' || entry.undone) return job;
+  const at = ctx.now().toISOString();
+  let next: Job = {
+    ...job,
+    updatedAt: at,
+    activity: job.activity.map((a) => (a.id === activityId ? { ...a, undone: true } : a)),
+  };
+  if (entry.setInterview && next.interview) {
+    const { interview: _interview, ...rest } = next;
+    next = rest;
+  }
+  if (back && entry.toStageId === job.stageId && back.stage.id === entry.fromStageId) {
+    next = {
+      ...next,
+      stageId: back.stage.id,
+      rank: back.rank,
+      activity: [
+        ...next.activity,
+        {
+          id: ctx.newId(),
+          at,
+          type: 'stage_changed',
+          fromStageId: job.stageId,
+          toStageId: back.stage.id,
+        },
+      ],
+    };
+  }
+  return next;
 }

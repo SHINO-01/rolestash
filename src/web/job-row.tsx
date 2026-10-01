@@ -4,6 +4,8 @@ import type { Job } from '@/domain/job';
 import type { Stage } from '@/domain/stage';
 import { formatSalary } from '@/extraction';
 import { CompanyAvatar } from '@/ui/components/company-avatar';
+import { InterviewChip } from '@/features/email/interview';
+import { SuggestionChip } from '@/features/email/suggestion';
 import { STAGE_STYLE } from '@/ui/stage-style';
 
 /** A tappable job in the web board's lists: big enough for a thumb. */
@@ -38,6 +40,12 @@ export function JobRow({
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-semibold">{job.title}</span>
           <span className="text-muted block truncate text-xs">{detail}</span>
+          {job.suggestion || job.interview ? (
+            <span className="mt-1 flex flex-wrap gap-1">
+              <SuggestionChip job={job} />
+              <InterviewChip job={job} />
+            </span>
+          ) : null}
           {note || (showStage && stage) ? (
             <span className="mt-1 flex items-center gap-2 text-xs">
               {showStage && stage ? (

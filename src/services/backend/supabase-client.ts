@@ -122,6 +122,20 @@ const EntitlementRow = z.object({
   tier: z.enum(['pro', 'advanced']).nullish(),
 });
 
+const InboxResult = z.discriminatedUnion('ok', [
+  z.object({ ok: z.literal(true), address: z.email(), rotated_at: z.string().nullish() }),
+  z.object({ ok: z.literal(false), reason: z.literal('plan_required') }),
+]);
+
+export type InboxInfo =
+  { ok: true; address: string; rotatedAt?: string } | { ok: false; reason: 'plan_required' };
+
+export interface EmailEventRow {
+  id: number;
+  /** Validated by the caller with EmailEventSchema. */
+  event: unknown;
+}
+
 export class SupabaseClient {
   constructor(
     readonly config: BackendConfig,
@@ -392,6 +406,48 @@ export class SupabaseClient {
       updatedAt: new Date(r.updated_at).toISOString(),
       revision: r.revision,
     }));
+  }
+
+  // ── Email updates (ADR-0014) ─────────────────────────────────────────────
+
+  /** The forwarding address (Advanced), created on first call; or why there isn't one. */
+  async myInbox(accessToken: string, rotate = false): Promise<InboxInfo> {
+    const data = await this.rpc(rotate ? 'rotate_inbox' : 'my_inbox', accessToken, {});
+    const parsed = InboxResult.safeParse(data);
+    if (!parsed.success) throw new BackendError('server');
+    return parsed.data.ok
+      ? {
+          ok: true,
+          address: parsed.data.address,
+          ...(parsed.data.rotated_at
+            ? { rotatedAt: new Date(parsed.data.rotated_at).toISOString() }
+            : {}),
+        }
+      : { ok: false, reason: parsed.data.reason };
+  }
+
+  /** Extracted email events after `after` (by id), oldest first. */
+  async emailEvents(accessToken: string, after: number, limit: number): Promise<EmailEventRow[]> {
+    const { status, data } = await this.request(
+      `/rest/v1/email_events?select=id,event&id=gt.${String(after)}&order=id.asc&limit=${String(limit)}`,
+      { token: accessToken },
+    );
+    if (status === 401) throw new BackendError('session_expired', status);
+    if (status >= 300) this.fail(status, data);
+    const rows = z.array(z.object({ id: z.number().int(), event: z.unknown() })).safeParse(data);
+    if (!rows.success) throw new BackendError('server');
+    return rows.data;
+  }
+
+  /** Deletes processed events, so other devices don't apply them twice. */
+  async deleteEmailEvents(accessToken: string, ids: readonly number[]): Promise<void> {
+    if (ids.length === 0) return;
+    const { status, data } = await this.request(
+      `/rest/v1/email_events?id=in.(${ids.map((id) => String(Math.trunc(id))).join(',')})`,
+      { method: 'DELETE', token: accessToken },
+    );
+    if (status === 401) throw new BackendError('session_expired', status);
+    if (status >= 300) this.fail(status, data);
   }
 
   async deleteAccount(accessToken: string): Promise<void> {

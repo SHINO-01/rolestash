@@ -8,6 +8,21 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Email status updates, part 3** (Advanced; not switched on yet): your
+  board now updates itself from the job emails you forward.
+  - **Confident updates move the card for you**, with the email's subject
+    and sender shown as the reason and one-click **Undo** in the timeline.
+  - **Less certain ones** wait on the card as a suggestion to Accept or
+    Dismiss.
+  - **Emails that don't clearly match a job** go to **Unsorted updates**:
+    file each one under a job (later emails from that sender follow), or
+    add it as a new job.
+  - **Interviews show on the card:** the time in your time zone, **Join**
+    for video calls, **Open in Google Maps** for in-person ones, and **Add
+    to calendar**.
+  - **Setup in Account:** your forwarding address, step-by-step Gmail and
+    Outlook filter guides, and Gmail's confirmation code shown right there.
+    The same works on the web board.
 - **Email status updates, part 2** (Advanced; not switched on yet): your
   personal forwarding address at `in.rolestash.com`, which you can replace
   at any time.

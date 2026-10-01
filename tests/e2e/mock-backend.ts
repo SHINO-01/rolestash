@@ -26,8 +26,12 @@ export interface MockBackend {
   devices: { id: string; name: string; kind: string }[];
   synced: Map<string, { data: unknown; deleted: boolean; updated_at: string; revision: number }>;
   revision: number;
+  /** Email updates (ADR-0014): stored events, as the Email Worker writes them. */
+  emailEvents: { id: number; event: unknown }[];
   close(): Promise<void>;
 }
+
+export const E2E_INBOX = 'k3x9q2w7m4p8r5t6abcd@in.rolestash.com';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -96,6 +100,15 @@ function route(
           .sort(([, x], [, y]) => x.revision - y.revision)
           .map(([job_id, r]) => ({ job_id, ...r })),
       ];
+    case '/rest/v1/rpc/my_inbox':
+    case '/rest/v1/rpc/rotate_inbox':
+      return [200, { ok: true, address: E2E_INBOX, created_at: '2026-10-01T00:00:00Z' }];
+    case '/rest/v1/email_events':
+      if (method === 'DELETE') {
+        state.emailEvents = [];
+        return [204, ''];
+      }
+      return [200, state.emailEvents];
     case '/auth/v1/settings':
       return [200, { external: { email: true, google: true } }];
     case '/auth/v1/otp':
@@ -139,6 +152,7 @@ export async function startMockBackend(): Promise<MockBackend> {
     devices: [],
     synced: new Map(),
     revision: 0,
+    emailEvents: [],
     close: () => Promise.resolve(),
   };
 

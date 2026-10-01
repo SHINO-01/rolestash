@@ -29,7 +29,9 @@ export function isFinished(job: Job, stages: readonly Stage[]): boolean {
 /** When the job reached its current (finished) stage: its last move there, else creation. */
 export function finishedAt(job: Job): string {
   const moves = job.activity.filter(
-    (a) => a.type === 'stage_changed' && a.toStageId === job.stageId,
+    (a) =>
+      (a.type === 'stage_changed' || (a.type === 'email_update' && !a.undone)) &&
+      a.toStageId === job.stageId,
   );
   return moves.at(-1)?.at ?? job.createdAt;
 }

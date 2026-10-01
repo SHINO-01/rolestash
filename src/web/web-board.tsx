@@ -1,4 +1,4 @@
-import { CalendarCheck, Columns3, Plus, UserRound, WifiOff } from 'lucide-react';
+import { CalendarCheck, Columns3, Inbox, Plus, UserRound, WifiOff } from 'lucide-react';
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react';
 import type { AccountService } from '@/services/account-service';
 import { backendErrorMessage } from '@/features/account/plan-copy';
@@ -9,6 +9,8 @@ import { Logo } from '@/ui/components/misc';
 import { useAccount } from '@/ui/hooks/account';
 import { useServices } from '@/ui/hooks/services';
 import { useAutoSync, useSyncState } from '@/ui/hooks/sync';
+import { useAutoEmailUpdates, useEmailState } from '@/ui/hooks/email';
+import { UnsortedDialog } from '@/features/email/unsorted-dialog';
 import { relativeTime } from '@/ui/format';
 import { AccountView } from './account-view';
 import { BoardView } from './board-view';
@@ -290,6 +292,10 @@ const online = {
 
 function WebApp() {
   useAutoSync();
+  // Only Advanced reaches the web board, and email updates are Advanced.
+  useAutoEmailUpdates('advanced');
+  const unsorted = useEmailState()?.unsorted.length ?? 0;
+  const [sorting, setSorting] = useState(false);
   const sync = useSyncState();
   const isOnline = useSyncExternalStore(online.subscribe, online.get);
   const [tab, setTab] = useState<Tab>('today');
@@ -307,6 +313,15 @@ function WebApp() {
     <div className="bg-canvas flex min-h-dvh flex-col">
       <header className="bg-canvas/90 border-line sticky top-0 z-10 flex h-14 items-center justify-between border-b px-4 backdrop-blur">
         <Logo />
+        {unsorted > 0 ? (
+          <button
+            type="button"
+            onClick={() => setSorting(true)}
+            className="text-accent flex items-center gap-1 text-xs font-medium"
+          >
+            <Inbox className="size-4" /> Unsorted ({unsorted})
+          </button>
+        ) : null}
         <span className="text-subtle flex items-center gap-1.5 text-xs">
           {!isOnline ? (
             <>
@@ -364,6 +379,7 @@ function WebApp() {
       </nav>
 
       <JobSheet id={openId} onClose={() => setOpenId(undefined)} />
+      <UnsortedDialog open={sorting} onClose={() => setSorting(false)} />
       <QuickAdd open={adding} onClose={() => setAdding(false)} onAdded={setOpenId} />
     </div>
   );

@@ -9,6 +9,9 @@ import { Chip } from '@/ui/components/chip';
 import { CompanyAvatar } from '@/ui/components/company-avatar';
 import { PriorityBadge } from '@/ui/components/misc';
 import { daysUntilClose } from '@/domain/reminders';
+import { isUpcoming } from '@/domain/interview';
+import { InterviewChip } from '@/features/email/interview';
+import { SuggestionChip } from '@/features/email/suggestion';
 import { daysUntil, relativeTime, WORKPLACE_LABEL } from '@/ui/format';
 
 export function SortableJobCard({ job, onOpen }: { job: Job; onOpen: (id: string) => void }) {
@@ -69,13 +72,17 @@ export const JobCard = memo(function JobCard({
         </div>
       </div>
 
-      {job.location ||
+      {job.suggestion ||
+      (job.interview && (isUpcoming(job.interview, new Date()) || !job.interview.start)) ||
+      job.location ||
       job.workplaceType ||
       salary ||
       closesIn !== undefined ||
       followUpIn !== undefined ||
       job.tags.length ? (
         <div className="mt-2.5 flex flex-wrap gap-1">
+          <SuggestionChip job={job} />
+          <InterviewChip job={job} />
           {job.location ? (
             <Chip
               icon={<MapPin className="size-3 shrink-0" />}

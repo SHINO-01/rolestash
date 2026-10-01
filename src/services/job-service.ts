@@ -1,12 +1,24 @@
 import {
+  applyEmailUpdate,
   archiveJob,
+  clearSuggestion,
   createJob,
   moveJob,
+  setSuggestion,
   unarchiveJob,
+  undoEmailUpdate,
   updateJob,
   type DomainContext,
 } from '@/domain/job-factory';
-import { MANUAL_URL_HOST, type Job, type JobId, type JobPatch, type Posting } from '@/domain/job';
+import {
+  MANUAL_URL_HOST,
+  type EmailNote,
+  type Job,
+  type JobId,
+  type JobInterview,
+  type JobPatch,
+  type Posting,
+} from '@/domain/job';
 import {
   checkJobLimit,
   countActiveJobs,
@@ -228,6 +240,83 @@ export class JobService {
   /** Re-inserts a deleted job exactly as it was (undo). */
   async restore(job: Job): Promise<Job> {
     return this.jobs.save(job);
+  }
+
+  // ── Email updates (Advanced; ADR-0014) ───────────────────────────────────
+
+  /**
+   * Applies an update from an email: moves the job (to the top of its new
+   * column) and/or sets its next interview, as one undoable timeline entry.
+   */
+  async applyEmailUpdate(
+    jobId: JobId,
+    update: { toStageId?: StageId; interview?: JobInterview; email: EmailNote },
+  ): Promise<Job> {
+    const job = await this.require(jobId);
+    const stage = update.toStageId ? await this.resolveStage(update.toStageId, true) : undefined;
+    const next = applyEmailUpdate(
+      job,
+      {
+        ...(stage ? { to: { stage, rank: await this.topRank(stage.id) } } : {}),
+        ...(update.interview ? { interview: update.interview } : {}),
+        email: update.email,
+      },
+      this.ctx,
+    );
+    return next === job ? job : this.jobs.save(next);
+  }
+
+  /** Leaves a lower-confidence update on the card for the user to decide. */
+  async suggestEmailUpdate(
+    jobId: JobId,
+    suggestion: { toStageId?: StageId; interview?: JobInterview; email: EmailNote },
+  ): Promise<Job> {
+    const job = await this.require(jobId);
+    return this.jobs.save(
+      setSuggestion(
+        job,
+        { ...suggestion, id: this.ctx.newId(), createdAt: this.ctx.now().toISOString() },
+        this.ctx,
+      ),
+    );
+  }
+
+  async acceptSuggestion(jobId: JobId): Promise<Job> {
+    const job = await this.require(jobId);
+    const suggestion = job.suggestion;
+    if (!suggestion) return job;
+    const settings = await this.settings.get();
+    // The column may have been removed since; then only the interview applies.
+    const toStageId =
+      suggestion.toStageId && findStage(settings.stages, suggestion.toStageId)
+        ? suggestion.toStageId
+        : undefined;
+    return this.applyEmailUpdate(jobId, {
+      ...(toStageId ? { toStageId } : {}),
+      ...(suggestion.interview ? { interview: suggestion.interview } : {}),
+      email: suggestion.email,
+    });
+  }
+
+  async dismissSuggestion(jobId: JobId): Promise<Job> {
+    const job = await this.require(jobId);
+    const next = clearSuggestion(job, this.ctx);
+    return next === job ? job : this.jobs.save(next);
+  }
+
+  /** Undoes an email update; the job goes back to the top of its old column. */
+  async undoEmailUpdate(jobId: JobId, activityId: string): Promise<Job> {
+    const job = await this.require(jobId);
+    const entry = job.activity.find((a) => a.id === activityId);
+    const settings = await this.settings.get();
+    const stage = entry?.fromStageId ? findStage(settings.stages, entry.fromStageId) : undefined;
+    const next = undoEmailUpdate(
+      job,
+      activityId,
+      stage ? { stage, rank: await this.topRank(stage.id) } : undefined,
+      this.ctx,
+    );
+    return next === job ? job : this.jobs.save(next);
   }
 
   private async assertCanAdd(): Promise<void> {

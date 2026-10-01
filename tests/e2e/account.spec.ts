@@ -1,6 +1,7 @@
 import type { Worker } from '@playwright/test';
 import { expect, test } from './fixtures';
-import { E2E_CODE, MOCK_BACKEND } from './mock-backend';
+import { analyzeEmail } from '../../src/email/analyze';
+import { E2E_CODE, E2E_INBOX, MOCK_BACKEND } from './mock-backend';
 import { serveBoard } from '../web/serve-board';
 
 /**
@@ -314,6 +315,107 @@ test.describe('accounts', () => {
     } finally {
       await board.close();
     }
+  });
+
+  test('email updates move the card, show the interview, undo, and sort the rest', async ({
+    context,
+    worker,
+    extensionId,
+    backend,
+  }) => {
+    const advanced = {
+      status: 'active',
+      tier: 'advanced',
+      currentPeriodEnd: new Date(Date.now() + 20 * 86_400_000).toISOString(),
+      hasBillingAccount: false,
+    };
+    await seedSignedIn(worker, advanced);
+    backend.entitlement = {
+      status: 'active',
+      tier: 'advanced',
+      trial_ends_at: null,
+      current_period_end: advanced.currentPeriodEnd,
+      provider_customer_id: null,
+    };
+    const posting = 'https://job-boards.greenhouse.io/northwindlabs/jobs/4012345';
+    await worker.evaluate(async (url) => {
+      const now = new Date().toISOString();
+      await chrome.storage.local.set({
+        'job:nw': {
+          id: 'nw',
+          title: 'Data Analyst',
+          company: 'Northwind Labs',
+          employmentTypes: [],
+          stageId: 'applied',
+          rank: 1024,
+          priority: 0,
+          tags: [],
+          notes: '',
+          activity: [],
+          createdAt: now,
+          updatedAt: now,
+          appliedAt: now,
+          source: {
+            url,
+            originalUrl: url,
+            siteId: 'greenhouse',
+            siteName: 'Greenhouse',
+            capturedAt: now,
+          },
+        },
+      });
+    }, posting);
+    // What the Email Worker would have stored: an interview invite for the
+    // Northwind job, and a rejection that matches no job on this board.
+    backend.emailEvents = [
+      {
+        id: 1,
+        event: analyzeEmail({
+          from: 'Jordan Lee <jordan@northwindlabs.example>',
+          subject: 'Interview invitation - Data Analyst',
+          date: new Date().toISOString(),
+          html: `<p>We would like to invite you to a video interview on Thursday 9 October 2031 at 10am AEST.</p><p><a href="https://us02web.zoom.us/j/81234567890">Join Zoom</a> <a href="${posting}">The role</a></p>`,
+        }),
+      },
+      {
+        id: 2,
+        event: analyzeEmail({
+          from: 'Quokka Health HR <hr@quokkahealth.example>',
+          subject: 'Product Designer application',
+          date: new Date().toISOString(),
+          text: 'Dear Sam, we are unable to offer you a position at this time.',
+        }),
+      },
+    ];
+
+    const page = await context.newPage();
+    await page.goto(`chrome-extension://${extensionId}/board.html#job=nw`);
+    const drawer = page.getByRole('dialog', { name: 'Data Analyst details' });
+    await expect(drawer.getByLabel('Column')).toHaveValue('interviewing');
+    await expect(drawer.getByRole('link', { name: 'Join' })).toHaveAttribute(
+      'href',
+      'https://us02web.zoom.us/j/81234567890',
+    );
+    await expect(drawer.getByRole('button', { name: 'Add to calendar' })).toBeVisible();
+    await expect(drawer.getByText('“Interview invitation - Data Analyst”')).toBeVisible();
+    // Processed events are deleted from the server.
+    await expect.poll(() => backend.emailEvents.length).toBe(0);
+
+    await drawer.getByRole('button', { name: 'Undo' }).click();
+    await expect(drawer.getByLabel('Column')).toHaveValue('applied');
+    await expect(drawer.getByText('Undone')).toBeVisible();
+    await drawer.getByRole('button', { name: 'Close' }).click();
+
+    await page.getByRole('button', { name: 'Unsorted (1)' }).click();
+    const unsorted = page.getByRole('dialog', { name: 'Unsorted updates' });
+    await expect(unsorted).toContainText('Rejection');
+    await unsorted.getByRole('button', { name: 'Add this job' }).click();
+    await expect(unsorted).toContainText('All sorted');
+    await unsorted.getByRole('button', { name: 'Close' }).click();
+    await expect(page.getByRole('button', { name: 'Product Designer application' })).toBeVisible();
+
+    await page.goto(`chrome-extension://${extensionId}/board.html#account`);
+    await expect(page.getByLabel('Your forwarding address')).toHaveText(E2E_INBOX);
   });
 
   test('deleting the account keeps jobs on this device', async ({

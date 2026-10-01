@@ -1,5 +1,10 @@
 import clsx from 'clsx';
-import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react';
+import {
+  forwardRef,
+  type AnchorHTMLAttributes,
+  type ButtonHTMLAttributes,
+  type ReactNode,
+} from 'react';
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
 type Size = 'sm' | 'md';
@@ -22,6 +27,9 @@ const SIZES: Record<Size, string> = {
   md: 'h-9 px-3.5 text-sm gap-2 rounded-lg',
 };
 
+const BASE =
+  'inline-flex shrink-0 items-center justify-center font-medium whitespace-nowrap transition-colors select-none disabled:pointer-events-none disabled:opacity-50';
+
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
   {
     variant = 'secondary',
@@ -41,12 +49,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       ref={ref}
       type={type}
       disabled={disabled ?? loading}
-      className={clsx(
-        'inline-flex shrink-0 items-center justify-center font-medium whitespace-nowrap transition-colors select-none disabled:pointer-events-none disabled:opacity-50',
-        VARIANTS[variant],
-        SIZES[size],
-        className,
-      )}
+      className={clsx(BASE, VARIANTS[variant], SIZES[size], className)}
       {...rest}
     >
       {loading ? <Spinner /> : icon}
@@ -54,6 +57,35 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
     </button>
   );
 });
+
+export interface ButtonLinkProps extends AnchorHTMLAttributes<HTMLAnchorElement> {
+  href: string;
+  variant?: Variant;
+  size?: Size;
+  icon?: ReactNode;
+}
+
+/** A link that looks like a Button; external links open in a new tab without a referrer. */
+export function ButtonLink({
+  variant = 'secondary',
+  size = 'md',
+  icon,
+  className,
+  children,
+  ...rest
+}: ButtonLinkProps) {
+  return (
+    <a
+      target="_blank"
+      rel="noopener noreferrer"
+      className={clsx(BASE, VARIANTS[variant], SIZES[size], className)}
+      {...rest}
+    >
+      {icon}
+      {children}
+    </a>
+  );
+}
 
 export interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   label: string;

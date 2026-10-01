@@ -14,7 +14,8 @@ import { WEB_HANDOFF_MESSAGE, type WebHandoffReply } from '@/services/web-handof
  *  - Right-click "Track this job"   → capture + save straight to the board
  *  - Alt+Shift+J                    → same
  *  - Right-click the toolbar icon → "Open board"
- *  - Every 15 minutes             → follow-up reminders, closing-soon digest (ADR-0015)
+ *  - Every 15 minutes             → follow-up reminders, closing-soon digest (ADR-0015),
+ *                                   email updates (ADR-0014) and sync (ADR-0016)
  *  - The web board asks to sign in → a single-use token for this account (ADR-0017)
  */
 
@@ -60,16 +61,22 @@ async function runReminders(): Promise<void> {
   ).run();
 }
 
+async function syncAndEmail(): Promise<void> {
+  const services = getServices();
+  await services.ready;
+  await services.email?.run().catch(() => undefined);
+  await services.sync?.sync().catch(() => undefined);
+}
+
 export default defineBackground(() => {
   browser.runtime.onStartup.addListener(() => void ensureReminderAlarm());
   browser.alarms.onAlarm.addListener((alarm) => {
     if (alarm.name !== ALARM_REMINDERS) return;
     runReminders().catch((error: unknown) => console.error('[rolestash] reminders failed', error));
-    // The same 15-minute tick keeps synced devices in step (ADR-0016). The
-    // board shows sync problems, so failures are not logged here.
-    getServices()
-      .sync?.sync()
-      .catch(() => undefined);
+    // The same 15-minute tick applies email updates (ADR-0014) and then keeps
+    // synced devices in step (ADR-0016), so those changes go out at once. The
+    // board shows problems with either, so failures are not logged here.
+    void syncAndEmail();
   });
   // The notifications API exists only once the optional permission is granted.
   listenForNotificationClicks();

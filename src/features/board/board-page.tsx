@@ -4,6 +4,7 @@ import {
   Columns3,
   History,
   FileSpreadsheet,
+  Inbox,
   Keyboard,
   Monitor,
   Moon,
@@ -23,6 +24,8 @@ import { jobsToCsv } from '@/storage/csv-export';
 import { requestNotifications } from '@/platform/notifications';
 import { AccountDialog } from '@/features/account/account-dialog';
 import { PlanBanner } from '@/features/account/plan-banner';
+import { UnsortedDialog } from '@/features/email/unsorted-dialog';
+import { useAutoEmailUpdates, useEmailState } from '@/ui/hooks/email';
 import { planChip } from '@/features/account/plan-copy';
 import { Button, IconButton, Spinner } from '@/ui/components/button';
 import { Menu } from '@/ui/components/menu';
@@ -57,15 +60,38 @@ export function BoardPage() {
   const [openJobId, setOpenJobId] = useState<string | undefined>(readJobFromHash);
   const { account, state: accountState } = useAccount();
   useAutoSync();
-  const [dialog, setDialog] = useState<'add' | 'import' | 'account' | 'history' | 'columns' | null>(
-    () => (location.hash === '#account' ? 'account' : null),
-  );
+  const [dialog, setDialog] = useState<
+    'add' | 'import' | 'account' | 'history' | 'columns' | 'unsorted' | null
+  >(() => (location.hash === '#account' ? 'account' : null));
   const searchRef = useRef<HTMLInputElement>(null);
 
   // History (ADR-0013): Free shows 30 days of finished and archived jobs.
   // Without accounts in the build, nothing is limited.
   const plan = account ? (accountState?.plan.plan ?? 'free') : undefined;
   const historyFrom = useMemo(() => historyStart(plan, new Date()), [plan]);
+
+  // Email updates (Advanced; ADR-0014): apply new ones while the board is open.
+  const emailState = useEmailState();
+  const unsortedCount = emailState?.unsorted.length ?? 0;
+  useAutoEmailUpdates(
+    plan,
+    useCallback(
+      (run: { applied: number; suggested: number; unsorted: number }) => {
+        const parts = [
+          run.applied ? `${String(run.applied)} updated` : undefined,
+          run.suggested ? `${String(run.suggested)} to review` : undefined,
+          run.unsorted ? `${String(run.unsorted)} unsorted` : undefined,
+        ].filter(Boolean);
+        toast({
+          message: `From your email: ${parts.join(', ')}`,
+          ...(run.unsorted
+            ? { action: { label: 'Sort', onClick: () => setDialog('unsorted') } }
+            : {}),
+        });
+      },
+      [toast],
+    ),
+  );
   const onBoard = useMemo(() => jobs.filter((j) => !j.archivedAt), [jobs]);
   const board = useMemo(
     () => boardView(jobs, settings.stages, historyFrom),
@@ -159,6 +185,15 @@ export function BoardPage() {
         </div>
         <div className="flex-1" />
         <BoardStats jobs={onBoard} stages={settings.stages} />
+        {unsortedCount > 0 ? (
+          <Button
+            variant="ghost"
+            icon={<Inbox className="size-4" />}
+            onClick={() => setDialog('unsorted')}
+          >
+            Unsorted ({unsortedCount})
+          </Button>
+        ) : null}
         <Button
           variant="ghost"
           icon={<History className="size-4" />}
@@ -315,6 +350,7 @@ export function BoardPage() {
         onSeePlans={account ? () => setDialog('account') : undefined}
       />
       <ImportDialog open={dialog === 'import'} onClose={() => setDialog(null)} />
+      <UnsortedDialog open={dialog === 'unsorted'} onClose={() => setDialog(null)} />
       {account ? (
         <AccountDialog
           open={dialog === 'account'}

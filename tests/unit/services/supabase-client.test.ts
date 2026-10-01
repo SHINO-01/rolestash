@@ -206,3 +206,89 @@ describe('SupabaseClient sync calls (ADR-0016)', () => {
     expect(await code(c.removeDevice('tok', D))).toBe('server');
   });
 });
+
+describe('SupabaseClient email updates (ADR-0014)', () => {
+  it('gets and rotates the forwarding address', async () => {
+    const { c, calls } = client({
+      [`POST ${SB}/rest/v1/rpc/my_inbox`]: {
+        status: 200,
+        body: {
+          ok: true,
+          address: 'k3x9q2w7m4p8r5t6abcd@in.rolestash.com',
+          created_at: 'x',
+          rotated_at: null,
+        },
+      },
+      [`POST ${SB}/rest/v1/rpc/rotate_inbox`]: {
+        status: 200,
+        body: {
+          ok: true,
+          address: 'newtokennewtokennewt@in.rolestash.com',
+          rotated_at: '2026-10-01T00:00:00+00:00',
+        },
+      },
+    });
+    expect(await c.myInbox('tok')).toEqual({
+      ok: true,
+      address: 'k3x9q2w7m4p8r5t6abcd@in.rolestash.com',
+    });
+    expect(await c.myInbox('tok', true)).toEqual({
+      ok: true,
+      address: 'newtokennewtokennewt@in.rolestash.com',
+      rotatedAt: '2026-10-01T00:00:00.000Z',
+    });
+    expect(calls[0]?.headers.Authorization).toBe('Bearer tok');
+  });
+
+  it('reports a plan that has no address, and rejects odd answers', async () => {
+    const { c } = client({
+      [`POST ${SB}/rest/v1/rpc/my_inbox`]: {
+        status: 200,
+        body: { ok: false, reason: 'plan_required' },
+      },
+      [`POST ${SB}/rest/v1/rpc/rotate_inbox`]: {
+        status: 200,
+        body: { ok: true, address: 'not an email' },
+      },
+    });
+    expect(await c.myInbox('tok')).toEqual({ ok: false, reason: 'plan_required' });
+    expect(await code(c.myInbox('tok', true))).toBe('server');
+  });
+
+  it('pages events by id and deletes processed ones', async () => {
+    const { c, calls } = client({
+      [`GET ${SB}/rest/v1/email_events`]: {
+        status: 200,
+        body: [{ id: 7, event: { intent: 'other' } }],
+      },
+      [`DELETE ${SB}/rest/v1/email_events`]: { status: 204, body: null },
+    });
+    expect(await c.emailEvents('tok', 6, 100)).toEqual([{ id: 7, event: { intent: 'other' } }]);
+    expect(calls[0]?.url).toBe(
+      `${SB}/rest/v1/email_events?select=id,event&id=gt.6&order=id.asc&limit=100`,
+    );
+    await c.deleteEmailEvents('tok', [7, 8]);
+    expect(calls[1]?.url).toBe(`${SB}/rest/v1/email_events?id=in.(7,8)`);
+    await c.deleteEmailEvents('tok', []);
+    expect(calls).toHaveLength(2);
+  });
+
+  it('maps errors on event calls', async () => {
+    const { c } = client({
+      [`GET ${SB}/rest/v1/email_events`]: { status: 401, body: {} },
+      [`DELETE ${SB}/rest/v1/email_events`]: { status: 401, body: {} },
+    });
+    expect(await code(c.emailEvents('tok', 0, 10))).toBe('session_expired');
+    expect(await code(c.deleteEmailEvents('tok', [1]))).toBe('session_expired');
+    const bad = client({
+      [`GET ${SB}/rest/v1/email_events`]: { status: 200, body: [{ id: 'x' }] },
+    });
+    expect(await code(bad.c.emailEvents('tok', 0, 10))).toBe('server');
+    const down = client({
+      [`GET ${SB}/rest/v1/email_events`]: { status: 500, body: {} },
+      [`DELETE ${SB}/rest/v1/email_events`]: { status: 500, body: {} },
+    });
+    expect(await code(down.c.emailEvents('tok', 0, 10))).toBe('server');
+    expect(await code(down.c.deleteEmailEvents('tok', [1]))).toBe('server');
+  });
+});

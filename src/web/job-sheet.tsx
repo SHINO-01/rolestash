@@ -12,6 +12,8 @@ import { CompanyAvatar } from '@/ui/components/company-avatar';
 import { Select, Textarea } from '@/ui/components/field';
 import { Drawer } from '@/ui/components/overlay';
 import { useToast } from '@/ui/components/toast';
+import { InterviewPanel } from '@/features/email/interview';
+import { SuggestionBanner } from '@/features/email/suggestion';
 import { useJobs, useLiveJobs, useServices, useSettings } from '@/ui/hooks/services';
 import { formatDate, hasPostingUrl, relativeTime, WORKPLACE_LABEL } from '@/ui/format';
 
@@ -77,6 +79,8 @@ function Sheet({ job, onClose }: { job: Job; onClose: () => void }) {
       </div>
 
       <div className="flex-1 space-y-6 overflow-y-auto px-5 py-5">
+        {job.suggestion ? <SuggestionBanner job={job} stages={settings.stages} /> : null}
+        {job.interview ? <InterviewPanel job={job} /> : null}
         <label className="flex flex-col gap-1.5">
           <span className="text-subtle text-xs font-semibold tracking-wide uppercase">Column</span>
           <Select

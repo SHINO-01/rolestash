@@ -57,7 +57,7 @@
     <main id="main" class="wrap">
       <article class="prose">
         <h1>Privacy policy</h1>
-        <p class="updated">Last updated: 1 October 2026</p>
+        <p class="updated">Last updated: 2 October 2026</p>
         <div class="callout">
           <strong>In short:</strong> the free plan keeps everything in your browser and sends
           nothing to us. If you create an account (for Pro or Advanced), we store only what's needed
@@ -165,9 +165,23 @@
             rejection or offer) using plain rules, no AI.
           </li>
           <li>
-            <strong>What we keep:</strong> the extracted update: the job it matched, the outcome,
-            any interview time, meeting link and location, and the email's subject, sender and date
-            so you can see why a card moved. We do not keep the email itself.
+            <strong>What we keep on our server, briefly:</strong> the extracted update, never the
+            email itself. That is the outcome and how sure the rules were; the email's subject,
+            sender, date and message IDs (so replies in the same thread follow); the company, job
+            title, job number and posting links it mentions; any interview time, time zone,
+            location, meeting or booking link; and, for Gmail's forwarding check, the confirmation
+            code. Your board fetches it and then we delete it; anything not fetched is deleted after
+            90 days.
+          </li>
+          <li>
+            <strong>Matching happens on your device:</strong> the extension or web board decides
+            which of your jobs an update belongs to. The card keeps the outcome, any interview, and
+            the email's subject, sender and date as the reason, so you can see why it moved and undo
+            it. If you use sync, these travel with your board like the rest of it.
+          </li>
+          <li>
+            <strong>Limits:</strong> each address accepts a limited number of emails per hour and
+            per day, and mail to an unknown or replaced address is discarded unread.
           </li>
           <li>
             <strong>Shared learning:</strong> when you confirm or correct an update, we may add
@@ -178,8 +192,9 @@
             several different accounts confirm it. You can turn this off in the extension.
           </li>
           <li>
-            <strong>Stopping it:</strong> stop forwarding, rotate or turn off the address in the
-            extension, or delete your account. Updates are deleted with your account.
+            <strong>Stopping it:</strong> delete your mail filter, get a new address in Account (the
+            old one stops working at once), or delete your account. Updates are deleted with your
+            account.
           </li>
         </ul>
 
@@ -296,6 +311,10 @@
           <li>
             Account and synced data: while your account is open. When you delete your account, we
             delete it from our systems within 30 days.
+          </li>
+          <li>
+            Automatic status updates: on our server until your board fetches them, and 90 days at
+            most.
           </li>
           <li>Paddle keeps transaction records for as long as tax law requires.</li>
           <li>
