@@ -87,6 +87,26 @@ npm run site:og
 Chat apps cache previews, so a changed image can take days to show for a
 link that was already shared.
 
+## Scripts Cloudflare injects
+
+Checked live on 2026-10-01: Cloudflare adds two scripts to our HTML at the
+edge.
+
+| Script           | What it is                                                                                               | Effect                                                     |
+| ---------------- | -------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| An inline script | **JavaScript Detections** (bot management), which would load `/cdn-cgi/challenge-platform/…/jsd/main.js` | Blocked by our CSP (no inline scripts), so it never runs   |
+| `beacon.min.js`  | **Web Analytics (RUM)**, from `static.cloudflareinsights.com`, injected only for real browsers           | Blocked by CSP before any request is made; no data is sent |
+
+**Both are inert**, so "no analytics" stays true. The only symptom is two
+CSP errors in the browser console.
+
+- **Test:** _keeps scripts Cloudflare injects inert_ in
+  `tests/unit/site/site.test.ts` fails if any page's CSP ever allows inline
+  scripts, eval or Cloudflare's script hosts.
+- **Removing them at the source** (optional, cosmetic):
+  - turn off Web Analytics / RUM for the `rolestash.com` zone;
+  - turn off JavaScript Detections, if the plan offers the toggle.
+
 ## Preview locally
 
 ```bash

@@ -167,6 +167,28 @@ describe('rolestash.com static site', () => {
       expect(existsSync(resolveInternal(path ?? '')), path).toBe(true);
   });
 
+  it('keeps scripts Cloudflare injects (JS detections, Web Analytics beacon) inert', () => {
+    // Cloudflare can add an inline bot-detection script and a
+    // static.cloudflareinsights.com beacon to our HTML at the edge. Our CSPs
+    // block both, which is what keeps "no analytics" true. Never allow inline
+    // scripts, eval, or Cloudflare's script hosts on any page.
+    const headers = readFileSync(join(SITE, '_headers'), 'utf8');
+    const policies = headers
+      .split('\n')
+      .filter((line) => /^\s+Content-Security-Policy:/.test(line))
+      .map((line) => line.replace(/^\s+Content-Security-Policy:\s*/, ''));
+    expect(policies.length).toBeGreaterThanOrEqual(3);
+    for (const policy of policies) {
+      const scriptSrc =
+        /script-src([^;]*)/.exec(policy)?.[1] ?? /default-src([^;]*)/.exec(policy)?.[1];
+      expect(scriptSrc, policy).toBeDefined();
+      expect(scriptSrc).not.toMatch(
+        /'unsafe-inline'|'unsafe-eval'|cloudflareinsights|\*(?!\.paddle\.com)|https:(?!\/\/)/,
+      );
+      expect(policy).not.toMatch(/cloudflareinsights|cdn-cgi/);
+    }
+  });
+
   it('keeps its security headers', () => {
     const headers = readFileSync(join(SITE, '_headers'), 'utf8');
     expect(headers).toContain("default-src 'none'");
