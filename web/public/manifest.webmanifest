@@ -1,0 +1,13 @@
+{
+  "name": "Rolestash board",
+  "short_name": "Rolestash",
+  "description": "Your Rolestash job board on your phone.",
+  "start_url": "/board/",
+  "scope": "/board/",
+  "display": "standalone",
+  "background_color": "#fbfaf7",
+  "theme_color": "#0b5d52",
+  "icons": [
+    { "src": "/assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

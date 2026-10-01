@@ -12,3 +12,6 @@ stats.html
 !.env.e2e
 !.env.staging
 secrets.env
+
+# Built by `npm run build:web` (CI builds it before deploying the site).
+site/board/

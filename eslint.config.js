@@ -6,7 +6,15 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
-    ignores: ['.output', '.wxt', 'coverage', 'node_modules', 'playwright-report', 'test-results'],
+    ignores: [
+      '.output',
+      '.wxt',
+      'coverage',
+      'node_modules',
+      'playwright-report',
+      'test-results',
+      'site/board', // built web board (npm run build:web)
+    ],
   },
   js.configs.recommended,
   ...tseslint.configs.strictTypeChecked,

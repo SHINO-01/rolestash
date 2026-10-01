@@ -51,6 +51,17 @@ tested commit (docs/guides/ci-cd.md).
 - Screenshots use fictional companies only. Never show real employers or
   job boards' branding.
 
+## The web board (`/board/`)
+
+A built app, not a hand-written page (ADR-0017):
+
+- **Source:** `src/web/` and `web/`.
+- **Build:** `npm run build:web` writes to `site/board/` (gitignored). CI
+  builds it before every deploy.
+- **CSP:** its own, on `/board/*` in `_headers`, connecting only to our
+  Supabase project. A site test checks the CSP.
+- **Tests:** `npm run build:web:e2e && npx playwright test --project=web`.
+
 ## Layout and styles
 
 `site/assets/site.css` holds everything, organised by section. Colours are

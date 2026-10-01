@@ -1,5 +1,8 @@
 @import 'tailwindcss';
 @import '@fontsource-variable/inter';
+/* Scan all of src/ for classes, whichever build includes this file (the
+   extension, or the web board built from web/). */
+@source '..';
 
 /*
  * Design tokens. Components use semantic names (bg-surface, text-muted …) so

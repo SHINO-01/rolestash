@@ -15,9 +15,13 @@ const HEX_TO_ID = 'abcdefghijklmnop';
 
 const SITE = resolve(import.meta.dirname, '../../../site');
 
+/** site/board/ is the built web board (ADR-0017), not a hand-written page. */
+const BUILT = new Set([join(SITE, 'board')]);
+
 function walk(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
     const path = join(dir, name);
+    if (BUILT.has(path)) return [];
     return statSync(path).isDirectory() ? walk(path) : [path];
   });
 }
@@ -187,6 +191,20 @@ describe('rolestash.com static site', () => {
       );
       expect(policy).not.toMatch(/cloudflareinsights|cdn-cgi/);
     }
+  });
+
+  it('gives the web board its own strict CSP, talking only to our Supabase project', () => {
+    const headers = readFileSync(join(SITE, '_headers'), 'utf8');
+    const board = headers.slice(headers.indexOf('/board/*'));
+    expect(board).toMatch(/^\s+! Content-Security-Policy$/m);
+    const csp = /Content-Security-Policy: (.+)$/m.exec(board)?.[1] ?? '';
+    expect(csp).toContain("default-src 'none'");
+    expect(csp).toContain("script-src 'self';");
+    expect(csp).toMatch(/connect-src https:\/\/[a-z]+\.supabase\.co;/);
+    expect(csp).toContain("frame-ancestors 'none'");
+    const env = readFileSync(resolve(SITE, '../.env.staging'), 'utf8');
+    const url = /^WXT_SUPABASE_URL=(.+)$/m.exec(env)?.[1]?.trim() ?? 'missing';
+    expect(csp).toContain(`connect-src ${url};`);
   });
 
   it('keeps its security headers', () => {

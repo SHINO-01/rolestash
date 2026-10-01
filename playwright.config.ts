@@ -18,5 +18,7 @@ export default defineConfig<Options>({
   projects: [
     { name: 'e2e', use: { extensionDir: '.output/chrome-mv3-e2e' } },
     { name: 'smoke', grep: /@smoke/, use: { extensionDir: '.output/chrome-mv3' } },
+    // The web board (ADR-0017) in a plain browser: `npm run build:web:e2e` first.
+    { name: 'web', testDir: 'tests/web', use: { channel: 'chromium' } },
   ],
 });

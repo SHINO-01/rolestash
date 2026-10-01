@@ -8,6 +8,14 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Web board for your phone** (Advanced) at rolestash.com/board/:
+  - **Today:** follow-ups due, saved jobs closing soon, and where
+    everything stands.
+  - **Board and job details:** browse by column; move jobs, set
+    follow-ups, edit notes, archive.
+  - **Quick add:** for jobs you hear about away from your computer.
+  - It syncs with your other devices and works offline. Sign in with an
+    emailed code. Signing out clears the browser (ADR-0017).
 - **Sync across devices** (Pro: 3 computers; Advanced: 5 devices):
   - Turn it on in _Account_, and your jobs and columns stay in step
     between browsers. Your theme stays per device.

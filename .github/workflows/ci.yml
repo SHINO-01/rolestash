@@ -47,6 +47,8 @@ jobs:
       - run: npm run typecheck
       - name: Production build
         run: npm run build
+      - name: Build the web board (ADR-0017)
+        run: npm run build:web
 
   test:
     name: Unit tests & coverage
@@ -155,6 +157,10 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: .nvmrc
+      # The web board (ADR-0017) is built into site/board/ before deploying.
+      - run: npm ci
+      - name: Build the web board
+        run: npm run build:web
       # site/ is served by an assets-only Worker (infra/site.wrangler.jsonc).
       # Runs on every promoted push: wrangler uploads only changed files, and
       # deploying always means a cancelled run can never leave the site behind

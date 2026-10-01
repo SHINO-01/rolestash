@@ -70,8 +70,8 @@ feature on the pricing page is built. The site already advertises them all.
   - a `SyncService` behind a `RemoteJobStore` port;
   - last writer wins per job, tombstones for deletes, compressed
     descriptions.
-- **Web board:** a static board on rolestash.com that reads the same data
-  (for phones).
+- ~~**Web board**~~ done (ADR-0017; rolestash.com/board/): a phone-first board with
+  Today, columns, quick updates and quick add, syncing as a `web` device.
 - **Email status updates and interview cards** (ADR-0014):
   - a personal `@in.rolestash.com` address;
   - a Cloudflare Email Worker;

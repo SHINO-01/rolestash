@@ -161,6 +161,21 @@ export function SyncSection({ plan }: { plan: Plan }) {
         </>
       )}
 
+      {plan === 'advanced' && !location.pathname.startsWith('/board') ? (
+        <p className="text-muted mt-3 text-sm">
+          On your phone, open{' '}
+          <a
+            className="text-accent font-medium"
+            href="https://rolestash.com/board/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            rolestash.com/board
+          </a>{' '}
+          and sign in with this email. It counts as one of your devices.
+        </p>
+      ) : null}
+
       {devices && (state?.enabled || full) ? (
         <ul aria-label="Synced devices" className="divide-line mt-3 divide-y">
           {devices.map((d) => {

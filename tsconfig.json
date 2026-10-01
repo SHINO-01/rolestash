@@ -13,6 +13,14 @@
     "noEmit": true,
     "types": ["chrome", "vitest/globals"]
   },
-  "include": [".wxt/wxt.d.ts", "src", "tests", "scripts", "supabase/functions", "*.config.ts"],
+  "include": [
+    ".wxt/wxt.d.ts",
+    "src",
+    "tests",
+    "scripts",
+    "supabase/functions",
+    "web",
+    "*.config.ts"
+  ],
   "exclude": ["node_modules", ".output"]
 }

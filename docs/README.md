@@ -27,6 +27,7 @@ Start with **Architecture → Overview**, then go by task.
 | [0014](adr/0014-email-status-updates.md)                    | Email status updates via a forwarding address and rules (no AI)       |
 | [0015](adr/0015-reminders-alarms-optional-notifications.md) | Reminders on `alarms`, with `notifications` as an optional permission |
 | [0016](adr/0016-sync-protocol.md)                           | Sync through server-checked RPCs, last writer wins, revision cursor   |
+| [0017](adr/0017-web-board.md)                               | A phone-first web board at rolestash.com/board/, built in CI          |
 
 New decision? Copy [the template](adr/0000-template.md).
 
