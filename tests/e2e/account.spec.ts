@@ -466,6 +466,102 @@ test.describe('accounts', () => {
     expect(JSON.stringify(backend.requests)).not.toContain('sam@example.com');
   });
 
+  test('contacts, interview rounds and documents on a card, and the calendar export (Advanced)', async ({
+    context,
+    worker,
+    extensionId,
+    backend,
+  }) => {
+    const end = new Date(Date.now() + 20 * 86_400_000).toISOString();
+    await seedActiveJobs(worker, 1);
+    await seedSignedIn(worker, {
+      status: 'active',
+      tier: 'advanced',
+      currentPeriodEnd: end,
+      hasBillingAccount: false,
+    });
+    backend.entitlement = {
+      status: 'active',
+      tier: 'advanced',
+      trial_ends_at: null,
+      current_period_end: end,
+      provider_customer_id: null,
+    };
+    const page = await context.newPage();
+    await page.goto(`chrome-extension://${extensionId}/board.html#job=j0`);
+    const drawer = page.getByRole('dialog', { name: 'Role 0 details' });
+
+    await drawer.getByRole('button', { name: 'Add an interview round' }).click();
+    const roundForm = drawer.getByRole('form', { name: 'Interview round' });
+    await roundForm.getByLabel('When').fill('2031-10-09T10:00');
+    await roundForm.getByLabel('With').fill('Priya');
+    await roundForm.getByLabel('Notes').fill('Asked about SQL window functions');
+    await roundForm.getByRole('button', { name: 'Save' }).click();
+    await expect(drawer.getByRole('list', { name: 'Interview rounds' })).toContainText(
+      'Asked about SQL',
+    );
+
+    await drawer.getByRole('button', { name: 'Add a contact' }).click();
+    const contactForm = drawer.getByRole('form', { name: 'Contact' });
+    await contactForm.getByLabel('Name').fill('Jordan Lee');
+    await contactForm.getByLabel('Email').fill('jordan@harbour.example');
+    await contactForm.getByRole('button', { name: 'Save' }).click();
+    await expect(drawer.getByRole('link', { name: 'jordan@harbour.example' })).toHaveAttribute(
+      'href',
+      'mailto:jordan@harbour.example',
+    );
+
+    await drawer.getByRole('button', { name: 'Add a document' }).click();
+    const docForm = drawer.getByRole('form', { name: 'Document' });
+    await docForm.getByLabel('File name').fill('Resume-2031.pdf');
+    await docForm.getByRole('button', { name: 'Save' }).click();
+    await expect(drawer.getByRole('list', { name: 'Documents' })).toContainText('Resume-2031.pdf');
+
+    const stored = await worker.evaluate(
+      async () => (await chrome.storage.local.get('job:j0'))['job:j0'],
+    );
+    expect(stored).toMatchObject({
+      rounds: [{ kind: 'video', with: 'Priya' }],
+      contacts: [{ name: 'Jordan Lee', email: 'jordan@harbour.example' }],
+      documents: [{ kind: 'resume', name: 'Resume-2031.pdf' }],
+    });
+
+    await drawer.getByRole('button', { name: 'Close' }).click();
+    await page.getByRole('button', { name: 'Board menu' }).click();
+    const download = page.waitForEvent('download');
+    await page.getByRole('menuitem', { name: 'Export calendar (.ics)' }).click();
+    const file = await download;
+    expect(file.suggestedFilename()).toMatch(/^rolestash-calendar-.*\.ics$/);
+    const ics = await (await import('node:fs/promises')).readFile(await file.path(), 'utf8');
+    expect(ics).toContain('SUMMARY:Video interview: Role 0 at Acme');
+    expect(ics).not.toContain('SQL');
+  });
+
+  test('on Pro, saved records stay but adding new ones is offered as Advanced', async ({
+    context,
+    worker,
+    extensionId,
+  }) => {
+    await seedActiveJobs(worker, 1);
+    await worker.evaluate(async () => {
+      const job = (await chrome.storage.local.get('job:j0'))['job:j0'] as Record<string, unknown>;
+      await chrome.storage.local.set({
+        'job:j0': { ...job, contacts: [{ id: 'c', name: 'Kept Contact' }] },
+      });
+    });
+    await seedSignedIn(worker, {
+      status: 'trialing',
+      trialEndsAt: new Date(Date.now() + 10 * 86_400_000).toISOString(),
+      hasBillingAccount: false,
+    });
+    const page = await context.newPage();
+    await page.goto(`chrome-extension://${extensionId}/board.html#job=j0`);
+    const drawer = page.getByRole('dialog', { name: 'Role 0 details' });
+    await expect(drawer.getByText('Kept Contact')).toBeVisible();
+    await expect(drawer.getByText('Adding these is part of Advanced.').first()).toBeVisible();
+    await expect(drawer.getByRole('button', { name: 'Add a contact' })).toHaveCount(0);
+  });
+
   test('deleting the account keeps jobs on this device', async ({
     context,
     worker,

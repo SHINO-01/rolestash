@@ -52,6 +52,21 @@ const COLUMNS: readonly Column[] = [
   { header: 'Saved', value: (j) => localDate(j.createdAt) },
   { header: 'Applied', value: (j) => localDate(j.appliedAt) },
   { header: 'Last updated', value: (j) => localDate(j.updatedAt) },
+  {
+    header: 'Contacts',
+    value: (j) =>
+      (j.contacts ?? [])
+        .map((c) => [c.name, c.role, c.email].filter(Boolean).join(', '))
+        .join('; '),
+  },
+  {
+    header: 'Interview rounds',
+    value: (j) =>
+      (j.rounds ?? [])
+        .map((r) => [r.kind, localDate(r.at), r.with].filter(Boolean).join(' '))
+        .join('; '),
+  },
+  { header: 'Documents', value: (j) => (j.documents ?? []).map((d) => d.name).join('; ') },
   { header: 'Posting link', value: (j) => (isManualUrl(j.source.url) ? '' : j.source.url) },
   { header: 'Apply link', value: (j) => j.applyUrl },
   {

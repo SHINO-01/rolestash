@@ -14,6 +14,8 @@ import { Drawer } from '@/ui/components/overlay';
 import { useToast } from '@/ui/components/toast';
 import { InterviewPanel } from '@/features/email/interview';
 import { SuggestionBanner } from '@/features/email/suggestion';
+import { ContactCard, DocumentLine } from '@/features/board/job-records';
+import { INTERVIEW_KIND_LABEL } from '@/domain/calendar';
 import { useJobs, useLiveJobs, useServices, useSettings } from '@/ui/hooks/services';
 import { formatDate, hasPostingUrl, relativeTime, WORKPLACE_LABEL } from '@/ui/format';
 
@@ -120,6 +122,8 @@ function Sheet({ job, onClose }: { job: Job; onClose: () => void }) {
           </a>
         ) : null}
 
+        <Records job={job} />
+
         <section>
           <h3 className="text-subtle mb-2 flex items-center gap-1.5 text-xs font-semibold tracking-wide uppercase">
             <BellRing className="size-3.5" /> Follow-up
@@ -225,5 +229,70 @@ function Item({ label, children }: { label: string; children: React.ReactNode })
       <dt className="text-subtle text-xs">{label}</dt>
       <dd className="truncate">{children}</dd>
     </div>
+  );
+}
+
+/** Interview rounds, contacts and documents, to read on the go (edit them on a computer). */
+function Records({ job }: { job: Job }) {
+  const rounds = [...(job.rounds ?? [])].sort((a, b) => (a.at ?? '').localeCompare(b.at ?? ''));
+  const contacts = job.contacts ?? [];
+  const documents = job.documents ?? [];
+  if (!rounds.length && !contacts.length && !documents.length) return null;
+  const heading = 'text-subtle mb-2 text-xs font-semibold tracking-wide uppercase';
+  return (
+    <>
+      {rounds.length ? (
+        <section>
+          <h3 className={heading}>Interview rounds</h3>
+          <ul className="flex flex-col gap-2 text-sm">
+            {rounds.map((r) => (
+              <li key={r.id} className="border-line rounded-xl border p-3">
+                <p className="font-medium">
+                  {INTERVIEW_KIND_LABEL[r.kind]}
+                  {r.at ? (
+                    <span className="text-muted font-normal">
+                      {' · '}
+                      {new Date(r.at).toLocaleString(undefined, {
+                        weekday: 'short',
+                        day: 'numeric',
+                        month: 'short',
+                        hour: 'numeric',
+                        minute: '2-digit',
+                      })}
+                    </span>
+                  ) : null}
+                </p>
+                {r.with ? <p className="text-muted">With {r.with}</p> : null}
+                {r.notes ? <p className="text-muted mt-1 whitespace-pre-wrap">{r.notes}</p> : null}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+      {contacts.length ? (
+        <section>
+          <h3 className={heading}>Contacts</h3>
+          <ul className="flex flex-col gap-2 text-sm">
+            {contacts.map((c) => (
+              <li key={c.id} className="border-line rounded-xl border p-3">
+                <ContactCard contact={c} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+      {documents.length ? (
+        <section>
+          <h3 className={heading}>Documents</h3>
+          <ul className="flex flex-col gap-2 text-sm">
+            {documents.map((d) => (
+              <li key={d.id} className="border-line rounded-xl border p-3">
+                <DocumentLine doc={d} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+    </>
   );
 }

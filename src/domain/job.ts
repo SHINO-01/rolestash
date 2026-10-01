@@ -148,6 +148,60 @@ export const SuggestionSchema = z.object({
 });
 export type Suggestion = z.infer<typeof SuggestionSchema>;
 
+// ── Contacts, interview rounds and documents (Advanced) ─────────────────────
+
+const optionalText = (max: number) => z.string().trim().max(max).optional();
+
+/** Someone at the company: recruiter, hiring manager, interviewer, referrer. */
+export const ContactSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().trim().min(1).max(120),
+  role: optionalText(120),
+  email: optionalText(254),
+  phone: optionalText(40),
+  linkedin: optionalText(300),
+  notes: optionalText(2000),
+});
+export type Contact = z.infer<typeof ContactSchema>;
+
+export const INTERVIEW_KINDS = [
+  'phone',
+  'video',
+  'onsite',
+  'technical',
+  'panel',
+  'final',
+  'other',
+] as const;
+export type InterviewKind = (typeof INTERVIEW_KINDS)[number];
+
+/** One interview round and the notes from it. */
+export const InterviewRoundSchema = z.object({
+  id: z.string().min(1),
+  kind: z.enum(INTERVIEW_KINDS),
+  /** When it is (or was): an exact instant. */
+  at: IsoDateTime.optional(),
+  with: optionalText(200),
+  notes: optionalText(10_000),
+});
+export type InterviewRound = z.infer<typeof InterviewRoundSchema>;
+
+export const DOCUMENT_KINDS = ['resume', 'cover_letter', 'portfolio', 'other'] as const;
+export type DocumentKind = (typeof DOCUMENT_KINDS)[number];
+
+/**
+ * A document sent for this job, by name (and optionally a link to where it
+ * lives). Rolestash never stores the file itself.
+ */
+export const DocumentRefSchema = z.object({
+  id: z.string().min(1),
+  kind: z.enum(DOCUMENT_KINDS),
+  name: z.string().trim().min(1).max(200),
+  url: z.url().max(2000).optional(),
+  note: optionalText(500),
+});
+export type DocumentRef = z.infer<typeof DocumentRefSchema>;
+
 export const ActivitySchema = z.object({
   id: z.string().min(1),
   at: IsoDateTime,
@@ -196,6 +250,12 @@ export const JobSchema = PostingSchema.extend({
   interview: JobInterviewSchema.optional(),
   /** A pending email update for the user to accept or dismiss. */
   suggestion: SuggestionSchema.optional(),
+  /** People at the company (Advanced). */
+  contacts: z.array(ContactSchema).max(30).optional(),
+  /** Interview rounds and their notes (Advanced). */
+  rounds: z.array(InterviewRoundSchema).max(30).optional(),
+  /** Documents sent, by name only (Advanced). */
+  documents: z.array(DocumentRefSchema).max(30).optional(),
 });
 export type Job = z.infer<typeof JobSchema>;
 export type JobId = Job['id'];
@@ -216,6 +276,9 @@ export const EDITABLE_FIELDS = [
   'tags',
   'notes',
   'followUpAt',
+  'contacts',
+  'rounds',
+  'documents',
 ] as const satisfies readonly (keyof Job)[];
 export type EditableField = (typeof EDITABLE_FIELDS)[number];
 export type JobPatch = Partial<Pick<Job, EditableField>>;

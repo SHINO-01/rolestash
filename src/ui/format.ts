@@ -1,4 +1,10 @@
-import { isManualUrl, type EmploymentType, type Job, type WorkplaceType } from '@/domain/job';
+import {
+  isManualUrl,
+  type DocumentKind,
+  type EmploymentType,
+  type Job,
+  type WorkplaceType,
+} from '@/domain/job';
 
 /** Presentation helpers shared by popup and board. */
 
@@ -17,6 +23,13 @@ export const EMPLOYMENT_LABEL: Record<EmploymentType, string> = {
   internship: 'Internship',
   graduate: 'Graduate',
   volunteer: 'Volunteer',
+};
+
+export const DOCUMENT_KIND_LABEL: Record<DocumentKind, string> = {
+  resume: 'Résumé',
+  cover_letter: 'Cover letter',
+  portfolio: 'Portfolio',
+  other: 'Other',
 };
 
 const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' });

@@ -8,6 +8,18 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Contacts, interview rounds and documents** on every job (Advanced; not
+  switched on yet).
+  - **Contacts:** keep the recruiter's and interviewers' details, with
+    one-click email, call and LinkedIn.
+  - **Interview rounds:** note each round (when, with whom, how it went).
+  - **Documents:** record which résumé or cover letter you sent, by file
+    name and an optional link. Rolestash never stores the files.
+  - All three show on the web board too, and in the CSV export.
+- **Export calendar (.ics)** (Advanced): every interview, interview round,
+  follow-up and closing date on your board, as one file for Google, Apple or
+  Outlook calendars. Importing it again updates the events instead of
+  duplicating them, and notes and contacts are never included.
 - **Application autofill** (Advanced; not switched on yet): save your
   details once in **Autofill profile…** on the board, then click **Fill this
   application** in the popup (or right-click the page).

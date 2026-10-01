@@ -91,7 +91,7 @@ feature on the pricing page is built. The site already advertises them all.
     confirmations, with no personal data.
 - ~~**Application autofill:**~~ done (ADR-0020; [guide](guides/autofill.md)): a local profile and deterministic field mapping
   for Greenhouse, Lever, Workday, Ashby and SmartRecruiters.
-- **Contacts, interview notes and documents** per job (file names, not
+- ~~**Contacts, interview notes and documents**~~ done: per job (file names, not
   uploads), plus an `.ics` export.
 - **Analytics:** funnel by stage, response time, source site, applications
   per week.

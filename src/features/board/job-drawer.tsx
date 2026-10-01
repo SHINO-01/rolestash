@@ -27,6 +27,7 @@ import { InterviewPanel } from '@/features/email/interview';
 import { INTENT_LABEL } from '@/features/email/email-copy';
 import { EmailLine, SuggestionBanner } from '@/features/email/suggestion';
 import { FollowUp } from './follow-up';
+import { Contacts, Documents, InterviewRounds } from './job-records';
 import { HistoryLimitNote } from './history-dialog';
 import { formatSalary, parseSalaryText } from '@/extraction';
 import { Button, IconButton } from '@/ui/components/button';
@@ -51,6 +52,7 @@ export function JobDrawer({
   stages,
   historyFrom,
   remindersAllowed = true,
+  recordsAllowed = true,
   onSeePlans,
   onClose,
 }: {
@@ -60,6 +62,8 @@ export function JobDrawer({
   historyFrom?: Date | undefined;
   /** Whether follow-up reminders are available (Pro and up, or no accounts). */
   remindersAllowed?: boolean;
+  /** Whether contacts, interview rounds and documents can be added (Advanced, or no accounts). */
+  recordsAllowed?: boolean;
   onSeePlans?: (() => void) | undefined;
   onClose: () => void;
 }) {
@@ -76,6 +80,7 @@ export function JobDrawer({
           stages={stages}
           historyFrom={historyFrom}
           remindersAllowed={remindersAllowed}
+          recordsAllowed={recordsAllowed}
           onSeePlans={onSeePlans}
           onClose={onClose}
         />
@@ -89,6 +94,7 @@ function DrawerBody({
   stages,
   historyFrom,
   remindersAllowed,
+  recordsAllowed,
   onSeePlans,
   onClose,
 }: {
@@ -96,6 +102,7 @@ function DrawerBody({
   stages: readonly Stage[];
   historyFrom: Date | undefined;
   remindersAllowed: boolean;
+  recordsAllowed: boolean;
   onSeePlans: (() => void) | undefined;
   onClose: () => void;
 }) {
@@ -353,6 +360,23 @@ function DrawerBody({
 
         <Section title="Follow-up">
           <FollowUp job={job} allowed={remindersAllowed} onPatch={patch} onSeePlans={onSeePlans} />
+        </Section>
+
+        <Section title="Interview rounds">
+          <InterviewRounds
+            job={job}
+            allowed={recordsAllowed}
+            onPatch={patch}
+            onSeePlans={onSeePlans}
+          />
+        </Section>
+
+        <Section title="Contacts">
+          <Contacts job={job} allowed={recordsAllowed} onPatch={patch} onSeePlans={onSeePlans} />
+        </Section>
+
+        <Section title="Documents">
+          <Documents job={job} allowed={recordsAllowed} onPatch={patch} onSeePlans={onSeePlans} />
         </Section>
 
         <Section title="Tags">
@@ -714,6 +738,7 @@ const FIELD_LABEL: Record<string, string> = {
   applyUrl: 'apply link',
   workplaceType: 'workplace',
   employmentTypes: 'employment type',
+  rounds: 'interview rounds',
 };
 
 /** Timeline entries shown before "Show all". */

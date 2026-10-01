@@ -1,6 +1,7 @@
 import {
   Download,
   BellRing,
+  CalendarDays,
   Columns3,
   History,
   FileSpreadsheet,
@@ -18,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { browser } from 'wxt/browser';
+import { boardEvents, calendarFile } from '@/domain/calendar';
 import { boardView, historyStart } from '@/domain/history';
 import type { Theme } from '@/domain/settings';
 import { createBackup } from '@/storage/backup';
@@ -154,6 +156,25 @@ export function BoardPage() {
     toast({ message: `Exported ${String(backup.jobs.length)} jobs`, tone: 'success' });
   }
 
+  // Advanced (or a build without accounts): interviews, rounds, follow-ups and closing dates.
+  const recordsAllowed = plan === undefined || plan === 'advanced';
+
+  function exportCalendar() {
+    const events = boardEvents(jobs);
+    download(
+      calendarFile(events, new Date()),
+      'text/calendar;charset=utf-8',
+      'rolestash-calendar',
+      'ics',
+    );
+    toast({
+      message: events.length
+        ? `Exported ${String(events.length)} calendar ${events.length === 1 ? 'event' : 'events'}`
+        : 'Nothing dated on the board yet',
+      tone: 'success',
+    });
+  }
+
   async function exportCsv() {
     const all = await services.jobs.list();
     download(jobsToCsv(all, settings.stages), 'text/csv;charset=utf-8', 'rolestash-jobs', 'csv');
@@ -250,6 +271,15 @@ export function BoardPage() {
               icon: <FileSpreadsheet className="size-4" />,
               onSelect: () => void exportCsv(),
             },
+            ...(recordsAllowed
+              ? [
+                  {
+                    label: 'Export calendar (.ics)',
+                    icon: <CalendarDays className="size-4" />,
+                    onSelect: exportCalendar,
+                  },
+                ]
+              : []),
             {
               label: 'Export backup',
               icon: <Download className="size-4" />,
@@ -336,6 +366,7 @@ export function BoardPage() {
         stages={settings.stages}
         historyFrom={historyFrom}
         remindersAllowed={plan !== 'free'}
+        recordsAllowed={recordsAllowed}
         onSeePlans={account ? () => setDialog('account') : undefined}
         onClose={() => openCard(undefined)}
       />
