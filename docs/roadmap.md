@@ -93,8 +93,10 @@ feature on the pricing page is built. The site already advertises them all.
   for Greenhouse, Lever, Workday, Ashby and SmartRecruiters.
 - ~~**Contacts, interview notes and documents**~~ done: per job (file names, not
   uploads), plus an `.ics` export.
-- **Analytics:** funnel by stage, response time, source site, applications
-  per week.
+- ~~**Analytics**~~ done as **Insights** (`src/domain/insights.ts`, computed on
+  the device): applications per week, how far applications get, reply rate
+  and typical wait, applications unanswered after 21 days, and results by
+  source.
 - ~~**Side panel**~~ done (ADR-0021: one-click access, Today and board docked
   beside the page) and **bulk actions** (multi-select,
   archive, tag).

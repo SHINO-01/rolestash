@@ -8,6 +8,15 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Insights** (Advanced): how your search is going, from the board's new
+  **Insights** button.
+  - Applications per week, and how far applications get (applied →
+    screening → interview → offer).
+  - How often and how quickly employers reply, and which applications have
+    gone 3 weeks without a reply.
+  - Which job sites work best for you.
+  - Worked out on your device from your own board; nothing is tracked or
+    sent.
 - **Side panel:** Rolestash docks on the right of the browser and stays
   open as you switch tabs.
   - **Opening it:** the button in the popup, or right-click the Rolestash

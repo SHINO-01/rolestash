@@ -639,6 +639,87 @@ test.describe('accounts', () => {
     expect(behaviour).toEqual({ popup: '', panel: true, setting: true });
   });
 
+  test('insights: applications per week, how far they get, replies and sources (Advanced)', async ({
+    context,
+    worker,
+    extensionId,
+    backend,
+  }) => {
+    const end = new Date(Date.now() + 20 * 86_400_000).toISOString();
+    await seedSignedIn(worker, {
+      status: 'active',
+      tier: 'advanced',
+      currentPeriodEnd: end,
+      hasBillingAccount: false,
+    });
+    backend.entitlement = {
+      status: 'active',
+      tier: 'advanced',
+      trial_ends_at: null,
+      current_period_end: end,
+      provider_customer_id: null,
+    };
+    await worker.evaluate(async () => {
+      const day = 86_400_000;
+      const ago = (d: number) => new Date(Date.now() - d * day).toISOString();
+      const entries: Record<string, unknown> = {};
+      const sites = ['SEEK', 'LinkedIn', 'Greenhouse'];
+      for (let i = 0; i < 14; i++) {
+        const applied = ago(i * 5 + 1);
+        const replied = i % 3 === 0;
+        entries[`job:i${String(i)}`] = {
+          id: `i${String(i)}`,
+          title: `Role ${String(i)}`,
+          company: 'Acme',
+          employmentTypes: [],
+          stageId: replied ? (i === 0 ? 'offer' : 'interviewing') : 'applied',
+          rank: 1024 * (i + 1),
+          priority: 0,
+          tags: [],
+          notes: '',
+          appliedAt: applied,
+          activity: replied
+            ? [
+                {
+                  id: `m${String(i)}`,
+                  at: ago(i * 5),
+                  type: 'stage_changed',
+                  fromStageId: 'applied',
+                  toStageId: 'interviewing',
+                },
+              ]
+            : [],
+          createdAt: applied,
+          updatedAt: applied,
+          source: {
+            url: `https://example.com/jobs/${String(i)}`,
+            originalUrl: `https://example.com/jobs/${String(i)}`,
+            siteId: 'generic',
+            siteName: sites[i % 3],
+            capturedAt: applied,
+          },
+        };
+      }
+      await chrome.storage.local.set(entries);
+    });
+    const page = await context.newPage();
+    await page.goto(`chrome-extension://${extensionId}/board.html`);
+    await page.getByRole('button', { name: 'Insights' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Insights' });
+    await expect(dialog.getByText('Got a reply')).toBeVisible();
+    await expect(dialog.getByText('5 of 14')).toBeVisible();
+    await expect(
+      dialog.getByRole('img', { name: 'Applications per week, last 12 weeks' }),
+    ).toBeVisible();
+    await expect(dialog.getByRole('row', { name: /SEEK/ })).toBeVisible();
+    await dialog
+      .getByRole('img', { name: 'Applications per week, last 12 weeks' })
+      .locator('rect')
+      .last()
+      .hover();
+    await expect(dialog.getByRole('tooltip')).toContainText('Week of');
+  });
+
   test('deleting the account keeps jobs on this device', async ({
     context,
     worker,

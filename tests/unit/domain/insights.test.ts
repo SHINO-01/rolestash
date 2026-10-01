@@ -1,0 +1,167 @@
+import {
+  applicationsPerWeek,
+  appliedWithin,
+  bySource,
+  daysToReply,
+  funnel,
+  replies,
+  stagesReached,
+  weekStart,
+} from '@/domain/insights';
+import type { Activity, Job } from '@/domain/job';
+import { DEFAULT_STAGES, type Stage } from '@/domain/stage';
+import { makeJob } from '../helpers/factories';
+
+const now = new Date('2026-10-02T12:00:00');
+const daysAgo = (n: number) => new Date(now.getTime() - n * 86_400_000).toISOString();
+const move = (from: string, to: string, at: string): Activity => ({
+  id: `${from}-${to}-${at}`,
+  at,
+  type: 'stage_changed',
+  fromStageId: from,
+  toStageId: to,
+});
+const site = (name: string, url = `https://${name.toLowerCase()}.example/jobs/1`) => ({
+  url,
+  originalUrl: url,
+  siteId: name.toLowerCase(),
+  siteName: name,
+  capturedAt: daysAgo(60),
+});
+
+// a: applied 10 days ago, screened after 3, interviewed, rejected.
+// b: applied 30 days ago, never heard back.
+// c: applied 2 days ago via an email update to Interviewing, then an offer.
+// d: saved only. e: added by hand, applied 40 days ago, archived, no reply.
+const jobs: Job[] = [
+  makeJob({
+    id: 'a',
+    stageId: 'rejected',
+    appliedAt: daysAgo(10),
+    source: site('SEEK'),
+    activity: [
+      move('saved', 'applied', daysAgo(10)),
+      move('applied', 'screening', daysAgo(7)),
+      move('screening', 'interviewing', daysAgo(5)),
+      move('interviewing', 'rejected', daysAgo(1)),
+    ],
+  }),
+  makeJob({ id: 'b', stageId: 'applied', appliedAt: daysAgo(30), source: site('LinkedIn') }),
+  makeJob({
+    id: 'c',
+    stageId: 'offer',
+    appliedAt: daysAgo(2),
+    source: site('LinkedIn'),
+    activity: [
+      {
+        id: 'e1',
+        at: daysAgo(1),
+        type: 'email_update',
+        fromStageId: 'applied',
+        toStageId: 'interviewing',
+        email: { intent: 'interview', subject: 's', sender: 'x', receivedAt: daysAgo(1) },
+      },
+      {
+        id: 'e2',
+        at: daysAgo(0.5),
+        type: 'email_update',
+        fromStageId: 'interviewing',
+        toStageId: 'offer',
+        undone: true,
+        email: { intent: 'offer', subject: 's', sender: 'x', receivedAt: daysAgo(1) },
+      },
+    ],
+  }),
+  makeJob({ id: 'd', stageId: 'saved' }),
+  makeJob({
+    id: 'e',
+    stageId: 'applied',
+    appliedAt: daysAgo(40),
+    archivedAt: daysAgo(5),
+    source: site('Manual', 'https://rolestash.invalid/manual/1'),
+  }),
+];
+
+describe('insights', () => {
+  it('knows every column a job has been in, ignoring undone email moves', () => {
+    expect([...stagesReached(jobs[0]!)].sort()).toEqual([
+      'applied',
+      'interviewing',
+      'rejected',
+      'screening',
+    ]);
+    expect(stagesReached(jobs[2]!).has('interviewing')).toBe(true);
+  });
+
+  it('counts applications per week, Monday to Sunday, this week last', () => {
+    expect(weekStart(new Date('2026-10-04T10:00:00'))).toBe('2026-09-28'); // Sunday → Monday before
+    expect(weekStart(new Date('2026-09-28T00:30:00'))).toBe('2026-09-28');
+    const weeks = applicationsPerWeek(jobs, now, 8);
+    expect(weeks).toHaveLength(8);
+    expect(weeks.at(-1)).toEqual({ week: '2026-09-28', count: 1 }); // c
+    expect(weeks.reduce((n, w) => n + w.count, 0)).toBe(4); // a, b, c, e (e: 40 days ago is within 8 weeks)
+  });
+
+  it('shows how far applications get, counting skipped columns', () => {
+    expect(funnel(jobs, DEFAULT_STAGES).map((s) => [s.stageId, s.count])).toEqual([
+      ['applied', 4],
+      ['screening', 2], // a, and c (skipped to Interviewing, then Offer)
+      ['interviewing', 2],
+      ['offer', 1],
+    ]);
+    expect(funnel(jobs, DEFAULT_STAGES)[0]?.rate).toBe(1);
+    expect(funnel([], DEFAULT_STAGES)[0]).toMatchObject({ count: 0, rate: 0 });
+  });
+
+  it('measures replies: rate, median wait, and applications still unanswered', () => {
+    expect(daysToReply(jobs[0]!)).toBeCloseTo(3);
+    expect(daysToReply(jobs[2]!)).toBeCloseTo(1);
+    expect(daysToReply(jobs[1]!)).toBeUndefined();
+    expect(daysToReply(jobs[3]!)).toBeUndefined();
+    expect(replies(jobs, now)).toEqual({
+      applications: 4,
+      replied: 2,
+      rate: 0.5,
+      medianDays: 2,
+      unanswered: 1,
+    });
+    expect(replies([], now)).toEqual({ applications: 0, replied: 0, rate: 0, unanswered: 0 });
+  });
+
+  it('groups by source, busiest first, folding the rest into Other', () => {
+    expect(bySource(jobs, DEFAULT_STAGES)).toEqual([
+      { source: 'LinkedIn', applications: 2, replied: 1, interviews: 1, offers: 1 },
+      { source: 'Added by hand', applications: 1, replied: 0, interviews: 0, offers: 0 },
+      { source: 'SEEK', applications: 1, replied: 1, interviews: 1, offers: 0 },
+    ]);
+    expect(bySource(jobs, DEFAULT_STAGES, 2).map((r) => [r.source, r.applications])).toEqual([
+      ['LinkedIn', 2],
+      ['Other', 2],
+    ]);
+  });
+
+  it('works with custom columns', () => {
+    const custom: Stage[] = [
+      { id: 'todo', name: 'To apply', color: 'slate', kind: 'active', marksApplied: false },
+      { id: 'sent', name: 'Sent', color: 'sky', kind: 'active', marksApplied: true },
+      { id: 'talks', name: 'Interviews', color: 'amber', kind: 'active', marksApplied: true },
+      { id: 'hired', name: 'Hired', color: 'emerald', kind: 'won', marksApplied: true },
+      { id: 'old', name: 'Old', color: 'zinc', kind: 'active', marksApplied: true, archived: true },
+    ];
+    const job = makeJob({
+      stageId: 'talks',
+      appliedAt: daysAgo(3),
+      activity: [move('sent', 'talks', daysAgo(1))],
+    });
+    expect(funnel([job], custom).map((s) => [s.stageId, s.count])).toEqual([
+      ['sent', 1],
+      ['talks', 1],
+      ['hired', 0],
+    ]);
+    expect(bySource([job], custom)[0]?.interviews).toBe(1);
+  });
+
+  it('counts recent applications', () => {
+    expect(appliedWithin(jobs, now, 30)).toBe(3);
+  });
+});

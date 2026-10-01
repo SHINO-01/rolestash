@@ -1,4 +1,5 @@
 import {
+  BarChart3,
   Download,
   BellRing,
   CalendarDays,
@@ -32,6 +33,7 @@ import { AccountDialog } from '@/features/account/account-dialog';
 import { PlanBanner } from '@/features/account/plan-banner';
 import { UnsortedDialog } from '@/features/email/unsorted-dialog';
 import { ProfileDialog } from '@/features/autofill/profile-dialog';
+import { InsightsDialog } from '@/features/insights/insights-dialog';
 import { useAutoEmailUpdates, useEmailState } from '@/ui/hooks/email';
 import { planChip } from '@/features/account/plan-copy';
 import { Button, IconButton, Spinner } from '@/ui/components/button';
@@ -68,7 +70,15 @@ export function BoardPage() {
   const { account, state: accountState } = useAccount();
   useAutoSync();
   const [dialog, setDialog] = useState<
-    'add' | 'import' | 'account' | 'history' | 'columns' | 'unsorted' | 'profile' | null
+    | 'add'
+    | 'import'
+    | 'account'
+    | 'history'
+    | 'columns'
+    | 'unsorted'
+    | 'profile'
+    | 'insights'
+    | null
   >(() =>
     location.hash === '#account' ? 'account' : location.hash === '#profile' ? 'profile' : null,
   );
@@ -236,6 +246,13 @@ export function BoardPage() {
             Unsorted ({unsortedCount})
           </Button>
         ) : null}
+        <Button
+          variant="ghost"
+          icon={<BarChart3 className="size-4" />}
+          onClick={() => setDialog('insights')}
+        >
+          Insights
+        </Button>
         <Button
           variant="ghost"
           icon={<History className="size-4" />}
@@ -420,6 +437,14 @@ export function BoardPage() {
       />
       <ImportDialog open={dialog === 'import'} onClose={() => setDialog(null)} />
       <UnsortedDialog open={dialog === 'unsorted'} onClose={() => setDialog(null)} />
+      <InsightsDialog
+        open={dialog === 'insights'}
+        onClose={() => setDialog(null)}
+        jobs={jobs}
+        stages={settings.stages}
+        allowed={recordsAllowed}
+        onSeePlans={account ? () => setDialog('account') : undefined}
+      />
       <ProfileDialog
         open={dialog === 'profile'}
         onClose={() => {

@@ -27,6 +27,8 @@
   --color-accent-hover: var(--jt-accent-hover);
   --color-accent-soft: var(--jt-accent-soft);
   --color-accent-ink: var(--jt-accent-ink);
+  /* Chart marks (Insights): validated per mode for lightness, chroma and contrast. */
+  --color-chart: var(--jt-chart);
 
   --shadow-card: 0 1px 2px rgb(15 23 42 / 0.04), 0 1px 3px rgb(15 23 42 / 0.06);
   --shadow-lift: 0 12px 28px -8px rgb(15 23 42 / 0.22), 0 4px 10px -4px rgb(15 23 42 / 0.12);
@@ -69,6 +71,7 @@
   --jt-accent-hover: #084a41;
   --jt-accent-soft: #e7f3ef;
   --jt-accent-ink: #07433b;
+  --jt-chart: #0f8a78;
   color-scheme: light;
 }
 
@@ -86,6 +89,7 @@
   --jt-accent-hover: #7fd1be;
   --jt-accent-soft: #0d2b26;
   --jt-accent-ink: #9fe0cf;
+  --jt-chart: #2fa38c;
   color-scheme: dark;
 }
 
