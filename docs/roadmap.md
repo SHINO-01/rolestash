@@ -51,7 +51,8 @@ feature on the pricing page is built. The site already advertises them all.
 - ~~**Custom columns**~~ done (board menu → _Edit columns…_; `src/domain/columns.ts`)
   (Pro): rename, recolor, reorder, add and archive stages. Stages are already
   data in settings.
-- **Capture from a pasted link** (Pro):
+- ~~**Capture from a pasted link**~~ done (_Add job_ → _Fill in from link_;
+  `src/services/link-capture-service.ts`) (Pro):
   - `optional_host_permissions` per site;
   - `fetch` + `DOMParser` in an offscreen document, running the same pure
     extractor;

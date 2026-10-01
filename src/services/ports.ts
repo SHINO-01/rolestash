@@ -18,6 +18,14 @@ export interface ExtractorRunner {
   snapshot(tabId: number): Promise<PageSnapshot>;
 }
 
+/** Loads a pasted job link (Pro; capture from a link). */
+export interface PageLoader {
+  /** Fetches the page's HTML without cookies; `url` is the final URL after redirects. */
+  fetch(url: string): Promise<{ url: string; html: string }>;
+  /** Opens the page in a background tab, runs the extractor once it has rendered, closes it. */
+  render(url: string): Promise<ExtractionResult[]>;
+}
+
 /** System notifications (chrome.notifications, optional permission; ADR-0015). */
 export interface Notifier {
   /** Whether the user has granted notifications. */

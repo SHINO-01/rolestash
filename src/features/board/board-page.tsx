@@ -306,7 +306,12 @@ export function BoardPage() {
         }}
         {...(account ? { onSeePlans: () => setDialog('account') } : {})}
       />
-      <AddJobDialog open={dialog === 'add'} onClose={() => setDialog(null)} settings={settings} />
+      <AddJobDialog
+        open={dialog === 'add'}
+        onClose={() => setDialog(null)}
+        settings={settings}
+        onSeePlans={account ? () => setDialog('account') : undefined}
+      />
       <ImportDialog open={dialog === 'import'} onClose={() => setDialog(null)} />
       {account ? (
         <AccountDialog

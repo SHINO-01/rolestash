@@ -8,6 +8,14 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Capture from a pasted link** (Pro):
+  - In _Add job_, paste a job link and choose _Fill in from link_.
+  - Rolestash asks for access to that one site and reads the page with the
+    same extractor as the toolbar button. If the page needs JavaScript, it
+    uses a background tab.
+  - You review the details before saving, and access to the site is
+    removed afterwards.
+  - The privacy policy and PRIVACY.md describe this.
 - **Custom columns** (Pro): board menu → _Edit columns…_.
   - Rename, recolour, reorder, add, and archive columns.
   - Choose which column new jobs go to.

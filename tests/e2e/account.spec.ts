@@ -189,6 +189,31 @@ test.describe('accounts', () => {
     await expect(page.getByRole('region', { name: 'Withdrawn column' })).toBeHidden();
   });
 
+  test('captures a job from a pasted link on Pro', async ({
+    context,
+    worker,
+    extensionId,
+    fixtureServer,
+  }) => {
+    await seedSignedIn(worker, {
+      status: 'trialing',
+      trialEndsAt: new Date(Date.now() + 10 * 86_400_000).toISOString(),
+      hasBillingAccount: false,
+    });
+    const page = await context.newPage();
+    await page.goto(`chrome-extension://${extensionId}/board.html`);
+    await page.getByRole('button', { name: 'Add job' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Add a job' });
+    await dialog.getByLabel('Job link').fill(fixtureServer.url('sites/greenhouse/board.html'));
+    await dialog.getByRole('button', { name: 'Fill in from link' }).click();
+
+    const review = page.getByRole('dialog', { name: 'Check the details' });
+    await expect(review.getByLabel('Job title')).toHaveValue('Backend Engineer (Payments)');
+    await review.getByRole('button', { name: /^Save to/ }).click();
+    await expect(review).toBeHidden();
+    await expect(page.getByText('Backend Engineer (Payments)')).toBeVisible();
+  });
+
   test('deleting the account keeps jobs on this device', async ({
     context,
     worker,

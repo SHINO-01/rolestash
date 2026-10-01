@@ -52,6 +52,9 @@ export default defineConfig({
       // without a real user gesture. Production builds never ship this.
       // Asked for only when someone turns reminders on, so there's no install warning (ADR-0015).
       optional_permissions: ['notifications'],
+      // Capture from a pasted link (Pro): access to that one site, asked for in the click and
+      // given back afterwards. Optional, so installs show no warning.
+      optional_host_permissions: ['https://*/*', 'http://*/*'],
       ...(mode === 'e2e' ? { host_permissions: ['<all_urls>'] } : {}),
       action: {
         default_title: 'Track this job',

@@ -22,12 +22,18 @@ Not requested, on purpose:
 - **`favicon`**: tried and removed (see ADR-0002).
   Optional permissions (requested at the moment of use):
 
-| Permission      | Why                                                                                                   | Asked when                                                        |
-| --------------- | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| `notifications` | Follow-up reminders and the closing-soon digest (Pro; ADR-0015). Optional so installs show no warning | Setting a first follow-up, or turning on closing alerts (a click) |
+| Permission                                              | Why                                                                                                                                          | Asked when                                                        |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| `notifications`                                         | Follow-up reminders and the closing-soon digest (Pro; ADR-0015). Optional so installs show no warning                                        | Setting a first follow-up, or turning on closing alerts (a click) |
+| `optional_host_permissions` `https://*/*`, `http://*/*` | Capture from a pasted link (Pro): access to the **one site** of the pasted link, asked for in the click and removed when the capture is done | Clicking _Fill in from link_ in _Add job_                         |
 
-Future "paste a link" capture will use `optional_host_permissions`, requested
-at the moment of use for the specific site.
+Capture from a pasted link runs in the board page:
+
+- it fetches the page with `credentials: 'omit'` and parses it inertly
+  with `DOMParser`, using the same pure extractor;
+- for pages that need JavaScript, it falls back to a background tab
+  (`tabs.create` plus `scripting`, which the per-site access allows);
+- it needs neither an `offscreen` document nor the `tabs` permission.
 
 ## Commands
 
