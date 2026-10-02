@@ -6,7 +6,7 @@
 // Purchases here carry no Rolestash account: the billing webhook links them
 // to the account with the checkout email (creating it if needed), so buyers
 // sign in to the extension with that email. Edit the tiers below.
-import { initPaddle, PADDLE } from './paddle-config.js';
+import { checkoutTheme, initPaddle, PADDLE } from './paddle-config.js';
 
 /** @typedef {'month' | 'quarter' | 'year'} Interval */
 /** @typedef {{ name: 'Free' | 'Pro' | 'Advanced', description: string, features: string[], priceId: Record<Interval, string> | null, badge?: string }} Tier */
@@ -116,6 +116,7 @@ function subscribe(priceId) {
     settings: {
       displayMode: 'overlay',
       variant: 'one-page',
+      theme: checkoutTheme(),
       successUrl: `${location.origin}/welcome/`,
     },
   });

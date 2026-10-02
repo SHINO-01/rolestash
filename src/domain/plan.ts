@@ -65,7 +65,7 @@ export function featurePlanName(feature: Feature): 'Pro' | 'Advanced' {
   return FEATURE_PLANS[feature] === 'pro' ? 'Pro' : 'Advanced';
 }
 
-/** "45 active jobs" or "Unlimited active jobs". */
+/** "60 active jobs" or "Unlimited active jobs". */
 export function activeJobsLabel(plan: Plan): string {
   const limit = ACTIVE_JOB_LIMITS[plan];
   return Number.isFinite(limit) ? `${String(limit)} active jobs` : 'Unlimited active jobs';

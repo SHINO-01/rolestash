@@ -23,6 +23,12 @@ export const PADDLE = {
   },
 };
 
+/** Checkout follows the visitor's light or dark setting, like rolestash.com.
+ * The brand colour (#0B5D52, Rolestash spruce) is set in Paddle's dashboard. */
+export function checkoutTheme() {
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
 /**
  * Loads Paddle.js for the configured environment, failing loudly (never
  * silently falling back to a default) if the settings don't match each other.
