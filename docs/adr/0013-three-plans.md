@@ -44,8 +44,12 @@ approved the following:
     the top plan wouldn't sell Advanced and left Pro thin at US$7.
 - `FEATURE_PLANS` and `allows()` in `src/domain/plan.ts` are the single map
   of feature to plan; gates call `allows(plan, feature)`.
-- Prices are unchanged. A 3-month pass and an Advanced trial were proposed
-  but not decided.
+- Prices are unchanged.
+- **Trial:** a 14-day trial of Advanced replaces the 30-day Pro trial. People
+  try the full product first, then choose a plan or stay on Free. It's still
+  one trial per email, with no card (`…_advanced_trial.sql`). Trials already
+  running keep their tier.
+- A 3-month pass was considered and dropped by the owner.
 
 We don't launch until every advertised feature of every plan is built, so
 the site advertises them all.
@@ -57,7 +61,7 @@ the site advertises them all.
     unlimited (originally 15, 45 and 95; see the 2026-10-02 revision).
   - A trial or subscription carries a `tier` (`pro` | `advanced`) in
     `entitlements`, set by the billing webhook from the Paddle price.
-  - Trials are always Pro.
+  - Trials were always Pro; since the 2026-10-02 revision they're 14 days of Advanced.
   - `plan_tier()` is the server-side twin, for RLS on tier-gated tables.
 - **Limits apply only to creating jobs, at the current plan's limit.**
   - After a downgrade every job stays and stays editable. Only new jobs

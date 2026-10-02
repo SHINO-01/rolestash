@@ -151,6 +151,13 @@ export interface PaddleConfig {
   environment: 'sandbox' | 'production';
 }
 
+/** Money due now for a plan change, in the currency's minor units (cents). */
+export interface PlanChangePreview {
+  action: 'charge' | 'credit' | 'none';
+  amount: number;
+  currency: string;
+}
+
 export class PaddleApiError extends Error {
   constructor(
     readonly status: number,
@@ -231,12 +238,41 @@ export class PaddleClient {
     return data.urls.general.overview;
   }
 
-  /** Moves a subscription to another price now; Paddle prorates the difference. */
+  /**
+   * Moves a subscription to another price now; Paddle prorates the difference
+   * and charges (or credits) the saved payment method straight away. If that
+   * payment fails, the plan doesn't change.
+   */
   async changePrice(subscriptionId: string, priceId: string): Promise<void> {
     await this.call('PATCH', `/subscriptions/${encodeURIComponent(subscriptionId)}`, {
       items: [{ price_id: priceId, quantity: 1 }],
       proration_billing_mode: 'prorated_immediately',
+      on_payment_failure: 'prevent_change',
     });
+  }
+
+  /** What changePrice would charge or credit now, without changing anything. */
+  async previewChangePrice(subscriptionId: string, priceId: string): Promise<PlanChangePreview> {
+    const data = await this.call<{
+      update_summary?: {
+        result?: { action?: string; amount?: string; currency_code?: string };
+      } | null;
+    }>('PATCH', `/subscriptions/${encodeURIComponent(subscriptionId)}/preview`, {
+      items: [{ price_id: priceId, quantity: 1 }],
+      proration_billing_mode: 'prorated_immediately',
+      on_payment_failure: 'prevent_change',
+    });
+    const result = data.update_summary?.result;
+    const amount = Number(result?.amount ?? '0');
+    const action =
+      result?.action === 'charge' || result?.action === 'credit' ? result.action : 'none';
+    if (!Number.isFinite(amount) || !result?.currency_code)
+      throw new PaddleApiError(502, 'Preview has no summary');
+    return {
+      action: amount === 0 ? 'none' : action,
+      amount: Math.abs(amount),
+      currency: result.currency_code,
+    };
   }
 
   async cancelNow(subscriptionId: string): Promise<void> {

@@ -111,8 +111,8 @@ export function welcomeEmail(plan: string | null, unsubscribeUrl: string): Email
 export function launchEmail(plan: string | null, storeUrl: string, unsubscribeUrl: string): Email {
   const trial =
     plan === 'pro' || plan === 'advanced'
-      ? 'Pro comes with a 30-day free trial, no card needed.'
-      : 'It’s free for up to 15 active jobs, and Pro comes with a 30-day free trial.';
+      ? 'Try Advanced free for 14 days, no card needed.'
+      : 'It’s free for up to 15 active jobs, and you can try Advanced free for 14 days.';
   return build({
     subject: 'Rolestash is live on the Chrome Web Store',
     title: 'Rolestash is live',

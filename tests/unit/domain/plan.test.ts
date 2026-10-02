@@ -1,4 +1,5 @@
 import {
+  TRIAL_DAYS,
   activeJobsLabel,
   allows,
   featurePlanName,
@@ -66,7 +67,7 @@ describe('planOf', () => {
     );
   });
 
-  it('follows the subscription tier, and trials are always Pro', () => {
+  it('follows the tier of the subscription or trial', () => {
     const adv = { tier: 'advanced' as const, currentPeriodEnd: days(10) };
     expect(planOf(ent({ ...adv, status: 'active' }), NOW).plan).toBe('advanced');
     expect(planOf(ent({ ...adv, status: 'canceled' }), NOW)).toMatchObject({
@@ -76,7 +77,12 @@ describe('planOf', () => {
     expect(planOf(ent({ ...adv, status: 'active', currentPeriodEnd: days(-4) }), NOW).plan).toBe(
       'free',
     );
+    // New trials are 14 days of Advanced; trials started before that are Pro.
+    expect(
+      planOf(ent({ status: 'trialing', tier: 'advanced', trialEndsAt: days(14) }), NOW),
+    ).toMatchObject({ plan: 'advanced', reason: 'trial', trialDaysLeft: 14 });
     expect(planOf(ent({ status: 'trialing', trialEndsAt: days(3) }), NOW).plan).toBe('pro');
+    expect(TRIAL_DAYS).toBe(14);
     // A stale Advanced snapshot drops to Free too, not to Pro.
     expect(planOf(ent({ ...adv, status: 'active', checkedAt: days(-8) }), NOW)).toEqual({
       plan: 'free',

@@ -12,6 +12,7 @@ import {
   BackendError,
   randomToken,
   SessionSchema,
+  type PlanChangePreview,
   type Session,
   type SupabaseClient,
 } from './backend/supabase-client';
@@ -244,6 +245,11 @@ export class AccountService implements PlanProvider {
       tier,
       interval,
     });
+  }
+
+  /** What switching would charge or credit now; shown for confirmation first. */
+  async previewPlanChange(tier: PaidPlan, interval: 'month' | 'year'): Promise<PlanChangePreview> {
+    return this.client.previewPlanChange(await this.accessToken(), { tier, interval });
   }
 
   /** Switches a live subscription between Pro and Advanced, then re-reads the plan. */

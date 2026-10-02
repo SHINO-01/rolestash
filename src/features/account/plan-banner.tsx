@@ -26,11 +26,11 @@ export function PlanBanner({
   let message: string | undefined;
   let action = 'Plans';
   if (plan.reason === 'stale') {
-    message = "We couldn't confirm your Pro plan for over a week, so you're on Free for now.";
+    message = "We couldn't confirm your plan for over a week, so you're on Free for now.";
     action = 'Check plan';
   } else if (plan.reason === 'trial' && (plan.trialDaysLeft ?? 0) <= TRIAL_WARNING_DAYS) {
-    message = `Your Pro trial ends in ${String(plan.trialDaysLeft ?? 0)} day${plan.trialDaysLeft === 1 ? '' : 's'}. Your jobs stay either way.`;
-    action = 'Keep Pro';
+    message = `Your ${PLAN_NAMES[plan.plan]} trial ends in ${String(plan.trialDaysLeft ?? 0)} day${plan.trialDaysLeft === 1 ? '' : 's'}. Your jobs stay either way.`;
+    action = 'Choose a plan';
   } else if (active >= limit - LIMIT_WARNING_MARGIN) {
     const name = PLAN_NAMES[plan.plan];
     const next = nextPlan(plan.plan);
@@ -38,7 +38,7 @@ export function PlanBanner({
       active >= limit
         ? `You've reached the ${name} plan's ${String(limit)} active jobs. Archive finished ones or move them to Rejected or Withdrawn${next ? `, or upgrade to ${PLAN_NAMES[next]} for ${activeJobsLabel(next).toLowerCase()}` : ''}.`
         : `${String(active)} of ${String(limit)} active jobs used on ${name}.`;
-    action = !next ? 'Plan' : state.signedIn ? `Get ${PLAN_NAMES[next]}` : 'Try Pro free';
+    action = !next ? 'Plan' : state.signedIn ? `Get ${PLAN_NAMES[next]}` : 'Try it free';
   }
   if (!message) return null;
 

@@ -1,7 +1,7 @@
 -- Run with: npm run test:db  (needs Docker; see docs/guides/backend.md)
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(29);
+select plan(30);
 
 -- Helpers: act as a signed-in user, or as nobody.
 create function pg_temp.act_as(uid uuid) returns void language sql as $$
@@ -20,14 +20,17 @@ insert into auth.users (id, email, aud, role) values
   ('11111111-1111-4111-8111-111111111111', 'alice@example.com', 'authenticated', 'authenticated'),
   ('22222222-2222-4222-8222-222222222222', 'bob@example.com', 'authenticated', 'authenticated');
 
--- Sign-up starts a 30-day trial ----------------------------------------------
+-- Sign-up starts a 14-day Advanced trial -----------------------------------
 select is(
   (select status::text from public.entitlements where user_id = '11111111-1111-4111-8111-111111111111'),
   'trialing', 'a new account starts on the trial');
 select ok(
-  (select trial_ends_at between now() + interval '29 days 23 hours' and now() + interval '30 days 1 minute'
+  (select trial_ends_at between now() + interval '13 days 23 hours' and now() + interval '14 days 1 minute'
      from public.entitlements where user_id = '11111111-1111-4111-8111-111111111111'),
-  'the trial lasts 30 days');
+  'the trial lasts 14 days');
+select is(
+  (select tier from public.entitlements where user_id = '11111111-1111-4111-8111-111111111111'),
+  'advanced', 'the trial is of Advanced');
 select is((select count(*)::int from public.trial_claims), 2, 'each sign-up records a trial claim');
 select ok(
   not exists (select 1 from public.trial_claims where email_sha256 like '%@%' or length(email_sha256) <> 64),

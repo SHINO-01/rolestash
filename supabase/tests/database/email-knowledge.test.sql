@@ -21,6 +21,8 @@ $$;
 insert into auth.users (id, email, aud, role)
   select pg_temp.uid(i), 'u' || i || '@example.com', 'authenticated', 'authenticated'
   from generate_series(1, 6) i;
+-- Sign-ups start on an Advanced trial; these fixtures start as Pro, then set what they need.
+update public.entitlements set tier = 'pro';
 update public.entitlements set tier = 'advanced', status = 'active', current_period_end = now() + interval '20 days'
   where user_id in (select pg_temp.uid(i) from generate_series(1, 5) i);
 insert into public.email_inboxes (user_id, address_token)

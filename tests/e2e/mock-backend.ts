@@ -155,6 +155,10 @@ function route(
       return [200, [state.entitlement]];
     case '/functions/v1/create-checkout':
       return [200, { url: `${MOCK_BACKEND}/pay/?_ptxn=txn_e2e` }];
+    case '/functions/v1/change-plan':
+      return b.preview === true
+        ? [200, { preview: { action: 'charge', amount: 848, currency: 'USD' } }]
+        : [200, { changed: true }];
     case '/functions/v1/billing-portal':
       return [200, { url: `${MOCK_BACKEND}/portal` }];
     case '/functions/v1/delete-account':
@@ -172,8 +176,8 @@ export async function startMockBackend(): Promise<MockBackend> {
     requests: [],
     entitlement: {
       status: 'trialing',
-      tier: 'pro',
-      trial_ends_at: new Date(Date.now() + 30 * 86_400_000).toISOString(),
+      tier: 'advanced',
+      trial_ends_at: new Date(Date.now() + 14 * 86_400_000).toISOString(),
       current_period_end: null,
       provider_customer_id: null,
     },

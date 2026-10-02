@@ -15,7 +15,10 @@ export function planChip(plan: PlanState): {
 } {
   switch (plan.reason) {
     case 'trial':
-      return { label: `Pro trial · ${String(plan.trialDaysLeft ?? 0)}d`, tone: 'accent' };
+      return {
+        label: `${PLAN_NAMES[plan.plan]} trial · ${String(plan.trialDaysLeft ?? 0)}d`,
+        tone: 'accent',
+      };
     case 'subscribed':
     case 'ending':
       return { label: PLAN_NAMES[plan.plan], tone: 'accent' };
@@ -31,7 +34,7 @@ export function planSummary(plan: PlanState): string {
   const ends = formatDate(plan.endsAt);
   switch (plan.reason) {
     case 'trial':
-      return `Pro trial: ${String(plan.trialDaysLeft ?? 0)} days left${ends ? `, until ${ends}` : ''}. No card needed.`;
+      return `${PLAN_NAMES[plan.plan]} trial: ${String(plan.trialDaysLeft ?? 0)} days left${ends ? `, until ${ends}` : ''}. No card needed.`;
     case 'subscribed':
       return ends ? `${PLAN_NAMES[plan.plan]}. Renews on ${ends}.` : `${PLAN_NAMES[plan.plan]}.`;
     case 'ending':
@@ -39,11 +42,11 @@ export function planSummary(plan: PlanState): string {
         ? `${PLAN_NAMES[plan.plan]} until ${ends}. Your subscription is canceled.`
         : `${PLAN_NAMES[plan.plan]}, canceled.`;
     case 'trial-ended':
-      return 'Your Pro trial has ended. You are on the free plan.';
+      return 'Your free trial has ended. You are on the free plan.';
     case 'lapsed':
       return 'Your subscription has ended. You are on the free plan.';
     case 'stale':
-      return "We couldn't confirm your Pro plan for over a week. Check your connection, then refresh.";
+      return "We couldn't confirm your plan for over a week. Check your connection, then refresh.";
     case 'no-account':
       return 'Free plan.';
   }
@@ -89,3 +92,14 @@ export const PLAN_PITCH: Record<PaidPlan, string> = {
   pro: `${String(ACTIVE_JOB_LIMITS.pro)} active jobs, application autofill, insights, contacts and documents, bulk actions, full history, reminders, custom columns, capture from a pasted link, and sync across ${String(SYNC_DEVICE_LIMITS.pro)} computers.`,
   advanced: `Unlimited active jobs, automatic status updates from your job emails, interview details on every card, sync across ${String(SYNC_DEVICE_LIMITS.advanced)} devices including your phone, and your whole board in the side panel.`,
 };
+
+/** "US$8.48" from minor units, with the currency's own decimals. */
+export function formatMinor(amount: number, currency: string): string {
+  const format = new Intl.NumberFormat(undefined, {
+    style: 'currency',
+    currency,
+    currencyDisplay: 'symbol',
+  });
+  const digits = format.resolvedOptions().maximumFractionDigits ?? 2;
+  return format.format(amount / 10 ** digits);
+}

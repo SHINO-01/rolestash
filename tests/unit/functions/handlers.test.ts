@@ -280,6 +280,59 @@ describe('plan choice and change-plan', () => {
     expect(calls.find((c) => c.method === 'PATCH')?.body).toEqual({
       items: [{ price_id: 'pri_adv_month', quantity: 1 }],
       proration_billing_mode: 'prorated_immediately',
+      on_payment_failure: 'prevent_change',
+    });
+  });
+
+  it('change-plan previews the amount due now without changing anything', async () => {
+    const { deps: d, calls } = deps({
+      [`GET ${SB}/rest/v1/entitlements`]: entitlementRoute({
+        status: 'active',
+        provider_subscription_id: 'sub_01',
+      }),
+      'PATCH https://sandbox-api.paddle.com/subscriptions/sub_01/preview': {
+        status: 200,
+        body: {
+          data: {
+            update_summary: {
+              credit: { amount: '-662', currency_code: 'USD' },
+              charge: { amount: '1510', currency_code: 'USD' },
+              result: { action: 'charge', amount: '848', currency_code: 'USD' },
+            },
+          },
+        },
+      },
+    });
+    const res = await handleChangePlan(
+      post({ tier: 'advanced', interval: 'month', preview: true }),
+      d,
+    );
+    expect(await res.json()).toEqual({
+      preview: { action: 'charge', amount: 848, currency: 'USD' },
+    });
+    expect(calls.filter((c) => c.method === 'PATCH').map((c) => c.url)).toEqual([
+      'https://sandbox-api.paddle.com/subscriptions/sub_01/preview',
+    ]);
+  });
+
+  it('a downgrade previews as a credit', async () => {
+    const { deps: d } = deps({
+      [`GET ${SB}/rest/v1/entitlements`]: entitlementRoute({
+        status: 'active',
+        provider_subscription_id: 'sub_01',
+      }),
+      'PATCH https://sandbox-api.paddle.com/subscriptions/sub_01/preview': {
+        status: 200,
+        body: {
+          data: {
+            update_summary: { result: { action: 'credit', amount: '-700', currency_code: 'GBP' } },
+          },
+        },
+      },
+    });
+    const res = await handleChangePlan(post({ tier: 'pro', interval: 'month', preview: true }), d);
+    expect(await res.json()).toEqual({
+      preview: { action: 'credit', amount: 700, currency: 'GBP' },
     });
   });
 

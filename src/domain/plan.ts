@@ -8,7 +8,7 @@ import { findStage, type Stage } from './stage';
  * (JobService) live elsewhere.
  */
 
-/** Plans, lowest first. Trials are Pro. */
+/** Plans, lowest first. Trials are of Advanced (since 2026-10-02; earlier ones were Pro). */
 export const PLANS = ['free', 'pro', 'advanced'] as const;
 export type Plan = (typeof PLANS)[number];
 /** The paid plans a subscription can be on. */
@@ -79,7 +79,7 @@ export const SYNC_DEVICE_LIMITS: Readonly<Record<Plan, number>> = {
 /** Only Advanced can use the web board (the way phones sync). */
 export const WEB_BOARD_PLANS: readonly Plan[] = ['advanced'];
 export const FREE_ACTIVE_JOB_LIMIT = ACTIVE_JOB_LIMITS.free;
-export const TRIAL_DAYS = 30;
+export const TRIAL_DAYS = 14;
 /** How long a cached Pro entitlement stays valid without reaching the server. */
 export const OFFLINE_GRACE_DAYS = 7;
 /** Slack after a period ends, so a late renewal webhook doesn't flip a payer to Free. */
@@ -104,7 +104,7 @@ export const EntitlementSchema = z.object({
   status: z.enum(ENTITLEMENT_STATUSES),
   trialEndsAt: IsoDateTime.optional(),
   currentPeriodEnd: IsoDateTime.optional(),
-  /** Which paid plan the trial or subscription is for. Trials are Pro. */
+  /** Which paid plan the trial or subscription is for. New trials are Advanced. */
   tier: z.enum(['pro', 'advanced']).default('pro'),
   /** When this snapshot was fetched; drives the offline grace period. */
   checkedAt: IsoDateTime,
@@ -145,7 +145,7 @@ export function planOf(entitlement: Entitlement | undefined, now: Date): PlanSta
     case 'trialing':
       state = before(now, trialEndsAt)
         ? {
-            plan: 'pro',
+            plan: tier,
             reason: 'trial',
             ...(trialEndsAt ? { endsAt: trialEndsAt } : {}),
             trialDaysLeft: Math.max(

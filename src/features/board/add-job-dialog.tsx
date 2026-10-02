@@ -222,7 +222,7 @@ export function AddJobDialog({
                 className="text-accent font-medium hover:underline"
                 onClick={onSeePlans}
               >
-                Try Pro free
+                Try it free
               </button>
             ) : null}
           </p>

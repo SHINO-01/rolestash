@@ -9,6 +9,13 @@ import { ENTITLEMENT_STATUSES, type PaidPlan } from '@/domain/plan';
  * recording fake and never touches the network.
  */
 
+/** Money due now for a plan change, in minor units (cents). */
+export interface PlanChangePreview {
+  action: 'charge' | 'credit' | 'none';
+  amount: number;
+  currency: string;
+}
+
 export interface BackendConfig {
   /** https://<ref>.supabase.co */
   url: string;
@@ -327,6 +334,33 @@ export class SupabaseClient {
   }
 
   /** Moves a live subscription to another plan/interval (prorated by Paddle). */
+  /** What switching plans would charge or credit now (minor units), without switching. */
+  async previewPlanChange(
+    accessToken: string,
+    body: { tier: PaidPlan; interval: 'month' | 'year' },
+  ): Promise<PlanChangePreview> {
+    const { status, data } = await this.request('/functions/v1/change-plan', {
+      body: { ...body, preview: true },
+      token: accessToken,
+    });
+    const error = (data as { error?: unknown } | null)?.error;
+    if (status === 401) throw new BackendError('session_expired', status);
+    if (status === 404 && error === 'no_subscription')
+      throw new BackendError('no_subscription', status);
+    if (status >= 300) this.fail(status, data);
+    const parsed = z
+      .object({
+        preview: z.object({
+          action: z.enum(['charge', 'credit', 'none']),
+          amount: z.number().int().nonnegative(),
+          currency: z.string().regex(/^[A-Z]{3}$/),
+        }),
+      })
+      .safeParse(data);
+    if (!parsed.success) throw new BackendError('server');
+    return parsed.data.preview;
+  }
+
   async changePlan(accessToken: string, body: { tier: PaidPlan; interval: 'month' | 'year' }) {
     const { status, data } = await this.request('/functions/v1/change-plan', {
       body,

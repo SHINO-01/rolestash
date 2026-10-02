@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { browser } from 'wxt/browser';
 import {
   ACTIVE_JOB_LIMITS,
-  activeJobsLabel,
+  TRIAL_DAYS,
   countActiveJobs,
   PAID_PLANS,
   type PaidPlan,
@@ -17,6 +17,7 @@ import { useToast } from '@/ui/components/toast';
 import { useJobs, useSettings } from '@/ui/hooks/services';
 import {
   backendErrorMessage,
+  formatMinor,
   PLAN_NAMES,
   PLAN_PITCH,
   PLAN_PRICES,
@@ -26,6 +27,7 @@ import {
 import { EmailSection } from '@/features/email/email-section';
 import { ProfileSection } from './profile-section';
 import { SharingChoice } from './sharing-choice';
+import type { PlanChangePreview } from '@/services/backend/supabase-client';
 import { SyncSection } from './sync-section';
 
 const SITE = 'https://rolestash.com';
@@ -45,11 +47,11 @@ export function AccountDialog({
     <Dialog
       open={open}
       onClose={onClose}
-      title={state?.signedIn ? 'Your account' : 'Start your 30-day Pro trial'}
+      title={state?.signedIn ? 'Your account' : `Start your ${String(TRIAL_DAYS)}-day free trial`}
       description={
         state?.signedIn
           ? state.email
-          : `Sign in for ${activeJobsLabel('pro').toLowerCase()}, autofill, insights, sync and more. No card needed.`
+          : `${String(TRIAL_DAYS)} days of Advanced: unlimited jobs, email updates, autofill, insights, sync and more. No card needed.`
       }
     >
       {state?.signedIn ? (
@@ -233,6 +235,11 @@ function SignedIn({ account, state }: { account: AccountService; state: AccountS
   const [busy, setBusy] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [awaitingPayment, setAwaitingPayment] = useState(false);
+  const [pending, setPending] = useState<{
+    tier: PaidPlan;
+    interval: 'month' | 'year';
+    preview: PlanChangePreview;
+  }>();
 
   // Coming back from the checkout tab: re-read the plan straight away.
   useEffect(() => {
@@ -269,10 +276,24 @@ function SignedIn({ account, state }: { account: AccountService; state: AccountS
       await openTab(account.checkoutUrl(tier, interval));
       setAwaitingPayment(true);
     });
+  // A live subscription changes only after the user has seen what it costs now.
   const switchTo = (tier: PaidPlan, interval: 'month' | 'year') =>
     void run(`${tier}-${interval}`, async () => {
-      await account.changePlan(tier, interval);
-      toast({ message: `Switched to ${PLAN_NAMES[tier]}`, tone: 'success' });
+      setPending({ tier, interval, preview: await account.previewPlanChange(tier, interval) });
+    });
+  const confirmSwitch = () =>
+    void run('confirm', async () => {
+      if (!pending) return;
+      await account.changePlan(pending.tier, pending.interval);
+      const { action, amount, currency } = pending.preview;
+      setPending(undefined);
+      toast({
+        message:
+          action === 'charge'
+            ? `Switched to ${PLAN_NAMES[pending.tier]}. Paddle charged ${formatMinor(amount, currency)} and emailed a receipt.`
+            : `Switched to ${PLAN_NAMES[pending.tier]}.`,
+        tone: 'success',
+      });
     });
 
   return (
@@ -306,24 +327,35 @@ function SignedIn({ account, state }: { account: AccountService; state: AccountS
               <span className="text-sm font-semibold">{PLAN_NAMES[tier]}</span>
               <p className="text-muted text-sm">{PLAN_PITCH[tier]}</p>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              {(['month', 'year'] as const).map((interval) => (
-                <Button
-                  key={interval}
-                  variant={interval === 'month' ? 'primary' : 'secondary'}
-                  loading={busy === `${tier}-${interval}`}
-                  disabled={busy !== null}
-                  onClick={() => (subscribed ? switchTo(tier, interval) : checkout(tier, interval))}
-                >
-                  {PLAN_PRICES[tier][interval]}
-                </Button>
-              ))}
-            </div>
+            {pending?.tier === tier ? (
+              <ConfirmSwitch
+                pending={pending}
+                busy={busy === 'confirm'}
+                onConfirm={confirmSwitch}
+                onCancel={() => setPending(undefined)}
+              />
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                {(['month', 'year'] as const).map((interval) => (
+                  <Button
+                    key={interval}
+                    variant={interval === 'month' ? 'primary' : 'secondary'}
+                    loading={busy === `${tier}-${interval}`}
+                    disabled={busy !== null}
+                    onClick={() =>
+                      subscribed ? switchTo(tier, interval) : checkout(tier, interval)
+                    }
+                  >
+                    {PLAN_PRICES[tier][interval]}
+                  </Button>
+                ))}
+              </div>
+            )}
           </div>
         ))}
         <p className="text-subtle text-xs">
           {subscribed
-            ? 'Paddle, our reseller, charges or credits the difference straight away.'
+            ? 'You’ll see what it costs before anything changes. Paddle, our reseller, charges or credits the difference for the rest of this billing period.'
             : 'Secure checkout by Paddle, our reseller, in a new tab. Local prices in the UK, Ireland and Australia. 14-day money-back guarantee.'}
         </p>
       </section>
@@ -422,5 +454,45 @@ function GoogleMark() {
         d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4A12 12 0 0 0 1.4 6.6l4 3.1C6.3 6.9 8.9 4.8 12 4.8z"
       />
     </svg>
+  );
+}
+
+/** The amount due now for a plan switch, and the buttons to go ahead or not. */
+function ConfirmSwitch({
+  pending,
+  busy,
+  onConfirm,
+  onCancel,
+}: {
+  pending: { tier: PaidPlan; interval: 'month' | 'year'; preview: PlanChangePreview };
+  busy: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const { action, amount, currency } = pending.preview;
+  const money = formatMinor(amount, currency);
+  const then = PLAN_PRICES[pending.tier][pending.interval];
+  return (
+    <div
+      role="group"
+      aria-label="Confirm plan change"
+      className="bg-surface-2 rounded-lg p-3 text-sm"
+    >
+      <p>
+        {action === 'charge'
+          ? `Paddle will charge ${money} now to your saved payment method, for the rest of this billing period. Then ${then}.`
+          : action === 'credit'
+            ? `You’ll get a ${money} credit toward your next bills. Then ${then}.`
+            : `Nothing to pay now. Then ${then}.`}
+      </p>
+      <div className="mt-3 flex gap-2">
+        <Button variant="primary" loading={busy} disabled={busy} onClick={onConfirm}>
+          {action === 'charge' ? `Pay ${money} and switch` : 'Switch plan'}
+        </Button>
+        <Button variant="ghost" disabled={busy} onClick={onCancel}>
+          Cancel
+        </Button>
+      </div>
+    </div>
   );
 }

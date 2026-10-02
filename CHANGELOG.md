@@ -6,6 +6,15 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- **Free trial:** new accounts get 14 days of Advanced (was 30 days of Pro),
+  still with no card, once per email. Trials already running are unchanged.
+- **Switching plans shows the price first:** moving between Pro and Advanced
+  now shows what Paddle will charge (or credit) for the rest of the billing
+  period, and changes nothing until you confirm. If the payment fails, your
+  plan stays as it was.
+
 ## [0.2.0] — 2026-10-02
 
 ### Added

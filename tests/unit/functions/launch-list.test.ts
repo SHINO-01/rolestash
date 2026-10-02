@@ -284,7 +284,7 @@ describe('launch list: sending campaigns', () => {
     expect(batches.map((b) => (b.body as unknown[]).length)).toEqual([100, 50]);
     const [first, second] = sent();
     expect(first?.html).toContain(STORE);
-    expect(first?.text).toContain('30-day free trial, no card needed');
+    expect(first?.text).toContain('Try Advanced free for 14 days, no card needed');
     expect(second?.text).toContain('free for up to 15 active jobs');
     expect(first?.text).toContain('Unsubscribe in one click (no sign-in, no questions)');
     expect(first?.headers?.['List-Unsubscribe']).toContain(recipients[0]?.token);

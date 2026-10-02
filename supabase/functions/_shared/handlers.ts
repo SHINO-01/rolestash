@@ -123,16 +123,28 @@ export const handleCreateCheckout = userEndpoint(async ({ req, user, admin, padd
 });
 
 /**
- * POST /functions/v1/change-plan  { tier, interval } → { changed: true }.
- * Moves a live subscription between Pro and Advanced (or monthly and yearly);
- * Paddle prorates, and the webhook updates the entitlement.
+ * POST /functions/v1/change-plan  { tier, interval, preview? }.
+ * With `preview: true` → { preview: { action, amount, currency } }: what the
+ * switch would charge or credit now, so the user confirms the amount first.
+ * Without it → { changed: true }: moves a live subscription between Pro and
+ * Advanced (or monthly and yearly); Paddle prorates and charges the saved
+ * payment method, the plan changes only if that payment succeeds, and the
+ * webhook updates the entitlement.
  */
 export const handleChangePlan = userEndpoint(async ({ req, user, admin, paddle, env }) => {
-  const choice = planChoice((await req.json().catch(() => ({}))) as Record<string, unknown>);
+  const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
+  const choice = planChoice(body);
   if (!choice) return json(400, { error: 'invalid_plan' });
   const entitlement = await admin.entitlement(user.id);
   if (!entitlement?.provider_subscription_id || !LIVE.has(entitlement.status)) {
     return json(404, { error: 'no_subscription' });
+  }
+  if (body.preview === true) {
+    const preview = await paddle.previewChangePrice(
+      entitlement.provider_subscription_id,
+      env.paddle.prices[choice.tier][choice.interval],
+    );
+    return json(200, { preview });
   }
   await paddle.changePrice(
     entitlement.provider_subscription_id,

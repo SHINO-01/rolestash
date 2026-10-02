@@ -63,7 +63,14 @@ async function signIn(page: Page, site: string) {
 
 test('offers Advanced to other plans', async ({ page, site, backend }) => {
   expect(backend.devices).toEqual([]);
-  await signIn(page, site); // the mock signs in on a Pro trial
+  backend.entitlement = {
+    status: 'active',
+    tier: 'pro',
+    trial_ends_at: null,
+    current_period_end: new Date(Date.now() + 20 * 86_400_000).toISOString(),
+    provider_customer_id: null,
+  };
+  await signIn(page, site);
   await expect(
     page.getByRole('heading', { name: 'The web board is part of Advanced' }),
   ).toBeVisible();

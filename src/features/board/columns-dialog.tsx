@@ -75,7 +75,7 @@ export function ColumnsDialog({
           </span>
           {onSeePlans ? (
             <button type="button" className="font-semibold hover:underline" onClick={onSeePlans}>
-              Try Pro free
+              Try it free
             </button>
           ) : null}
         </div>

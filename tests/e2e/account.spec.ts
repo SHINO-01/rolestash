@@ -62,7 +62,7 @@ test.describe('accounts', () => {
     'needs the backend-configured build',
   );
 
-  test('signs in with an email code and starts the Pro trial', async ({
+  test('signs in with an email code and starts the Advanced trial', async ({
     context,
     extensionId,
     backend,
@@ -71,7 +71,7 @@ test.describe('accounts', () => {
     await page.goto(`chrome-extension://${extensionId}/board.html`);
     await page.getByRole('button', { name: 'Account', exact: true }).click();
     const dialog = page.getByRole('dialog');
-    await expect(dialog.getByText('Start your 30-day Pro trial')).toBeVisible();
+    await expect(dialog.getByText('Start your 14-day free trial')).toBeVisible();
     // The mock project enables Google, so the button is offered.
     await expect(dialog.getByRole('button', { name: 'Continue with Google' })).toBeVisible();
 
@@ -84,9 +84,9 @@ test.describe('accounts', () => {
     await dialog.getByLabel('Sign-in code').fill(E2E_CODE);
     await dialog.getByRole('button', { name: 'Sign in', exact: true }).click();
     await expect(dialog.getByText('Your account', { exact: true })).toBeVisible();
-    await expect(dialog.getByText(/Pro trial: 30 days left/)).toBeVisible();
+    await expect(dialog.getByText(/Advanced trial: 14 days left/)).toBeVisible();
     await expect(page.getByRole('button', { name: 'Account', exact: true })).toContainText(
-      'Pro trial · 30d',
+      'Advanced trial · 14d',
     );
 
     const otp = backend.requests.find((r) => r.path === '/auth/v1/otp');
@@ -179,6 +179,49 @@ test.describe('accounts', () => {
       expect(elsewhere).toEqual([]);
     });
 
+  test('switching a paid plan shows what it costs now and changes only on confirm', async ({
+    context,
+    worker,
+    extensionId,
+    backend,
+  }) => {
+    const end = new Date(Date.now() + 20 * 86_400_000).toISOString();
+    await seedSignedIn(worker, {
+      status: 'active',
+      tier: 'pro',
+      currentPeriodEnd: end,
+      hasBillingAccount: true,
+    });
+    backend.entitlement = {
+      status: 'active',
+      tier: 'pro',
+      trial_ends_at: null,
+      current_period_end: end,
+      provider_customer_id: 'ctm_e2e',
+    };
+    const page = await context.newPage();
+    await page.goto(`chrome-extension://${extensionId}/board.html#account`);
+    const dialog = page.getByRole('dialog');
+    await dialog.getByRole('button', { name: 'US$15 / month' }).click();
+    const confirm = dialog.getByRole('group', { name: 'Confirm plan change' });
+    await expect(confirm).toContainText('will charge $8.48 now');
+    const changes = () => backend.requests.filter((r) => r.path === '/functions/v1/change-plan');
+    expect(changes().map((r) => r.body)).toEqual([
+      { tier: 'advanced', interval: 'month', preview: true },
+    ]);
+    // Cancel changes nothing; confirming makes the one real change.
+    await confirm.getByRole('button', { name: 'Cancel' }).click();
+    await expect(confirm).toHaveCount(0);
+    await dialog.getByRole('button', { name: 'US$15 / month' }).click();
+    await dialog.getByRole('button', { name: /Pay .*8\.48 and switch/ }).click();
+    await expect(page.getByText(/Switched to Advanced\. Paddle charged/)).toBeVisible();
+    expect(changes().map((r) => r.body)).toEqual([
+      { tier: 'advanced', interval: 'month', preview: true },
+      { tier: 'advanced', interval: 'month', preview: true },
+      { tier: 'advanced', interval: 'month' },
+    ]);
+  });
+
   test('the free plan stops the 16th active job with a clear way forward', async ({
     context,
     worker,
@@ -207,7 +250,7 @@ test.describe('accounts', () => {
     // The banner leads signed-out users to the trial.
     await page.keyboard.press('Escape');
     await page.getByRole('status', { name: 'Plan notice' }).getByRole('button').click();
-    await expect(page.getByRole('dialog')).toContainText('Start your 30-day Pro trial');
+    await expect(page.getByRole('dialog')).toContainText('Start your 14-day free trial');
   });
 
   test('upgrading opens the checkout in a new tab', async ({
@@ -224,7 +267,7 @@ test.describe('accounts', () => {
     const page = await context.newPage();
     await page.goto(`chrome-extension://${extensionId}/board.html#account`);
     const dialog = page.getByRole('dialog');
-    await expect(dialog).toContainText('Your Pro trial has ended');
+    await expect(dialog).toContainText('Your free trial has ended');
 
     const [checkout] = await Promise.all([
       context.waitForEvent('page'),
@@ -906,7 +949,7 @@ test.describe('accounts', () => {
     const dialog = page.getByRole('dialog');
     await dialog.getByRole('button', { name: 'Delete account…' }).click();
     await dialog.getByRole('button', { name: 'Delete account', exact: true }).click();
-    await expect(dialog.getByText('Start your 30-day Pro trial')).toBeVisible();
+    await expect(dialog.getByText('Start your 14-day free trial')).toBeVisible();
     expect(backend.requests.some((r) => r.path === '/functions/v1/delete-account')).toBe(true);
     const keys = await worker.evaluate(async () =>
       Object.keys(await chrome.storage.local.get(null)),

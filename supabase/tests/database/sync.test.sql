@@ -16,6 +16,8 @@ insert into auth.users (id, email, aud, role) values
   ('11111111-1111-4111-8111-111111111111', 'pro@example.com', 'authenticated', 'authenticated'),
   ('22222222-2222-4222-8222-222222222222', 'adv@example.com', 'authenticated', 'authenticated'),
   ('33333333-3333-4333-8333-333333333333', 'free@example.com', 'authenticated', 'authenticated');
+-- Sign-ups start on an Advanced trial; these fixtures start as Pro, then set what they need.
+update public.entitlements set tier = 'pro';
 update public.entitlements set tier = 'advanced', status = 'active',
   current_period_end = now() + interval '20 days'
   where user_id = '22222222-2222-4222-8222-222222222222';
