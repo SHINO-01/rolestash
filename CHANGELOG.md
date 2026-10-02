@@ -6,6 +6,12 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- **Rolestash is on the Chrome Web Store:** rolestash.com's buttons install
+  it from the store, Pricing in the menu opens prices in your currency, and
+  the email form is now for occasional product news.
+
 ### Fixed
 
 - **Google sign-in works in the Chrome Web Store build:** rolestash.com now

@@ -46,7 +46,7 @@
           <a href="/#privacy">Privacy</a>
           <a href="/#faq">FAQ</a>
           <a href="/support/">Support</a>
-          <a class="btn btn-primary btn-sm" href="/#pricing">Pricing</a>
+          <a class="btn btn-primary btn-sm" href="/pricing/">Pricing</a>
         </nav>
         <details class="menu">
           <summary>
@@ -55,7 +55,7 @@
           </summary>
           <nav class="menu-panel" aria-label="Main">
             <a href="/#features">Features</a>
-            <a href="/#pricing">Pricing</a>
+            <a href="/pricing/">Pricing</a>
             <a href="/#privacy">Privacy</a>
             <a href="/#faq">FAQ</a>
             <a href="/support/">Support</a>
@@ -68,7 +68,9 @@
       <section class="hero">
         <div class="wrap">
           <div class="hero-copy">
-            <span class="pill">Launching soon on the Chrome Web Store</span>
+            <a class="pill" href="https://chromewebstore.google.com/detail/rolestash/STORE_ID"
+              >Now on the Chrome Web Store</a
+            >
             <h1>The <em>private</em> job application&nbsp;tracker.</h1>
             <p class="lede">
               No AI reading your applications, no access to your inbox, no data selling. Save any
@@ -76,8 +78,12 @@
               fill applications, and let your email keep the board up to date. From US$7.
             </p>
             <div class="cta-row">
-              <a class="btn btn-primary btn-lg" href="/#pricing">See plans</a>
-              <a class="btn btn-ghost btn-lg" href="/#privacy">How we handle your data</a>
+              <a
+                class="btn btn-primary btn-lg"
+                href="https://chromewebstore.google.com/detail/rolestash/STORE_ID"
+                >Add to Chrome, free</a
+              >
+              <a class="btn btn-ghost btn-lg" href="/#pricing">See plans</a>
             </div>
             <p class="fine">
               Free for up to 30 active jobs · Try Advanced free for 14 days, no card needed
@@ -490,7 +496,11 @@
                 <li>Side panel: save a page or open your board from any tab</li>
                 <li>Stored locally in your browser</li>
               </ul>
-              <a class="btn btn-ghost plan-cta" href="/#notify">Notify me at launch</a>
+              <a
+                class="btn btn-ghost plan-cta"
+                href="https://chromewebstore.google.com/detail/rolestash/STORE_ID"
+                >Add to Chrome, free</a
+              >
             </article>
             <article class="plan">
               <h3>Pro</h3>
@@ -508,7 +518,7 @@
                 <li>Full history, custom columns, capture from a pasted link</li>
                 <li>Sync across up to 3 computers</li>
               </ul>
-              <a class="btn btn-ghost plan-cta" href="/#notify">Notify me at launch</a>
+              <a class="btn btn-ghost plan-cta" href="/pricing/">Get Pro</a>
             </article>
             <article class="plan plan-pro">
               <span class="plan-badge">14-day free trial</span>
@@ -526,7 +536,11 @@
                 <li>Sync across up to 5 devices, including your phone (web board)</li>
                 <li>Your whole board in the side panel, beside any page</li>
               </ul>
-              <a class="btn btn-primary plan-cta" href="/#notify">Notify me at launch</a>
+              <a
+                class="btn btn-primary plan-cta"
+                href="https://chromewebstore.google.com/detail/rolestash/STORE_ID"
+                >Start the free trial</a
+              >
             </article>
           </div>
 
@@ -745,16 +759,24 @@
       <section id="notify" class="closer">
         <div class="wrap">
           <div class="closer-card">
-            <h2>Launching soon on the Chrome Web Store</h2>
+            <h2>Rolestash is on the Chrome Web Store</h2>
             <p>
-              Leave your email and we'll tell you the day Rolestash goes live. Free for up to 30
-              active jobs; try Advanced free for 14 days, no card needed.
+              Free for up to 30 active jobs, with no account. Try Advanced free for 14 days, no card
+              needed.
+            </p>
+            <p class="closer-cta">
+              <a
+                class="btn btn-amber btn-lg"
+                href="https://chromewebstore.google.com/detail/rolestash/STORE_ID"
+                >Add to Chrome</a
+              >
             </p>
             <form
               class="notify-form"
               action="https://fhclnxqumcdsqxyunelp.supabase.co/functions/v1/launch-list"
               method="post"
             >
+              <p class="notify-lede">Want to hear when we ship something new?</p>
               <div class="notify-row">
                 <label class="sr-only" for="notify-email">Email address</label>
                 <input
@@ -766,15 +788,8 @@
                   autocomplete="email"
                   placeholder="you@example.com"
                 />
-                <button class="btn btn-amber btn-lg" type="submit">Notify me at launch</button>
+                <button class="btn btn-ghost btn-lg" type="submit">Get product news</button>
               </div>
-              <fieldset class="notify-plans">
-                <legend>I'm most interested in</legend>
-                <label><input type="radio" name="plan" value="" checked /> Not sure yet</label>
-                <label><input type="radio" name="plan" value="free" /> Free</label>
-                <label><input type="radio" name="plan" value="pro" /> Pro</label>
-                <label><input type="radio" name="plan" value="advanced" /> Advanced</label>
-              </fieldset>
               <div class="hp" aria-hidden="true">
                 <label
                   >Leave this empty
@@ -782,8 +797,8 @@
                 /></label>
               </div>
               <p class="notify-fine">
-                We'll email you to confirm, on launch day, and now and then with product news (a few
-                times a year at most). Every email has a one-click unsubscribe link. See our
+                We'll email you to confirm, then now and then with product news (a few times a year
+                at most). Every email has a one-click unsubscribe link. See our
                 <a href="/privacy/#launch-list">privacy policy</a>.
               </p>
             </form>
@@ -802,7 +817,7 @@
         <nav class="footer-nav" aria-label="Product">
           <h2>Product</h2>
           <a href="/#features">Features</a>
-          <a href="/#pricing">Pricing</a>
+          <a href="/pricing/">Pricing</a>
           <a href="/#faq">FAQ</a>
         </nav>
         <nav class="footer-nav" aria-label="Legal">
