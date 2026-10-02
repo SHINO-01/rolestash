@@ -239,6 +239,22 @@ describe('fillForm', () => {
     ]);
   });
 
+  it('never fills fields the user cannot see (transparent, styled hidden, collapsed)', async () => {
+    const window = new Window();
+    window.document.body.innerHTML = `
+      <style>.ghost { visibility: hidden } .clear { opacity: 0 }</style>
+      <label for="n">Full name</label><input id="n">
+      <div class="ghost"><label for="p">Phone</label><input id="p"></div>
+      <div class="clear"><label for="a">Street address</label><input id="a"></div>
+      <div style="display:none"><label for="e">Email</label><input id="e"></div>`;
+    const doc = window.document as unknown as Document;
+    const report = await fillForm(doc, profile, FAST);
+    expect(report.filled.map((f) => f.key)).toEqual(['fullName']);
+    for (const id of ['p', 'a', 'e'])
+      expect((doc.getElementById(id) as HTMLInputElement).value).toBe('');
+    await window.happyDOM.close();
+  });
+
   it('skips a select with no matching option', async () => {
     const doc = new DOMParser().parseFromString(
       '<label for="s">How did you hear about us?</label><select id="s"><option value="">Select</option><option>Newspaper</option></select>',

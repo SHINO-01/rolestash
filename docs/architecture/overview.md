@@ -1,8 +1,12 @@
 # Architecture overview
 
 Rolestash is a Manifest V3 Chrome extension built with [WXT](https://wxt.dev),
-React and TypeScript. There is no server: every component runs inside the
-browser, and all state lives in `chrome.storage.local`.
+React and TypeScript. It is local-first: every component runs inside the
+browser, and `chrome.storage.local` is the source of truth. The optional
+server side (accounts, billing, sync, email updates: Supabase, Paddle and a
+Cloudflare Email Worker) is a layer behind ports, described in the
+[backend guide](../guides/backend.md); builds without backend settings have
+none of it.
 
 ## Extension surfaces (entrypoints)
 
@@ -10,8 +14,10 @@ browser, and all state lives in `chrome.storage.local`.
 | ------------------------------- | ---------------------- | ----------------------------------------------------------------- |
 | `src/entrypoints/popup/`        | Toolbar popup          | Capture the active tab, let the user review/edit, save            |
 | `src/entrypoints/board/`        | Extension page (tab)   | The Kanban board, job drawer, import/export                       |
-| `src/entrypoints/background.ts` | MV3 service worker     | Context menu + shortcut "instant save", badge feedback            |
+| `src/entrypoints/sidepanel/`    | Docked side panel      | Save this page, open the board; Advanced: Today, board, job sheet |
+| `src/entrypoints/background.ts` | MV3 service worker     | Context menu + shortcut "instant save", badge feedback, reminders |
 | `src/entrypoints/extractor.ts`  | Injected into the page | Runs `extractJob(document, location.href)` and returns the result |
+| `src/entrypoints/autofill.ts`   | Injected into the page | Fills an application form from the local profile, on a click      |
 
 The extractor is an **unlisted script**: it is never registered as a content
 script, only injected with `chrome.scripting.executeScript` after a user

@@ -31,7 +31,7 @@ export default defineConfig({
       name: 'Rolestash — Job Application Tracker',
       short_name: 'Rolestash',
       description:
-        'Save any job posting to a local Kanban board in one click. No AI, no accounts, no servers.',
+        'Save any job posting to a Kanban board in one click. Local-first and no AI; accounts and sync are optional.',
       minimum_chrome_version: '116',
       permissions: [
         // Read the current tab only after an explicit user gesture (popup, menu, shortcut).
@@ -70,9 +70,6 @@ export default defineConfig({
       // given back afterwards. Optional, so installs show no warning.
       optional_host_permissions: ['https://*/*', 'http://*/*'],
       ...(mode === 'e2e' ? { host_permissions: ['<all_urls>'] } : {}),
-      action: {
-        default_title: 'Track this job',
-      },
       commands: {
         _execute_action: {
           suggested_key: { default: 'Alt+J' },

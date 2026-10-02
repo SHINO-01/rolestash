@@ -11,9 +11,11 @@ board you drag through _Saved → Applied → Screening → Interviewing → Off
 - **No AI.** Extraction is deterministic: structured data first
   (schema.org JSON-LD and microdata), then 50 hand-written site adapters, then
   conservative heuristics. Every field records where it came from.
-- **No third parties.** No backend, no accounts, no analytics, no remote code,
-  no network requests. Your data lives in `chrome.storage.local` and leaves the
-  browser only when you export a backup.
+- **Local-first.** Your data lives in `chrome.storage.local`. The free plan
+  needs no account and makes no network requests beyond the page you capture.
+  Accounts, sync and email updates are optional paid features on our own
+  backend (Supabase, payments by Paddle). No analytics, no remote code, no AI
+  vendors.
 - **Minimal permissions.** The extension can read a page only after you click it
   (`activeTab`). No "read all your data on all websites" warning.
 

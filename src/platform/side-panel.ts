@@ -7,6 +7,8 @@ import { browser } from 'wxt/browser';
  */
 
 const POPUP = 'popup.html';
+// The popup's title comes from popup/index.html's <title>.
+const TITLE = { popup: 'Rolestash', panel: 'Rolestash: open the side panel' };
 
 /** Opens the panel in the current window. Must run inside a click. */
 export async function openSidePanel(windowId?: number): Promise<void> {
@@ -19,6 +21,7 @@ export async function setIconOpensPanel(on: boolean): Promise<void> {
   await browser.sidePanel.setPanelBehavior({ openPanelOnActionClick: on });
   // A popup wins over the panel, so it's cleared while the panel is chosen.
   await browser.action.setPopup({ popup: on ? '' : POPUP });
+  await browser.action.setTitle({ title: on ? TITLE.panel : TITLE.popup });
 }
 
 /** Whether the icon is pinned to the toolbar; undefined when Chrome can't say. */

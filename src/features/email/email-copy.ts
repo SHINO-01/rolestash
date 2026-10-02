@@ -3,16 +3,7 @@ import { interviewStart } from '@/domain/interview';
 
 /** Wording and small helpers shared by the email-update components (ADR-0014). */
 
-/** Only http(s) links are ever rendered as links. */
-export function safeHref(url: string | undefined): string | undefined {
-  if (!url) return undefined;
-  try {
-    const u = new URL(url);
-    return u.protocol === 'https:' || u.protocol === 'http:' ? u.href : undefined;
-  } catch {
-    return undefined;
-  }
-}
+export { safeHref } from '@/ui/format';
 
 /** "Thu 9 Oct, 10:00 am" in the user's zone (floating times as written). */
 export function formatInterviewTime(interview: JobInterview, short = false): string | undefined {

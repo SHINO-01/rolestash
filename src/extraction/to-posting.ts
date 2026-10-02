@@ -21,7 +21,8 @@ export function toPosting(result: ExtractionResult, overrides: Partial<Posting> 
   if (f.closesAt) posting.closesAt = f.closesAt;
   if (f.description) posting.description = f.description;
   if (f.externalId) posting.externalId = f.externalId.slice(0, 200);
-  if (f.applyUrl && tryParseUrl(f.applyUrl)) posting.applyUrl = f.applyUrl;
+  if (f.applyUrl && /^https?:$/.test(tryParseUrl(f.applyUrl)?.protocol ?? ''))
+    posting.applyUrl = f.applyUrl;
   return { ...posting, ...overrides };
 }
 

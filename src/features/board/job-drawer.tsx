@@ -41,7 +41,7 @@ import { useLiveJobs, useServices } from '@/ui/hooks/services';
 import {
   EMPLOYMENT_LABEL,
   formatDate,
-  hasPostingUrl,
+  postingHref,
   relativeTime,
   WORKPLACE_LABEL,
 } from '@/ui/format';
@@ -108,6 +108,7 @@ function DrawerBody({
 }) {
   const { jobService } = useServices();
   const live = useLiveJobs();
+  const posting = postingHref(job);
   const toast = useToast();
 
   async function patch(p: JobPatch) {
@@ -255,12 +256,12 @@ function DrawerBody({
           </label>
           <PriorityInput value={job.priority} onChange={(priority) => void patch({ priority })} />
           <div className="flex-1" />
-          {hasPostingUrl(job) ? (
+          {posting ? (
             <Button
               size="sm"
               variant="primary"
               icon={<ExternalLink className="size-3.5" />}
-              onClick={() => window.open(job.applyUrl ?? job.source.url, '_blank', 'noopener')}
+              onClick={() => window.open(posting, '_blank', 'noopener')}
             >
               Open posting
             </Button>

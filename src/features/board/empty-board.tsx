@@ -31,8 +31,8 @@ export function EmptyBoard({ onAdd }: { onAdd: () => void }) {
           </Button>
         </div>
         <p className="text-subtle mt-8 flex items-center gap-1.5 text-xs">
-          <MousePointerClick className="size-3.5" /> Everything stays in this browser. No accounts,
-          no servers.
+          <MousePointerClick className="size-3.5" /> Your jobs are saved in this browser first.
+          Accounts and sync are optional.
         </p>
       </div>
     </div>

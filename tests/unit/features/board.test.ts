@@ -2,7 +2,7 @@ import { findColumn, groupIntoColumns, resolveDropIndex } from '@/features/board
 import { computeStats } from '@/features/board/stats';
 import { postingFromDraft, draftFromResult } from '@/features/capture/capture-draft';
 import { DEFAULT_STAGES } from '@/domain/stage';
-import { daysUntil, hasPostingUrl, matchesQuery, relativeTime } from '@/ui/format';
+import { daysUntil, hasPostingUrl, matchesQuery, postingHref, relativeTime } from '@/ui/format';
 import { makeJob, makeResult } from '../helpers/factories';
 
 describe('board columns', () => {
@@ -109,5 +109,17 @@ describe('format helpers', () => {
         makeJob({ source: { ...makeJob().source, url: 'https://jobtrail.invalid/manual/1' } }),
       ),
     ).toBe(false);
+  });
+  it('opens only http(s) posting links, preferring the apply link', () => {
+    const job = makeJob();
+    expect(postingHref(job)).toBe(job.source.url);
+    expect(postingHref(makeJob({ applyUrl: 'https://apply.example/1' }))).toBe(
+      'https://apply.example/1',
+    );
+    // Stored before the extractor checked the scheme, or synced from elsewhere.
+    expect(postingHref(makeJob({ applyUrl: 'javascript:alert(1)' }))).toBe(job.source.url);
+    expect(
+      postingHref(makeJob({ source: { ...job.source, url: 'javascript:alert(1)' } })),
+    ).toBeUndefined();
   });
 });

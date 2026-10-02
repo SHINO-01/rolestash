@@ -84,5 +84,8 @@ describe('pipeline fault tolerance', () => {
     );
     expect(posting.salary?.text).toHaveLength(200);
     expect(posting.applyUrl).toBeUndefined();
+    // A hostile page's structured data can't plant a script link.
+    for (const applyUrl of ['javascript:alert(1)', 'data:text/html,x'])
+      expect(toPosting(makeResult({ fields: { title: 'T', applyUrl } })).applyUrl).toBeUndefined();
   });
 });

@@ -17,7 +17,7 @@ import { SuggestionBanner } from '@/features/email/suggestion';
 import { ContactCard, DocumentLine } from '@/features/board/job-records';
 import { INTERVIEW_KIND_LABEL } from '@/domain/calendar';
 import { useJobs, useLiveJobs, useServices, useSettings } from '@/ui/hooks/services';
-import { formatDate, hasPostingUrl, relativeTime, WORKPLACE_LABEL } from '@/ui/format';
+import { formatDate, postingHref, relativeTime, WORKPLACE_LABEL } from '@/ui/format';
 
 const PRESETS = [
   { label: 'Tomorrow', days: 1 },
@@ -45,6 +45,7 @@ export function JobSheet({ id, onClose }: { id: string | undefined; onClose: () 
 
 function Sheet({ job, onClose }: { job: Job; onClose: () => void }) {
   const { jobService } = useServices();
+  const posting = postingHref(job);
   const settings = useSettings();
   const live = useLiveJobs();
   const toast = useToast();
@@ -111,9 +112,9 @@ function Sheet({ job, onClose }: { job: Job; onClose: () => void }) {
           <Item label="Saved">{relativeTime(job.createdAt)}</Item>
         </dl>
 
-        {hasPostingUrl(job) ? (
+        {posting ? (
           <a
-            href={job.applyUrl ?? job.source.url}
+            href={posting}
             target="_blank"
             rel="noopener noreferrer"
             className="bg-accent flex h-11 items-center justify-center gap-2 rounded-xl text-sm font-semibold text-white dark:text-zinc-950"

@@ -13,8 +13,23 @@ All notable changes to this project are documented here. The format follows
   undone). Select them with **Select** in the board header, or Ctrl/⌘-click
   cards at any time; Esc clears the selection.
 
+### Security
+
+- **Autofill never fills fields you can't see:** transparent, zero-size,
+  off-screen and style-hidden fields are skipped, so a page can't collect
+  details its visible form never asks for.
+- **Posting links open only as web links:** an apply link that isn't
+  http(s) is dropped when a job is captured, and ignored by "Open posting"
+  on the board and the web board.
+
 ### Changed
 
+- **Wording:** the store description, the empty board and PRIVACY.md now
+  describe what ships: local-first and no AI, with optional accounts, sync,
+  email updates and shared learning.
+- **Toolbar icon tooltip** says "open the side panel" while the icon opens
+  it.
+- **rolestash.com:** the plans list the side panel and bulk actions.
 - **Board header:** Select, Insights and History show as icons on narrower
   screens, so the search box keeps its room.
 - **Insights** (Advanced): how your search is going, from the board's new

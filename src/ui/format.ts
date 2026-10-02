@@ -66,6 +66,23 @@ export function hasPostingUrl(job: Job): boolean {
   return !isManualUrl(job.source.url);
 }
 
+/** Only http(s) links are ever rendered or opened as links. */
+export function safeHref(url: string | undefined): string | undefined {
+  if (!url) return undefined;
+  try {
+    const u = new URL(url);
+    return u.protocol === 'https:' || u.protocol === 'http:' ? u.href : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/** Where "Open posting" goes: the apply link, else the posting; never another scheme. */
+export function postingHref(job: Job): string | undefined {
+  if (!hasPostingUrl(job)) return undefined;
+  return safeHref(job.applyUrl) ?? safeHref(job.source.url);
+}
+
 export function matchesQuery(job: Job, query: string): boolean {
   const q = query.trim().toLowerCase();
   if (!q) return true;

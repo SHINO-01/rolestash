@@ -318,13 +318,29 @@ export function labelFor(el: HTMLElement): string {
   return humanize(el.getAttribute('name') ?? el.id).trim();
 }
 
+/**
+ * Whether the user can't see the field. A page could hide inputs labelled
+ * "Phone" or "Address" to collect details the visible form never asks for,
+ * so transparent, zero-size and off-screen fields count as hidden too.
+ */
 function isHidden(el: HTMLElement): boolean {
   if (el.closest('[hidden], [aria-hidden="true"]')) return true;
   // Real browsers know what's rendered (closed dropdowns, collapsed sections).
-  if ('checkVisibility' in el && typeof el.checkVisibility === 'function' && !el.checkVisibility())
+  if (
+    'checkVisibility' in el &&
+    typeof el.checkVisibility === 'function' &&
+    !el.checkVisibility({ opacityProperty: true, visibilityProperty: true })
+  )
     return true;
   for (let node: HTMLElement | null = el; node; node = node.parentElement) {
     if (node.style.display === 'none' || node.style.visibility === 'hidden') return true;
+  }
+  // Geometry, only where there is layout (a real page, not a test DOM).
+  const view = el.ownerDocument.documentElement.getBoundingClientRect();
+  if (view.width > 0) {
+    const box = el.getBoundingClientRect();
+    if (box.width < 2 || box.height < 2) return true;
+    if (box.right <= view.left || box.bottom <= view.top) return true; // pushed off the page
   }
   return false;
 }
