@@ -27,9 +27,14 @@ export function readEnv(get: (name: string) => string | undefined): FunctionEnv 
       apiKey: need('PADDLE_API_KEY'),
       webhookSecret: need('PADDLE_WEBHOOK_SECRET'),
       prices: {
-        pro: { month: need('PADDLE_PRICE_PRO_MONTHLY'), year: need('PADDLE_PRICE_PRO_YEARLY') },
+        pro: {
+          month: need('PADDLE_PRICE_PRO_MONTHLY'),
+          quarter: need('PADDLE_PRICE_PRO_QUARTERLY'),
+          year: need('PADDLE_PRICE_PRO_YEARLY'),
+        },
         advanced: {
           month: need('PADDLE_PRICE_ADVANCED_MONTHLY'),
+          quarter: need('PADDLE_PRICE_ADVANCED_QUARTERLY'),
           year: need('PADDLE_PRICE_ADVANCED_YEARLY'),
         },
       },

@@ -117,9 +117,9 @@ describe('free-plan job limit', () => {
     expect(countActiveJobs(jobs, DEFAULT_STAGES)).toBe(3);
   });
 
-  it('holds 15 on Free and 60 on Pro; Advanced is unlimited', () => {
-    expect(ACTIVE_JOB_LIMITS).toEqual({ free: 15, pro: 60, advanced: Infinity });
-    expect(FREE_ACTIVE_JOB_LIMIT).toBe(15);
+  it('holds 30 on Free and 60 on Pro; Advanced is unlimited', () => {
+    expect(ACTIVE_JOB_LIMITS).toEqual({ free: 30, pro: 60, advanced: Infinity });
+    expect(FREE_ACTIVE_JOB_LIMIT).toBe(30);
     expect(checkJobLimit('advanced', 100_000, 500).allowed).toBe(true);
     expect(activeJobsLabel('pro')).toBe('60 active jobs');
     expect(activeJobsLabel('advanced')).toBe('Unlimited active jobs');
@@ -129,13 +129,13 @@ describe('free-plan job limit', () => {
       expect(checkJobLimit(plan, limit - 1).allowed).toBe(true);
       expect(checkJobLimit(plan, limit)).toEqual({ allowed: false, active: limit, limit });
     }
-    expect(checkJobLimit('free', 10, 6).allowed).toBe(false);
+    expect(checkJobLimit('free', 25, 6).allowed).toBe(false);
     // After a downgrade, an account over the limit keeps its jobs but can't add.
     expect(checkJobLimit('free', 60).allowed).toBe(false);
   });
 
   it('puts on-device features on Pro and server features on Advanced', () => {
-    for (const f of ['autofill', 'insights', 'records', 'bulk', 'sync', 'reminders'] as const) {
+    for (const f of ['fullAutofill', 'insights', 'records', 'bulk', 'sync', 'reminders'] as const) {
       expect(allows('free', f)).toBe(false);
       expect(allows('pro', f)).toBe(true);
       expect(allows('advanced', f)).toBe(true);
@@ -146,7 +146,7 @@ describe('free-plan job limit', () => {
     }
     // A build without accounts has nothing to upgrade to, so nothing is held back.
     expect(allows(undefined, 'emailUpdates')).toBe(true);
-    expect(featurePlanName('autofill')).toBe('Pro');
+    expect(featurePlanName('fullAutofill')).toBe('Pro');
   });
 
   it('suggests the next plan up', () => {

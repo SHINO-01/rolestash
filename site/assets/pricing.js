@@ -8,7 +8,8 @@
 // sign in to the extension with that email. Edit the tiers below.
 import { initPaddle, PADDLE } from './paddle-config.js';
 
-/** @typedef {{ name: 'Free' | 'Pro' | 'Advanced', description: string, features: string[], priceId: { month: string, year: string } | null, badge?: string }} Tier */
+/** @typedef {'month' | 'quarter' | 'year'} Interval */
+/** @typedef {{ name: 'Free' | 'Pro' | 'Advanced', description: string, features: string[], priceId: Record<Interval, string> | null, badge?: string }} Tier */
 
 /** @type {Tier[]} */
 const TIERS = [
@@ -18,7 +19,8 @@ const TIERS = [
     features: [
       'One-click capture from 50+ sites',
       'Kanban board with notes, tags and priorities',
-      'Up to 15 active jobs',
+      'Up to 30 active jobs (rejected ones don’t count)',
+      'Autofill your name, contact details and links',
       'CSV and JSON export',
     ],
     priceId: null,
@@ -28,7 +30,7 @@ const TIERS = [
     description: 'Everything on your computer',
     features: [
       'Up to 60 active jobs',
-      'Application autofill, from your profile or résumé',
+      'Full autofill: work details, saved answers, from your résumé',
       'Insights, contacts, documents and bulk actions',
       'Reminders, custom columns and full history',
       'Sync across up to 3 computers',
@@ -50,10 +52,13 @@ const TIERS = [
   },
 ];
 
+/** @type {Record<Interval, string>} */
+const PER = { month: ' / month', quarter: ' / 3 months', year: ' / year' };
+
 const grid = document.getElementById('pricing-plans');
 const status = document.getElementById('pricing-status');
 const toggle = document.querySelectorAll('[data-interval]');
-/** @type {'month' | 'year'} */
+/** @type {Interval} */
 let interval = 'month';
 /** priceId → Paddle's formatted total for this visitor. */
 const totals = new Map();
@@ -76,7 +81,7 @@ function render() {
       if (tier.priceId) {
         const id = tier.priceId[interval];
         price.textContent = totals.get(id) ?? '…';
-        price.append(el('small', '', interval === 'month' ? ' / month' : ' / year'));
+        price.append(el('small', '', PER[interval]));
       } else price.textContent = 'Free';
       card.append(price, el('p', 'note', tier.description));
       const list = el('ul');
@@ -118,14 +123,15 @@ function subscribe(priceId) {
 
 for (const button of toggle)
   button.addEventListener('click', () => {
-    interval = button.dataset.interval === 'year' ? 'year' : 'month';
+    const chosen = button.dataset.interval;
+    interval = chosen === 'year' || chosen === 'quarter' ? chosen : 'month';
     render();
   });
 
 render();
 try {
   const paddle = initPaddle({});
-  const items = TIERS.flatMap((t) => (t.priceId ? [t.priceId.month, t.priceId.year] : [])).map(
+  const items = TIERS.flatMap((t) => (t.priceId ? Object.values(t.priceId) : [])).map(
     (priceId) => ({ priceId, quantity: 1 }),
   );
   // No address or country: Paddle localizes from the visitor's IP.

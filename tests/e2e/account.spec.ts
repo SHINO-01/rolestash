@@ -244,30 +244,30 @@ test.describe('accounts', () => {
     await expect(panel.getByRole('button', { name: 'Set up autofill' })).toHaveCount(0);
   });
 
-  test('the free plan stops the 16th active job with a clear way forward', async ({
+  test('the free plan stops the 31st active job with a clear way forward', async ({
     context,
     worker,
     extensionId,
     backend: _backend,
   }) => {
-    await seedActiveJobs(worker, 15);
+    await seedActiveJobs(worker, 30);
     const page = await context.newPage();
     await page.goto(`chrome-extension://${extensionId}/board.html`);
     await expect(page.getByRole('status', { name: 'Plan notice' })).toContainText(
-      "You've reached the Free plan's 15 active jobs",
+      "You've reached the Free plan's 30 active jobs",
     );
 
     await page.getByRole('button', { name: 'Add job' }).click();
     const dialog = page.getByRole('dialog');
     await dialog.getByLabel('Job title').fill('One too many');
     await dialog.getByRole('button', { name: /add/i }).last().click();
-    await expect(dialog).toContainText('Your plan holds 15 active jobs');
+    await expect(dialog).toContainText('Your plan holds 30 active jobs');
     const count = await worker.evaluate(
       async () =>
         Object.keys(await chrome.storage.local.get(null)).filter((k) => k.startsWith('job:'))
           .length,
     );
-    expect(count).toBe(15);
+    expect(count).toBe(30);
 
     // The banner leads signed-out users to the trial.
     await page.keyboard.press('Escape');
@@ -638,6 +638,30 @@ test.describe('accounts', () => {
     await expect(dialog.getByText('Set-up steps')).toBeVisible();
     await dialog.getByText('Set-up steps').click();
     await expect(dialog.getByText('It’s working')).toBeVisible();
+  });
+
+  test('Free gets basic autofill: contact details and links, with Pro details offered', async ({
+    context,
+    worker,
+    extensionId,
+  }) => {
+    await seedSignedIn(worker, { status: 'expired', hasBillingAccount: false });
+    const page = await context.newPage();
+    await page.goto(`chrome-extension://${extensionId}/board.html#profile`);
+    const dialog = page.getByRole('dialog', { name: 'Autofill profile' });
+    await dialog.getByLabel('First name').fill('Sam');
+    await dialog.getByLabel('LinkedIn URL').fill('https://linkedin.com/in/sam');
+    await expect(dialog.getByText('Autofill is free for these details.')).toBeVisible();
+    // Pro-only parts stay out of the way.
+    await expect(dialog.getByLabel('Current job title')).toHaveCount(0);
+    await expect(dialog.getByRole('button', { name: 'Fill from résumé' })).toHaveCount(0);
+    await expect(dialog.getByRole('button', { name: 'Add a saved answer' })).toHaveCount(0);
+    await dialog.getByRole('button', { name: 'Save profile' }).click();
+    await expect(dialog).toBeHidden();
+    // The side panel offers filling straight away, on Free.
+    const panel = await context.newPage();
+    await panel.goto(`chrome-extension://${extensionId}/sidepanel.html`);
+    await expect(panel.getByRole('button', { name: 'Fill this application' })).toBeVisible();
   });
 
   test('saves the autofill profile on this device (Advanced)', async ({

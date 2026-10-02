@@ -14,13 +14,16 @@ export type Plan = (typeof PLANS)[number];
 /** The paid plans a subscription can be on. */
 export type PaidPlan = Exclude<Plan, 'free'>;
 export const PAID_PLANS: readonly PaidPlan[] = ['pro', 'advanced'];
+/** How often a paid plan bills. Quarterly suits a typical ~3-month job search. */
+export const BILLING_INTERVALS = ['month', 'quarter', 'year'] as const;
+export type BillingInterval = (typeof BILLING_INTERVALS)[number];
 
 /**
  * Jobs outside a `lost` stage each plan may hold. Advanced has no limit; the
  * server's 5,000 synced-job cap (synced_jobs_cap) is the fair-use backstop.
  */
 export const ACTIVE_JOB_LIMITS: Readonly<Record<Plan, number>> = {
-  free: 15,
+  free: 30,
   pro: 60,
   advanced: Number.POSITIVE_INFINITY,
 };
@@ -37,7 +40,8 @@ export const FEATURE_PLANS = {
   customColumns: 'pro',
   pasteLink: 'pro',
   sync: 'pro',
-  autofill: 'pro',
+  /** Autofill beyond the basic fields, saved answers and résumé import. Basic autofill is free. */
+  fullAutofill: 'pro',
   insights: 'pro',
   records: 'pro',
   bulk: 'pro',

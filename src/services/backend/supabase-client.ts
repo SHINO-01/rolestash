@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { AccountProfileSchema, type AccountProfile } from '@/domain/account-profile';
-import { ENTITLEMENT_STATUSES, type PaidPlan } from '@/domain/plan';
+import { ENTITLEMENT_STATUSES, type BillingInterval, type PaidPlan } from '@/domain/plan';
 
 /**
  * A small client for the Supabase endpoints Rolestash uses (ADR-0011):
@@ -337,7 +337,7 @@ export class SupabaseClient {
   /** What switching plans would charge or credit now (minor units), without switching. */
   async previewPlanChange(
     accessToken: string,
-    body: { tier: PaidPlan; interval: 'month' | 'year' },
+    body: { tier: PaidPlan; interval: BillingInterval },
   ): Promise<PlanChangePreview> {
     const { status, data } = await this.request('/functions/v1/change-plan', {
       body: { ...body, preview: true },
@@ -361,7 +361,7 @@ export class SupabaseClient {
     return parsed.data.preview;
   }
 
-  async changePlan(accessToken: string, body: { tier: PaidPlan; interval: 'month' | 'year' }) {
+  async changePlan(accessToken: string, body: { tier: PaidPlan; interval: BillingInterval }) {
     const { status, data } = await this.request('/functions/v1/change-plan', {
       body,
       token: accessToken,

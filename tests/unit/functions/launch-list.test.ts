@@ -285,7 +285,7 @@ describe('launch list: sending campaigns', () => {
     const [first, second] = sent();
     expect(first?.html).toContain(STORE);
     expect(first?.text).toContain('Try Advanced free for 14 days, no card needed');
-    expect(second?.text).toContain('free for up to 15 active jobs');
+    expect(second?.text).toContain('free for up to 30 active jobs');
     expect(first?.text).toContain('Unsubscribe in one click (no sign-in, no questions)');
     expect(first?.headers?.['List-Unsubscribe']).toContain(recipients[0]?.token);
     const marks = calls.filter((c) => c.url.endsWith('/rpc/launch_mark_sent'));

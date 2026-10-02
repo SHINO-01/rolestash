@@ -60,9 +60,9 @@ describe('AutofillService', () => {
     ats: 'greenhouse',
   });
 
-  it('is Pro and up, and needs a profile', async () => {
+  it('needs a profile on every plan', async () => {
     const free = setup('free');
-    expect(await free.service.blocked()).toBe('plan');
+    expect(await free.service.blocked()).toBe('no_profile');
     await expect(free.service.fill(1)).rejects.toBeInstanceOf(AutofillBlockedError);
 
     expect(await setup('pro').service.blocked()).toBe('no_profile');
@@ -87,8 +87,42 @@ describe('AutofillService', () => {
       skipped: report(2).skipped,
       files: ['Resume'],
       ats: 'greenhouse',
+      basic: false,
     });
     expect(calls[0]).toMatchObject({ tabId: 7, profile: { email: 'sam@example.com' } });
     expect((await service.profile()).email).toBe('sam@example.com');
+  });
+
+  it('fills the basic fields on Free, and everything on Pro', async () => {
+    const full: Profile = {
+      ...EMPTY_PROFILE,
+      firstName: 'Sam',
+      email: 'sam@example.com',
+      linkedin: 'https://linkedin.com/in/sam',
+      currentTitle: 'Analyst',
+      salaryExpectation: '$120k',
+      workAuthorization: 'yes',
+      answers: [{ question: 'Why us?', answer: 'The mission.' }],
+    };
+    const free = setup('free', [report(1)]);
+    await free.service.saveProfile(full);
+    expect(await free.service.allowed()).toBe(false);
+    expect((await free.service.fill(1)).basic).toBe(true);
+    expect(free.calls[0]?.profile).toEqual({
+      answers: [],
+      firstName: 'Sam',
+      email: 'sam@example.com',
+      linkedin: 'https://linkedin.com/in/sam',
+    });
+
+    // Only Pro details saved: nothing Free can fill with.
+    const onlyPro = setup('free');
+    await onlyPro.service.saveProfile({ ...EMPTY_PROFILE, currentTitle: 'Analyst' });
+    expect(await onlyPro.service.blocked()).toBe('no_profile');
+
+    const pro = setup('pro', [report(1)]);
+    await pro.service.saveProfile(full);
+    expect((await pro.service.fill(1)).basic).toBe(false);
+    expect(pro.calls[0]?.profile).toMatchObject({ currentTitle: 'Analyst', answers: full.answers });
   });
 });

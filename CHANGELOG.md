@@ -18,6 +18,12 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- **More on the free plan:** 30 active jobs (was 15), and autofill for your
+  name, contact details, address and links. Pro still fills everything else
+  (current role, work rights, salary, saved answers) and can start from your
+  résumé.
+- **rolestash.com** now leads with what makes Rolestash different: no AI
+  reading your applications, no inbox access, no data selling.
 - **Easier email-updates setup:** choose "I'll forward emails myself"
   (easiest, with a contact card to save), Gmail or Outlook, then follow a few
   short steps. Each step has a button that opens the right page and the text

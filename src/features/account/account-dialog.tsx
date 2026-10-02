@@ -3,7 +3,9 @@ import { useEffect, useState } from 'react';
 import { browser } from 'wxt/browser';
 import {
   ACTIVE_JOB_LIMITS,
+  BILLING_INTERVALS,
   TRIAL_DAYS,
+  type BillingInterval,
   countActiveJobs,
   PAID_PLANS,
   type PaidPlan,
@@ -237,7 +239,7 @@ function SignedIn({ account, state }: { account: AccountService; state: AccountS
   const [awaitingPayment, setAwaitingPayment] = useState(false);
   const [pending, setPending] = useState<{
     tier: PaidPlan;
-    interval: 'month' | 'year';
+    interval: BillingInterval;
     preview: PlanChangePreview;
   }>();
 
@@ -271,13 +273,13 @@ function SignedIn({ account, state }: { account: AccountService; state: AccountS
   const subscribed = plan.reason === 'subscribed' && plan.plan !== 'free';
   const limit = ACTIVE_JOB_LIMITS[plan.plan];
 
-  const checkout = (tier: PaidPlan, interval: 'month' | 'year') =>
+  const checkout = (tier: PaidPlan, interval: BillingInterval) =>
     void run(`${tier}-${interval}`, async () => {
       await openTab(account.checkoutUrl(tier, interval));
       setAwaitingPayment(true);
     });
   // A live subscription changes only after the user has seen what it costs now.
-  const switchTo = (tier: PaidPlan, interval: 'month' | 'year') =>
+  const switchTo = (tier: PaidPlan, interval: BillingInterval) =>
     void run(`${tier}-${interval}`, async () => {
       setPending({ tier, interval, preview: await account.previewPlanChange(tier, interval) });
     });
@@ -335,8 +337,8 @@ function SignedIn({ account, state }: { account: AccountService; state: AccountS
                 onCancel={() => setPending(undefined)}
               />
             ) : (
-              <div className="grid grid-cols-2 gap-2">
-                {(['month', 'year'] as const).map((interval) => (
+              <div className="grid grid-cols-3 gap-2">
+                {BILLING_INTERVALS.map((interval) => (
                   <Button
                     key={interval}
                     variant={interval === 'month' ? 'primary' : 'secondary'}
@@ -464,7 +466,7 @@ function ConfirmSwitch({
   onConfirm,
   onCancel,
 }: {
-  pending: { tier: PaidPlan; interval: 'month' | 'year'; preview: PlanChangePreview };
+  pending: { tier: PaidPlan; interval: BillingInterval; preview: PlanChangePreview };
   busy: boolean;
   onConfirm: () => void;
   onCancel: () => void;

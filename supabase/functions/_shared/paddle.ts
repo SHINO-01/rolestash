@@ -5,7 +5,7 @@
  */
 
 export type PaidTier = 'pro' | 'advanced';
-export type BillingInterval = 'month' | 'year';
+export type BillingInterval = 'month' | 'quarter' | 'year';
 
 export type EntitlementStatus =
   'trialing' | 'active' | 'past_due' | 'paused' | 'canceled' | 'expired';
@@ -22,7 +22,7 @@ export interface BillingEvent {
   occurredAt: string;
   status: EntitlementStatus;
   currentPeriodEnd: string | null;
-  billingInterval: 'month' | 'year' | null;
+  billingInterval: BillingInterval | null;
   customerId: string | null;
   subscriptionId: string;
   tier: PaidTier;
@@ -95,7 +95,7 @@ interface PaddleSubscriptionEvent {
     customer_id?: unknown;
     custom_data?: { user_id?: unknown } | null;
     current_billing_period?: { ends_at?: unknown } | null;
-    billing_cycle?: { interval?: unknown } | null;
+    billing_cycle?: { interval?: unknown; frequency?: unknown } | null;
     items?: { price?: { id?: unknown; custom_data?: { tier?: unknown } | null } | null }[] | null;
     canceled_at?: unknown;
   };
@@ -138,7 +138,17 @@ export function toBillingEvent(
     (tagged === 'pro' || tagged === 'advanced' ? tagged : undefined);
   if (!tier) return null;
 
-  const interval = str(data.billing_cycle?.interval);
+  // Paddle bills quarterly plans as every 3 months.
+  const cycle = str(data.billing_cycle?.interval);
+  const every = data.billing_cycle?.frequency ?? 1;
+  const interval: BillingInterval | null =
+    cycle === 'year' && every === 1
+      ? 'year'
+      : cycle === 'month' && every === 3
+        ? 'quarter'
+        : cycle === 'month' && every === 1
+          ? 'month'
+          : null;
   return {
     userId,
     occurredAt,
@@ -147,7 +157,7 @@ export function toBillingEvent(
     currentPeriodEnd:
       str(data.current_billing_period?.ends_at) ??
       (status === 'canceled' ? (str(data.canceled_at) ?? occurredAt) : null),
-    billingInterval: interval === 'month' || interval === 'year' ? interval : null,
+    billingInterval: interval,
     customerId: str(data.customer_id),
     subscriptionId,
     tier,

@@ -51,6 +51,25 @@ approved the following:
   running keep their tier.
 - A 3-month pass was considered and dropped by the owner.
 
+**Revision (2026-10-02, later): value against the market.** A comparison
+showed our paid plans are the cheapest in the category, but our free plan
+was the weakest. Huntr's free plan has 100 jobs and autofill, and Teal,
+Simplify and Eztrackr track unlimited jobs for free. The owner approved:
+
+- **Free:** 30 active jobs (was 15). Rejected and withdrawn jobs still don't
+  count.
+- **Basic autofill on every plan:** name, contact details, address and
+  links (`BASIC_PROFILE_FIELDS`). Pro (`fullAutofill`) adds the current
+  role, work rights, salary, notice period, saved answers and résumé import.
+- **Quarterly prices**, billed every 3 months: Pro US$18 / £14 / €16.50 /
+  A$26, Advanced US$39 / £31 / €36 / A$59. Every competitor sells a
+  quarterly plan, and a median search lasts about 108 days.
+  `entitlements.billing_interval` gains `quarter`, and the webhook maps
+  "every 3 months" to it.
+- **Messaging leads with privacy:** "The private job application tracker:
+  no AI reading your applications, no inbox access, no data selling — from
+  US$7."
+
 We don't launch until every advertised feature of every plan is built, so
 the site advertises them all.
 

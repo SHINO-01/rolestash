@@ -1,5 +1,12 @@
 import { z } from 'zod';
-import { EntitlementSchema, planOf, type PaidPlan, type Plan, type PlanState } from '@/domain/plan';
+import {
+  EntitlementSchema,
+  planOf,
+  type BillingInterval,
+  type PaidPlan,
+  type Plan,
+  type PlanState,
+} from '@/domain/plan';
 import type { KeyValueStore } from '@/storage/key-value-store';
 import { AccountProfileSchema, type AccountProfile } from '@/domain/account-profile';
 import {
@@ -240,7 +247,7 @@ export class AccountService implements PlanProvider {
   }
 
   /** Checkout for a new subscription (Free, trial or lapsed accounts). */
-  async checkoutUrl(tier: PaidPlan, interval: 'month' | 'year'): Promise<string> {
+  async checkoutUrl(tier: PaidPlan, interval: BillingInterval): Promise<string> {
     return this.client.functionUrl('create-checkout', await this.accessToken(), {
       tier,
       interval,
@@ -248,12 +255,12 @@ export class AccountService implements PlanProvider {
   }
 
   /** What switching would charge or credit now; shown for confirmation first. */
-  async previewPlanChange(tier: PaidPlan, interval: 'month' | 'year'): Promise<PlanChangePreview> {
+  async previewPlanChange(tier: PaidPlan, interval: BillingInterval): Promise<PlanChangePreview> {
     return this.client.previewPlanChange(await this.accessToken(), { tier, interval });
   }
 
   /** Switches a live subscription between Pro and Advanced, then re-reads the plan. */
-  async changePlan(tier: PaidPlan, interval: 'month' | 'year'): Promise<void> {
+  async changePlan(tier: PaidPlan, interval: BillingInterval): Promise<void> {
     await this.client.changePlan(await this.accessToken(), { tier, interval });
     await this.refreshEntitlement();
   }

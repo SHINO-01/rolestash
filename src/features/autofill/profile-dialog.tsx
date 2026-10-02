@@ -14,7 +14,8 @@ type TextKey = Exclude<
   'answers' | 'updatedAt' | 'workAuthorization' | 'needsSponsorship'
 >;
 
-const SECTIONS: { title: string; fields: [TextKey, string, string?][] }[] = [
+/** `pro` sections are filled on Pro and up; the rest on every plan (ADR-0013). */
+const SECTIONS: { title: string; pro?: boolean; fields: [TextKey, string, string?][] }[] = [
   {
     title: 'Name and contact',
     fields: [
@@ -36,18 +37,19 @@ const SECTIONS: { title: string; fields: [TextKey, string, string?][] }[] = [
     ],
   },
   {
-    title: 'Work and links',
+    title: 'Links',
     fields: [
-      ['currentTitle', 'Current job title', 'organization-title'],
-      ['currentCompany', 'Current employer', 'organization'],
       ['linkedin', 'LinkedIn URL', 'url'],
       ['github', 'GitHub URL', 'url'],
       ['website', 'Website or portfolio', 'url'],
     ],
   },
   {
-    title: 'Common questions',
+    title: 'Work and common questions',
+    pro: true,
     fields: [
+      ['currentTitle', 'Current job title', 'organization-title'],
+      ['currentCompany', 'Current employer', 'organization'],
       ['salaryExpectation', 'Salary expectation'],
       ['noticePeriod', 'Notice period or start date'],
       ['howHeard', 'How you usually hear about jobs'],
@@ -56,7 +58,7 @@ const SECTIONS: { title: string; fields: [TextKey, string, string?][] }[] = [
 ];
 
 /**
- * The autofill profile (Advanced; ADR-0020). Lives only on this device and is
+ * The autofill profile (ADR-0020): basic details on every plan, the rest on Pro. Lives only on this device and is
  * used only when you click "Fill this application".
  */
 export function ProfileDialog({
@@ -111,21 +113,6 @@ function ProfileForm({
   }, [autofill]);
 
   if (!autofill) return <p className="text-muted text-sm">Autofill isn’t available here.</p>;
-  if (!allowed)
-    return (
-      <div className="flex flex-col gap-3">
-        <p className="text-muted text-sm">
-          Autofill is part of Pro. Save your details once, then fill Greenhouse, Lever, Workday,
-          Ashby and SmartRecruiters applications, and most company careers forms, in one click.
-          Rolestash never submits a form for you.
-        </p>
-        {onSeePlans ? (
-          <Button variant="primary" onClick={onSeePlans}>
-            See plans
-          </Button>
-        ) : null}
-      </div>
-    );
   if (!profile) return null;
 
   const set = (patch: Partial<Profile>) => setProfile({ ...profile, ...patch });
@@ -190,34 +177,36 @@ function ProfileForm({
         void save();
       }}
     >
-      <div className="border-line bg-surface-2 flex items-center justify-between gap-3 rounded-xl border p-3">
-        <p className="text-muted text-sm">
-          Start from your résumé (PDF or Word). It’s read on this device and isn’t kept.
-        </p>
-        <Button
-          size="sm"
-          icon={<FileUp className="size-4" />}
-          loading={reading}
-          disabled={reading}
-          onClick={() => resumeInput.current?.click()}
-        >
-          Fill from résumé
-        </Button>
-        <input
-          ref={resumeInput}
-          type="file"
-          className="hidden"
-          aria-label="Choose your résumé"
-          accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            e.target.value = '';
-            if (file) void importResume(file);
-          }}
-        />
-      </div>
+      {allowed ? (
+        <div className="border-line bg-surface-2 flex items-center justify-between gap-3 rounded-xl border p-3">
+          <p className="text-muted text-sm">
+            Start from your résumé (PDF or Word). It’s read on this device and isn’t kept.
+          </p>
+          <Button
+            size="sm"
+            icon={<FileUp className="size-4" />}
+            loading={reading}
+            disabled={reading}
+            onClick={() => resumeInput.current?.click()}
+          >
+            Fill from résumé
+          </Button>
+          <input
+            ref={resumeInput}
+            type="file"
+            className="hidden"
+            aria-label="Choose your résumé"
+            accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = '';
+              if (file) void importResume(file);
+            }}
+          />
+        </div>
+      ) : null}
 
-      {SECTIONS.map((section) => (
+      {SECTIONS.filter((section) => allowed || !section.pro).map((section) => (
         <Section key={section.title} title={section.title}>
           <div className="grid grid-cols-2 gap-3">
             {section.fields.map(([key, label, autocomplete]) => (
@@ -241,76 +230,95 @@ function ProfileForm({
         </Section>
       ))}
 
-      <Section title="Work rights">
-        <div className="grid grid-cols-2 gap-3">
-          <YesNo
-            label="Allowed to work where you apply?"
-            value={profile.workAuthorization}
-            onChange={(workAuthorization) => set({ workAuthorization })}
-          />
-          <YesNo
-            label="Need visa sponsorship?"
-            value={profile.needsSponsorship}
-            onChange={(needsSponsorship) => set({ needsSponsorship })}
-          />
-        </div>
-      </Section>
-
-      <Section title="Saved answers">
-        <p className="text-subtle -mt-1 mb-2 text-xs">
-          For questions that come up again and again (“Why do you want to work here?”). Matched by
-          their wording.
-        </p>
-        <div className="flex flex-col gap-3">
-          {profile.answers.map((a, i) => (
-            <div key={i} className="border-line flex flex-col gap-2 rounded-lg border p-3">
-              <div className="flex items-center gap-2">
-                <Input
-                  aria-label={`Question ${String(i + 1)}`}
-                  placeholder="Question"
-                  value={a.question}
-                  onChange={(e) =>
-                    set({
-                      answers: profile.answers.map((x, j) =>
-                        j === i ? { ...x, question: e.target.value } : x,
-                      ),
-                    })
-                  }
-                />
-                <IconButton
-                  label="Remove answer"
-                  onClick={() => set({ answers: profile.answers.filter((_, j) => j !== i) })}
-                >
-                  <Trash2 className="size-4" />
-                </IconButton>
-              </div>
-              <Textarea
-                aria-label={`Answer ${String(i + 1)}`}
-                placeholder="Your answer"
-                value={a.answer}
-                onChange={(e) =>
-                  set({
-                    answers: profile.answers.map((x, j) =>
-                      j === i ? { ...x, answer: e.target.value } : x,
-                    ),
-                  })
-                }
+      {allowed ? (
+        <>
+          <Section title="Work rights">
+            <div className="grid grid-cols-2 gap-3">
+              <YesNo
+                label="Allowed to work where you apply?"
+                value={profile.workAuthorization}
+                onChange={(workAuthorization) => set({ workAuthorization })}
+              />
+              <YesNo
+                label="Need visa sponsorship?"
+                value={profile.needsSponsorship}
+                onChange={(needsSponsorship) => set({ needsSponsorship })}
               />
             </div>
-          ))}
-          {profile.answers.length < 30 ? (
-            <Button
-              size="sm"
-              variant="ghost"
-              icon={<Plus className="size-3.5" />}
-              className="self-start"
-              onClick={() => set({ answers: [...profile.answers, { question: '', answer: '' }] })}
-            >
-              Add a saved answer
+          </Section>
+
+          <Section title="Saved answers">
+            <p className="text-subtle -mt-1 mb-2 text-xs">
+              For questions that come up again and again (“Why do you want to work here?”). Matched
+              by their wording.
+            </p>
+            <div className="flex flex-col gap-3">
+              {profile.answers.map((a, i) => (
+                <div key={i} className="border-line flex flex-col gap-2 rounded-lg border p-3">
+                  <div className="flex items-center gap-2">
+                    <Input
+                      aria-label={`Question ${String(i + 1)}`}
+                      placeholder="Question"
+                      value={a.question}
+                      onChange={(e) =>
+                        set({
+                          answers: profile.answers.map((x, j) =>
+                            j === i ? { ...x, question: e.target.value } : x,
+                          ),
+                        })
+                      }
+                    />
+                    <IconButton
+                      label="Remove answer"
+                      onClick={() => set({ answers: profile.answers.filter((_, j) => j !== i) })}
+                    >
+                      <Trash2 className="size-4" />
+                    </IconButton>
+                  </div>
+                  <Textarea
+                    aria-label={`Answer ${String(i + 1)}`}
+                    placeholder="Your answer"
+                    value={a.answer}
+                    onChange={(e) =>
+                      set({
+                        answers: profile.answers.map((x, j) =>
+                          j === i ? { ...x, answer: e.target.value } : x,
+                        ),
+                      })
+                    }
+                  />
+                </div>
+              ))}
+              {profile.answers.length < 30 ? (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  icon={<Plus className="size-3.5" />}
+                  className="self-start"
+                  onClick={() =>
+                    set({ answers: [...profile.answers, { question: '', answer: '' }] })
+                  }
+                >
+                  Add a saved answer
+                </Button>
+              ) : null}
+            </div>
+          </Section>
+        </>
+      ) : (
+        <div className="border-line bg-surface-2 flex flex-col gap-2 rounded-xl border p-3 text-sm">
+          <p className="text-muted">
+            <b className="text-ink">Autofill is free for these details.</b> With Pro, Rolestash also
+            fills your current role, work rights, salary and notice period, answers questions you
+            save, and can start your profile from your résumé.
+          </p>
+          {onSeePlans ? (
+            <Button size="sm" className="self-start" onClick={onSeePlans}>
+              See plans
             </Button>
           ) : null}
         </div>
-      </Section>
+      )}
 
       <p className="text-subtle flex items-start gap-2 text-xs">
         <ShieldCheck className="mt-0.5 size-3.5 shrink-0" />

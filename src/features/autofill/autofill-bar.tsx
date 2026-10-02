@@ -21,7 +21,8 @@ const LEFT_FOR_YOU = {
 const TIP_DISMISSED_KEY = 'tips:autofillDismissed';
 
 /**
- * "Fill this application" in the popup (Advanced; ADR-0020). Fills the
+ * "Fill this application" in the popup and side panel (ADR-0020): basic
+ * details on every plan, everything on Pro. Fills the
  * current tab's form from the profile and says what's left to do.
  */
 export function AutofillBar({ tabId }: { tabId: number | undefined }) {
@@ -47,7 +48,7 @@ export function AutofillBar({ tabId }: { tabId: number | undefined }) {
     };
   }, [autofill, store]);
 
-  // Off Advanced, the popup stays about capturing; Account explains plans.
+  // Basic autofill is on every plan; Pro fills more (see the fill result).
   if (!autofill || status === 'plan' || status === 'loading' || tabId === undefined) return null;
 
   // A slim suggestion, never in the way of saving, and gone once dismissed.
@@ -120,6 +121,12 @@ export function AutofillBar({ tabId }: { tabId: number | undefined }) {
             Filled {outcome.filled.length} {outcome.filled.length === 1 ? 'field' : 'fields'}. Check
             them, then submit yourself.
           </p>
+          {outcome.basic ? (
+            <p className="text-subtle text-[13px]">
+              Filled your basic details. Pro also fills your current role, work rights, salary and
+              saved answers.
+            </p>
+          ) : null}
           {outcome.files.length ? (
             <p className="text-muted flex items-center gap-1.5 text-[13px]">
               <FileUp className="size-3.5" /> Attach your résumé yourself.

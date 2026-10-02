@@ -1,7 +1,8 @@
 import { z } from 'zod';
 
 /**
- * The applicant profile used by application autofill (Advanced; ADR-0020).
+ * The applicant profile used by application autofill (ADR-0020): the basic
+ * fields on every plan, everything on Pro and up.
  * Stored only on this device (`profile` key): never synced, never sent.
  * Every field is optional, so a half-filled profile still helps.
  */
@@ -67,6 +68,37 @@ export const PROFILE_TEXT_FIELDS = [
   'noticePeriod',
   'howHeard',
 ] as const satisfies readonly (keyof Profile)[];
+
+/**
+ * What autofill uses on Free (ADR-0013, 2026-10-02 revision): who you are and
+ * how to reach you. Pro adds your current role, work rights, salary, notice
+ * period, saved answers and starting from a résumé.
+ */
+export const BASIC_PROFILE_FIELDS = [
+  'firstName',
+  'lastName',
+  'preferredName',
+  'email',
+  'phone',
+  'addressLine1',
+  'city',
+  'region',
+  'postcode',
+  'country',
+  'linkedin',
+  'github',
+  'website',
+] as const satisfies readonly (keyof Profile)[];
+
+/** The profile cut to the basic fields (Free). */
+export function basicProfile(profile: Profile): Profile {
+  const out: Profile = { answers: [] };
+  for (const key of BASIC_PROFILE_FIELDS) {
+    const value = profile[key];
+    if (value) out[key] = value;
+  }
+  return out;
+}
 
 /** Whether the profile has anything to fill with. */
 export function hasProfile(profile: Profile): boolean {

@@ -1,6 +1,6 @@
 # Application autofill
 
-Pro and Advanced users save their details once (**Autofill profile…** on the board)
+Everyone saves their details once (**Autofill profile…** on the board)
 and fill application forms in one click (ADR-0020). This guide covers how a
 form is read and filled, how to support a new form, and what's verified.
 

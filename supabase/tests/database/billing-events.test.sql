@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(12);
+select plan(14);
 
 insert into auth.users (id, email, aud, role)
   values ('55555555-5555-4555-8555-555555555555', 'carol@example.com', 'authenticated', 'authenticated');
@@ -40,6 +40,13 @@ select is((select tier from public.entitlements where user_id = '55555555-5555-4
 select throws_ok(
   $$select pg_temp.apply('2026-10-26T00:00:00Z', 'active', '2026-11-26T00:00:00Z', 'platinum')$$,
   '23514', null, 'unknown tiers are rejected');
+
+select ok(
+  public.apply_billing_event('55555555-5555-4555-8555-555555555555', '2026-10-27T00:00:00Z', 'active',
+    '2027-01-27T00:00:00Z', 'quarter', 'paddle', 'ctm_1', 'sub_1', 'pro'),
+  'a quarterly plan applies');
+select is((select billing_interval from public.entitlements where user_id = '55555555-5555-4555-8555-555555555555'),
+  'quarter', 'and is recorded as quarterly');
 
 set local role authenticated;
 select throws_ok(

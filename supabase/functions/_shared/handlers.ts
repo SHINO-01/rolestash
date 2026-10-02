@@ -90,7 +90,9 @@ function planChoice(body: { tier?: unknown; interval?: unknown }) {
         ? 'advanced'
         : null;
   const interval: BillingInterval | null =
-    body.interval === 'year' ? 'year' : body.interval === 'month' ? 'month' : null;
+    body.interval === 'year' || body.interval === 'quarter' || body.interval === 'month'
+      ? body.interval
+      : null;
   return tier && interval ? { tier, interval } : null;
 }
 

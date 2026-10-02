@@ -26,8 +26,10 @@ const ENV = readEnv(
       PADDLE_API_KEY: 'pdl_key',
       PADDLE_WEBHOOK_SECRET: 'whsec',
       PADDLE_PRICE_PRO_MONTHLY: 'pri_pro_month',
+      PADDLE_PRICE_PRO_QUARTERLY: 'pri_pro_quarter',
       PADDLE_PRICE_PRO_YEARLY: 'pri_pro_year',
       PADDLE_PRICE_ADVANCED_MONTHLY: 'pri_adv_month',
+      PADDLE_PRICE_ADVANCED_QUARTERLY: 'pri_adv_quarter',
       PADDLE_PRICE_ADVANCED_YEARLY: 'pri_adv_year',
     })[name],
 );
@@ -259,6 +261,12 @@ describe('plan choice and change-plan', () => {
     expect(
       (await handleCreateCheckout(post({ tier: 'advanced', interval: 'year' }), d)).status,
     ).toBe(200);
+    expect((await handleCreateCheckout(post({ tier: 'pro', interval: 'quarter' }), d)).status).toBe(
+      200,
+    );
+    expect(calls.filter((c) => c.url.endsWith('/transactions')).at(-1)?.body).toMatchObject({
+      items: [{ price_id: 'pri_pro_quarter' }],
+    });
     expect(calls.find((c) => c.url.endsWith('/transactions'))?.body).toMatchObject({
       items: [{ price_id: 'pri_adv_year' }],
     });
@@ -488,6 +496,18 @@ describe('paddle-webhook', () => {
     expect((await handlePaddleWebhook(unsigned, d)).status).toBe(401);
     expect((await handlePaddleWebhook(new Request('https://fn'), d)).status).toBe(405);
     expect(calls).toHaveLength(0);
+  });
+
+  it('records a quarterly plan (billed every 3 months)', async () => {
+    const { deps: d, calls } = deps({
+      [`POST ${SB}/rest/v1/rpc/apply_billing_event`]: { status: 200, body: true },
+    });
+    const quarterly = subscriptionEvent({
+      items: [{ price: { id: 'pri_adv_quarter' } }],
+      billing_cycle: { interval: 'month', frequency: 3 },
+    });
+    await handlePaddleWebhook(await signedRequest(quarterly), d);
+    expect(calls[0]?.body).toMatchObject({ p_tier: 'advanced', p_billing_interval: 'quarter' });
   });
 
   it('records the tier of the subscribed price', async () => {
