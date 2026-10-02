@@ -28,4 +28,7 @@ confirm the board and an old backup import both work.
 ## Store listing
 
 Listing text, screenshots, permission justifications and the privacy
-disclosure live in rolestash-extension under `store/`.
+disclosure live in rolestash-extension under `store/`. To regenerate the
+screenshots (1280×800, fictional data), run `npm run store:screenshots` here,
+then copy `.output/store-screenshots/*.png` into that repo's
+`store/screenshots/`.

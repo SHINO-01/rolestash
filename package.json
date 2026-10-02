@@ -31,6 +31,7 @@
     "site:chrome": "tsx scripts/build-site-chrome.ts",
     "site:og": "tsx scripts/site-og-image.ts",
     "site:screenshots": "npm run build:e2e && tsx scripts/site-screenshots.ts",
+    "store:screenshots": "npm run build && tsx scripts/store-screenshots.ts",
     "verify": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run build && npm run build:web",
     "test:smoke": "npm run build && playwright test --project=smoke",
     "release": "node scripts/changelog.ts release",
