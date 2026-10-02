@@ -1,0 +1,14 @@
+Priya Raman
+priya.raman@example.org
+(02) 9876 5432
+Melbourne, Victoria
+Portfolio: https://priya.example.dev
+
+Professional Experience
+Northwind Labs
+Frontend Engineer
+January 2022 - Present
+- Shipped the design system.
+
+Skills
+React, TypeScript, Node.js, ASP.NET

@@ -20,6 +20,22 @@ form is read and filled, how to support a new form, and what's verified.
 The right-click menu item **Fill this application with Rolestash** runs the
 same thing. The badge then shows how many fields were filled.
 
+## Filling the profile from a résumé
+
+**Fill from résumé** in the profile dialog turns a PDF or Word file into
+profile fields, on the device (ADR-0020 addendum).
+
+- `src/features/autofill/resume-file.ts` gets the text:
+  - **DOCX:** `fflate` plus `DOMParser`, headers first;
+  - **PDF:** lazy `pdfjs-dist`, with lines rebuilt from text positions and
+    wide gaps read as column breaks.
+- `src/autofill/resume.ts` (pure) applies the rules.
+- Only empty fields are filled, and each is marked for checking.
+
+To fix a miss, add a fictional `tests/fixtures/resumes/<case>.txt` with its
+`.expected.json`. The unit test runs every pair. `tests/fixtures/resumes/files/`
+holds a real PDF and DOCX for the end-to-end test.
+
 ## How a question is recognised
 
 In order, the first match wins:

@@ -8,6 +8,11 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Fill your autofill profile from your résumé** (Pro and Advanced): choose
+  a PDF or Word file in the profile and Rolestash fills your name, contact
+  details, links, location and current role. Only empty fields are filled,
+  each marked for you to check. The file is read in your browser and never
+  stored or sent.
 - **Profile name and photo:** add a display name and a photo in Account (the
   extension or the web board). The photo is shrunk to a small square on your
   device, shown on the board's Account button, and never loaded from Google

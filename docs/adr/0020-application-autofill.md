@@ -91,6 +91,33 @@ careers pages. Constraints:
 - **Profile changes need an owner:** adding a profile field means a schema
   field, a rule, the dialog and a fixture case.
 
+## Addendum (2026-10-02): fill the profile from a résumé
+
+The owner asked for "autofill from my résumé" (Word and PDF). We read the
+résumé to **pre-fill the profile**; filling forms still works only from the
+saved profile.
+
+- **Rules:** `src/autofill/resume.ts` reads plain text with deterministic
+  rules:
+  - email, phone and links (LinkedIn, GitHub, explicit web links);
+  - the name, location and current role as best guesses.
+  - Fixtures are in `tests/fixtures/resumes/` (fictional people).
+- **Reading the file:** `src/features/autofill/resume-file.ts`, on the device:
+  - **DOCX:** unzipped with `fflate`, reading only `document.xml` and the
+    headers, with a 20 MB unzipped cap against zip bombs. The XML is parsed
+    inertly with `DOMParser`.
+  - **PDF:** `pdfjs-dist`, loaded only when a PDF is chosen, with its worker
+    bundled. Font faces are off, and no `cMapUrl`, `standardFontDataUrl`,
+    `iccUrl` or `wasmUrl` is set, so pdf.js fetches nothing. pdf.js 6 has no
+    `eval`. At most 6 pages are read.
+- **Review before saving:** only empty fields are filled, and each one is
+  marked "From your résumé: check it" until the person saves. The file and
+  its text are never stored or sent.
+- **Cost:** pdf.js adds about 1.7 MB unpacked to the package (mostly its
+  worker). The release repo's package budget is raised to match.
+- **Unchanged:** "Store and attach the résumé file" below still stands. Autofill
+  doesn't touch file inputs.
+
 ## Alternatives considered
 
 | Option                                             | Why not                                                                                                  |

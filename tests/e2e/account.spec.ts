@@ -1,3 +1,4 @@
+import path from 'node:path';
 import type { Worker } from '@playwright/test';
 import { expect, test } from './fixtures';
 import { analyzeEmail } from '../../src/email/analyze';
@@ -138,6 +139,45 @@ test.describe('accounts', () => {
     ]);
     expect(size).toEqual([128, 128]);
   });
+
+  for (const file of ['classic.pdf', 'classic.docx'])
+    test(`fills the autofill profile from a résumé on Pro, on this device (${file})`, async ({
+      context,
+      worker,
+      extensionId,
+    }) => {
+      await seedSignedIn(worker, {
+        status: 'trialing',
+        trialEndsAt: new Date(Date.now() + 10 * 86_400_000).toISOString(),
+        hasBillingAccount: false,
+      });
+      const page = await context.newPage();
+      const elsewhere: string[] = [];
+      page.on('request', (r) => {
+        if (!/^(chrome-extension|blob|data):|^http:\/\/127\.0\.0\.1/.test(r.url()))
+          elsewhere.push(r.url());
+      });
+      await page.goto(`chrome-extension://${extensionId}/board.html#profile`);
+      const dialog = page.getByRole('dialog', { name: 'Autofill profile' });
+      // What's already there is kept.
+      await dialog.getByLabel('Email', { exact: true }).fill('mine@example.com');
+      await dialog
+        .getByLabel('Choose your résumé')
+        .setInputFiles(path.join(import.meta.dirname, '../fixtures/resumes/files', file));
+      await expect(page.getByText(/from your résumé\. Check them, then save\./)).toBeVisible();
+      await expect(dialog.getByLabel('First name')).toHaveValue('Sam');
+      await expect(dialog.getByLabel('Last name')).toHaveValue('Taylor');
+      await expect(dialog.getByLabel('Phone')).toHaveValue('+61 400 123 456');
+      await expect(dialog.getByLabel('City or suburb')).toHaveValue('Sydney');
+      await expect(dialog.getByLabel('Current job title')).toHaveValue('Senior Data Analyst');
+      await expect(dialog.getByLabel('Current employer')).toHaveValue('Quokka Health');
+      await expect(dialog.getByLabel('LinkedIn URL')).toHaveValue(
+        'https://linkedin.com/in/sam-taylor-example',
+      );
+      await expect(dialog.getByLabel('Email', { exact: true })).toHaveValue('mine@example.com');
+      await expect(dialog.getByText('From your résumé: check it').first()).toBeVisible();
+      expect(elsewhere).toEqual([]);
+    });
 
   test('the free plan stops the 16th active job with a clear way forward', async ({
     context,

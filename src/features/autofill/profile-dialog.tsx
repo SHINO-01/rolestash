@@ -1,11 +1,13 @@
-import { Plus, ShieldCheck, Trash2 } from 'lucide-react';
-import { useEffect, useState, type ReactNode } from 'react';
+import { FileUp, Plus, ShieldCheck, Trash2 } from 'lucide-react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { readResume } from '@/autofill/resume';
 import { EMPTY_PROFILE, type Profile } from '@/domain/profile';
 import { Button, IconButton } from '@/ui/components/button';
 import { Field, Input, Select, Textarea } from '@/ui/components/field';
 import { Dialog } from '@/ui/components/overlay';
 import { useToast } from '@/ui/components/toast';
 import { useServices } from '@/ui/hooks/services';
+import { resumeText, ResumeFileError } from './resume-file';
 
 type TextKey = Exclude<
   keyof Profile,
@@ -90,6 +92,10 @@ function ProfileForm({
   const [profile, setProfile] = useState<Profile>();
   const [allowed, setAllowed] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [reading, setReading] = useState(false);
+  // Fields just filled from a résumé, marked until saved so they get checked.
+  const [fromResume, setFromResume] = useState<ReadonlySet<TextKey>>(new Set());
+  const resumeInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!autofill) return;
@@ -123,6 +129,40 @@ function ProfileForm({
   if (!profile) return null;
 
   const set = (patch: Partial<Profile>) => setProfile({ ...profile, ...patch });
+
+  /** Fills empty fields from a résumé file; never overwrites what's there. */
+  async function importResume(file: File) {
+    if (!profile) return;
+    setReading(true);
+    try {
+      const found = readResume(await resumeText(file));
+      const filled = (Object.keys(found) as TextKey[]).filter((k) => !profile[k]?.trim());
+      if (filled.length === 0) {
+        toast({
+          message: Object.keys(found).length
+            ? 'Your profile already has everything we found in that résumé.'
+            : 'We couldn’t find contact details in that file.',
+        });
+        return;
+      }
+      setProfile({
+        ...profile,
+        ...Object.fromEntries(filled.map((k) => [k, found[k as keyof typeof found]])),
+      });
+      setFromResume(new Set(filled));
+      toast({
+        message: `Filled ${String(filled.length)} ${filled.length === 1 ? 'detail' : 'details'} from your résumé. Check them, then save.`,
+        tone: 'success',
+      });
+    } catch (e) {
+      toast({
+        message: e instanceof ResumeFileError ? e.message : 'Couldn’t read that file.',
+        tone: 'error',
+      });
+    } finally {
+      setReading(false);
+    }
+  }
   const setText = (key: TextKey, value: string) => set({ [key]: value.trim() ? value : undefined });
 
   async function save() {
@@ -150,16 +190,48 @@ function ProfileForm({
         void save();
       }}
     >
+      <div className="border-line bg-surface-2 flex items-center justify-between gap-3 rounded-xl border p-3">
+        <p className="text-muted text-sm">
+          Start from your résumé (PDF or Word). It’s read on this device and isn’t kept.
+        </p>
+        <Button
+          size="sm"
+          icon={<FileUp className="size-4" />}
+          loading={reading}
+          disabled={reading}
+          onClick={() => resumeInput.current?.click()}
+        >
+          Fill from résumé
+        </Button>
+        <input
+          ref={resumeInput}
+          type="file"
+          className="hidden"
+          aria-label="Choose your résumé"
+          accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            e.target.value = '';
+            if (file) void importResume(file);
+          }}
+        />
+      </div>
+
       {SECTIONS.map((section) => (
         <Section key={section.title} title={section.title}>
           <div className="grid grid-cols-2 gap-3">
             {section.fields.map(([key, label, autocomplete]) => (
-              <Field key={key} label={label}>
+              <Field
+                key={key}
+                label={label}
+                hint={fromResume.has(key) ? 'From your résumé: check it' : undefined}
+              >
                 {(id) => (
                   <Input
                     id={id}
                     value={profile[key] ?? ''}
                     autoComplete={autocomplete ?? 'off'}
+                    warn={fromResume.has(key)}
                     onChange={(e) => setText(key, e.target.value)}
                   />
                 )}

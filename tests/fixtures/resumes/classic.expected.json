@@ -1,0 +1,13 @@
+{
+  "firstName": "Sam",
+  "lastName": "Taylor",
+  "email": "sam.taylor@example.com",
+  "phone": "+61 400 123 456",
+  "city": "Sydney",
+  "region": "NSW",
+  "country": "Australia",
+  "linkedin": "https://linkedin.com/in/sam-taylor-example",
+  "github": "https://github.com/samtaylor-example",
+  "currentTitle": "Senior Data Analyst",
+  "currentCompany": "Quokka Health"
+}

@@ -1,0 +1,48 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 831 >>
+stream
+BT /F1 11 Tf
+1 0 0 1 50 800 Tm (SAM TAYLOR) Tj
+1 0 0 1 50 784 Tm (Sydney, NSW, Australia | +61 400 123 456 | sam.taylor@example.com) Tj
+1 0 0 1 50 768 Tm (linkedin.com/in/sam-taylor-example | https://github.com/samtaylor-example) Tj
+1 0 0 1 50 736 Tm (SUMMARY) Tj
+1 0 0 1 50 720 Tm (Analyst with five years of experience in health data.) Tj
+1 0 0 1 50 688 Tm (EXPERIENCE) Tj
+1 0 0 1 50 672 Tm (Senior Data Analyst at Quokka Health) Tj
+1 0 0 1 50 656 Tm (Mar 2021 - Present) Tj
+1 0 0 1 50 640 Tm (- Built reporting for 40 clinics.) Tj
+1 0 0 1 50 624 Tm (- Led a team of three.) Tj
+1 0 0 1 50 592 Tm (Data Analyst - Wombat Insurance) Tj
+1 0 0 1 50 576 Tm (2018 - 2021) Tj
+1 0 0 1 50 560 Tm (- Automated claims dashboards.) Tj
+1 0 0 1 50 528 Tm (EDUCATION) Tj
+1 0 0 1 50 512 Tm (Bachelor of Science, University of Example, 2017) Tj
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000001123 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+1220
+%%EOF

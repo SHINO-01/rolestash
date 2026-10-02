@@ -28,7 +28,9 @@ Full policy: https://rolestash.com/privacy/
   applications stay on this device only. They are not synced, not in backups
   and never sent to us. They go only into the application page you choose,
   when you click "Fill this application". Autofill never answers demographic
-  questions and never submits a form.
+  questions and never submits a form. "Fill from résumé" reads your PDF or
+  Word file in the browser to pre-fill the profile; the file is never stored
+  or sent.
 
 ## What is sent to us, and only if you create an account
 

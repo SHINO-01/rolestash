@@ -1,0 +1,11 @@
+{
+  "firstName": "Oliver",
+  "lastName": "James Okafor",
+  "email": "oliver@example.co.uk",
+  "phone": "+44 7700 900123",
+  "city": "London",
+  "country": "United Kingdom",
+  "website": "https://www.olivero.example.com",
+  "currentTitle": "Product Manager",
+  "currentCompany": "Summit Robotics"
+}

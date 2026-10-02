@@ -1,0 +1,19 @@
+SAM TAYLOR
+Sydney, NSW, Australia | +61 400 123 456 | sam.taylor@example.com
+linkedin.com/in/sam-taylor-example | https://github.com/samtaylor-example
+
+SUMMARY
+Analyst with five years of experience in health data.
+
+EXPERIENCE
+Senior Data Analyst at Quokka Health
+Mar 2021 – Present
+• Built reporting for 40 clinics.
+• Led a team of three.
+
+Data Analyst — Wombat Insurance
+2018 - 2021
+• Automated claims dashboards.
+
+EDUCATION
+Bachelor of Science, University of Example, 2017
