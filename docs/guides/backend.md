@@ -204,5 +204,35 @@ To check which email a purchase really used, look at the Paddle customer:
 `create-checkout` binds every checkout to the Paddle customer for the account
 email.
 
-Use the sandbox until Paddle approves the account, then switch
-`PADDLE_ENV=production` and the production keys and prices.
+Use the sandbox until Paddle approves the account.
+
+### Going live with Paddle
+
+`scripts/paddle-setup.ts` creates or checks the whole catalog idempotently:
+products, six prices with local overrides, and the webhook destination. The
+sandbox was set up the same way, and a dry run changes nothing.
+
+1. **Owner, in the live Paddle dashboard:**
+   - account verification is approved, and `rolestash.com` is an approved
+     domain;
+   - **Checkout → Checkout settings:** the default payment link is
+     `https://rolestash.com/pay/`;
+   - **Developer tools → Authentication:**
+     - an API key with product, price, customer, subscription, transaction
+       and notification-setting permissions goes in `secrets.env` as
+       `PADDLE_LIVE_API_KEY`. Never paste it in chat;
+     - a client-side token (`live_…`, public).
+2. `npx tsx scripts/paddle-setup.ts production`, a dry run. Then the same with
+   `--apply`. The webhook secret lands in `secrets.env` as
+   `PADDLE_LIVE_WEBHOOK_SECRET`.
+3. **Supabase secrets:** `PADDLE_ENV=production`, `PADDLE_API_KEY`
+   (the live key), `PADDLE_WEBHOOK_SECRET` (the live secret), and the six
+   `PADDLE_PRICE_*` IDs printed by step 2. Then redeploy the functions.
+4. **`site/assets/paddle-config.js`:** `environment: 'production'`, the
+   `live_` token and the six live price IDs, in one commit.
+   `initPaddle()` refuses a mismatch.
+5. **Clear sandbox subscriptions** from test accounts. Their
+   `provider_subscription_id` values don't exist in live, so "Manage
+   subscription" would fail for them.
+6. **A real purchase:** Paddle's "Test and go live" step. Buy Pro monthly
+   with a real card, check the plan arrives, then refund it in Paddle.
