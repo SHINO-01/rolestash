@@ -284,6 +284,17 @@ async function main() {
     await seed(first);
     // The "pin Rolestash" tip is for real installs, not the store.
     await first.evaluate(() => chrome.storage.local.set({ 'tips:pinDismissed': true }));
+    // A fictional autofill profile, so the side panel offers "Fill this application".
+    await first.evaluate(() =>
+      chrome.storage.local.set({
+        profile: {
+          firstName: 'Sam',
+          lastName: 'Taylor',
+          email: 'sam.taylor@example.com',
+          answers: [],
+        },
+      }),
+    );
     await first.close();
 
     // 1. The board.
@@ -324,8 +335,10 @@ async function main() {
     await save(page, '4-side-panel.png');
     await page.close();
 
-    // 5. The autofill profile, started from a résumé.
-    page = await open(`${board}#profile`);
+    // 5. The autofill profile, started from a résumé (from an empty profile).
+    page = await open(board);
+    await page.evaluate(() => chrome.storage.local.remove('profile'));
+    await page.goto(`${board}#profile`);
     const dialog = page.getByRole('dialog', { name: 'Autofill profile' });
     await dialog
       .getByLabel('Choose your résumé')
