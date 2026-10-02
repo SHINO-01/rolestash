@@ -310,6 +310,17 @@ describe('rolestash.com static site', () => {
     expect(headers.slice(headers.indexOf('/pricing/*'))).toMatch(/X-Robots-Tag: noindex/);
   });
 
+  it.each(pages)('$file loads ES-module scripts as modules', ({ doc }) => {
+    // A classic <script> that uses `import` fails silently in the browser
+    // (checkout on /pay/ once stayed stuck on "Opening secure checkout…").
+    for (const script of doc.querySelectorAll('script[src^="/"]')) {
+      const src = script.getAttribute('src') ?? '';
+      const code = readFileSync(join(SITE, src.slice(1)), 'utf8');
+      if (/^\s*(import|export)\s/m.test(code))
+        expect(script.getAttribute('type'), src).toBe('module');
+    }
+  });
+
   it('reads Paddle settings from one config that refuses mismatched environments', async () => {
     const source = readFileSync(join(SITE, 'assets/paddle-config.js'), 'utf8');
     for (const script of ['pay.js', 'pricing.js'])
