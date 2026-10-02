@@ -211,3 +211,129 @@ export function appliedWithin(jobs: readonly Job[], now: Date, days: number): nu
   return applied(jobs).filter((j) => now.getTime() - Date.parse(j.appliedAt ?? '') <= days * DAY_MS)
     .length;
 }
+
+// ── Where applications end up (the journey chart) ──────────────────────────
+
+export type JourneyNodeKind = 'start' | 'stage' | 'won' | 'ended' | 'waiting';
+
+export interface JourneyNode {
+  id: string;
+  label: string;
+  kind: JourneyNodeKind;
+  /** Applications through this node: the larger of what flows in and out. */
+  value: number;
+  /**
+   * Left to right: 0 is Applications, then columns in the order reached;
+   * every outcome (Rejected, No reply, Waiting…) shares the last column, so
+   * flows never pass behind another node.
+   */
+  column: number;
+}
+
+export interface JourneyLink {
+  source: string;
+  target: string;
+  value: number;
+}
+
+export interface Journey {
+  applications: number;
+  nodes: JourneyNode[];
+  links: JourneyLink[];
+}
+
+export const JOURNEY_START = 'applications';
+const NO_REPLY = 'outcome:no-reply';
+const WAITING = 'outcome:waiting';
+
+/**
+ * Every application as a path: Applications, then each later column it
+ * reached in board order (so custom columns such as "Online assessment" or
+ * "Accepted" appear), then how it ended: the lost column it's in (Rejected,
+ * Withdrawn…), no reply after NO_REPLY_DAYS, or still waiting. Jobs still
+ * moving through the board stop at the furthest column they reached.
+ */
+export function journey(jobs: readonly Job[], stages: readonly Stage[], now: Date): Journey {
+  const live = stages.filter((s) => !s.archived);
+  const progress = [
+    ...live.filter((s) => s.kind === 'active' && s.marksApplied),
+    ...live.filter((s) => s.kind === 'won'),
+  ];
+  // The first applied column ("Applied") is the start node itself.
+  const after = progress.slice(1);
+  const byId = new Map(stages.map((s) => [s.id, s]));
+  const links = new Map<string, JourneyLink>();
+  const meta = new Map<string, { label: string; kind: JourneyNodeKind; order: number }>([
+    [JOURNEY_START, { label: 'Applications', kind: 'start', order: -1 }],
+  ]);
+  after.forEach((s, i) =>
+    meta.set(s.id, { label: s.name, kind: s.kind === 'won' ? 'won' : 'stage', order: i }),
+  );
+  const link = (source: string, target: string) => {
+    const key = `${source}>${target}`;
+    const row = links.get(key) ?? { source, target, value: 0 };
+    row.value++;
+    links.set(key, row);
+  };
+
+  const list = applied(jobs);
+  for (const job of list) {
+    const reached = stagesReached(job);
+    const path = [JOURNEY_START, ...after.filter((s) => reached.has(s.id)).map((s) => s.id)];
+    const current = byId.get(job.stageId);
+    let end: string | undefined;
+    if (current?.kind === 'lost') {
+      end = `outcome:${current.id}`;
+      meta.set(end, { label: current.name, kind: 'ended', order: 1000 + live.indexOf(current) });
+    } else if (path.length === 1) {
+      const waited = now.getTime() - Date.parse(job.appliedAt ?? '') > NO_REPLY_DAYS * DAY_MS;
+      end = waited || job.archivedAt ? NO_REPLY : WAITING;
+      meta.set(
+        end,
+        end === NO_REPLY
+          ? { label: 'No reply', kind: 'ended', order: 2000 }
+          : { label: 'Waiting to hear', kind: 'waiting', order: 3000 },
+      );
+    }
+    if (end) path.push(end);
+    for (let i = 1; i < path.length; i++) link(path[i - 1] ?? '', path[i] ?? '');
+  }
+
+  const linkList = [...links.values()];
+  // Columns: longest path from the start. Links only go forward in board
+  // order, then to an outcome, so there are no cycles.
+  const column = new Map<string, number>([[JOURNEY_START, 0]]);
+  const ordered = [...meta.entries()].sort((a, b) => a[1].order - b[1].order).map(([id]) => id);
+  for (const id of ordered) {
+    for (const l of linkList)
+      if (l.source === id && column.has(id))
+        column.set(l.target, Math.max(column.get(l.target) ?? 0, (column.get(id) ?? 0) + 1));
+  }
+  const isOutcome = (id: string) => id.startsWith('outcome:');
+  const lastStage = Math.max(
+    0,
+    ...[...column.entries()].filter(([id]) => !isOutcome(id)).map(([, c]) => c),
+  );
+  for (const id of column.keys()) if (isOutcome(id)) column.set(id, lastStage + 1);
+  const nodes: JourneyNode[] = ordered
+    .filter((id) => id === JOURNEY_START || linkList.some((l) => l.target === id))
+    .map((id) => {
+      const m = meta.get(id) ?? { label: id, kind: 'stage' as const, order: 0 };
+      const sum = (pick: (l: JourneyLink) => boolean) =>
+        linkList.filter(pick).reduce((n, l) => n + l.value, 0);
+      return {
+        id,
+        label: m.label,
+        kind: m.kind,
+        value:
+          id === JOURNEY_START
+            ? list.length
+            : Math.max(
+                sum((l) => l.target === id),
+                sum((l) => l.source === id),
+              ),
+        column: column.get(id) ?? 0,
+      };
+    });
+  return { applications: list.length, nodes, links: linkList };
+}

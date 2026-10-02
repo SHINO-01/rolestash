@@ -4,18 +4,20 @@ import {
   appliedWithin,
   bySource,
   funnel,
+  type FunnelStep,
+  journey,
   NO_REPLY_DAYS,
   replies,
-  type FunnelStep,
   type WeekCount,
 } from '@/domain/insights';
+import { JourneyChart } from './journey-chart';
 import type { Job } from '@/domain/job';
 import type { Stage } from '@/domain/stage';
 import { Button } from '@/ui/components/button';
 import { Dialog } from '@/ui/components/overlay';
 
 /**
- * Insights (Advanced): applications per week, how far applications get,
+ * Insights (Pro and up): applications per week, how far applications get,
  * replies and sources. Worked out on this device; nothing is tracked.
  */
 export function InsightsDialog({
@@ -73,6 +75,7 @@ function InsightsBody({ jobs, stages }: { jobs: readonly Job[]; stages: readonly
   const reply = useMemo(() => replies(jobs, now), [jobs, now]);
   const sources = useMemo(() => bySource(jobs, stages), [jobs, stages]);
   const recent = useMemo(() => appliedWithin(jobs, now, 30), [jobs, now]);
+  const paths = useMemo(() => journey(jobs, stages, now), [jobs, stages, now]);
   const offers =
     steps.find((s) => stages.find((x) => x.id === s.stageId)?.kind === 'won')?.count ?? 0;
 
@@ -113,6 +116,10 @@ function InsightsBody({ jobs, stages }: { jobs: readonly Job[]; stages: readonly
             had no reply for over {NO_REPLY_DAYS} days. A follow-up can help.
           </p>
         ) : null}
+      </Section>
+
+      <Section title="Where applications end up" note="Hover a flow for its share">
+        <JourneyChart journey={paths} />
       </Section>
 
       <Section title="By source">

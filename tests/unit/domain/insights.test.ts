@@ -4,6 +4,7 @@ import {
   bySource,
   daysToReply,
   funnel,
+  journey,
   replies,
   stagesReached,
   weekStart,
@@ -163,5 +164,116 @@ describe('insights', () => {
 
   it('counts recent applications', () => {
     expect(appliedWithin(jobs, now, 30)).toBe(3);
+  });
+});
+
+describe('journey', () => {
+  const at = (n: number) => daysAgo(n);
+  const flows = (j: ReturnType<typeof journey>) =>
+    Object.fromEntries(j.links.map((l) => [`${l.source}>${l.target}`, l.value]));
+
+  it('follows each application to where it ended up', () => {
+    const list: Job[] = [
+      // Rejected straight after applying.
+      makeJob({
+        id: '1',
+        stageId: 'rejected',
+        appliedAt: at(20),
+        activity: [move('applied', 'rejected', at(15))],
+      }),
+      // Screened, interviewed, then an offer.
+      makeJob({
+        id: '2',
+        stageId: 'offer',
+        appliedAt: at(30),
+        activity: [
+          move('applied', 'screening', at(25)),
+          move('screening', 'interviewing', at(20)),
+          move('interviewing', 'offer', at(5)),
+        ],
+      }),
+      // Interviewed (skipping screening), then rejected.
+      makeJob({
+        id: '3',
+        stageId: 'rejected',
+        appliedAt: at(30),
+        activity: [
+          move('applied', 'interviewing', at(20)),
+          move('interviewing', 'rejected', at(10)),
+        ],
+      }),
+      // Nothing for 40 days; and one applied yesterday.
+      makeJob({ id: '4', stageId: 'applied', appliedAt: at(40) }),
+      makeJob({ id: '5', stageId: 'applied', appliedAt: at(1) }),
+      // Saved only: not an application.
+      makeJob({ id: '6', stageId: 'saved' }),
+    ];
+    const j = journey(list, DEFAULT_STAGES, now);
+    expect(j.applications).toBe(5);
+    expect(flows(j)).toEqual({
+      'applications>outcome:rejected': 1,
+      'applications>screening': 1,
+      'screening>interviewing': 1,
+      'interviewing>offer': 1,
+      'applications>interviewing': 1,
+      'interviewing>outcome:rejected': 1,
+      'applications>outcome:no-reply': 1,
+      'applications>outcome:waiting': 1,
+    });
+    const node = (id: string) => j.nodes.find((n) => n.id === id);
+    expect(node('applications')).toMatchObject({ value: 5, column: 0, kind: 'start' });
+    expect(node('screening')).toMatchObject({ value: 1, column: 1 });
+    // Fed by Screening (column 1), so it sits in column 2.
+    expect(node('interviewing')).toMatchObject({ value: 2, column: 2 });
+    expect(node('offer')).toMatchObject({ value: 1, column: 3, kind: 'won' });
+    // One node for every way it ended, all in the last column.
+    expect(node('outcome:rejected')).toMatchObject({
+      value: 2,
+      column: 4,
+      kind: 'ended',
+      label: 'Rejected',
+    });
+    expect(node('outcome:no-reply')).toMatchObject({ label: 'No reply', kind: 'ended', column: 4 });
+    expect(node('outcome:waiting')).toMatchObject({ label: 'Waiting to hear', kind: 'waiting' });
+  });
+
+  it('shows custom columns, such as an assessment step or Accepted', () => {
+    const stages: Stage[] = [
+      ...DEFAULT_STAGES.slice(0, 2),
+      { id: 'oa', name: 'Online assessment', color: 'sky', kind: 'active', marksApplied: true },
+      ...DEFAULT_STAGES.slice(2),
+      { id: 'accepted', name: 'Accepted', color: 'emerald', kind: 'won', marksApplied: true },
+    ];
+    const j = journey(
+      [
+        makeJob({
+          id: 'x',
+          stageId: 'accepted',
+          appliedAt: at(30),
+          activity: [
+            move('applied', 'oa', at(25)),
+            move('oa', 'offer', at(10)),
+            move('offer', 'accepted', at(5)),
+          ],
+        }),
+      ],
+      stages,
+      now,
+    );
+    expect(flows(j)).toEqual({ 'applications>oa': 1, 'oa>offer': 1, 'offer>accepted': 1 });
+    expect(j.nodes.map((n) => n.label)).toEqual([
+      'Applications',
+      'Online assessment',
+      'Offer',
+      'Accepted',
+    ]);
+  });
+
+  it('is empty with no applications', () => {
+    expect(journey([makeJob({ id: 's' })], DEFAULT_STAGES, now)).toEqual({
+      applications: 0,
+      nodes: [{ id: 'applications', label: 'Applications', kind: 'start', value: 0, column: 0 }],
+      links: [],
+    });
   });
 });

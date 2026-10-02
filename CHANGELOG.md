@@ -8,6 +8,11 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Where applications end up** (Insights, Pro and Advanced): a flow chart
+  from all your applications through each column they reached (Screening,
+  Interviewing, your own columns such as an assessment step) to how they
+  ended: an offer, rejected, withdrawn, no reply after 3 weeks, or still
+  waiting. Hover or focus a flow for its share.
 - **Fill your autofill profile from your résumé** (Pro and Advanced): choose
   a PDF or Word file in the profile and Rolestash fills your name, contact
   details, links, location and current role. Only empty fields are filled,

@@ -807,6 +807,12 @@ test.describe('accounts', () => {
       .last()
       .hover();
     await expect(dialog.getByRole('tooltip')).toContainText('Week of');
+    // Where applications end up: Applications → Interviewing → Offer, the rest still waiting.
+    const paths = dialog.getByRole('img', { name: 'Where applications end up' });
+    await expect(paths).toBeVisible();
+    await page.mouse.move(0, 0);
+    await paths.locator('[aria-label="Applications to Interviewing: 5"]').focus();
+    await expect(dialog.getByRole('tooltip')).toContainText('Applications → Interviewing: 5');
   });
 
   test('bulk actions: select, move, tag, delete and undo (Advanced)', async ({
