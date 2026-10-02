@@ -61,6 +61,142 @@ const PRICES: Record<
     year: [15900, 12900, 14500, 23900],
   },
 };
+/**
+ * Regional (purchasing-power) prices: round local amounts chosen by hand for
+ * lower-income markets, not conversions of the US price (ADR-0013, 2026-10-02).
+ * Minor units, by tier: [pro month, pro quarter, pro year, adv month, adv quarter, adv year].
+ * Volatile currencies (ARS, TRY) are priced in USD. Sanctioned countries,
+ * where Paddle doesn't sell, are left out.
+ */
+const REGIONAL: { countries: string[]; currency: string; amounts: number[] }[] = [
+  // Low and lower-middle income, in local currency.
+  { countries: ['IN'], currency: 'INR', amounts: [24900, 64900, 219900, 54900, 139900, 499900] },
+  { countries: ['VN'], currency: 'VND', amounts: [69000, 179000, 599000, 149000, 389000, 1299000] },
+  // Low and lower-middle income, in USD.
+  {
+    countries: [
+      'PK',
+      'BD',
+      'NP',
+      'LK',
+      'NG',
+      'KE',
+      'GH',
+      'EG',
+      'ET',
+      'UG',
+      'TZ',
+      'RW',
+      'ZM',
+      'SN',
+      'CI',
+      'CM',
+      'PH',
+      'ID',
+      'KH',
+      'LA',
+      'MN',
+      'BO',
+      'HN',
+      'MA',
+      'TN',
+      'DZ',
+      'UZ',
+      'KG',
+      'TJ',
+      'UA',
+      'BJ',
+      'BF',
+      'MG',
+      'MW',
+      'MZ',
+      'NE',
+      'TG',
+      'GN',
+      'HT',
+    ],
+    currency: 'USD',
+    amounts: [300, 800, 2500, 600, 1600, 5900],
+  },
+  // Upper-middle income, in local currency.
+  { countries: ['BR'], currency: 'BRL', amounts: [1990, 4990, 16900, 3990, 9990, 34900] },
+  { countries: ['MX'], currency: 'MXN', amounts: [7900, 19900, 69900, 16900, 44900, 149900] },
+  {
+    countries: ['CO'],
+    currency: 'COP',
+    amounts: [1490000, 3990000, 12990000, 3290000, 8490000, 28990000],
+  },
+  { countries: ['ZA'], currency: 'ZAR', amounts: [7900, 19900, 69900, 16900, 43900, 149900] },
+  { countries: ['TH'], currency: 'THB', amounts: [14900, 37900, 129000, 29900, 79000, 269000] },
+  { countries: ['CN'], currency: 'CNY', amounts: [2900, 7500, 24900, 5900, 15900, 54900] },
+  // Upper-middle income, in USD.
+  {
+    countries: [
+      'AR',
+      'TR',
+      'MY',
+      'PE',
+      'EC',
+      'DO',
+      'GT',
+      'PY',
+      'JM',
+      'RS',
+      'BA',
+      'MK',
+      'AL',
+      'GE',
+      'AM',
+      'AZ',
+      'KZ',
+      'MD',
+      'SV',
+      'CR',
+      'BW',
+      'NA',
+      'MU',
+      'JO',
+      'FJ',
+    ],
+    currency: 'USD',
+    amounts: [450, 1200, 3900, 950, 2500, 9900],
+  },
+];
+
+interface Override {
+  country_codes: string[];
+  unit_price: { amount: string; currency_code: string };
+}
+
+/** Every local price for one plan and interval: UK, Ireland, Australia, then the regions. */
+function overridesFor(tier: Tier, interval: Interval): Override[] {
+  const [, gbp, eur, aud] = PRICES[tier][interval];
+  const slot = (tier === 'pro' ? 0 : 3) + ['month', 'quarter', 'year'].indexOf(interval);
+  return [
+    { country_codes: ['GB'], unit_price: { amount: String(gbp), currency_code: 'GBP' } },
+    { country_codes: ['IE'], unit_price: { amount: String(eur), currency_code: 'EUR' } },
+    { country_codes: ['AU'], unit_price: { amount: String(aud), currency_code: 'AUD' } },
+    ...REGIONAL.map((r) => ({
+      country_codes: r.countries,
+      unit_price: { amount: String(r.amounts[slot]), currency_code: r.currency },
+    })),
+  ];
+}
+
+const sameOverrides = (a: Override[], b: Override[]) => {
+  const key = (list: Override[]) =>
+    JSON.stringify(
+      list
+        .map((o) => [
+          [...o.country_codes].sort().join(','),
+          o.unit_price.currency_code,
+          String(Number(o.unit_price.amount)),
+        ])
+        .sort(),
+    );
+  return key(a) === key(b);
+};
+
 const CYCLE: Record<Interval, { interval: 'month' | 'year'; frequency: number }> = {
   month: { interval: 'month', frequency: 1 },
   quarter: { interval: 'month', frequency: 3 },
@@ -106,6 +242,7 @@ interface Price {
   id: string;
   billing_cycle: { interval: string; frequency: number } | null;
   unit_price: { amount: string; currency_code: string };
+  unit_price_overrides: Override[];
   custom_data: { tier?: string; interval?: string } | null;
 }
 
@@ -142,7 +279,7 @@ for (const tier of ['pro', 'advanced'] as const) {
     `/prices?product_id=${product.id}&status=active&per_page=200`,
   );
   for (const interval of ['month', 'quarter', 'year'] as const) {
-    const [usd, gbp, eur, aud] = PRICES[tier][interval];
+    const [usd] = PRICES[tier][interval];
     const cycle = CYCLE[interval];
     const found = prices.find(
       (p) =>
@@ -153,6 +290,13 @@ for (const tier of ['pro', 'advanced'] as const) {
     );
     if (found) {
       ids[tier][interval] = found.id;
+      if (!sameOverrides(found.unit_price_overrides, overridesFor(tier, interval))) {
+        changes.push(`update local prices on ${tier} ${LABEL[interval]}`);
+        if (apply)
+          await call('PATCH', `/prices/${found.id}`, {
+            unit_price_overrides: overridesFor(tier, interval),
+          });
+      }
       continue;
     }
     const name = `${tier === 'pro' ? 'Pro' : 'Advanced'} ${LABEL[interval]}`;
@@ -165,11 +309,7 @@ for (const tier of ['pro', 'advanced'] as const) {
       billing_cycle: cycle,
       tax_mode: 'location',
       unit_price: { amount: String(usd), currency_code: 'USD' },
-      unit_price_overrides: [
-        { country_codes: ['GB'], unit_price: { amount: String(gbp), currency_code: 'GBP' } },
-        { country_codes: ['IE'], unit_price: { amount: String(eur), currency_code: 'EUR' } },
-        { country_codes: ['AU'], unit_price: { amount: String(aud), currency_code: 'AUD' } },
-      ],
+      unit_price_overrides: overridesFor(tier, interval),
       quantity: { minimum: 1, maximum: 1 },
       custom_data: { tier, interval },
     });

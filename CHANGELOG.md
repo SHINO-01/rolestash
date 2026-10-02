@@ -8,6 +8,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- **Regional prices:** lower prices in lower-income countries, set by hand in
+  local currency where possible (for example ₹249, R$19.90, MX$79 or US$3 a
+  month for Pro), not converted from the US price.
 - **Prices in your currency:** Account in the extension and the web board show
   plan prices in your local currency (from Paddle, by location), with US
   dollars as the fallback; rolestash.com links to prices in your currency.

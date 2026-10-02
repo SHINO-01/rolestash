@@ -153,3 +153,27 @@ balance is held in AUD.
 - A cancellation scheduled for the end of the period is recorded as
   `canceled` with that end date. Account then says it ends rather than
   renews, and a second checkout is refused until it does.
+
+**Revision (2026-10-02, later): regional prices.** At the owner's request,
+lower-income markets get concession prices: round local amounts chosen by
+hand, not conversions of the US price. They live in the `REGIONAL` table in
+`scripts/paddle-setup.ts` and are applied as Paddle price overrides, on both
+sandbox and live.
+
+| Group                                                                          | Pro (month / quarter / year)  | Advanced (month / quarter / year) |
+| ------------------------------------------------------------------------------ | ----------------------------- | --------------------------------- |
+| India                                                                          | ₹249 / ₹649 / ₹2,199          | ₹549 / ₹1,399 / ₹4,999            |
+| Vietnam                                                                        | ₫69,000 / ₫179,000 / ₫599,000 | ₫149,000 / ₫389,000 / ₫1,299,000  |
+| Low and lower-middle income, priced in USD (39 countries)                      | US$3 / $8 / $25               | US$6 / $16 / $59                  |
+| Brazil, Mexico, Colombia, South Africa, Thailand, China                        | e.g. R$19.90, MX$79, R79, ¥29 | e.g. R$39.90, MX$169, R169, ¥59   |
+| Upper-middle income, priced in USD (25 countries, incl. Argentina and Türkiye) | US$4.50 / $12 / $39           | US$9.50 / $25 / $99               |
+
+- **Volatile currencies are priced in USD,** so prices don't decay with
+  inflation.
+- **Sanctioned countries, where Paddle doesn't sell, are left out.**
+- **Tax:** prices use Paddle's `location` tax mode, so countries that add tax
+  on top (Vietnam, Indonesia, Thailand…) show a non-round total at checkout,
+  as the US does.
+- **Fraud risk:** a VPN or a false billing country could get a lower price.
+  Paddle checks the billing country against the card, and we accept the
+  remaining risk, as other regional-pricing products do.
