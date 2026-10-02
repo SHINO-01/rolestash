@@ -104,6 +104,8 @@ feature on the pricing page is built. The site already advertises them all.
 
 ## Phase 1d: Launch
 
+Runbook: [guides/launch.md](guides/launch.md).
+
 1. **Paddle live:**
    - account approval;
    - live products, prices and local prices;
