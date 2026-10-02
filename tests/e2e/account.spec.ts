@@ -916,57 +916,84 @@ test.describe('accounts', () => {
   });
 });
 
-test('@smoke the production build has no accounts: no sign-in, no identity permission, no limit', async ({
+/**
+ * The release build ships with accounts off until launch, then on (the
+ * release repo sets the backend variables). These smoke tests check whichever
+ * the build is, so both pass in the release pipeline.
+ */
+const accountsOn = (manifest: chrome.runtime.Manifest) =>
+  (manifest.permissions ?? []).includes('identity');
+
+test('@smoke the production build: accounts exactly as configured', async ({
   context,
   worker,
   extensionId,
   extensionDir,
 }) => {
-  test.skip(extensionDir.endsWith('-e2e'), 'checks the build without a backend');
+  test.skip(extensionDir.endsWith('-e2e'), 'checks the release build');
   const manifest = await worker.evaluate(() => chrome.runtime.getManifest());
-  expect(manifest.permissions).not.toContain('identity');
+  const raw = manifest as unknown as Record<string, unknown>;
+  // Never a pinned development key, never a localhost board.
+  expect(raw.key).toBeUndefined();
   await seedActiveJobs(worker, 30);
   const page = await context.newPage();
   await page.goto(`chrome-extension://${extensionId}/board.html`);
   await expect(page.getByText('Role 29')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Account', exact: true })).toHaveCount(0);
-  await expect(page.getByRole('status', { name: 'Plan notice' })).toHaveCount(0);
+  if (accountsOn(manifest)) {
+    expect(raw.externally_connectable).toEqual({ matches: ['https://rolestash.com/board/*'] });
+    await expect(page.getByRole('button', { name: 'Account', exact: true })).toContainText(
+      'Sign in',
+    );
+  } else {
+    expect(raw.externally_connectable).toBeUndefined();
+    await expect(page.getByRole('button', { name: 'Account', exact: true })).toHaveCount(0);
+    await expect(page.getByRole('status', { name: 'Plan notice' })).toHaveCount(0);
+  }
 });
 
-test('@smoke the production build: Insights, bulk actions and the full side panel, with no account or email UI', async ({
+test('@smoke the production build: Insights, bulk actions and the side panel for its mode', async ({
   context,
   worker,
   extensionId,
   extensionDir,
 }) => {
-  test.skip(extensionDir.endsWith('-e2e'), 'checks the build without a backend');
+  test.skip(extensionDir.endsWith('-e2e'), 'checks the release build');
+  const on = accountsOn(await worker.evaluate(() => chrome.runtime.getManifest()));
   await seedActiveJobs(worker, 3);
   const page = await context.newPage();
   await page.goto(`chrome-extension://${extensionId}/board.html`);
 
-  // Insights opens (empty until something is applied to), not an upgrade pitch.
+  // Without accounts nothing is limited; signed out with accounts is Free.
   await page.getByRole('button', { name: 'Insights' }).click();
   const insights = page.getByRole('dialog', { name: 'Insights' });
-  await expect(insights.getByText(/Insights appear once you/)).toBeVisible();
-  await expect(insights.getByRole('button', { name: 'See plans' })).toHaveCount(0);
+  if (on) await expect(insights.getByText(/Insights are part of Pro/)).toBeVisible();
+  else {
+    await expect(insights.getByText(/Insights appear once you/)).toBeVisible();
+    await expect(insights.getByRole('button', { name: 'See plans' })).toHaveCount(0);
+  }
   await insights.getByRole('button', { name: 'Close' }).click();
 
-  // Bulk actions work without a plan to check.
   await page.getByRole('button', { name: 'Select' }).click();
-  await page.getByRole('button', { name: 'Role 0 at Acme' }).click();
-  await expect(page.getByRole('toolbar', { name: 'Bulk actions' })).toContainText('1 selected');
-  await expect(page.getByText(/part of Advanced/)).toHaveCount(0);
-
-  // No account, so no email updates or sign-in anywhere.
-  await expect(page.getByRole('button', { name: 'Account', exact: true })).toHaveCount(0);
+  if (on) {
+    await expect(page.getByText('Selecting several jobs at once is part of Pro.')).toBeVisible();
+  } else {
+    await page.getByRole('button', { name: 'Role 0 at Acme' }).click();
+    await expect(page.getByRole('toolbar', { name: 'Bulk actions' })).toContainText('1 selected');
+    await expect(page.getByText(/part of (Pro|Advanced)/)).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Account', exact: true })).toHaveCount(0);
+  }
   await expect(page.getByText(/forwarding address/i)).toHaveCount(0);
 
-  // The side panel shows everything, with nothing to sign in to.
   const panel = await context.newPage();
   await panel.setViewportSize({ width: 380, height: 800 });
   await panel.goto(`chrome-extension://${extensionId}/sidepanel.html`);
   await expect(panel.getByRole('button', { name: 'Save this page' })).toBeVisible();
-  await expect(panel.getByRole('button', { name: 'Today' })).toBeVisible();
-  await expect(panel.getByText('Your whole board, right here')).toHaveCount(0);
-  await expect(panel.getByText(/sign in/i)).toHaveCount(0);
+  if (on) {
+    await expect(panel.getByText('Your whole board, right here')).toBeVisible();
+    await expect(panel.getByRole('button', { name: 'Today' })).toHaveCount(0);
+  } else {
+    await expect(panel.getByRole('button', { name: 'Today' })).toBeVisible();
+    await expect(panel.getByText('Your whole board, right here')).toHaveCount(0);
+    await expect(panel.getByText(/sign in/i)).toHaveCount(0);
+  }
 });

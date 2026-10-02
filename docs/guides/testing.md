@@ -35,9 +35,14 @@ replace them with scrubbed real snapshots over time.
 - **Database:** `npm run test:db` (Docker) runs the pgTAP suite for RLS,
   trials and billing events, plus the PL/pgSQL linter.
 - **E2E:** the E2E build reads `.env.e2e`, so it talks to the mock Supabase
-  in `tests/e2e/mock-backend.ts` (`backend` fixture). The production build has
-  no backend, and an `@smoke` test asserts that: no `identity` permission, no
-  account UI, no limit.
+  in `tests/e2e/mock-backend.ts` (`backend` fixture). The release build has
+  a backend only when the release repo sets the `WXT_SUPABASE_*` variables
+  (at launch). The `@smoke` tests read the manifest and check whichever mode
+  was built:
+  - **Off:** no `identity` permission, no account UI, nothing limited.
+  - **On:** `externally_connectable` is exactly `rolestash.com/board/*`, and
+    signed out is Free, with Pro features offered.
+  - **Both:** never the development key.
 
 ## E2E tests
 
