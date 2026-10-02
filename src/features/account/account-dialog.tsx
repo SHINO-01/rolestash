@@ -314,8 +314,7 @@ function SignedIn({ account, state }: { account: AccountService; state: AccountS
         </p>
       </section>
 
-      {/* Keyed by the saved name, so a name saved elsewhere resets the field. */}
-      <ProfileSection key={state.profile.displayName ?? ''} account={account} state={state} />
+      <ProfileSection account={account} state={state} />
       <SyncSection plan={plan.plan} />
       <EmailSection plan={plan.plan} />
 

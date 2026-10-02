@@ -30,7 +30,12 @@ export const SessionSchema = z.object({
   refreshToken: z.string().min(1),
   /** Epoch milliseconds. */
   expiresAt: z.number(),
-  user: z.object({ id: z.string(), email: z.string().optional() }),
+  user: z.object({
+    id: z.string(),
+    email: z.string().optional(),
+    /** The full name a provider gave (Google), if any. */
+    name: z.string().optional(),
+  }),
 });
 export type Session = z.infer<typeof SessionSchema>;
 
@@ -69,7 +74,13 @@ const TokenResponse = z.object({
   access_token: z.string(),
   refresh_token: z.string(),
   expires_in: z.number(),
-  user: z.object({ id: z.string(), email: z.string().nullish() }),
+  user: z.object({
+    id: z.string(),
+    email: z.string().nullish(),
+    user_metadata: z
+      .object({ full_name: z.string().nullish(), name: z.string().nullish() })
+      .nullish(),
+  }),
 });
 
 export const DeviceKindSchema = z.enum(['computer', 'web']);
@@ -199,11 +210,16 @@ export class SupabaseClient {
     const parsed = TokenResponse.safeParse(data);
     if (!parsed.success) throw new BackendError('server');
     const t = parsed.data;
+    const name = (t.user.user_metadata?.full_name ?? t.user.user_metadata?.name)?.trim();
     return {
       accessToken: t.access_token,
       refreshToken: t.refresh_token,
       expiresAt: this.now().getTime() + t.expires_in * 1000,
-      user: { id: t.user.id, ...(t.user.email ? { email: t.user.email } : {}) },
+      user: {
+        id: t.user.id,
+        ...(t.user.email ? { email: t.user.email } : {}),
+        ...(name ? { name: name.slice(0, 100) } : {}),
+      },
     };
   }
 

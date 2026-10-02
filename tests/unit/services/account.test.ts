@@ -484,4 +484,26 @@ describe('AccountService profile and sharing choice (ADR-0022)', () => {
 
     await account.signOut().catch(() => undefined);
   });
+
+  it('greets by first name: from Google, or a guess from the email', async () => {
+    const google = setup({
+      [`POST ${SB}/auth/v1/token`]: {
+        status: 200,
+        body: {
+          access_token: 'g1',
+          refresh_token: 'r-g1',
+          expires_in: 3600,
+          user: { ...USER, user_metadata: { full_name: 'Jo Example-Smith' } },
+        },
+      },
+      [`GET ${SB}/rest/v1/account_profiles`]: { status: 200, body: [] },
+    });
+    await google.account.signInWithGoogle();
+    expect((await google.account.state()).firstName).toBe('Jo');
+
+    const byEmail = setup({ [`GET ${SB}/rest/v1/account_profiles`]: { status: 200, body: [] } });
+    await byEmail.account.verifyEmailCode('jo@example.com', '123456');
+    expect((await byEmail.account.state()).firstName).toBe('Jo');
+    expect((await byEmail.account.state()).profile).toEqual({});
+  });
 });

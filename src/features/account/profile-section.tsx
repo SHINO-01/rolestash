@@ -1,17 +1,17 @@
 import { Camera, Trash2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { DISPLAY_NAME_MAX, type AccountProfile } from '@/domain/account-profile';
+import type { AccountProfile } from '@/domain/account-profile';
 import type { AccountService, AccountState } from '@/services/account-service';
 import { Button } from '@/ui/components/button';
-import { Field, Input } from '@/ui/components/field';
 import { useToast } from '@/ui/components/toast';
 import { UserAvatar } from '@/ui/components/user-avatar';
 import { AvatarError, resizeAvatar } from '@/ui/resize-avatar';
 import { backendErrorMessage } from './plan-copy';
 
 /**
- * Display name and picture (ADR-0022). The picture is shrunk to 128 pixels
- * on this device before it's saved; without one, initials are shown.
+ * Who's signed in (ADR-0022): the first name from Google or the email
+ * address, and an optional photo, shrunk to 128 pixels on this device before
+ * it's saved. Without a photo, initials are shown.
  */
 export function ProfileSection({
   account,
@@ -22,7 +22,6 @@ export function ProfileSection({
 }) {
   const toast = useToast();
   const file = useRef<HTMLInputElement>(null);
-  const [name, setName] = useState(state.profile.displayName ?? '');
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -44,103 +43,60 @@ export function ProfileSection({
     }
   }
 
-  const trimmed = name.trim();
   const current = state.profile;
-  const withName = (p: AccountProfile): AccountProfile => ({
-    ...(p.avatar ? { avatar: p.avatar } : {}),
-    ...(trimmed ? { displayName: trimmed } : {}),
-  });
-
   return (
     <section className="border-line rounded-xl border p-4" aria-label="Profile">
-      <span className="text-sm font-semibold">Profile</span>
-      <div className="mt-3 flex items-center gap-4">
-        <UserAvatar profile={current} email={state.email} size="lg" />
-        <div className="flex flex-wrap gap-2">
-          <Button
-            size="sm"
-            icon={<Camera className="size-4" />}
-            disabled={busy}
-            onClick={() => file.current?.click()}
-          >
-            {current.avatar ? 'Change photo' : 'Add photo'}
-          </Button>
-          {current.avatar ? (
+      <div className="flex items-center gap-4">
+        <UserAvatar profile={current} name={state.firstName} email={state.email} size="lg" />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold">{state.firstName ?? 'Signed in'}</p>
+          <p className="text-muted truncate text-[13px]">{state.email}</p>
+          <div className="mt-2 flex flex-wrap gap-2">
             <Button
               size="sm"
-              variant="ghost"
-              icon={<Trash2 className="size-4" />}
+              icon={<Camera className="size-4" />}
               disabled={busy}
-              onClick={() =>
-                void save(
-                  current.displayName ? { displayName: current.displayName } : {},
-                  'Photo removed',
-                )
-              }
+              onClick={() => file.current?.click()}
             >
-              Remove
+              {current.avatar ? 'Change photo' : 'Add photo'}
             </Button>
-          ) : null}
-          <input
-            ref={file}
-            type="file"
-            accept="image/jpeg,image/png,image/webp,image/gif"
-            className="hidden"
-            aria-label="Choose a profile photo"
-            onChange={(e) => {
-              const picked = e.target.files?.[0];
-              e.target.value = '';
-              if (!picked) return;
-              void (async () => {
-                try {
-                  const avatar = await resizeAvatar(picked);
-                  await save(
-                    {
-                      ...(current.displayName ? { displayName: current.displayName } : {}),
-                      avatar,
-                    },
-                    'Photo saved',
-                  );
-                } catch (err) {
-                  toast({
-                    message:
-                      err instanceof AvatarError ? err.message : 'Couldn’t read that picture.',
-                    tone: 'error',
-                  });
-                }
-              })();
-            }}
-          />
+            {current.avatar ? (
+              <Button
+                size="sm"
+                variant="ghost"
+                icon={<Trash2 className="size-4" />}
+                disabled={busy}
+                onClick={() => void save({}, 'Photo removed')}
+              >
+                Remove
+              </Button>
+            ) : null}
+          </div>
         </div>
+        <input
+          ref={file}
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/gif"
+          className="hidden"
+          aria-label="Choose a profile photo"
+          onChange={(e) => {
+            const picked = e.target.files?.[0];
+            e.target.value = '';
+            if (!picked) return;
+            void (async () => {
+              try {
+                await save({ avatar: await resizeAvatar(picked) }, 'Photo saved');
+              } catch (err) {
+                toast({
+                  message: err instanceof AvatarError ? err.message : 'Couldn’t read that picture.',
+                  tone: 'error',
+                });
+              }
+            })();
+          }}
+        />
       </div>
-      <form
-        className="mt-3 flex items-end gap-2"
-        onSubmit={(e) => {
-          e.preventDefault();
-          void save(withName(current), trimmed ? 'Name saved' : 'Name removed');
-        }}
-      >
-        <Field label="Display name" className="flex-1">
-          {(id) => (
-            <Input
-              id={id}
-              value={name}
-              maxLength={DISPLAY_NAME_MAX}
-              autoComplete="name"
-              placeholder="How Rolestash greets you"
-              onChange={(e) => setName(e.target.value)}
-            />
-          )}
-        </Field>
-        <Button
-          type="submit"
-          disabled={busy || trimmed === (current.displayName ?? '')}
-          loading={busy}
-        >
-          Save
-        </Button>
-      </form>
-      <p className="text-subtle mt-2 text-xs">
+      <p className="text-subtle mt-3 text-xs">
         Your photo is shrunk to a small square on this device and kept with your account. It’s never
         loaded from Google or anywhere else.
       </p>

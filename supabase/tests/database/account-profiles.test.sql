@@ -1,7 +1,7 @@
 -- Run with: npm run test:db  (needs Docker; see docs/guides/backend.md)
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(14);
+select plan(16);
 
 create function pg_temp.act_as(uid uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),
@@ -46,6 +46,19 @@ select is((select count(*)::int from public.account_profiles), 0, 'other profile
 
 select pg_temp.act_as_anon();
 select throws_ok($$select * from public.account_profiles$$, '42501', null, 'anon reads nothing');
+
+-- Saving is an upsert, exactly as PostgREST sends it ------------------------------
+select pg_temp.act_as(pg_temp.uid(2));
+select lives_ok($$insert into public.account_profiles as p (user_id, avatar, updated_at)
+  values (pg_temp.uid(2), 'data:image/webp;base64,UklGRg==', now())
+  on conflict (user_id) do update set user_id = excluded.user_id, avatar = excluded.avatar,
+    updated_at = excluded.updated_at$$, 'a first save (upsert) works');
+select throws_ok($$insert into public.account_profiles as p (user_id, avatar)
+  values (pg_temp.uid(1), 'data:image/webp;base64,UklGRg==')
+  on conflict (user_id) do update set user_id = excluded.user_id, avatar = excluded.avatar$$,
+  '42501', null, 'but never onto someone else''s row');
+select pg_temp.act_as_admin();
+delete from public.account_profiles where user_id = pg_temp.uid(2);
 
 -- Opting out at sign-up carries into the inbox ------------------------------------------
 select pg_temp.act_as(pg_temp.uid(2));

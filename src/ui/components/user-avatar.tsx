@@ -17,11 +17,14 @@ const PALETTE = [
  */
 export function UserAvatar({
   profile,
+  name,
   email,
   size = 'md',
   className,
 }: {
   profile: AccountProfile;
+  /** First name for the initials (see firstNameFrom). */
+  name?: string | undefined;
   email?: string | undefined;
   size?: 'sm' | 'md' | 'lg';
   className?: string;
@@ -43,11 +46,11 @@ export function UserAvatar({
       className={clsx(
         'inline-flex shrink-0 items-center justify-center rounded-full font-semibold',
         dims,
-        PALETTE[avatarHue(email ?? profile.displayName ?? '') % PALETTE.length],
+        PALETTE[avatarHue(email ?? name ?? '') % PALETTE.length],
         className,
       )}
     >
-      {initials(profile.displayName, email)}
+      {initials(name, email)}
     </span>
   );
 }

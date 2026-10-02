@@ -96,7 +96,7 @@ test.describe('accounts', () => {
     expect(read?.headers.authorization).toBe('Bearer e2e-access');
   });
 
-  test('opting out of shared learning at sign-up, then a name and photo (ADR-0022)', async ({
+  test('opting out of shared learning at sign-up, then a photo (ADR-0022)', async ({
     context,
     extensionId,
     backend,
@@ -116,9 +116,9 @@ test.describe('accounts', () => {
     await expect.poll(() => backend.shareLearning).toBe(false);
 
     const profile = dialog.getByRole('region', { name: 'Profile' });
-    await profile.getByLabel('Display name').fill('Jo Example');
-    await profile.getByRole('button', { name: 'Save' }).click();
-    await expect(page.getByText('Name saved')).toBeVisible();
+    // No name to type: the first name comes from the email (jo@example.com).
+    await expect(profile.getByText('Jo', { exact: true })).toBeVisible();
+    await expect(profile.getByLabel('Display name')).toHaveCount(0);
     // A 3×2 red PNG: resized on the device to a 128-pixel square before saving.
     await profile.getByLabel('Choose a profile photo').setInputFiles({
       name: 'me.png',
@@ -129,7 +129,6 @@ test.describe('accounts', () => {
       ),
     });
     await expect(page.getByText('Photo saved')).toBeVisible();
-    expect(backend.profile?.display_name).toBe('Jo Example');
     expect(backend.profile?.avatar).toMatch(/^data:image\/(webp|jpeg);base64,/);
     const header = page.getByRole('button', { name: 'Account', exact: true }).locator('img');
     await expect(header).toHaveAttribute('src', /^data:image\//);

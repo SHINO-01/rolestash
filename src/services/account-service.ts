@@ -8,7 +8,7 @@ import {
   type PlanState,
 } from '@/domain/plan';
 import type { KeyValueStore } from '@/storage/key-value-store';
-import { AccountProfileSchema, type AccountProfile } from '@/domain/account-profile';
+import { AccountProfileSchema, firstNameFrom, type AccountProfile } from '@/domain/account-profile';
 import {
   ACCOUNT_ENTITLEMENT_KEY,
   ACCOUNT_PROFILE_KEY,
@@ -48,6 +48,8 @@ export interface AccountState {
   checkedAt?: string;
   /** Display name and picture (ADR-0022), as last read or saved. */
   profile: AccountProfile;
+  /** First name to greet by: from Google, or a best guess from the email. */
+  firstName?: string;
 }
 
 /** Refresh the access token this long before it expires. */
@@ -93,6 +95,9 @@ export class AccountService implements PlanProvider {
       hasBillingAccount: session !== undefined && (entitlement?.hasBillingAccount ?? false),
       ...(session && entitlement ? { checkedAt: entitlement.checkedAt } : {}),
       profile: session ? profile : {},
+      ...(session && firstNameFrom(session.user.name, session.user.email)
+        ? { firstName: firstNameFrom(session.user.name, session.user.email) }
+        : {}),
     };
   }
 

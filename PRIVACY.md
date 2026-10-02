@@ -36,8 +36,8 @@ Full policy: https://rolestash.com/privacy/
 
 - **Account:** your email address (and Google account ID if you sign in with
   Google), your plan and subscription status from Paddle, our merchant of
-  record, and a display name and small profile photo if you add them. We
-  never see card details.
+  record, and a small profile photo if you add one. We never see card
+  details.
 - **Sync (Pro and Advanced):** a copy of your board and a name for each
   synced device, stored in our database in Sydney, Australia, so your devices
   stay in step. Deleting your account deletes it.

@@ -56,8 +56,9 @@ All notable changes to this project are documented here. The format follows
   details, links, location and current role. Only empty fields are filled,
   each marked for you to check. The file is read in your browser and never
   stored or sent.
-- **Profile name and photo:** add a display name and a photo in Account (the
-  extension or the web board). The photo is shrunk to a small square on your
+- **Profile photo:** add a photo in Account (the extension or the web board);
+  Rolestash greets you by the first name from your Google account or your
+  email address, with nothing to type. The photo is shrunk to a small square on your
   device, shown on the board's Account button, and never loaded from Google
   or anywhere else. Without one, your initials are shown.
 - **Choose "Help improve automatic updates" when you sign up:** it's ticked

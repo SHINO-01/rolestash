@@ -1,4 +1,10 @@
-import { AccountProfileSchema, avatarHue, initials, isSafeAvatar } from '@/domain/account-profile';
+import {
+  AccountProfileSchema,
+  avatarHue,
+  firstNameFrom,
+  initials,
+  isSafeAvatar,
+} from '@/domain/account-profile';
 
 describe('account profile', () => {
   it('makes initials from the name, or else the email', () => {
@@ -28,5 +34,16 @@ describe('account profile', () => {
   it('gives each email a stable colour', () => {
     expect(avatarHue('sam@example.com')).toBe(avatarHue('sam@example.com'));
     expect(avatarHue('sam@example.com')).toBeLessThan(360);
+  });
+
+  it('finds a first name from the provider, or else the email address', () => {
+    expect(firstNameFrom('Sakif Hussain', 'x@example.com')).toBe('Sakif');
+    expect(firstNameFrom('Ailsa McKenzie', undefined)).toBe('Ailsa');
+    expect(firstNameFrom('McKenzie', undefined)).toBe('McKenzie');
+    expect(firstNameFrom(undefined, 'sakifhussain33@gmail.com')).toBe('Sakifhussain');
+    expect(firstNameFrom(undefined, 'sam.taylor@example.com')).toBe('Sam');
+    expect(firstNameFrom(undefined, 'JO_bloggs+jobs@example.com')).toBe('Jo');
+    expect(firstNameFrom('  ', '12345@example.com')).toBeUndefined();
+    expect(firstNameFrom(undefined, undefined)).toBeUndefined();
   });
 });

@@ -36,9 +36,14 @@ export function AccountView() {
       <section className="border-line bg-surface rounded-xl border p-4">
         <div className="flex items-center justify-between gap-2">
           <span className="flex min-w-0 items-center gap-2">
-            <UserAvatar profile={state.profile} email={state.email} size="sm" />
+            <UserAvatar
+              profile={state.profile}
+              name={state.firstName}
+              email={state.email}
+              size="sm"
+            />
             <span className="truncate text-sm font-semibold">
-              {state.profile.displayName ?? state.email ?? 'Signed in'}
+              {state.firstName ?? state.email ?? 'Signed in'}
             </span>
           </span>
           <Chip tone={chip.tone}>{chip.label}</Chip>
@@ -48,7 +53,7 @@ export function AccountView() {
           Change your plan, export or delete your data from Account in the Rolestash extension.
         </p>
       </section>
-      <ProfileSection key={state.profile.displayName ?? ''} account={account} state={state} />
+      <ProfileSection account={account} state={state} />
       <SyncSection plan={state.plan.plan} />
       <EmailSection plan={state.plan.plan} />
       <Button variant="ghost" icon={<LogOut className="size-4" />} onClick={() => void signOut()}>

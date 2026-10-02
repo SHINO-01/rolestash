@@ -53,6 +53,25 @@ and on another device.
   with the account.
 - Re-encoding the photo drops its metadata (for example its location).
 
+## Revision (2026-10-02, later): no name field
+
+The owner asked for the first name to come from the account itself, with no
+field to fill in:
+
+- **Google sign-in:** the first word of the name Google gives, kept as
+  written. Supabase passes it as `user_metadata.full_name`, which is now kept
+  on the session.
+- **Email-only sign-up:** a best guess from the address, made by
+  `firstNameFrom()`: `sam.taylor` → Sam, `sakifhussain33` → Sakifhussain.
+- The `display_name` column stays, unused, because migrations are
+  append-only. The photo remains.
+
+**Bug found while testing:** saving the profile is a PostgREST upsert
+(`ON CONFLICT … DO UPDATE SET user_id = …`), and Postgres needs UPDATE on
+`user_id` for that, even when nothing conflicts. Every save failed until
+`…_profile_upsert_grant.sql`; RLS still limits each user to their own row. A
+pgTAP test now runs the exact upsert.
+
 ## Alternatives considered
 
 - **Google profile photo URL:** a third-party request on every view. Rejected.

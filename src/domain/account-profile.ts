@@ -47,6 +47,28 @@ export function initials(displayName: string | undefined, email: string | undefi
   return letters.join('').toUpperCase() || '?';
 }
 
+/**
+ * The first name to greet someone by: the first word of the name their
+ * provider gave (Google), or else a best guess from the email address
+ * ("sam.taylor" → "Sam", "sakifhussain33" → "Sakifhussain"). Undefined when
+ * nothing sensible is left (a number-only address, say).
+ */
+export function firstNameFrom(
+  name: string | undefined,
+  email: string | undefined,
+): string | undefined {
+  const fromName = name?.trim().split(/\s+/)[0];
+  const local = email?.split('@')[0] ?? '';
+  const guess = local
+    .split(/[._+-]+/)
+    .map((part) => part.replace(/\d+/g, ''))
+    .find((part) => part.length >= 2);
+  // A provider's name is kept as written ("McKenzie"); a guess is capitalised.
+  if (fromName && /\p{L}/u.test(fromName)) return fromName;
+  if (!guess) return undefined;
+  return guess.charAt(0).toLocaleUpperCase() + guess.slice(1).toLocaleLowerCase();
+}
+
 /** A stable hue for the initials circle, from the email (0–359). */
 export function avatarHue(seed: string): number {
   let h = 0;

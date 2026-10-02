@@ -346,7 +346,12 @@ export function BoardPage() {
             variant="ghost"
             icon={
               accountState?.signedIn ? (
-                <UserAvatar profile={accountState.profile} email={accountState.email} size="sm" />
+                <UserAvatar
+                  profile={accountState.profile}
+                  name={accountState.firstName}
+                  email={accountState.email}
+                  size="sm"
+                />
               ) : (
                 <UserRound className="size-4" />
               )
