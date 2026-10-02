@@ -32,11 +32,11 @@ Rules:
 
 ## Environments
 
-| Build                   | Backend                                                              | Use                                                                                            |
-| ----------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `npm run build`         | none: accounts off, no `identity` permission                         | What ships until go-live                                                                       |
-| `npm run build:e2e`     | mock (`.env.e2e` → `tests/e2e/mock-backend.ts`)                      | Automated E2E                                                                                  |
-| `npm run build:staging` | real project `fhclnxqumcdsqxyunelp` (`.env.staging`), Paddle sandbox | Manual testing of real sign-in and checkout, loaded unpacked from `.output/chrome-mv3-staging` |
+| Build                   | Backend                                                                                | Use                                                                                            |
+| ----------------------- | -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `npm run build`         | none: accounts off, no `identity` permission                                           | What ships until go-live                                                                       |
+| `npm run build:e2e`     | mock (`.env.e2e` → `tests/e2e/mock-backend.ts`)                                        | Automated E2E                                                                                  |
+| `npm run build:staging` | real project `fhclnxqumcdsqxyunelp` (`.env.staging`), Paddle **live** since 2026-10-02 | Manual testing of real sign-in and checkout, loaded unpacked from `.output/chrome-mv3-staging` |
 
 The production project lives in Sydney (`ap-southeast-2`). The extension uses
 its **publishable** key (`sb_publishable_…`). That key is not a JWT, so the
@@ -204,7 +204,8 @@ To check which email a purchase really used, look at the Paddle customer:
 `create-checkout` binds every checkout to the Paddle customer for the account
 email.
 
-Use the sandbox until Paddle approves the account.
+Paddle went live on 2026-10-02: the server and `paddle-config.js` use the
+production account. The sandbox catalog is kept, matching, for reference.
 
 ### Going live with Paddle
 

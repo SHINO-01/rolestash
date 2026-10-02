@@ -7,18 +7,18 @@
 // environment, the live client token, and the live price IDs.
 
 export const PADDLE = {
-  environment: 'sandbox',
-  token: 'test_d7e463f467c037e2f530ec28c61',
+  environment: 'production',
+  token: 'live_0ec65d3d8ea14ba4c9a617381d7',
   prices: {
     pro: {
-      month: 'pri_01m3s73v5t0r2zqzz8wct746xv',
-      quarter: 'pri_01m3y3y6de3wsfs82jd8ymn0xa',
-      year: 'pri_01m3s73vs4yxfg6t659v7a5tct',
+      month: 'pri_01m3y715y2eep9wssnpra9e239',
+      quarter: 'pri_01m3y7167ce2c70mpmneqctxsk',
+      year: 'pri_01m3y716j3y2va7xyhpxzhj2xs',
     },
     advanced: {
-      month: 'pri_01m3st08htr3cj786030yfbbth',
-      quarter: 'pri_01m3y3y70ea10p5n29f6yd6z5s',
-      year: 'pri_01m3st08x58jpvrawjpsrdyj3e',
+      month: 'pri_01m3y718bn1h0vjn0eyep7s0yq',
+      quarter: 'pri_01m3y718m74mxxmh6ncza0fbbd',
+      year: 'pri_01m3y718xs5rrc4fe760rfzd95',
     },
   },
 };

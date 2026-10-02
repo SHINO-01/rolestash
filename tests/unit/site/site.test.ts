@@ -336,8 +336,9 @@ describe('rolestash.com static site', () => {
     expect(source).not.toMatch(/apiKey|pdl_live|pdl_sdbx/i);
     // A live token with the sandbox environment (or the reverse) stops loudly.
     const saved = PADDLE.token;
-    PADDLE.token = 'live_x';
-    expect(() => initPaddle({})).toThrow(/must start with test_/);
+    const live = PADDLE.environment === 'production';
+    PADDLE.token = live ? 'test_x' : 'live_x';
+    expect(() => initPaddle({})).toThrow(live ? /must start with live_/ : /must start with test_/);
     PADDLE.token = saved;
   });
 });
