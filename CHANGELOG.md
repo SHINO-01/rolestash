@@ -278,6 +278,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- **Switching plans** now says "You'll be charged A$12.98 now… Then A$22.99 a
+  month from 2 Nov", in your own currency throughout (it mixed in US prices),
+  and the button's loading spinner no longer squashes into a "[".
 - The privacy policy now says the checkout page loads Paddle.js and Paddle's
   checkout, which may use its own cookies and services. It used to say the
   site loads no third-party scripts at all.

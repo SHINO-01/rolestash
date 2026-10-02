@@ -157,7 +157,18 @@ function route(
       return [200, { url: `${MOCK_BACKEND}/pay/?_ptxn=txn_e2e` }];
     case '/functions/v1/change-plan':
       return b.preview === true
-        ? [200, { preview: { action: 'charge', amount: 848, currency: 'USD' } }]
+        ? [
+            200,
+            {
+              preview: {
+                action: 'charge',
+                amount: 848,
+                currency: 'USD',
+                recurring: 1500,
+                nextBilledAt: '2031-11-02T12:00:00Z',
+              },
+            },
+          ]
         : [200, { changed: true }];
     case '/functions/v1/billing-portal':
       return [200, { url: `${MOCK_BACKEND}/portal` }];

@@ -1,3 +1,4 @@
+import { formatDate } from '@/ui/format';
 import { ArrowLeft, ExternalLink, LogOut, Mail, RefreshCw, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { browser } from 'wxt/browser';
@@ -292,7 +293,7 @@ function SignedIn({ account, state }: { account: AccountService; state: AccountS
       toast({
         message:
           action === 'charge'
-            ? `Switched to ${PLAN_NAMES[pending.tier]}. Paddle charged ${formatMinor(amount, currency)} and emailed a receipt.`
+            ? `Switched to ${PLAN_NAMES[pending.tier]}. You were charged ${formatMinor(amount, currency)}; your receipt is on its way by email.`
             : `Switched to ${PLAN_NAMES[pending.tier]}.`,
         tone: 'success',
       });
@@ -356,7 +357,7 @@ function SignedIn({ account, state }: { account: AccountService; state: AccountS
         ))}
         <p className="text-subtle text-xs">
           {subscribed
-            ? 'You’ll see what it costs before anything changes. Paddle, our reseller, charges or credits the difference for the rest of this billing period.'
+            ? 'You’ll see the cost before anything changes, and you’re charged (or credited) only the difference for the rest of this billing period. Payments are handled by Paddle, our reseller.'
             : 'Secure checkout by Paddle, our reseller, in a new tab. Local prices in the UK, Ireland and Australia. 14-day money-back guarantee.'}
         </p>
       </section>
@@ -470,9 +471,15 @@ function ConfirmSwitch({
   onConfirm: () => void;
   onCancel: () => void;
 }) {
-  const { action, amount, currency } = pending.preview;
+  const { action, amount, currency, recurring, nextBilledAt } = pending.preview;
   const money = formatMinor(amount, currency);
-  const then = PLAN_PRICES[pending.tier][pending.interval];
+  // The regular price in the same currency as today's charge, when Paddle gave it.
+  const per = { month: 'a month', quarter: 'every 3 months', year: 'a year' }[pending.interval];
+  const from = nextBilledAt ? ` from ${formatDate(nextBilledAt)}` : '';
+  const then =
+    recurring === undefined
+      ? PLAN_PRICES[pending.tier][pending.interval]
+      : `${formatMinor(recurring, currency)} ${per}${from}`;
   return (
     <div
       role="group"
@@ -481,7 +488,7 @@ function ConfirmSwitch({
     >
       <p>
         {action === 'charge'
-          ? `Paddle will charge ${money} now to your saved payment method, for the rest of this billing period. Then ${then}.`
+          ? `You’ll be charged ${money} now, for the rest of this billing period. Then ${then}.`
           : action === 'credit'
             ? `You’ll get a ${money} credit toward your next bills. Then ${then}.`
             : `Nothing to pay now. Then ${then}.`}

@@ -1,3 +1,4 @@
+import { LoaderCircle } from 'lucide-react';
 import clsx from 'clsx';
 import {
   forwardRef,
@@ -116,13 +117,11 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
 
 export function Spinner({ className }: { className?: string }) {
   return (
-    <span
+    // An icon, not a CSS ring: a ring squeezed by a long label became a "[".
+    <LoaderCircle
       role="status"
       aria-label="Loading"
-      className={clsx(
-        'inline-block size-4 animate-spin rounded-full border-2 border-current border-r-transparent',
-        className,
-      )}
+      className={clsx('size-4 shrink-0 animate-spin', className)}
     />
   );
 }

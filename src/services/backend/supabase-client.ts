@@ -14,6 +14,10 @@ export interface PlanChangePreview {
   action: 'charge' | 'credit' | 'none';
   amount: number;
   currency: string;
+  /** The new plan's regular price, same currency (minor units). */
+  recurring?: number;
+  /** When it's next billed (ISO). */
+  nextBilledAt?: string;
 }
 
 export interface BackendConfig {
@@ -370,6 +374,8 @@ export class SupabaseClient {
           action: z.enum(['charge', 'credit', 'none']),
           amount: z.number().int().nonnegative(),
           currency: z.string().regex(/^[A-Z]{3}$/),
+          recurring: z.number().int().nonnegative().optional(),
+          nextBilledAt: z.string().optional(),
         }),
       })
       .safeParse(data);

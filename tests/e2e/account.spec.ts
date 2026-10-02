@@ -203,7 +203,8 @@ test.describe('accounts', () => {
     const dialog = page.getByRole('dialog');
     await dialog.getByRole('button', { name: 'US$15 / month' }).click();
     const confirm = dialog.getByRole('group', { name: 'Confirm plan change' });
-    await expect(confirm).toContainText('will charge $8.48 now');
+    await expect(confirm).toContainText('You’ll be charged $8.48 now');
+    await expect(confirm).toContainText(/Then \$15\.00 a month from/);
     const changes = () => backend.requests.filter((r) => r.path === '/functions/v1/change-plan');
     expect(changes().map((r) => r.body)).toEqual([
       { tier: 'advanced', interval: 'month', preview: true },
@@ -213,7 +214,7 @@ test.describe('accounts', () => {
     await expect(confirm).toHaveCount(0);
     await dialog.getByRole('button', { name: 'US$15 / month' }).click();
     await dialog.getByRole('button', { name: /Pay .*8\.48 and switch/ }).click();
-    await expect(page.getByText(/Switched to Advanced\. Paddle charged/)).toBeVisible();
+    await expect(page.getByText(/Switched to Advanced\. You were charged \$8\.48/)).toBeVisible();
     expect(changes().map((r) => r.body)).toEqual([
       { tier: 'advanced', interval: 'month', preview: true },
       { tier: 'advanced', interval: 'month', preview: true },

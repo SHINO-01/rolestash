@@ -306,8 +306,10 @@ describe('plan choice and change-plan', () => {
             update_summary: {
               credit: { amount: '-662', currency_code: 'USD' },
               charge: { amount: '1510', currency_code: 'USD' },
-              result: { action: 'charge', amount: '848', currency_code: 'USD' },
+              result: { action: 'charge', amount: '1298', currency_code: 'AUD' },
             },
+            recurring_transaction_details: { totals: { total: '2299', currency_code: 'AUD' } },
+            next_billed_at: '2026-11-02T12:43:31Z',
           },
         },
       },
@@ -317,7 +319,14 @@ describe('plan choice and change-plan', () => {
       d,
     );
     expect(await res.json()).toEqual({
-      preview: { action: 'charge', amount: 848, currency: 'USD' },
+      // In the customer's own currency, now and from the next bill.
+      preview: {
+        action: 'charge',
+        amount: 1298,
+        currency: 'AUD',
+        recurring: 2299,
+        nextBilledAt: '2026-11-02T12:43:31Z',
+      },
     });
     expect(calls.filter((c) => c.method === 'PATCH').map((c) => c.url)).toEqual([
       'https://sandbox-api.paddle.com/subscriptions/sub_01/preview',

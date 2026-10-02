@@ -175,6 +175,10 @@ export interface PlanChangePreview {
   action: 'charge' | 'credit' | 'none';
   amount: number;
   currency: string;
+  /** The new plan's regular price, in the same currency (minor units). */
+  recurring?: number;
+  /** When it's next billed (ISO). */
+  nextBilledAt?: string;
 }
 
 export class PaddleApiError extends Error {
@@ -292,6 +296,10 @@ export class PaddleClient {
       update_summary?: {
         result?: { action?: string; amount?: string; currency_code?: string };
       } | null;
+      recurring_transaction_details?: {
+        totals?: { total?: string; currency_code?: string } | null;
+      } | null;
+      next_billed_at?: string | null;
     }>('PATCH', `/subscriptions/${encodeURIComponent(subscriptionId)}/preview`, {
       items: [{ price_id: priceId, quantity: 1 }],
       proration_billing_mode: 'prorated_immediately',
@@ -303,10 +311,16 @@ export class PaddleClient {
       result?.action === 'charge' || result?.action === 'credit' ? result.action : 'none';
     if (!Number.isFinite(amount) || !result?.currency_code)
       throw new PaddleApiError(502, 'Preview has no summary');
+    const recurring = data.recurring_transaction_details?.totals;
+    const regular = Number(recurring?.total);
     return {
       action: amount === 0 ? 'none' : action,
       amount: Math.abs(amount),
       currency: result.currency_code,
+      ...(recurring?.currency_code === result.currency_code && Number.isFinite(regular)
+        ? { recurring: regular }
+        : {}),
+      ...(data.next_billed_at ? { nextBilledAt: data.next_billed_at } : {}),
     };
   }
 
