@@ -62,10 +62,12 @@ describe('rolestash.com static site', () => {
         'notify/unsubscribed/index.html',
         'pay/index.html',
         'pay/success/index.html',
+        'pricing/index.html',
         'privacy/index.html',
         'refunds/index.html',
         'support/index.html',
         'terms/index.html',
+        'welcome/index.html',
       ].sort(),
     );
   });
@@ -75,9 +77,10 @@ describe('rolestash.com static site', () => {
     ({ file, doc }) => {
       const scripts = [...doc.querySelectorAll('script')];
       for (const script of scripts) expect(script.textContent.trim()).toBe('');
-      // Only checkout (Paddle.js + pay.js) and the Google hand-off have scripts.
+      // Only checkout and pricing (Paddle.js + our module) and the Google hand-off have scripts.
       const allowed: Record<string, string[]> = {
         'pay/index.html': ['https://cdn.paddle.com/paddle/v2/paddle.js', '/assets/pay.js'],
+        'pricing/index.html': ['https://cdn.paddle.com/paddle/v2/paddle.js', '/assets/pricing.js'],
         'auth/google/index.html': ['/assets/auth-google.js'],
       };
       expect(scripts.map((el) => el.getAttribute('src'))).toEqual(allowed[file] ?? []);
@@ -294,12 +297,47 @@ describe('rolestash.com static site', () => {
     expect(auth).toContain('Cache-Control: no-store');
   });
 
-  it('scopes the Paddle CSP to /pay/ and replaces, not adds to, the site-wide one', () => {
+  it('scopes the Paddle CSP to /pay/ and /pricing/, replacing the site-wide one', () => {
     const headers = readFileSync(join(SITE, '_headers'), 'utf8');
-    const pay = headers.slice(headers.indexOf('/pay/*'));
-    expect(pay).toMatch(/^\s+! Content-Security-Policy$/m);
-    expect(pay).toContain("script-src 'self' https://cdn.paddle.com;");
-    expect(pay).toContain('frame-src https://buy.paddle.com https://sandbox-buy.paddle.com;');
+    for (const path of ['/pay/*', '/pricing/*']) {
+      const block = headers.slice(headers.indexOf(path)).split('\n\n')[0] ?? '';
+      expect(block).toMatch(/^\s+! Content-Security-Policy$/m);
+      expect(block).toContain("script-src 'self' https://cdn.paddle.com;");
+      expect(block).toContain('frame-src https://buy.paddle.com https://sandbox-buy.paddle.com;');
+    }
     expect(headers.slice(0, headers.indexOf('/pay/*'))).not.toContain('paddle');
+    // Out of search results until launch.
+    expect(headers.slice(headers.indexOf('/pricing/*'))).toMatch(/X-Robots-Tag: noindex/);
+  });
+
+  it('reads Paddle settings from one config that refuses mismatched environments', async () => {
+    const source = readFileSync(join(SITE, 'assets/paddle-config.js'), 'utf8');
+    for (const script of ['pay.js', 'pricing.js'])
+      expect(readFileSync(join(SITE, 'assets', script), 'utf8')).toContain(
+        "from './paddle-config.js'",
+      );
+    interface PaddleConfigModule {
+      PADDLE: {
+        environment: string;
+        token: string;
+        prices: Record<string, Record<string, string>>;
+      };
+      initPaddle: (options: object) => unknown;
+    }
+    const { PADDLE, initPaddle } = (await import(
+      join(SITE, 'assets/paddle-config.js')
+    )) as PaddleConfigModule;
+    expect(['sandbox', 'production']).toContain(PADDLE.environment);
+    expect(PADDLE.token.startsWith(PADDLE.environment === 'sandbox' ? 'test_' : 'live_')).toBe(
+      true,
+    );
+    for (const tier of Object.values(PADDLE.prices))
+      for (const id of Object.values(tier)) expect(id).toMatch(/^pri_[a-z0-9]{26}$/);
+    expect(source).not.toMatch(/apiKey|pdl_live|pdl_sdbx/i);
+    // A live token with the sandbox environment (or the reverse) stops loudly.
+    const saved = PADDLE.token;
+    PADDLE.token = 'live_x';
+    expect(() => initPaddle({})).toThrow(/must start with test_/);
+    PADDLE.token = saved;
   });
 });

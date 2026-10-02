@@ -14,6 +14,7 @@ tested commit (docs/guides/ci-cd.md).
 | `site/support/`     | Support and FAQ                                                          |
 | `site/404.html`     | Not found                                                                |
 | `site/pay/`         | Paddle checkout (default payment link); `pay/success/` after paying      |
+| `site/pricing/`     | Local prices and Subscribe (ADR-0023); `site/welcome/` after paying      |
 | `site/auth/google/` | Google sign-in hand-off (ADR-0012); own script and CSP                   |
 | `site/notify/`      | Launch-list result pages (check email, confirmed, unsubscribed, problem) |
 | `site/_headers`     | CSP and security headers                                                 |
@@ -24,12 +25,15 @@ tested commit (docs/guides/ci-cd.md).
 - **No scripts, no inline styles, nothing from other origins.** The CSP in
   `_headers` is `default-src 'none'`, and `tests/unit/site/site.test.ts`
   enforces it.
-- **The one exception is `/pay/`.** It loads Paddle.js from `cdn.paddle.com`
-  and our `assets/pay.js`, under its own CSP. The `/pay/*` rule detaches the
-  site-wide header first, because two CSP headers would both apply.
-  - To go live, put the Paddle **client-side token** (public; `test_…` in the
-    sandbox, `live_…` in production) and the environment in
-    `site/assets/pay.js`.
+- **The exceptions are `/pay/` and `/pricing/`.** They load Paddle.js from
+  `cdn.paddle.com` and our `assets/pay.js` or `assets/pricing.js` (ES
+  modules), under their own CSP. Their `_headers` rules detach the site-wide
+  header first, because two CSP headers would both apply.
+  - **Paddle settings** live in `site/assets/paddle-config.js`: the
+    environment, the client-side token (public; `test_…` in the sandbox,
+    `live_…` in production) and the price IDs. To go live, change all three
+    together. `initPaddle()` refuses a mismatch.
+  - `/pricing/` is `noindex` and not linked until launch.
   - After the first sandbox checkout, check the browser console for CSP
     violations and adjust `/pay/*` if Paddle needs another origin.
 - **Every page shares the landing page's header and footer**, byte for byte

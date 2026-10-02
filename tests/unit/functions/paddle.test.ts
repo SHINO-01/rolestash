@@ -103,7 +103,14 @@ describe('toBillingEvent', () => {
 
   it('ignores events we do not act on', () => {
     expect(toBillingEvent({ event_type: 'transaction.completed', data: {} }, TIERS)).toBeNull();
-    expect(toBillingEvent(subscriptionEvent({ custom_data: null }), TIERS)).toBeNull();
+    // A website purchase has no user id: kept, to be matched by the customer.
+    expect(toBillingEvent(subscriptionEvent({ custom_data: null }), TIERS)).toMatchObject({
+      userId: null,
+      customerId: 'ctm_01',
+    });
+    expect(
+      toBillingEvent(subscriptionEvent({ custom_data: null, customer_id: null }), TIERS),
+    ).toBeNull();
     expect(
       toBillingEvent(subscriptionEvent({ custom_data: { user_id: 'nope' } }), TIERS),
     ).toBeNull();

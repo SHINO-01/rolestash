@@ -2,6 +2,7 @@ import {
   PaddleApiError,
   PaddleClient,
   toBillingEvent,
+  type IncomingBillingEvent,
   type BillingInterval,
   type PaidTier,
   verifyPaddleSignature,
@@ -192,6 +193,27 @@ export const handleWebHandoff = userEndpoint(async ({ user, admin }) => {
   return json(200, { tokenHash: await admin.signInTokenFor(user.email) });
 });
 
+/**
+ * The account for a subscription that carries no user id: the one already
+ * billed as this Paddle customer, else the one with the customer's email,
+ * else a new account for that email. Then the subscription is tagged.
+ */
+async function accountForCustomer(
+  admin: SupabaseAdmin,
+  paddle: PaddleClient,
+  event: IncomingBillingEvent,
+): Promise<string | null> {
+  if (!event.customerId) return null;
+  let userId = await admin.userIdForCustomer(event.customerId);
+  if (!userId) {
+    const email = await paddle.customerEmail(event.customerId);
+    if (!email) return null;
+    userId = (await admin.userIdForEmail(email)) ?? (await admin.createUser(email));
+  }
+  await paddle.setSubscriptionUser(event.subscriptionId, userId);
+  return userId;
+}
+
 /** POST /functions/v1/paddle-webhook (called by Paddle, signed; no user JWT). */
 export async function handlePaddleWebhook(req: Request, deps: Deps): Promise<Response> {
   if (req.method !== 'POST') return json(405, { error: 'method_not_allowed' });
@@ -210,13 +232,22 @@ export async function handlePaddleWebhook(req: Request, deps: Deps): Promise<Res
   } catch {
     return json(400, { error: 'bad_json' });
   }
-  const event = toBillingEvent(payload, (priceId) => tierOfPrice(deps.env, priceId));
-  if (!event) return json(200, { ignored: true });
+  const incoming = toBillingEvent(payload, (priceId) => tierOfPrice(deps.env, priceId));
+  if (!incoming) return json(200, { ignored: true });
+  const admin = new SupabaseAdmin(deps.env.supabase, deps.fetch);
   try {
-    const applied = await new SupabaseAdmin(deps.env.supabase, deps.fetch).applyBillingEvent(
-      event,
-      'paddle',
-    );
+    let userId = incoming.userId;
+    if (!userId) {
+      // Bought on the website: find (or create) the account for this
+      // customer, then tag the subscription so later events carry the id.
+      userId = await accountForCustomer(
+        admin,
+        new PaddleClient(deps.env.paddle, deps.fetch),
+        incoming,
+      );
+      if (!userId) return json(200, { ignored: true });
+    }
+    const applied = await admin.applyBillingEvent({ ...incoming, userId }, 'paddle');
     return json(200, { applied });
   } catch (error) {
     // Non-2xx makes Paddle retry later.

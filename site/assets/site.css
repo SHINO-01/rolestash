@@ -1512,8 +1512,8 @@ kbd {
 }
 
 @media (min-width: 861px) {
-  /* The table carries the detail on wide screens. */
-  .plan ul {
+  /* On the home page the table carries the detail on wide screens. */
+  #pricing .plan ul {
     display: none;
   }
 }
@@ -1955,4 +1955,42 @@ details:not(.menu) p {
     opacity: 0;
     translate: 0 24px;
   }
+}
+
+/* ───────── Pricing page (/pricing/) ───────── */
+.pricing-page {
+  padding: 48px 0 64px;
+}
+
+.billing-toggle {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin: 0 auto 24px;
+  padding: 4px;
+  width: max-content;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-2);
+}
+
+.billing-toggle .btn {
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+}
+
+.billing-toggle .btn[aria-pressed='true'] {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
+}
+
+.pricing-page .price {
+  white-space: nowrap;
+}
+
+.plan button.plan-cta:disabled {
+  opacity: 0.6;
+  cursor: wait;
 }

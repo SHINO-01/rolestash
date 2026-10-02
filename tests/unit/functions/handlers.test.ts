@@ -22,6 +22,7 @@ const ENV = readEnv(
       SUPABASE_URL: SB,
       SUPABASE_ANON_KEY: 'anon',
       SUPABASE_SERVICE_ROLE_KEY: 'service',
+      PADDLE_ENV: 'sandbox',
       PADDLE_API_KEY: 'pdl_key',
       PADDLE_WEBHOOK_SECRET: 'whsec',
       PADDLE_PRICE_PRO_MONTHLY: 'pri_pro_month',
@@ -399,6 +400,86 @@ describe('paddle-webhook', () => {
     expect(calls[0]?.headers.apikey).toBe('service');
   });
 
+  describe('a purchase made on the website (no user id)', () => {
+    const website = () => subscriptionEvent({ custom_data: null });
+    const apply = { [`POST ${SB}/rest/v1/rpc/apply_billing_event`]: { status: 200, body: true } };
+    const tag = {
+      'PATCH https://sandbox-api.paddle.com/subscriptions/sub_01': {
+        status: 200,
+        body: { data: {} },
+      },
+    };
+    const customer = {
+      'GET https://sandbox-api.paddle.com/customers/ctm_01': {
+        status: 200,
+        body: { data: { email: 'buyer@example.com' } },
+      },
+    };
+    const NEW_ID = '99999999-9999-4999-8999-999999999999';
+
+    it('goes to the account already billed as that customer', async () => {
+      const { deps: d, calls } = deps({
+        [`GET ${SB}/rest/v1/entitlements`]: { status: 200, body: [{ user_id: USER.id }] },
+        ...apply,
+        ...tag,
+      });
+      expect(await (await handlePaddleWebhook(await signedRequest(website()), d)).json()).toEqual({
+        applied: true,
+      });
+      expect(calls.find((c) => c.url.includes('apply_billing_event'))?.body).toMatchObject({
+        p_user_id: USER.id,
+      });
+      // Tagged, so later events carry the id.
+      expect(calls.find((c) => c.method === 'PATCH')?.body).toEqual({
+        custom_data: { user_id: USER.id },
+      });
+    });
+
+    it('else to the account with the checkout email', async () => {
+      const { deps: d, calls } = deps({
+        [`GET ${SB}/rest/v1/entitlements`]: { status: 200, body: [] },
+        ...customer,
+        [`POST ${SB}/rest/v1/rpc/user_id_for_email`]: { status: 200, body: USER.id },
+        ...apply,
+        ...tag,
+      });
+      await handlePaddleWebhook(await signedRequest(website()), d);
+      expect(calls.find((c) => c.url.endsWith('/user_id_for_email'))?.body).toEqual({
+        p_email: 'buyer@example.com',
+      });
+      expect(calls.some((c) => c.url.endsWith('/admin/users'))).toBe(false);
+      expect(calls.find((c) => c.url.includes('apply_billing_event'))?.body).toMatchObject({
+        p_user_id: USER.id,
+      });
+    });
+
+    it('else creates an account for that email, to sign in to later', async () => {
+      const { deps: d, calls } = deps({
+        [`GET ${SB}/rest/v1/entitlements`]: { status: 200, body: [] },
+        ...customer,
+        [`POST ${SB}/rest/v1/rpc/user_id_for_email`]: { status: 200, body: null },
+        [`POST ${SB}/auth/v1/admin/users`]: { status: 200, body: { id: NEW_ID } },
+        ...apply,
+        ...tag,
+      });
+      await handlePaddleWebhook(await signedRequest(website()), d);
+      const created = calls.find((c) => c.url.endsWith('/admin/users'));
+      expect(created?.body).toEqual({ email: 'buyer@example.com', email_confirm: true });
+      expect(created?.headers.Authorization).toBe('Bearer service');
+      expect(calls.find((c) => c.url.includes('apply_billing_event'))?.body).toMatchObject({
+        p_user_id: NEW_ID,
+        p_tier: 'pro',
+      });
+    });
+
+    it('asks Paddle to retry when the account lookup fails', async () => {
+      const { deps: d } = deps({
+        [`GET ${SB}/rest/v1/entitlements`]: { status: 503, body: {} },
+      });
+      expect((await handlePaddleWebhook(await signedRequest(website()), d)).status).toBe(500);
+    });
+  });
+
   it('rejects unsigned or forged requests without touching the database', async () => {
     const { deps: d, calls } = deps({});
     const forged = await signedRequest(subscriptionEvent(), 'attacker-secret');
@@ -436,8 +517,10 @@ describe('paddle-webhook', () => {
 });
 
 describe('readEnv', () => {
-  it('fails fast on a missing secret and defaults Paddle to the sandbox', () => {
-    expect(() => readEnv(() => undefined)).toThrow(/SUPABASE_URL/);
+  it('fails fast on a missing secret, and never guesses the Paddle environment', () => {
+    expect(() => readEnv(() => undefined)).toThrow(/PADDLE_ENV|SUPABASE_URL/);
+    expect(() => readEnv((n) => (n === 'PADDLE_ENV' ? 'live' : 'x'))).toThrow(/PADDLE_ENV/);
+    expect(() => readEnv((n) => (n === 'PADDLE_ENV' ? undefined : 'x'))).toThrow(/PADDLE_ENV/);
     expect(ENV.paddle.environment).toBe('sandbox');
     expect(readEnv((n) => (n === 'PADDLE_ENV' ? 'production' : 'x')).paddle.environment).toBe(
       'production',

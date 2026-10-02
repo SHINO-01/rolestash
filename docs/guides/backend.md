@@ -148,6 +148,19 @@ rotate it, see [email-updates.md](email-updates.md#one-time-setup).
 - `share_learning`, the choice made at sign-up. Only `set_email_sharing()`
   changes it, and `my_inbox()` copies it into a new inbox.
 
+## Website purchases (ADR-0023)
+
+Checkouts opened from rolestash.com/pricing/ carry no `user_id`. The
+`paddle-webhook` function matches them, in order:
+
+1. to the account already billed as that Paddle customer;
+2. else to the account with the checkout email (`user_id_for_email()`,
+   service role only);
+3. else to a new account it creates for that email.
+
+It then tags the subscription with the `user_id`. `PADDLE_ENV` must be
+`sandbox` or `production`; anything else stops the functions.
+
 ## Edge Functions
 
 | Function          | Caller                  | Does                                                                                      |

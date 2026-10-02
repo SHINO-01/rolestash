@@ -11,7 +11,11 @@ export function readEnv(get: (name: string) => string | undefined): FunctionEnv 
     if (!value) throw new Error(`Missing secret ${name}`);
     return value;
   };
-  const environment = get('PADDLE_ENV') === 'production' ? 'production' : 'sandbox';
+  // Never guess which Paddle account to use: a missing or mistyped value stops here.
+  const paddleEnv = get('PADDLE_ENV');
+  if (paddleEnv !== 'sandbox' && paddleEnv !== 'production')
+    throw new Error('PADDLE_ENV must be "sandbox" or "production"');
+  const environment: 'sandbox' | 'production' = paddleEnv;
   return {
     supabase: {
       url: need('SUPABASE_URL'),

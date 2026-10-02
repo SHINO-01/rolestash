@@ -10,6 +10,12 @@ export type BillingInterval = 'month' | 'year';
 export type EntitlementStatus =
   'trialing' | 'active' | 'past_due' | 'paused' | 'canceled' | 'expired';
 
+/**
+ * A webhook's event before we know whose it is: purchases made on
+ * rolestash.com/pricing/ carry no user id (the extension's checkouts do).
+ */
+export type IncomingBillingEvent = Omit<BillingEvent, 'userId'> & { userId: string | null };
+
 /** What apply_billing_event() needs (supabase/migrations). */
 export interface BillingEvent {
   userId: string;
@@ -98,26 +104,29 @@ interface PaddleSubscriptionEvent {
 const str = (v: unknown): string | null => (typeof v === 'string' && v !== '' ? v : null);
 
 /**
- * Maps a Paddle `subscription.*` webhook to a BillingEvent. Returns null for
- * events we don't act on (other types, or subscriptions not started from our
- * checkout, which carry no user id).
+ * Maps a Paddle `subscription.*` webhook to a billing event. Returns null for
+ * events we don't act on. `userId` is null when the checkout didn't carry one
+ * (a purchase on the website); the webhook then finds the account by email.
  */
 export function toBillingEvent(
   payload: unknown,
   /** Maps our Paddle price IDs to tiers (from the PADDLE_PRICE_* secrets). */
   tierOfPrice: (priceId: string) => PaidTier | undefined,
-): BillingEvent | null {
+): IncomingBillingEvent | null {
   if (typeof payload !== 'object' || payload === null) return null;
   const event = payload as PaddleSubscriptionEvent;
   const type = str(event.event_type);
   if (!type?.startsWith('subscription.') || !event.data) return null;
 
   const data = event.data;
-  const userId = str(data.custom_data?.user_id);
+  const claimed = str(data.custom_data?.user_id);
+  const userId = claimed && UUID.test(claimed) ? claimed : null;
   const subscriptionId = str(data.id);
   const occurredAt = str(event.occurred_at);
   const status = STATUS_MAP[str(data.status) ?? ''];
-  if (!userId || !UUID.test(userId) || !subscriptionId || !occurredAt || !status) return null;
+  if ((claimed && !userId) || !subscriptionId || !occurredAt || !status) return null;
+  // Without a user id we need the customer to find the account.
+  if (!userId && !str(data.customer_id)) return null;
 
   // The tier comes from the subscribed price: our price map first, then the
   // price's own custom_data. An unknown price is ignored rather than guessed.
@@ -227,6 +236,22 @@ export class PaddleClient {
     if (found[0]) return found[0].id;
     const created = await this.call<{ id: string }>('POST', '/customers', { email });
     return created.id;
+  }
+
+  /** The email a Paddle customer checked out with. */
+  async customerEmail(customerId: string): Promise<string | null> {
+    const data = await this.call<{ email?: unknown }>(
+      'GET',
+      `/customers/${encodeURIComponent(customerId)}`,
+    );
+    return typeof data.email === 'string' && data.email.includes('@') ? data.email : null;
+  }
+
+  /** Tags a subscription with its Rolestash account, so later events name it. */
+  async setSubscriptionUser(subscriptionId: string, userId: string): Promise<void> {
+    await this.call('PATCH', `/subscriptions/${encodeURIComponent(subscriptionId)}`, {
+      custom_data: { user_id: userId },
+    });
   }
 
   async createPortalSession(customerId: string, subscriptionId: string | null): Promise<string> {

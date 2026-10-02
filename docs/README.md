@@ -33,6 +33,7 @@ Start with **Architecture → Overview**, then go by task.
 | [0020](adr/0020-application-autofill.md)                    | Autofill: a local profile, deterministic rules, filled only on a click  |
 | [0021](adr/0021-side-panel-one-click-access.md)             | One-click access: a docked side panel and a pinned icon, no page widget |
 | [0022](adr/0022-account-profile-and-sharing-choice.md)      | Account profile: display name, inline photo, sharing choice at sign-up  |
+| [0023](adr/0023-pricing-page-and-website-purchases.md)      | A pricing page with local prices; website purchases matched by email    |
 
 New decision? Copy [the template](adr/0000-template.md).
 

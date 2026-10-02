@@ -6,6 +6,14 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **rolestash.com/pricing/:** prices in your own currency (from Paddle), a
+  monthly/yearly switch and Subscribe buttons that open Paddle's checkout.
+  After paying, sign in to Rolestash with the same email and your plan is
+  there; if you had no account yet, one is waiting (ADR-0023). Hidden from
+  search engines until launch.
+
 ### Changed
 
 - **Easier email-updates setup:** choose "I'll forward emails myself"
