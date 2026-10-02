@@ -34,7 +34,7 @@ export interface Deps {
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
 };
 
 export function json(status: number, body: unknown): Response {
@@ -110,6 +110,15 @@ export const handleCreateCheckout = userEndpoint(async ({ req, user, admin, padd
 
   const entitlement = await admin.entitlement(user.id);
   if (entitlement && PAID.has(entitlement.status) && entitlement.provider_subscription_id) {
+    return json(409, { error: 'already_subscribed' });
+  }
+  // Cancelled but paid until the period ends: resume it rather than pay twice.
+  if (
+    entitlement?.status === 'canceled' &&
+    entitlement.provider_subscription_id &&
+    entitlement.current_period_end &&
+    Date.parse(entitlement.current_period_end) > Date.now()
+  ) {
     return json(409, { error: 'already_subscribed' });
   }
   // Returning subscribers keep their Paddle customer; everyone else is bound to
@@ -194,6 +203,56 @@ export const handleWebHandoff = userEndpoint(async ({ user, admin }) => {
   if (!user.email) return json(400, { error: 'no_email' });
   return json(200, { tokenHash: await admin.signInTokenFor(user.email) });
 });
+
+/** The caller's public IP, as the platform's proxy reports it. */
+function clientIp(req: Request): string | null {
+  const first = (req.headers.get('x-forwarded-for') ?? '').split(',')[0]?.trim() ?? '';
+  return /^[0-9a-f:.]{3,45}$/i.test(first) ? first : null;
+}
+
+/** Recent answers by IP, so a busy board doesn't ask Paddle every time. */
+const priceCache = new Map<string, { at: number; body: unknown }>();
+const PRICE_CACHE_MS = 10 * 60_000;
+
+/**
+ * GET /functions/v1/prices → { currency, country, prices: { pro, advanced } }
+ * with Paddle's formatted price per interval, for the caller's location
+ * (ADR-0013). Public (prices are public); nothing is stored. The IP goes to
+ * Paddle only to pick the currency, as Paddle.js does on the website.
+ */
+export async function handlePrices(req: Request, deps: Deps): Promise<Response> {
+  if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
+  if (req.method !== 'GET' && req.method !== 'POST')
+    return json(405, { error: 'method_not_allowed' });
+  const ip = clientIp(req);
+  const key = ip ?? 'none';
+  const now = deps.now().getTime();
+  const cached = priceCache.get(key);
+  if (cached && now - cached.at < PRICE_CACHE_MS) return json(200, cached.body);
+  try {
+    const ids = deps.env.paddle.prices;
+    const all = (['pro', 'advanced'] as const).flatMap((t) =>
+      (['month', 'quarter', 'year'] as const).map((i) => ids[t][i]),
+    );
+    const local = await new PaddleClient(deps.env.paddle, deps.fetch).localPrices(all, ip);
+    const pick = (t: PaidTier) => ({
+      month: local.totals[ids[t].month],
+      quarter: local.totals[ids[t].quarter],
+      year: local.totals[ids[t].year],
+    });
+    const body = {
+      currency: local.currency,
+      country: local.country,
+      prices: { pro: pick('pro'), advanced: pick('advanced') },
+    };
+    if (priceCache.size > 1000) priceCache.clear();
+    priceCache.set(key, { at: now, body });
+    return json(200, body);
+  } catch (error) {
+    console.error('[rolestash] prices failed', error);
+    return json(502, { error: 'prices_unavailable' });
+  }
+}
 
 /**
  * The account for a subscription that carries no user id: the one already

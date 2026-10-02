@@ -56,7 +56,9 @@ Full policy: https://rolestash.com/privacy/
   turn it off in Account later, which also withdraws what you shared.
 
 Network: the extension talks only to the page you capture and our Supabase
-project. Checkout, billing and Google sign-in open as pages on rolestash.com,
+project. To show plan prices in your currency, our server asks Paddle for
+the prices for your location, which means passing on your IP address; it
+isn't stored. Checkout, billing and Google sign-in open as pages on rolestash.com,
 Paddle and Google that you see. Nothing else.
 
 ## Deleting your data

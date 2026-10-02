@@ -14,11 +14,13 @@ import {
   ACCOUNT_PROFILE_KEY,
   ACCOUNT_SESSION_KEY,
   ACCOUNT_SHARING_OPT_OUT_KEY,
+  ACCOUNT_PRICES_KEY,
 } from '@/storage/keys';
 import {
   BackendError,
   randomToken,
   SessionSchema,
+  type LocalPrices,
   type PlanChangePreview,
   type Session,
   type SupabaseClient,
@@ -259,6 +261,24 @@ export class AccountService implements PlanProvider {
     });
   }
 
+  /**
+   * Plan prices in this user's currency, cached for a day; undefined when
+   * they can't be fetched (callers then show US prices).
+   */
+  async localPrices(): Promise<LocalPrices | undefined> {
+    const cached = (await this.store.get([ACCOUNT_PRICES_KEY]))[ACCOUNT_PRICES_KEY] as
+      { at: number; value: LocalPrices } | undefined;
+    const now = this.now().getTime();
+    if (cached && now - cached.at < 86_400_000) return cached.value;
+    try {
+      const value = await this.client.localPrices();
+      await this.store.set({ [ACCOUNT_PRICES_KEY]: { at: now, value } });
+      return value;
+    } catch {
+      return cached?.value;
+    }
+  }
+
   /** What switching would charge or credit now; shown for confirmation first. */
   async previewPlanChange(tier: PaidPlan, interval: BillingInterval): Promise<PlanChangePreview> {
     return this.client.previewPlanChange(await this.accessToken(), { tier, interval });
@@ -292,6 +312,7 @@ export class AccountService implements PlanProvider {
       ACCOUNT_ENTITLEMENT_KEY,
       ACCOUNT_PROFILE_KEY,
       ACCOUNT_SHARING_OPT_OUT_KEY,
+      ACCOUNT_PRICES_KEY,
     ]);
   }
 

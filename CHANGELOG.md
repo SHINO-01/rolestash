@@ -6,6 +6,12 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- **Prices in your currency:** Account in the extension and the web board show
+  plan prices in your local currency (from Paddle, by location), with US
+  dollars as the fallback; rolestash.com links to prices in your currency.
+
 ## [0.3.0] — 2026-10-02
 
 ### Added
@@ -278,6 +284,8 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- **A plan cancelled to end at the period's end** now shows "until 2 Nov…
+  canceled" instead of "Renews on 2 Nov", and can't be bought twice.
 - **Switching plans** now says "You'll be charged A$12.98 now… Then A$22.99 a
   month from 2 Nov", in your own currency throughout (it mixed in US prices),
   and the button's loading spinner no longer squashes into a "[".

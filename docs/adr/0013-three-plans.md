@@ -135,3 +135,21 @@ the site advertises them all.
   `plan_tier()`, including its per-plan device limit.
 - **Upgrades at renewal instead of immediately:** simpler billing, but
   users expect the bigger limit as soon as they pay.
+
+**Revision (2026-10-02, go-live): prices in every buyer's currency.** Paddle
+went live, and the owner turned on Paddle's automatic currency conversion
+(AUD, CAD, CHF, CNY, EUR, GBP, INR, JPY, NZD, SEK, USD and VND). The account
+balance is held in AUD.
+
+- **Where buyers see local prices:** the extension, the web board and
+  `/pricing/` all ask Paddle by location.
+- **How:** the extension and web board call the `prices` Edge Function. It
+  passes the caller's IP to Paddle's pricing preview and returns Paddle's
+  formatted totals, cached for 10 minutes on the server and a day on the
+  device. US$ is the fallback.
+- **Overrides still decide** GBP (UK), EUR (Ireland) and AUD (Australia).
+  Everything else is converted from USD, so it isn't rounded (for example
+  ₹672.27). Add overrides for big markets when they matter.
+- A cancellation scheduled for the end of the period is recorded as
+  `canceled` with that end date. Account then says it ends rather than
+  renews, and a second checkout is refused until it does.

@@ -2,7 +2,8 @@ import { SharingChoice } from '@/features/account/sharing-choice';
 import { CalendarCheck, Columns3, Inbox, Plus, UserRound, WifiOff } from 'lucide-react';
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react';
 import type { AccountService } from '@/services/account-service';
-import { backendErrorMessage } from '@/features/account/plan-copy';
+import { backendErrorMessage, planPriceLabel } from '@/features/account/plan-copy';
+import type { LocalPrices } from '@/services/backend/supabase-client';
 import { SyncSection } from '@/features/account/sync-section';
 import { Button, Spinner } from '@/ui/components/button';
 import { Field, Input } from '@/ui/components/field';
@@ -213,6 +214,10 @@ function WebSignIn({ account }: { account: AccountService }) {
 
 function AdvancedOnly({ account }: { account: AccountService }) {
   const [busy, setBusy] = useState(false);
+  const [local, setLocal] = useState<LocalPrices>();
+  useEffect(() => {
+    void account.localPrices().then(setLocal);
+  }, [account]);
   return (
     <Shell>
       <div>
@@ -234,7 +239,7 @@ function AdvancedOnly({ account }: { account: AccountService }) {
             .finally(() => setBusy(false));
         }}
       >
-        Get Advanced: US$15 / month
+        Get Advanced: {planPriceLabel('advanced', 'month', local)}
       </Button>
       <Button variant="ghost" onClick={() => void account.signOut()}>
         Sign out

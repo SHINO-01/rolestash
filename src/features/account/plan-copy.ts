@@ -89,6 +89,17 @@ export const PLAN_PRICES: Record<PaidPlan, Record<BillingInterval, string>> = {
   advanced: { month: 'US$15 / month', quarter: 'US$39 / 3 months', year: 'US$159 / year' },
 };
 
+/** "A$10.00 / month" in the user's currency when known, else the US price. */
+export function planPriceLabel(
+  tier: PaidPlan,
+  interval: BillingInterval,
+  local: { prices: Record<PaidPlan, Record<BillingInterval, string>> } | undefined,
+): string {
+  const price = local?.prices[tier][interval];
+  if (!price) return PLAN_PRICES[tier][interval];
+  return `${price} ${{ month: '/ month', quarter: '/ 3 months', year: '/ year' }[interval]}`;
+}
+
 export const PLAN_PITCH: Record<PaidPlan, string> = {
   pro: `${String(ACTIVE_JOB_LIMITS.pro)} active jobs, full autofill (work details, saved answers, from your résumé), insights, contacts and documents, bulk actions, full history, reminders, custom columns, capture from a pasted link, and sync across ${String(SYNC_DEVICE_LIMITS.pro)} computers.`,
   advanced: `Unlimited active jobs, automatic status updates from your job emails, interview details on every card, sync across ${String(SYNC_DEVICE_LIMITS.advanced)} devices including your phone, and your whole board in the side panel.`,

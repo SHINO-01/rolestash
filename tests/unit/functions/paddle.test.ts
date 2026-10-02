@@ -101,6 +101,26 @@ describe('toBillingEvent', () => {
     });
   });
 
+  it('treats a cancellation at the period end as ending, not renewing', () => {
+    const event = toBillingEvent(
+      subscriptionEvent({
+        status: 'active',
+        scheduled_change: { action: 'cancel', effective_at: '2026-11-02T12:43:31Z' },
+      }),
+      TIERS,
+    );
+    expect(event).toMatchObject({ status: 'canceled', currentPeriodEnd: '2026-11-02T12:43:31Z' });
+    // A scheduled pause or price change is not an ending.
+    expect(
+      toBillingEvent(
+        subscriptionEvent({
+          scheduled_change: { action: 'pause', effective_at: '2026-11-02T00:00:00Z' },
+        }),
+        TIERS,
+      ),
+    ).toMatchObject({ status: 'active' });
+  });
+
   it('ignores events we do not act on', () => {
     expect(toBillingEvent({ event_type: 'transaction.completed', data: {} }, TIERS)).toBeNull();
     // A website purchase has no user id: kept, to be matched by the customer.

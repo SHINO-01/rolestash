@@ -23,6 +23,8 @@ export const ACCOUNT_ENTITLEMENT_KEY = 'account:entitlement';
 export const ACCOUNT_PROFILE_KEY = 'account:profile';
 /** An opt-out of shared learning chosen at sign-in, until the server has it. */
 export const ACCOUNT_SHARING_OPT_OUT_KEY = 'account:sharing-opt-out';
+/** Plan prices in this user's currency, cached for a day. */
+export const ACCOUNT_PRICES_KEY = 'account:prices';
 
 export const REMINDERS_KEY = 'reminders';
 

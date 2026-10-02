@@ -201,7 +201,9 @@ test.describe('accounts', () => {
     const page = await context.newPage();
     await page.goto(`chrome-extension://${extensionId}/board.html#account`);
     const dialog = page.getByRole('dialog');
-    await dialog.getByRole('button', { name: 'US$15 / month' }).click();
+    // Prices in the user's currency (the mock answers as the UK).
+    await expect(dialog.getByRole('button', { name: '£31.00 / 3 months' })).toBeVisible();
+    await dialog.getByRole('button', { name: '£11.99 / month' }).click();
     const confirm = dialog.getByRole('group', { name: 'Confirm plan change' });
     await expect(confirm).toContainText('You’ll be charged $8.48 now');
     await expect(confirm).toContainText(/Then \$15\.00 a month from/);
@@ -212,7 +214,7 @@ test.describe('accounts', () => {
     // Cancel changes nothing; confirming makes the one real change.
     await confirm.getByRole('button', { name: 'Cancel' }).click();
     await expect(confirm).toHaveCount(0);
-    await dialog.getByRole('button', { name: 'US$15 / month' }).click();
+    await dialog.getByRole('button', { name: '£11.99 / month' }).click();
     await dialog.getByRole('button', { name: /Pay .*8\.48 and switch/ }).click();
     await expect(page.getByText(/Switched to Advanced\. You were charged \$8\.48/)).toBeVisible();
     expect(changes().map((r) => r.body)).toEqual([
@@ -293,7 +295,7 @@ test.describe('accounts', () => {
 
     const [checkout] = await Promise.all([
       context.waitForEvent('page'),
-      dialog.getByRole('button', { name: 'US$7 / month' }).click(),
+      dialog.getByRole('button', { name: '£5.50 / month' }).click(),
     ]);
     await checkout.waitForLoadState();
     expect(checkout.url()).toBe(`${MOCK_BACKEND}/pay/?_ptxn=txn_e2e`);

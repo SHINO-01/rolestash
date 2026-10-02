@@ -506,4 +506,34 @@ describe('AccountService profile and sharing choice (ADR-0022)', () => {
     expect((await byEmail.account.state()).firstName).toBe('Jo');
     expect((await byEmail.account.state()).profile).toEqual({});
   });
+
+  it('shows prices in the user’s currency, cached for a day, US prices if offline', async () => {
+    let calls = 0;
+    const { account, ctx } = setup({
+      [`GET ${SB}/functions/v1/prices`]: () => {
+        calls++;
+        return calls > 2
+          ? { status: 503, body: {} }
+          : {
+              status: 200,
+              body: {
+                currency: 'AUD',
+                prices: {
+                  pro: { month: 'A$10.00', quarter: 'A$26.00', year: 'A$89.00' },
+                  advanced: { month: 'A$22.99', quarter: 'A$59.00', year: 'A$239.00' },
+                },
+              },
+            };
+      },
+    });
+    expect((await account.localPrices())?.prices.advanced.month).toBe('A$22.99');
+    await account.localPrices();
+    expect(calls).toBe(1);
+    ctx.advance(25 * 3_600_000);
+    await account.localPrices();
+    expect(calls).toBe(2);
+    ctx.advance(25 * 3_600_000);
+    // Paddle unreachable: the last known prices stay.
+    expect((await account.localPrices())?.currency).toBe('AUD');
+  });
 });

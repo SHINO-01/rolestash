@@ -452,3 +452,7 @@ verify_jwt = false
 
 [functions.web-handoff]
 verify_jwt = false
+
+# Public prices in the caller's currency (no sign-in needed; prices are public).
+[functions.prices]
+verify_jwt = false

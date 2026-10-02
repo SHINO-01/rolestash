@@ -4,6 +4,7 @@ import {
   handleCreateCheckout,
   handleDeleteAccount,
   handlePaddleWebhook,
+  handlePrices,
   handleWebHandoff,
   tierOfPrice,
   type Deps,
@@ -270,6 +271,19 @@ describe('plan choice and change-plan', () => {
     expect(calls.find((c) => c.url.endsWith('/transactions'))?.body).toMatchObject({
       items: [{ price_id: 'pri_adv_year' }],
     });
+  });
+
+  it('create-checkout refuses a second subscription while a cancelled one still runs', async () => {
+    const { deps: d, calls } = deps({
+      [`GET ${SB}/rest/v1/entitlements`]: entitlementRoute({
+        status: 'canceled',
+        provider_subscription_id: 'sub_01',
+        current_period_end: '2999-01-01T00:00:00Z',
+      }),
+    });
+    const res = await handleCreateCheckout(post({ tier: 'pro', interval: 'month' }), d);
+    expect(res.status).toBe(409);
+    expect(calls.some((c) => c.url.includes('paddle'))).toBe(false);
   });
 
   it('change-plan moves a live subscription to the new price with proration', async () => {
@@ -542,6 +556,65 @@ describe('paddle-webhook', () => {
     expect(
       (await handlePaddleWebhook(await signedRequest(subscriptionEvent()), failing.deps)).status,
     ).toBe(500);
+  });
+});
+
+describe('prices', () => {
+  const preview = (currency: string, totals: [string, string][]) => ({
+    status: 200,
+    body: {
+      data: {
+        currency_code: currency,
+        address: { country_code: 'GB' },
+        details: {
+          line_items: totals.map(([id, total]) => ({
+            price: { id },
+            formatted_totals: { total },
+          })),
+        },
+      },
+    },
+  });
+
+  it('returns Paddle’s prices for the caller’s location, cached briefly', async () => {
+    const { deps: d, calls } = deps({
+      'POST https://sandbox-api.paddle.com/pricing-preview': preview('GBP', [
+        ['pri_pro_month', '£5.50'],
+        ['pri_pro_quarter', '£14.00'],
+        ['pri_pro_year', '£48.00'],
+        ['pri_adv_month', '£11.99'],
+        ['pri_adv_quarter', '£31.00'],
+        ['pri_adv_year', '£129.00'],
+      ]),
+    });
+    const request = () =>
+      new Request('https://fn', { headers: { 'x-forwarded-for': '81.2.69.142, 10.0.0.1' } });
+    const res = await handlePrices(request(), d);
+    expect(await res.json()).toEqual({
+      currency: 'GBP',
+      country: 'GB',
+      prices: {
+        pro: { month: '£5.50', quarter: '£14.00', year: '£48.00' },
+        advanced: { month: '£11.99', quarter: '£31.00', year: '£129.00' },
+      },
+    });
+    expect(calls[0]?.body).toMatchObject({ customer_ip_address: '81.2.69.142' });
+    await handlePrices(request(), d);
+    expect(calls).toHaveLength(1);
+  });
+
+  it('prices for the US without an IP, and reports Paddle failures', async () => {
+    const ok = deps({ 'POST https://sandbox-api.paddle.com/pricing-preview': preview('USD', []) });
+    await handlePrices(new Request('https://fn'), ok.deps);
+    expect(ok.calls[0]?.body).toMatchObject({ address: { country_code: 'US' } });
+    const down = deps({
+      'POST https://sandbox-api.paddle.com/pricing-preview': { status: 500, body: {} },
+    });
+    const res = await handlePrices(
+      new Request('https://fn', { headers: { 'x-forwarded-for': '203.0.113.9' } }),
+      down.deps,
+    );
+    expect(res.status).toBe(502);
   });
 });
 

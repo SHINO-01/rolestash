@@ -98,6 +98,7 @@ interface PaddleSubscriptionEvent {
     billing_cycle?: { interval?: unknown; frequency?: unknown } | null;
     items?: { price?: { id?: unknown; custom_data?: { tier?: unknown } | null } | null }[] | null;
     canceled_at?: unknown;
+    scheduled_change?: { action?: unknown; effective_at?: unknown } | null;
   };
 }
 
@@ -123,7 +124,14 @@ export function toBillingEvent(
   const userId = claimed && UUID.test(claimed) ? claimed : null;
   const subscriptionId = str(data.id);
   const occurredAt = str(event.occurred_at);
-  const status = STATUS_MAP[str(data.status) ?? ''];
+  const reported = STATUS_MAP[str(data.status) ?? ''];
+  // Cancelled to end at the period's end: still paid until then, but ending, not renewing.
+  const endsAt =
+    str(data.scheduled_change?.action) === 'cancel'
+      ? str(data.scheduled_change?.effective_at)
+      : null;
+  const status =
+    endsAt && (reported === 'active' || reported === 'past_due') ? 'canceled' : reported;
   if ((claimed && !userId) || !subscriptionId || !occurredAt || !status) return null;
   // Without a user id we need the customer to find the account.
   if (!userId && !str(data.customer_id)) return null;
@@ -155,6 +163,7 @@ export function toBillingEvent(
     status,
     // A canceled subscription has no current period; access ends when it was canceled.
     currentPeriodEnd:
+      endsAt ??
       str(data.current_billing_period?.ends_at) ??
       (status === 'canceled' ? (str(data.canceled_at) ?? occurredAt) : null),
     billingInterval: interval,
@@ -321,6 +330,38 @@ export class PaddleClient {
         ? { recurring: regular }
         : {}),
       ...(data.next_billed_at ? { nextBilledAt: data.next_billed_at } : {}),
+    };
+  }
+
+  /**
+   * Prices as Paddle would charge someone at this IP address: their currency,
+   * local overrides or Paddle's conversion, and tax as shown at checkout.
+   * Returns Paddle's own formatted totals by price ID.
+   */
+  async localPrices(
+    priceIds: readonly string[],
+    ip: string | null,
+  ): Promise<{ currency: string; country: string | null; totals: Record<string, string> }> {
+    const data = await this.call<{
+      currency_code?: string;
+      address?: { country_code?: string } | null;
+      details?: {
+        line_items?: { price?: { id?: string }; formatted_totals?: { total?: string } }[];
+      };
+    }>('POST', '/pricing-preview', {
+      items: priceIds.map((price_id) => ({ price_id, quantity: 1 })),
+      // Without an IP, Paddle prices for the US.
+      ...(ip ? { customer_ip_address: ip } : { address: { country_code: 'US' } }),
+    });
+    const totals: Record<string, string> = {};
+    for (const line of data.details?.line_items ?? []) {
+      if (line.price?.id && line.formatted_totals?.total)
+        totals[line.price.id] = line.formatted_totals.total;
+    }
+    return {
+      currency: data.currency_code ?? 'USD',
+      country: data.address?.country_code ?? null,
+      totals,
     };
   }
 

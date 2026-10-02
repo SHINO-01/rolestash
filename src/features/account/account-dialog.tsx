@@ -23,14 +23,14 @@ import {
   formatMinor,
   PLAN_NAMES,
   PLAN_PITCH,
-  PLAN_PRICES,
+  planPriceLabel,
   planChip,
   planSummary,
 } from './plan-copy';
 import { EmailSection } from '@/features/email/email-section';
 import { ProfileSection } from './profile-section';
 import { SharingChoice } from './sharing-choice';
-import type { PlanChangePreview } from '@/services/backend/supabase-client';
+import type { LocalPrices, PlanChangePreview } from '@/services/backend/supabase-client';
 import { SyncSection } from './sync-section';
 
 const SITE = 'https://rolestash.com';
@@ -238,6 +238,17 @@ function SignedIn({ account, state }: { account: AccountService; state: AccountS
   const [busy, setBusy] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [awaitingPayment, setAwaitingPayment] = useState(false);
+  // Prices in this user's currency (Paddle, by location); US prices until they arrive.
+  const [local, setLocal] = useState<LocalPrices>();
+  useEffect(() => {
+    let live = true;
+    void account.localPrices().then((prices) => {
+      if (live) setLocal(prices);
+    });
+    return () => {
+      live = false;
+    };
+  }, [account]);
   const [pending, setPending] = useState<{
     tier: PaidPlan;
     interval: BillingInterval;
@@ -348,7 +359,7 @@ function SignedIn({ account, state }: { account: AccountService; state: AccountS
                       subscribed ? switchTo(tier, interval) : checkout(tier, interval)
                     }
                   >
-                    {PLAN_PRICES[tier][interval]}
+                    {planPriceLabel(tier, interval, local)}
                   </Button>
                 ))}
               </div>
@@ -358,7 +369,7 @@ function SignedIn({ account, state }: { account: AccountService; state: AccountS
         <p className="text-subtle text-xs">
           {subscribed
             ? 'You’ll see the cost before anything changes, and you’re charged (or credited) only the difference for the rest of this billing period. Payments are handled by Paddle, our reseller.'
-            : 'Secure checkout by Paddle, our reseller, in a new tab. Local prices in the UK, Ireland and Australia. 14-day money-back guarantee.'}
+            : 'Prices in your currency, with tax as your country requires. Secure checkout by Paddle, our reseller, in a new tab. 14-day money-back guarantee.'}
         </p>
       </section>
 
@@ -478,7 +489,7 @@ function ConfirmSwitch({
   const from = nextBilledAt ? ` from ${formatDate(nextBilledAt)}` : '';
   const then =
     recurring === undefined
-      ? PLAN_PRICES[pending.tier][pending.interval]
+      ? planPriceLabel(pending.tier, pending.interval, undefined)
       : `${formatMinor(recurring, currency)} ${per}${from}`;
   return (
     <div

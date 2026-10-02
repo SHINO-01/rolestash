@@ -155,6 +155,18 @@ function route(
       return [200, [state.entitlement]];
     case '/functions/v1/create-checkout':
       return [200, { url: `${MOCK_BACKEND}/pay/?_ptxn=txn_e2e` }];
+    case '/functions/v1/prices':
+      return [
+        200,
+        {
+          currency: 'GBP',
+          country: 'GB',
+          prices: {
+            pro: { month: '£5.50', quarter: '£14.00', year: '£48.00' },
+            advanced: { month: '£11.99', quarter: '£31.00', year: '£129.00' },
+          },
+        },
+      ];
     case '/functions/v1/change-plan':
       return b.preview === true
         ? [

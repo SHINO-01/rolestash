@@ -9,6 +9,12 @@ import { ENTITLEMENT_STATUSES, type BillingInterval, type PaidPlan } from '@/dom
  * recording fake and never touches the network.
  */
 
+/** Paddle's formatted price for each plan and interval, in one currency. */
+export interface LocalPrices {
+  currency: string;
+  prices: Record<PaidPlan, Record<BillingInterval, string>>;
+}
+
 /** Money due now for a plan change, in minor units (cents). */
 export interface PlanChangePreview {
   action: 'charge' | 'credit' | 'none';
@@ -354,6 +360,24 @@ export class SupabaseClient {
   }
 
   /** Moves a live subscription to another plan/interval (prorated by Paddle). */
+  /**
+   * Plan prices in the caller's own currency, from Paddle (via our prices
+   * function, which passes the caller's IP to Paddle and stores nothing).
+   */
+  async localPrices(): Promise<LocalPrices> {
+    const { status, data } = await this.request('/functions/v1/prices');
+    if (status >= 300) this.fail(status, data);
+    const tier = z.object({ month: z.string(), quarter: z.string(), year: z.string() });
+    const parsed = z
+      .object({
+        currency: z.string(),
+        prices: z.object({ pro: tier, advanced: tier }),
+      })
+      .safeParse(data);
+    if (!parsed.success) throw new BackendError('server');
+    return parsed.data;
+  }
+
   /** What switching plans would charge or credit now (minor units), without switching. */
   async previewPlanChange(
     accessToken: string,
