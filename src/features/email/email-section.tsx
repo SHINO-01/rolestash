@@ -1,14 +1,14 @@
-import { Copy, ExternalLink, RefreshCw, RotateCcw } from 'lucide-react';
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { Copy, RefreshCw, RotateCcw } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
 import type { Plan } from '@/domain/plan';
-import { Button, ButtonLink } from '@/ui/components/button';
+import { Button } from '@/ui/components/button';
 import { Chip } from '@/ui/components/chip';
 import { useToast } from '@/ui/components/toast';
 import { useEmailState } from '@/ui/hooks/email';
 import { useServices } from '@/ui/hooks/services';
 import { relativeTime } from '@/ui/format';
 import { backendErrorMessage } from '@/features/account/plan-copy';
-import { GMAIL_FROM, safeHref, SUGGESTED_SENDERS, SUGGESTED_SUBJECT } from './email-copy';
+import { EmailSetupGuide } from './email-setup';
 
 const PROBLEM = {
   offline: 'Couldn’t reach Rolestash. Updates resume when you’re back online.',
@@ -108,7 +108,6 @@ export function EmailSection({ plan }: { plan: Plan }) {
     toast({ message: 'Address copied', tone: 'success' });
   };
 
-  const confirmUrl = safeHref(verification?.url);
   return (
     <section className="border-line rounded-xl border p-4">
       <Header
@@ -139,70 +138,18 @@ export function EmailSection({ plan }: { plan: Plan }) {
         </Button>
       </div>
 
-      {verification?.code || confirmUrl ? (
-        <div className="mt-3 rounded-lg border border-amber-300/60 bg-amber-50 p-3 text-sm dark:border-amber-500/30 dark:bg-amber-500/10">
-          <p className="font-semibold">Gmail asked to confirm forwarding</p>
-          {verification?.code ? (
-            <p className="mt-1">
-              Confirmation code:{' '}
-              <code className="font-semibold tracking-wider">{verification.code}</code>
-            </p>
-          ) : null}
-          <p className="text-muted mt-1 text-[13px]">
-            Enter the code in Gmail’s forwarding settings
-            {confirmUrl ? ', or confirm with Google directly' : ''}.
-          </p>
-          {confirmUrl ? (
-            <ButtonLink
-              className="mt-2"
-              href={confirmUrl}
-              size="sm"
-              icon={<ExternalLink className="size-3.5" />}
-            >
-              Confirm with Google
-            </ButtonLink>
-          ) : null}
-        </div>
-      ) : null}
-
       {state?.problem ? (
         <p className="mt-3 text-sm text-amber-800 dark:text-amber-300">{PROBLEM[state.problem]}</p>
       ) : null}
 
-      <div className="mt-3 flex flex-col gap-2">
-        <Guide title="Set up in Gmail">
-          <li>
-            Gmail → <b>Settings</b> → <b>See all settings</b> → <b>Forwarding and POP/IMAP</b> →{' '}
-            <b>Add a forwarding address</b>, and paste your address.
-          </li>
-          <li>
-            Gmail sends a confirmation. Its code appears here within a few minutes (press{' '}
-            <b>Check now</b>). Enter it in Gmail. You don’t need to turn on forwarding of all mail.
-          </li>
-          <li>
-            Create a filter (<b>Filters and blocked addresses</b> → <b>Create a new filter</b>) with{' '}
-            <b>From</b>:
-            <Copyable text={GMAIL_FROM} />
-            Choose <b>Forward it to</b> your address. Add a second filter with <b>Subject</b>:
-            <Copyable text={SUGGESTED_SUBJECT} />
-          </li>
-          <li>Filters only forward new mail. To try it, forward one job email by hand.</li>
-        </Guide>
-        <Guide title="Set up in Outlook">
-          <li>
-            Outlook → <b>Settings</b> → <b>Mail</b> → <b>Rules</b> → <b>Add new rule</b>.
-          </li>
-          <li>
-            Condition <b>From</b> contains any of: <Copyable text={SUGGESTED_SENDERS.join('; ')} />
-            Add a second rule with <b>Subject includes</b>: application, interview, assessment,
-            offer.
-          </li>
-          <li>
-            Action <b>Forward to</b> your address. Some work accounts block forwarding outside the
-            organisation; ask your IT team, or forward by hand.
-          </li>
-        </Guide>
-      </div>
+      {state?.lastEmailAt ? (
+        <details className="border-line mt-3 rounded-lg border px-3 py-2 text-sm">
+          <summary className="cursor-pointer font-medium">Set-up steps</summary>
+          <EmailSetupGuide address={address} state={state} verification={verification} />
+        </details>
+      ) : (
+        <EmailSetupGuide address={address} state={state} verification={verification} />
+      )}
 
       <div className="mt-3 flex flex-wrap gap-2">
         <Button
@@ -279,36 +226,5 @@ function Header({ status }: { status?: string | undefined }) {
       </span>
       {status ? <span className="text-muted text-xs">{status}</span> : null}
     </div>
-  );
-}
-
-function Guide({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <details className="border-line rounded-lg border px-3 py-2 text-sm">
-      <summary className="cursor-pointer font-medium">{title}</summary>
-      <ol className="text-muted mt-2 list-decimal space-y-2 pl-5 text-[13px]">{children}</ol>
-    </details>
-  );
-}
-
-function Copyable({ text }: { text: string }) {
-  const toast = useToast();
-  return (
-    <span className="my-1.5 flex items-start gap-2">
-      <code className="bg-surface-2 min-w-0 flex-1 rounded px-2 py-1 text-xs break-all">
-        {text}
-      </code>
-      <Button
-        size="sm"
-        variant="ghost"
-        aria-label="Copy"
-        icon={<Copy className="size-3.5" />}
-        onClick={() =>
-          void navigator.clipboard
-            .writeText(text)
-            .then(() => toast({ message: 'Copied', tone: 'success' }))
-        }
-      />
-    </span>
   );
 }

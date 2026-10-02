@@ -217,9 +217,21 @@ stays, marked undone.
 
 ### The UI (`src/features/email/`)
 
-- **Account:** the address with Copy, Gmail and Outlook filter guides, the
-  Gmail confirmation code, **Check now** and **Get a new address**. The
-  extension and the web board share this.
+- **Account:** the address with Copy, **Check now** and **Get a new address**,
+  plus a guided setup (`email-setup.tsx`):
+  - **Choice:** "I'll forward emails myself" (with a contact card to
+    download), Gmail, or Outlook.
+  - **Each step:** a button that opens the right page (Gmail forwarding
+    settings, a Gmail search to turn into a filter, Outlook rules) and the
+    text to paste.
+  - **Gmail's confirmation code:** while the user waits, the guide checks
+    every 15 seconds and shows the code large, with Copy.
+  - **"It's working":** shown once the first email arrives (`lastEmailAt`);
+    after that the guide folds away.
+  - Progress is kept in `email:state.setup`.
+
+  The extension and the web board share this.
+
 - **Card:** an interview badge (`InterviewChip`), and a "Rejection?"-style
   badge while a suggestion waits.
 - **Details:** the suggestion banner, and the interview panel:

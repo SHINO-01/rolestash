@@ -57,3 +57,6 @@ export const SUGGESTED_SUBJECT =
 
 /** Gmail's From filter for the senders above. */
 export const GMAIL_FROM = SUGGESTED_SENDERS.join(' OR ');
+
+/** One Gmail search for both: open it, then "Create filter" from the search. */
+export const GMAIL_QUERY = `from:(${GMAIL_FROM}) OR subject:${SUGGESTED_SUBJECT}`;

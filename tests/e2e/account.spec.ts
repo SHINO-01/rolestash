@@ -571,6 +571,75 @@ test.describe('accounts', () => {
     await expect(page.getByLabel('Your forwarding address')).toHaveText(E2E_INBOX);
   });
 
+  test('guided email setup: Gmail steps, the code shown big, then "It’s working"', async ({
+    context,
+    worker,
+    extensionId,
+    backend,
+  }) => {
+    const end = new Date(Date.now() + 20 * 86_400_000).toISOString();
+    await seedSignedIn(worker, {
+      status: 'active',
+      tier: 'advanced',
+      currentPeriodEnd: end,
+      hasBillingAccount: false,
+    });
+    backend.entitlement = {
+      status: 'active',
+      tier: 'advanced',
+      trial_ends_at: null,
+      current_period_end: end,
+      provider_customer_id: null,
+    };
+    // Gmail's own pages are stubbed: the test never leaves this machine.
+    await context.route('https://mail.google.com/**', (r) =>
+      r.fulfill({ contentType: 'text/html', body: '<title>Gmail</title>' }),
+    );
+    const page = await context.newPage();
+    await page.goto(`chrome-extension://${extensionId}/board.html#account`);
+    const dialog = page.getByRole('dialog');
+    await dialog.getByRole('button', { name: /^Gmail/ }).click();
+    const opened = context.waitForEvent('page');
+    await dialog.getByRole('link', { name: 'Open Gmail forwarding' }).click();
+    expect((await opened).url()).toBe('https://mail.google.com/mail/u/0/#settings/fwdandpop');
+    await expect(dialog.getByText(/Waiting for Gmail’s code/)).toBeVisible();
+
+    // Gmail's confirmation arrives at the forwarding address.
+    backend.emailEvents = [
+      {
+        id: 10,
+        event: analyzeEmail({
+          from: 'Gmail Team <forwarding-noreply@google.com>',
+          subject: '(#123456789) Gmail Forwarding Confirmation - Receive Mail from sam@example.com',
+          date: new Date().toISOString(),
+          text: `sam@example.com has requested to automatically forward mail to your email address ${E2E_INBOX}.\nConfirmation code: 123456789\n`,
+        }),
+      },
+    ];
+    await dialog.getByRole('button', { name: 'Check now' }).click();
+    await expect(dialog.getByText('123456789', { exact: true })).toBeVisible();
+    await expect(dialog.getByRole('button', { name: 'Copy code' })).toBeVisible();
+    const search = dialog.getByRole('link', { name: 'Open the search in Gmail' });
+    await expect(search).toHaveAttribute('href', /#search\/from%3A\(greenhouse-mail\.io/);
+
+    // The first forwarded job email proves it works.
+    backend.emailEvents = [
+      {
+        id: 11,
+        event: analyzeEmail({
+          from: 'Quokka Health HR <hr@quokkahealth.example>',
+          subject: 'Your application',
+          date: new Date().toISOString(),
+          text: 'Thanks for applying. We have received your application.',
+        }),
+      },
+    ];
+    await dialog.getByRole('button', { name: 'Check now' }).click();
+    await expect(dialog.getByText('Set-up steps')).toBeVisible();
+    await dialog.getByText('Set-up steps').click();
+    await expect(dialog.getByText('It’s working')).toBeVisible();
+  });
+
   test('saves the autofill profile on this device (Advanced)', async ({
     context,
     worker,

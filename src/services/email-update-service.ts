@@ -86,8 +86,18 @@ const StateSchema = z.object({
   /** "Help improve automatic updates", as last read from the server. */
   shareLearning: z.boolean().optional(),
   problem: z.enum(['offline', 'signed_out', 'error']).optional(),
+  /** When the last forwarded job email arrived (proof that forwarding works). */
+  lastEmailAt: z.string().optional(),
+  /** Guided setup: the mail service chosen, and the steps the user ticked off. */
+  setup: z
+    .object({
+      provider: z.enum(['gmail', 'outlook', 'manual']).optional(),
+      done: z.array(z.string()).default([]),
+    })
+    .optional(),
 });
 export type EmailUpdateState = z.infer<typeof StateSchema>;
+export type EmailSetup = NonNullable<EmailUpdateState['setup']>;
 
 export interface EmailRun {
   applied: number;
@@ -175,6 +185,16 @@ export class EmailUpdateService {
     return age < VERIFICATION_DAYS * 86_400_000 ? verification : undefined;
   }
 
+  /** Remembers the guided-setup choice and ticked steps on this device. */
+  async setSetup(setup: EmailSetup): Promise<void> {
+    const state = await this.state();
+    state.setup = {
+      ...(setup.provider ? { provider: setup.provider } : {}),
+      done: [...new Set(setup.done)],
+    };
+    await this.save(state);
+  }
+
   /** The forwarding address; `rotate` replaces it (the old one stops working). */
   async address(rotate = false): Promise<InboxInfo> {
     const info = await this.inbox.address(rotate);
@@ -244,6 +264,9 @@ export class EmailUpdateService {
       };
       return undefined;
     }
+    // Any forwarded email, even one with nothing to do, shows forwarding works.
+    if (!state.lastEmailAt || event.receivedAt > state.lastEmailAt)
+      state.lastEmailAt = event.receivedAt;
     if (event.intent === 'other' || event.action === 'none') return undefined;
     const intent = event.intent;
 

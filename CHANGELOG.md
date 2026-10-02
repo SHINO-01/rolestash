@@ -8,6 +8,12 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- **Easier email-updates setup:** choose "I'll forward emails myself"
+  (easiest, with a contact card to save), Gmail or Outlook, then follow a few
+  short steps. Each step has a button that opens the right page and the text
+  to paste. Gmail's confirmation code appears large, with a Copy button, as
+  soon as it arrives, and the setup shows "It's working" once your first
+  email comes through.
 - **"Set up autofill" is a slim suggestion** in the popup and side panel,
   with a ✕ to dismiss it for good, so it no longer pushes the save button
   down.

@@ -139,6 +139,21 @@ describe('EmailUpdateService', () => {
     expect((await service.state()).threads).toEqual({ '<rej-1@gh>': 'nw' });
   });
 
+  it('remembers when forwarding last worked, and the guided-setup progress', async () => {
+    const { inbox, service } = await setup();
+    expect((await service.state()).lastEmailAt).toBeUndefined();
+    // An email nobody matched still proves forwarding works.
+    inbox.add({ ...rejection(), action: 'none', intent: 'other' });
+    await service.run();
+    expect((await service.state()).lastEmailAt).toBe(rejection().receivedAt);
+
+    await service.setSetup({ provider: 'gmail', done: ['forward', 'forward', 'filter'] });
+    expect((await service.state()).setup).toEqual({
+      provider: 'gmail',
+      done: ['forward', 'filter'],
+    });
+  });
+
   it('adds an interview with its time and Join link', async () => {
     const { jobs, inbox, service } = await setup();
     await jobs.save(northwind());
