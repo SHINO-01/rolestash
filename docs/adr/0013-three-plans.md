@@ -171,9 +171,28 @@ sandbox and live.
 - **Volatile currencies are priced in USD,** so prices don't decay with
   inflation.
 - **Sanctioned countries, where Paddle doesn't sell, are left out.**
-- **Tax:** prices use Paddle's `location` tax mode, so countries that add tax
-  on top (Vietnam, Indonesia, Thailand…) show a non-round total at checkout,
-  as the US does.
+- **Tax:** prices use Paddle's `location` tax mode (it's set per price, not
+  per country). Most of these countries already include tax in the price.
+  In the five where Paddle adds it on top (Vietnam 25%, Indonesia 11%,
+  Cambodia and Laos 10%, Thailand 7%), prices are set before tax so the
+  checkout total is the round price (`TAX_ON_TOP` in the script). Where no
+  whole cent works (US$6.00 at 10–11%), the target is US$5.99. Run
+  `scripts/paddle-setup.ts production --check` after any change: it compares
+  every country's checkout total with the intended price.
 - **Fraud risk:** a VPN or a false billing country could get a lower price.
   Paddle checks the billing country against the card, and we accept the
   remaining risk, as other regional-pricing products do.
+
+**Revision (2026-10-03): round prices in other enabled currencies.** These
+replace Paddle's unrounded conversions (Pro / Advanced monthly):
+
+- **Eurozone:** all 20 countries take Ireland's tax-inclusive €6.50 / €13.99.
+- **New Zealand:** NZ$11.99 / NZ$24.99.
+- **Switzerland:** CHF 6.90 / CHF 14.90.
+- **Sweden:** 79 kr / 169 kr.
+- **Japan:** ¥1,100 / ¥2,300.
+- **Canada:** C$9.99 / C$19.99 **plus tax**, because Canadian tax depends on
+  the province (5–15%), so no single amount can land round after tax.
+
+Quarterly and yearly prices follow in the `ROUND` table. Haiti is no longer
+listed, because Paddle's pricing preview rejects it.

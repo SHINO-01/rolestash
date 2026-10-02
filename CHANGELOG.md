@@ -8,6 +8,10 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- **Round local prices** in the eurozone (€6.50 / €13.99 a month, as in
+  Ireland), New Zealand, Switzerland, Sweden, Japan and Canada (plus tax),
+  instead of exact conversions; and in Vietnam, Indonesia, Cambodia, Laos and
+  Thailand the checkout total is now the round price too (tax included).
 - **Regional prices:** lower prices in lower-income countries, set by hand in
   local currency where possible (for example ₹249, R$19.90, MX$79 or US$3 a
   month for Pro), not converted from the US price.

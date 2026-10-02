@@ -118,6 +118,14 @@ saved profile.
 - **Unchanged:** "Store and attach the résumé file" below still stands. Autofill
   doesn't touch file inputs.
 
+## Update (2026-10-03): Workday and SmartRecruiters verified
+
+The owner tried autofill on a real Workday application and a real
+SmartRecruiters application and found both satisfactory. All five named
+systems are now verified live, and the store listing names Workday and
+SmartRecruiters too. Their fixtures stay hand-built, because automated
+browsers can't reach those forms.
+
 ## Alternatives considered
 
 | Option                                             | Why not                                                                                                  |

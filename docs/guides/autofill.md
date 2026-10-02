@@ -77,8 +77,8 @@ capitalised words after the first (company names).
 | Greenhouse       | `forms/greenhouse/live-2026-10` (live)         | Name, email, phone, LinkedIn, preferred name. Its searchable dropdowns ignore scripted input, so they're left for the user |
 | Lever            | `forms/lever/live-2026-10` (live)              | Everything profile-backed, including location, links, yes/no work rights and "how did you hear"                            |
 | Ashby            | `forms/ashby/live-2026-10` (live)              | Name, email, LinkedIn and the country dropdown                                                                             |
-| Workday          | `forms/workday/my-information` (hand-built)    | Behind a candidate sign-in; built from documented `data-automation-id`s. Check on a real account                           |
-| SmartRecruiters  | `forms/smartrecruiters/one-click` (hand-built) | Refuses automated browsers; built from its documented ids. Check by hand                                                   |
+| Workday          | `forms/workday/my-information` (hand-built)    | Checked by the owner on a real application, 2026-10-03: satisfactory                                                       |
+| SmartRecruiters  | `forms/smartrecruiters/one-click` (hand-built) | Checked by the owner on a real application, 2026-10-03: satisfactory                                                       |
 | Any careers page | `forms/generic/careers-page`                   | General rules, yes/no radios, selects, saved answers, sensitive questions, prefilled fields                                |
 
 ## Supporting a new form or fixing a miss
