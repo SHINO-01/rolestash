@@ -33,7 +33,11 @@ export function stampChrome(page: string, landing: string): string {
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const landing = readFileSync(join(SITE, 'index.html'), 'utf8');
-  for (const file of walk(SITE).filter((f) => f.endsWith('.html'))) {
+  // site/board/ is the web board's build output (gitignored, its own app shell).
+  const pages = walk(SITE).filter(
+    (f) => f.endsWith('.html') && !relative(SITE, f).startsWith('board/'),
+  );
+  for (const file of pages) {
     const before = readFileSync(file, 'utf8');
     const after = stampChrome(before, landing);
     if (after !== before) {

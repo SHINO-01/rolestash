@@ -8,6 +8,11 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- **"Set up autofill" is a slim suggestion** in the popup and side panel,
+  with a ✕ to dismiss it for good, so it no longer pushes the save button
+  down.
+- **rolestash.com footer:** "Rolestash is an IP of Lumetrix Technologies,
+  Australia, ABN: 41 649 439 228", with the Lumetrix mark.
 - **Free trial:** new accounts get 14 days of Advanced (was 30 days of Pro),
   still with no card, once per email. Trials already running are unchanged.
 - **Switching plans shows the price first:** moving between Pro and Advanced

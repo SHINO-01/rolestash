@@ -1,4 +1,4 @@
-import { CheckCircle2, FileUp, Wand2 } from 'lucide-react';
+import { CheckCircle2, FileUp, Wand2, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { openBoard } from '@/platform/tabs';
 import {
@@ -6,7 +6,7 @@ import {
   type AutofillBlock,
   type AutofillOutcome,
 } from '@/services/autofill-service';
-import { Button } from '@/ui/components/button';
+import { Button, IconButton } from '@/ui/components/button';
 import { useServices } from '@/ui/hooks/services';
 
 /** Why a question was left, for people. */
@@ -17,12 +17,16 @@ const LEFT_FOR_YOU = {
   no_option: 'choose this one yourself',
 } as const;
 
+/** "Set up autofill" was dismissed; the profile is still in Board → Autofill profile. */
+const TIP_DISMISSED_KEY = 'tips:autofillDismissed';
+
 /**
  * "Fill this application" in the popup (Advanced; ADR-0020). Fills the
  * current tab's form from the profile and says what's left to do.
  */
 export function AutofillBar({ tabId }: { tabId: number | undefined }) {
-  const { autofill } = useServices();
+  const { autofill, store } = useServices();
+  const [tipDismissed, setTipDismissed] = useState(true);
   const [status, setStatus] = useState<AutofillBlock | 'loading' | 'ready'>('loading');
   const [busy, setBusy] = useState(false);
   const [outcome, setOutcome] = useState<AutofillOutcome>();
@@ -31,27 +35,46 @@ export function AutofillBar({ tabId }: { tabId: number | undefined }) {
   useEffect(() => {
     if (!autofill) return;
     let active = true;
-    void autofill.blocked().then((block) => {
-      if (active) setStatus(block ?? 'ready');
-    });
+    void Promise.all([autofill.blocked(), store.get([TIP_DISMISSED_KEY])]).then(
+      ([block, stored]) => {
+        if (!active) return;
+        setTipDismissed(stored[TIP_DISMISSED_KEY] === true);
+        setStatus(block ?? 'ready');
+      },
+    );
     return () => {
       active = false;
     };
-  }, [autofill]);
+  }, [autofill, store]);
 
   // Off Advanced, the popup stays about capturing; Account explains plans.
   if (!autofill || status === 'plan' || status === 'loading' || tabId === undefined) return null;
 
+  // A slim suggestion, never in the way of saving, and gone once dismissed.
   if (status === 'no_profile')
-    return (
-      <div className="border-line bg-surface mb-3 flex items-center justify-between gap-2 rounded-xl border p-3 text-sm">
-        <span className="text-muted">Fill applications in one click.</span>
-        <Button
+    return tipDismissed ? null : (
+      <div className="text-muted mb-3 flex items-center gap-2 text-[13px]">
+        <Wand2 className="size-3.5 shrink-0" />
+        <span className="flex-1">
+          Fill applications in one click.{' '}
+          <button
+            type="button"
+            className="text-accent font-medium hover:underline"
+            onClick={() => void openBoard({ profile: true }).then(() => window.close())}
+          >
+            Set up autofill
+          </button>
+        </span>
+        <IconButton
+          label="Dismiss autofill suggestion"
           size="sm"
-          onClick={() => void openBoard({ profile: true }).then(() => window.close())}
+          onClick={() => {
+            setTipDismissed(true);
+            void store.set({ [TIP_DISMISSED_KEY]: true });
+          }}
         >
-          Set up autofill
-        </Button>
+          <X className="size-3.5" />
+        </IconButton>
       </div>
     );
 

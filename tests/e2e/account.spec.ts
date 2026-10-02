@@ -222,6 +222,28 @@ test.describe('accounts', () => {
     ]);
   });
 
+  test('the "Set up autofill" suggestion is slim and can be dismissed for good', async ({
+    context,
+    worker,
+    extensionId,
+  }) => {
+    await seedSignedIn(worker, {
+      status: 'trialing',
+      tier: 'advanced',
+      trialEndsAt: new Date(Date.now() + 10 * 86_400_000).toISOString(),
+      hasBillingAccount: false,
+    });
+    const panel = await context.newPage();
+    await panel.setViewportSize({ width: 380, height: 800 });
+    await panel.goto(`chrome-extension://${extensionId}/sidepanel.html`);
+    await expect(panel.getByRole('button', { name: 'Set up autofill' })).toBeVisible();
+    await panel.getByRole('button', { name: 'Dismiss autofill suggestion' }).click();
+    await expect(panel.getByRole('button', { name: 'Set up autofill' })).toHaveCount(0);
+    await panel.reload();
+    await expect(panel.getByRole('button', { name: 'Save this page' })).toBeVisible();
+    await expect(panel.getByRole('button', { name: 'Set up autofill' })).toHaveCount(0);
+  });
+
   test('the free plan stops the 16th active job with a clear way forward', async ({
     context,
     worker,
