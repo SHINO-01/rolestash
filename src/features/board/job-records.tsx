@@ -84,7 +84,7 @@ function AddButton({
   if (!allowed)
     return (
       <p className="text-subtle text-xs">
-        Adding these is part of Advanced.{' '}
+        Adding these is part of Pro.{' '}
         {onSeePlans ? (
           <button
             type="button"

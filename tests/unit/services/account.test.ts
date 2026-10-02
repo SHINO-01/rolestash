@@ -11,7 +11,11 @@ import { createServices } from '@/services/container';
 import { JobLimitError } from '@/services/job-service';
 import type { ExtractorRunner, WebAuthFlow } from '@/services/ports';
 import { MemoryKeyValueStore } from '@/storage/key-value-store';
-import { ACCOUNT_ENTITLEMENT_KEY, ACCOUNT_SESSION_KEY } from '@/storage/keys';
+import {
+  ACCOUNT_ENTITLEMENT_KEY,
+  ACCOUNT_SESSION_KEY,
+  ACCOUNT_SHARING_OPT_OUT_KEY,
+} from '@/storage/keys';
 import { fakeFetch, type FakeResponse, type RecordedCall } from '../helpers/fake-fetch';
 import { makeJob, testContext } from '../helpers/factories';
 
@@ -77,6 +81,7 @@ describe('AccountService sign-in', () => {
       signedIn: false,
       plan: { plan: 'free', reason: 'no-account' },
       hasBillingAccount: false,
+      profile: {},
     });
   });
 
@@ -416,5 +421,67 @@ describe('AccountService on the web board (ADR-0017)', () => {
     await expect(account.webHandoffToken()).rejects.toMatchObject({ code: 'session_expired' });
     await account.verifyEmailCode('jo@example.com', '123456');
     await expect(account.webHandoffToken()).rejects.toMatchObject({ code: 'server' });
+  });
+});
+
+describe('AccountService profile and sharing choice (ADR-0022)', () => {
+  const PICTURE = 'data:image/webp;base64,UklGRg==';
+
+  it('opts out of shared learning at sign-in, retrying until the server has it', async () => {
+    let online = false;
+    const { account, store, calls } = setup({
+      [`POST ${SB}/rest/v1/rpc/set_email_sharing`]: () =>
+        online ? { status: 200, body: { ok: true } } : { status: 503, body: {} },
+      [`GET ${SB}/rest/v1/account_profiles`]: { status: 200, body: [] },
+    });
+    await account.chooseSharingAtSignIn(false);
+    await account.verifyEmailCode('jo@example.com', '123456');
+    // The server was down: the choice waits on this device.
+    expect((await store.get([ACCOUNT_SHARING_OPT_OUT_KEY]))[ACCOUNT_SHARING_OPT_OUT_KEY]).toBe(
+      true,
+    );
+    online = true;
+    await account.refreshEntitlement();
+    const sent = calls.filter((c) => c.url.endsWith('/rpc/set_email_sharing'));
+    expect(sent.at(-1)?.body).toEqual({ p_on: false });
+    expect(sent.at(-1)?.headers.Authorization).toBe('Bearer a1');
+    expect(
+      (await store.get([ACCOUNT_SHARING_OPT_OUT_KEY]))[ACCOUNT_SHARING_OPT_OUT_KEY],
+    ).toBeUndefined();
+  });
+
+  it('leaves sharing alone when the default (on) is kept', async () => {
+    const { account, calls } = setup({
+      [`GET ${SB}/rest/v1/account_profiles`]: { status: 200, body: [] },
+    });
+    await account.chooseSharingAtSignIn(true);
+    await account.verifyEmailCode('jo@example.com', '123456');
+    expect(calls.some((c) => c.url.includes('set_email_sharing'))).toBe(false);
+  });
+
+  it('reads, saves and caches the display name and picture', async () => {
+    const { account, calls } = setup({
+      [`GET ${SB}/rest/v1/account_profiles`]: {
+        status: 200,
+        body: [{ display_name: 'Jo', avatar: 'https://tracker.example/x.gif' }],
+      },
+      [`POST ${SB}/rest/v1/account_profiles`]: { status: 201, body: null },
+    });
+    await account.verifyEmailCode('jo@example.com', '123456');
+    // A picture that isn't a safe inline image is dropped with the rest of that row.
+    expect((await account.state()).profile).toEqual({});
+
+    await account.saveProfile({ displayName: '  Jo Example ', avatar: PICTURE });
+    const save = calls.find((c) => c.method === 'POST' && c.url.includes('account_profiles'));
+    expect(save?.body).toMatchObject({
+      user_id: USER.id,
+      display_name: 'Jo Example',
+      avatar: PICTURE,
+    });
+    expect(save?.headers.Prefer).toBe('resolution=merge-duplicates,return=minimal');
+    expect((await account.state()).profile).toEqual({ displayName: 'Jo Example', avatar: PICTURE });
+    await expect(account.saveProfile({ avatar: 'https://x.example/a.png' })).rejects.toThrow();
+
+    await account.signOut().catch(() => undefined);
   });
 });

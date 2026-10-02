@@ -109,9 +109,9 @@ function ProfileForm({
     return (
       <div className="flex flex-col gap-3">
         <p className="text-muted text-sm">
-          Autofill is part of Advanced. Save your details once, then fill Greenhouse, Lever,
-          Workday, Ashby and SmartRecruiters applications, and most company careers forms, in one
-          click. Rolestash never submits a form for you.
+          Autofill is part of Pro. Save your details once, then fill Greenhouse, Lever, Workday,
+          Ashby and SmartRecruiters applications, and most company careers forms, in one click.
+          Rolestash never submits a form for you.
         </p>
         {onSeePlans ? (
           <Button variant="primary" onClick={onSeePlans}>

@@ -15,12 +15,57 @@ export type Plan = (typeof PLANS)[number];
 export type PaidPlan = Exclude<Plan, 'free'>;
 export const PAID_PLANS: readonly PaidPlan[] = ['pro', 'advanced'];
 
-/** Jobs outside a `lost` stage each plan may hold. */
+/**
+ * Jobs outside a `lost` stage each plan may hold. Advanced has no limit; the
+ * server's 5,000 synced-job cap (synced_jobs_cap) is the fair-use backstop.
+ */
 export const ACTIVE_JOB_LIMITS: Readonly<Record<Plan, number>> = {
   free: 15,
-  pro: 45,
-  advanced: 95,
+  pro: 60,
+  advanced: Number.POSITIVE_INFINITY,
 };
+
+/**
+ * Which plan each paid feature starts on (ADR-0013, 2026-10-02 revision):
+ * Pro has everything that runs on your computer; Advanced adds what runs on
+ * our servers (email updates, the web board and phone, more devices) and the
+ * full side panel.
+ */
+export const FEATURE_PLANS = {
+  history: 'pro',
+  reminders: 'pro',
+  customColumns: 'pro',
+  pasteLink: 'pro',
+  sync: 'pro',
+  autofill: 'pro',
+  insights: 'pro',
+  records: 'pro',
+  bulk: 'pro',
+  emailUpdates: 'advanced',
+  webBoard: 'advanced',
+  fullSidePanel: 'advanced',
+} as const satisfies Record<string, PaidPlan>;
+export type Feature = keyof typeof FEATURE_PLANS;
+
+/**
+ * May this plan use the feature? `undefined` is a build without accounts,
+ * where nothing is limited because there is no way to upgrade.
+ */
+export function allows(plan: Plan | undefined, feature: Feature): boolean {
+  if (plan === undefined) return true;
+  return PLANS.indexOf(plan) >= PLANS.indexOf(FEATURE_PLANS[feature]);
+}
+
+/** "Pro" or "Advanced": the plan to mention when pitching a feature. */
+export function featurePlanName(feature: Feature): 'Pro' | 'Advanced' {
+  return FEATURE_PLANS[feature] === 'pro' ? 'Pro' : 'Advanced';
+}
+
+/** "45 active jobs" or "Unlimited active jobs". */
+export function activeJobsLabel(plan: Plan): string {
+  const limit = ACTIVE_JOB_LIMITS[plan];
+  return Number.isFinite(limit) ? `${String(limit)} active jobs` : 'Unlimited active jobs';
+}
 /**
  * Devices that may sync one account (ADR-0013 revision). Pro: computers only
  * (signed-in Chrome installs). Advanced: any device, including a phone through

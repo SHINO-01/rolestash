@@ -33,8 +33,9 @@ Full policy: https://rolestash.com/privacy/
 ## What is sent to us, and only if you create an account
 
 - **Account:** your email address (and Google account ID if you sign in with
-  Google), and your plan and subscription status from Paddle, our merchant of
-  record. We never see card details.
+  Google), your plan and subscription status from Paddle, our merchant of
+  record, and a display name and small profile photo if you add them. We
+  never see card details.
 - **Sync (Pro and Advanced):** a copy of your board and a name for each
   synced device, stored in our database in Sydney, Australia, so your devices
   stay in step. Deleting your account deletes it.
@@ -49,8 +50,8 @@ Full policy: https://rolestash.com/privacy/
   template (with names, companies, numbers, dates and links removed) and
   which company an email domain belongs to, under a one-way code instead of
   your account. Never email text, subjects or which jobs you applied to.
-  Turn off "Help improve automatic updates" in Account to stop and withdraw
-  it.
+  Untick "Help improve automatic updates" when you create your account, or
+  turn it off in Account later, which also withdraws what you shared.
 
 Network: the extension talks only to the page you capture and our Supabase
 project. Checkout, billing and Google sign-in open as pages on rolestash.com,

@@ -1,3 +1,4 @@
+import { SharingChoice } from '@/features/account/sharing-choice';
 import { CalendarCheck, Columns3, Inbox, Plus, UserRound, WifiOff } from 'lucide-react';
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react';
 import type { AccountService } from '@/services/account-service';
@@ -74,6 +75,7 @@ function WebSignIn({ account }: { account: AccountService }) {
   const [code, setCode] = useState('');
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [share, setShare] = useState(true);
   const [error, setError] = useState<string>();
   // First: finish a Google return, or sign in from the extension in this browser.
   const [checking, setChecking] = useState(true);
@@ -100,6 +102,7 @@ function WebSignIn({ account }: { account: AccountService }) {
     setBusy(true);
     setError(undefined);
     try {
+      await account.chooseSharingAtSignIn(share);
       await task();
     } catch (e) {
       setError(backendErrorMessage(e));
@@ -199,6 +202,7 @@ function WebSignIn({ account }: { account: AccountService }) {
           </button>
         </form>
       )}
+      <SharingChoice checked={share} disabled={busy} onChange={setShare} />
       {error ? <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p> : null}
       <p className="text-subtle text-xs">
         Signed in to the Rolestash extension on this computer? This page signs you in by itself.

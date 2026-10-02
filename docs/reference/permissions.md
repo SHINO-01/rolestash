@@ -6,7 +6,7 @@ usually an ADR) because it changes the install prompt and store review.
 | Permission         | Why                                                                                                                | Install warning       |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------ | --------------------- |
 | `activeTab`        | Read the job page the user is looking at, only after they click the icon / menu / shortcut                         | none                  |
-| `scripting`        | Inject the bundled extractor, or the autofill filler (Advanced; ADR-0020), into that tab                           | none (with activeTab) |
+| `scripting`        | Inject the bundled extractor, or the autofill filler (Pro and up; ADR-0020), into that tab                         | none (with activeTab) |
 | `storage`          | Save jobs and settings locally                                                                                     | none                  |
 | `unlimitedStorage` | Description snapshots can exceed the 10 MB default quota over time                                                 | none                  |
 | `contextMenus`     | "Track this job" and "Fill this application" on the page; "Open board" on the toolbar icon                         | none                  |

@@ -1,7 +1,13 @@
 import { z } from 'zod';
 import { EntitlementSchema, planOf, type PaidPlan, type Plan, type PlanState } from '@/domain/plan';
 import type { KeyValueStore } from '@/storage/key-value-store';
-import { ACCOUNT_ENTITLEMENT_KEY, ACCOUNT_SESSION_KEY } from '@/storage/keys';
+import { AccountProfileSchema, type AccountProfile } from '@/domain/account-profile';
+import {
+  ACCOUNT_ENTITLEMENT_KEY,
+  ACCOUNT_PROFILE_KEY,
+  ACCOUNT_SESSION_KEY,
+  ACCOUNT_SHARING_OPT_OUT_KEY,
+} from '@/storage/keys';
 import {
   BackendError,
   randomToken,
@@ -32,6 +38,8 @@ export interface AccountState {
   hasBillingAccount: boolean;
   /** When the entitlement was last confirmed with the server. */
   checkedAt?: string;
+  /** Display name and picture (ADR-0022), as last read or saved. */
+  profile: AccountProfile;
 }
 
 /** Refresh the access token this long before it expires. */
@@ -50,18 +58,25 @@ export class AccountService implements PlanProvider {
   private async load(): Promise<{
     session: Session | undefined;
     entitlement: StoredEntitlement | undefined;
+    profile: AccountProfile;
   }> {
-    const raw = await this.store.get([ACCOUNT_SESSION_KEY, ACCOUNT_ENTITLEMENT_KEY]);
+    const raw = await this.store.get([
+      ACCOUNT_SESSION_KEY,
+      ACCOUNT_ENTITLEMENT_KEY,
+      ACCOUNT_PROFILE_KEY,
+    ]);
     const session = SessionSchema.safeParse(raw[ACCOUNT_SESSION_KEY]);
     const entitlement = StoredEntitlementSchema.safeParse(raw[ACCOUNT_ENTITLEMENT_KEY]);
+    const profile = AccountProfileSchema.safeParse(raw[ACCOUNT_PROFILE_KEY]);
     return {
       session: session.success ? session.data : undefined,
       entitlement: entitlement.success ? entitlement.data : undefined,
+      profile: profile.success ? profile.data : {},
     };
   }
 
   async state(): Promise<AccountState> {
-    const { session, entitlement } = await this.load();
+    const { session, entitlement, profile } = await this.load();
     const plan = planOf(session ? entitlement : undefined, this.now());
     return {
       signedIn: session !== undefined,
@@ -69,6 +84,7 @@ export class AccountService implements PlanProvider {
       plan,
       hasBillingAccount: session !== undefined && (entitlement?.hasBillingAccount ?? false),
       ...(session && entitlement ? { checkedAt: entitlement.checkedAt } : {}),
+      profile: session ? profile : {},
     };
   }
 
@@ -79,7 +95,12 @@ export class AccountService implements PlanProvider {
   /** Fires when the session or entitlement changes in any extension context. */
   subscribe(listener: () => void): () => void {
     return this.store.subscribe((changes) => {
-      if (ACCOUNT_SESSION_KEY in changes || ACCOUNT_ENTITLEMENT_KEY in changes) listener();
+      if (
+        ACCOUNT_SESSION_KEY in changes ||
+        ACCOUNT_ENTITLEMENT_KEY in changes ||
+        ACCOUNT_PROFILE_KEY in changes
+      )
+        listener();
     });
   }
 
@@ -139,6 +160,42 @@ export class AccountService implements PlanProvider {
   private async signedIn(session: Session): Promise<void> {
     await this.store.set({ [ACCOUNT_SESSION_KEY]: session });
     await this.refreshEntitlement();
+    await this.refreshProfile().catch(() => undefined);
+  }
+
+  /**
+   * The "Help improve automatic updates" choice made while signing in
+   * (ADR-0019, ADR-0022). On is the default and changes nothing; off is kept
+   * on this device until the server has it, so it survives being offline.
+   */
+  async chooseSharingAtSignIn(on: boolean): Promise<void> {
+    if (on) await this.store.remove([ACCOUNT_SHARING_OPT_OUT_KEY]);
+    else await this.store.set({ [ACCOUNT_SHARING_OPT_OUT_KEY]: true });
+  }
+
+  private async applySharingOptOut(token: string): Promise<void> {
+    const pending = (await this.store.get([ACCOUNT_SHARING_OPT_OUT_KEY]))[
+      ACCOUNT_SHARING_OPT_OUT_KEY
+    ];
+    if (pending !== true) return;
+    await this.client.setEmailSharing(token, false);
+    await this.store.remove([ACCOUNT_SHARING_OPT_OUT_KEY]);
+  }
+
+  /** Re-reads the display name and picture. */
+  async refreshProfile(): Promise<AccountProfile> {
+    const profile = await this.client.accountProfile(await this.accessToken());
+    await this.store.set({ [ACCOUNT_PROFILE_KEY]: profile });
+    return profile;
+  }
+
+  /** Saves the display name and picture; leaving one out clears it. */
+  async saveProfile(profile: AccountProfile): Promise<void> {
+    const parsed = AccountProfileSchema.parse(profile);
+    const { session } = await this.load();
+    if (!session) throw new BackendError('session_expired');
+    await this.client.saveAccountProfile(await this.accessToken(), session.user.id, parsed);
+    await this.store.set({ [ACCOUNT_PROFILE_KEY]: parsed });
   }
 
   /**
@@ -148,6 +205,8 @@ export class AccountService implements PlanProvider {
   async refreshEntitlement(): Promise<boolean> {
     try {
       const token = await this.accessToken();
+      // A sign-in opt-out that couldn't reach the server yet; retried here.
+      await this.applySharingOptOut(token).catch(() => undefined);
       const remote = await this.client.entitlement(token);
       if (!remote) {
         await this.store.remove([ACCOUNT_ENTITLEMENT_KEY]);
@@ -210,7 +269,12 @@ export class AccountService implements PlanProvider {
   }
 
   private async clear(): Promise<void> {
-    await this.store.remove([ACCOUNT_SESSION_KEY, ACCOUNT_ENTITLEMENT_KEY]);
+    await this.store.remove([
+      ACCOUNT_SESSION_KEY,
+      ACCOUNT_ENTITLEMENT_KEY,
+      ACCOUNT_PROFILE_KEY,
+      ACCOUNT_SHARING_OPT_OUT_KEY,
+    ]);
   }
 
   /** Sync's server calls, made as the signed-in user (ADR-0016). */

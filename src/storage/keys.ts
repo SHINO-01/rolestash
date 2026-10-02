@@ -19,6 +19,10 @@ export const isJobKey = (key: string): boolean => key.startsWith(JOB_KEY_PREFIX)
 
 export const ACCOUNT_SESSION_KEY = 'account:session';
 export const ACCOUNT_ENTITLEMENT_KEY = 'account:entitlement';
+/** Display name and picture, cached for showing offline (ADR-0022). */
+export const ACCOUNT_PROFILE_KEY = 'account:profile';
+/** An opt-out of shared learning chosen at sign-in, until the server has it. */
+export const ACCOUNT_SHARING_OPT_OUT_KEY = 'account:sharing-opt-out';
 
 export const REMINDERS_KEY = 'reminders';
 

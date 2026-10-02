@@ -24,13 +24,37 @@ When a paid plan lapses, the account drops to Free. No data is deleted.
 - `SYNC_DEVICE_LIMITS` in `src/domain/plan.ts` holds the numbers.
 - The server enforces them when a device registers (Phase 1c).
 
+**Revision (2026-10-02): features redistributed before launch; Advanced is unlimited.**
+
+Nobody had paid yet, so this was the cheapest moment to change. The owner
+approved the following:
+
+- **Rule:** Pro has everything that runs on your computer. Advanced adds
+  what runs on our servers (email updates, the web board and phone, more
+  devices) and the full side panel.
+- **Limits:** Free 15, Pro 60 (was 45), Advanced unlimited (was 95). The
+  server's 5,000 synced-job cap (`synced_jobs_cap()`) is the fair-use
+  backstop.
+- **Moved from Advanced to Pro:** application autofill, Insights, contacts,
+  interview rounds and documents with calendar export, and bulk actions.
+  All are computed or stored on the device, so they cost nothing to run.
+- **Why:**
+  - A cap on the top plan penalises the heaviest searchers, who pay the most.
+  - Competitors (for example Simplify) give autofill away, so keeping it in
+    the top plan wouldn't sell Advanced and left Pro thin at US$7.
+- `FEATURE_PLANS` and `allows()` in `src/domain/plan.ts` are the single map
+  of feature to plan; gates call `allows(plan, feature)`.
+- Prices are unchanged. A 3-month pass and an Advanced trial were proposed
+  but not decided.
+
 We don't launch until every advertised feature of every plan is built, so
 the site advertises them all.
 
 ## Decision
 
 - **Plans are data.**
-  - `PLANS` and `ACTIVE_JOB_LIMITS` in `src/domain/plan.ts` set 15, 45 and 95.
+  - `PLANS` and `ACTIVE_JOB_LIMITS` in `src/domain/plan.ts` set 15, 60 and
+    unlimited (originally 15, 45 and 95; see the 2026-10-02 revision).
   - A trial or subscription carries a `tier` (`pro` | `advanced`) in
     `entitlements`, set by the billing webhook from the Paddle price.
   - Trials are always Pro.

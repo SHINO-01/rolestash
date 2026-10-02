@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { AccountProfileSchema, type AccountProfile } from '@/domain/account-profile';
 import { ENTITLEMENT_STATUSES, type PaidPlan } from '@/domain/plan';
 
 /**
@@ -158,7 +159,7 @@ export class SupabaseClient {
 
   private async request(
     path: string,
-    init: { method?: string; body?: unknown; token?: string } = {},
+    init: { method?: string; body?: unknown; token?: string; prefer?: string } = {},
   ): Promise<{ status: number; data: unknown }> {
     let response: Response;
     try {
@@ -170,6 +171,7 @@ export class SupabaseClient {
           // `apikey`. Authorization carries a user's access token when there is one.
           ...(init.token ? { Authorization: `Bearer ${init.token}` } : {}),
           ...(init.body === undefined ? {} : { 'Content-Type': 'application/json' }),
+          ...(init.prefer ? { Prefer: init.prefer } : {}),
         },
         ...(init.body === undefined ? {} : { body: JSON.stringify(init.body) }),
       });
@@ -449,6 +451,48 @@ export class SupabaseClient {
   /** "Help improve automatic updates"; turning it off also withdraws your votes. */
   async setEmailSharing(accessToken: string, on: boolean): Promise<void> {
     await this.rpc('set_email_sharing', accessToken, { p_on: on });
+  }
+
+  // ── Account profile (ADR-0022) ──────────────────────────────────────────
+
+  /** The caller's display name and picture; empty when never set. */
+  async accountProfile(accessToken: string): Promise<AccountProfile> {
+    const { status, data } = await this.request(
+      '/rest/v1/account_profiles?select=display_name,avatar',
+      { token: accessToken },
+    );
+    if (status === 401) throw new BackendError('session_expired', status);
+    if (status >= 300) this.fail(status, data);
+    const row = z
+      .array(z.object({ display_name: z.string().nullish(), avatar: z.string().nullish() }))
+      .safeParse(data);
+    if (!row.success) throw new BackendError('server');
+    const first = row.data[0];
+    const profile = AccountProfileSchema.safeParse({
+      ...(first?.display_name ? { displayName: first.display_name } : {}),
+      ...(first?.avatar ? { avatar: first.avatar } : {}),
+    });
+    return profile.success ? profile.data : {};
+  }
+
+  /** Saves the display name and picture (missing fields are cleared). */
+  async saveAccountProfile(
+    accessToken: string,
+    userId: string,
+    profile: AccountProfile,
+  ): Promise<void> {
+    const { status, data } = await this.request('/rest/v1/account_profiles?on_conflict=user_id', {
+      body: {
+        user_id: userId,
+        display_name: profile.displayName ?? null,
+        avatar: profile.avatar ?? null,
+        updated_at: this.now().toISOString(),
+      },
+      token: accessToken,
+      prefer: 'resolution=merge-duplicates,return=minimal',
+    });
+    if (status === 401) throw new BackendError('session_expired', status);
+    if (status >= 300) this.fail(status, data);
   }
 
   /** Extracted email events after `after` (by id), oldest first. */

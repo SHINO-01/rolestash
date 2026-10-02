@@ -8,7 +8,15 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
-- **Bulk actions** (Advanced): select several cards, then move them to a
+- **Profile name and photo:** add a display name and a photo in Account (the
+  extension or the web board). The photo is shrunk to a small square on your
+  device, shown on the board's Account button, and never loaded from Google
+  or anywhere else. Without one, your initials are shown.
+- **Choose "Help improve automatic updates" when you sign up:** it's ticked
+  by default, and unticking it opts the new account out before anything is
+  shared. You can still change it in Account.
+
+- **Bulk actions** (Pro and Advanced): select several cards, then move them to a
   column, add a tag, archive or delete them in one go (deleting can be
   undone). Select them with **Select** in the board header, or Ctrl/⌘-click
   cards at any time; Esc clears the selection.
@@ -24,6 +32,11 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- **Plans:** Pro now includes application autofill, Insights, contacts,
+  interview rounds and documents with calendar export, and bulk actions, and
+  holds 60 active jobs (was 45). Advanced has no active-job limit (was 95)
+  and keeps email updates, the web board and phone, 5 devices and the full
+  side panel (ADR-0013 revision).
 - **Wording:** the store description, the empty board and PRIVACY.md now
   describe what ships: local-first and no AI, with optional accounts, sync,
   email updates and shared learning.
@@ -32,7 +45,7 @@ All notable changes to this project are documented here. The format follows
 - **rolestash.com:** the plans list the side panel and bulk actions.
 - **Board header:** Select, Insights and History show as icons on narrower
   screens, so the search box keeps its room.
-- **Insights** (Advanced): how your search is going, from the board's new
+- **Insights** (Pro and Advanced): how your search is going, from the board's new
   **Insights** button.
   - Applications per week, and how far applications get (applied →
     screening → interview → offer).
@@ -47,12 +60,12 @@ All notable changes to this project are documented here. The format follows
     icon → **Open side panel**. Or turn on **Toolbar icon opens the side
     panel** in the board menu, so it's always one click.
   - **On every plan:** save the page you're on and open the board.
-  - **On Advanced:** also Today, your board, a job's details and autofill,
+  - **On Pro:** also autofill. **On Advanced:** Today, your board, a job's details and autofill,
     without leaving the page.
   - No new access to web pages.
 - **Pin tip:** until Rolestash is pinned, the board shows how to pin it for
   one-click access.
-- **Contacts, interview rounds and documents** on every job (Advanced; not
+- **Contacts, interview rounds and documents** on every job (Pro and Advanced; not
   switched on yet).
   - **Contacts:** keep the recruiter's and interviewers' details, with
     one-click email, call and LinkedIn.
@@ -60,11 +73,11 @@ All notable changes to this project are documented here. The format follows
   - **Documents:** record which résumé or cover letter you sent, by file
     name and an optional link. Rolestash never stores the files.
   - All three show on the web board too, and in the CSV export.
-- **Export calendar (.ics)** (Advanced): every interview, interview round,
+- **Export calendar (.ics)** (Pro and Advanced): every interview, interview round,
   follow-up and closing date on your board, as one file for Google, Apple or
   Outlook calendars. Importing it again updates the events instead of
   duplicating them, and notes and contacts are never included.
-- **Application autofill** (Advanced; not switched on yet): save your
+- **Application autofill** (Pro and Advanced; not switched on yet): save your
   details once in **Autofill profile…** on the board, then click **Fill this
   application** in the popup (or right-click the page).
   - **Fills** Greenhouse, Lever, Ashby, Workday and SmartRecruiters forms,

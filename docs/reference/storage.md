@@ -45,7 +45,7 @@ Optional fields added without a migration:
 
 - `archivedAt`: History, with the `archived` and `unarchived` activity types.
 - `followUpAt`: reminders.
-- `contacts`, `rounds`, `documents`: per-job records (Advanced).
+- `contacts`, `rounds`, `documents`: per-job records (Pro and up).
 - `interview`, `suggestion`, and the `email_update` activity type (with
   `email`, `setInterview`, `undone`): email status updates (ADR-0014).
 - `settings.closingAlerts`: absent means on.

@@ -2,11 +2,11 @@
 
 Rolestash is a freemium product with three plans (ADR-0013):
 
-| Plan     | Price                | Active jobs | Features                                                                                                                                                                            |
-| -------- | -------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Free     | US$0, no account     | 15          | Capture from every supported site, board, CSV/JSON export, last 30 days of history                                                                                                  |
-| Pro      | US$7/mo · US$59/yr   | 45          | Everything in Free, plus: full history, reminders and closing-date alerts, custom columns, capture from a pasted link, sync on 3 computers. 30-day trial                            |
-| Advanced | US$15/mo · US$159/yr | 95          | Everything in Pro, plus: sync on 5 devices incl. phone (web board), email status updates and interview cards, autofill, contacts and documents, analytics, side panel, bulk actions |
+| Plan     | Price                | Active jobs | Features                                                                                                                                                                                                           |
+| -------- | -------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Free     | US$0, no account     | 15          | Capture from every supported site, board, CSV/JSON export, last 30 days of history                                                                                                                                 |
+| Pro      | US$7/mo · US$59/yr   | 60          | Everything in Free, plus: autofill, Insights, contacts and documents, bulk actions, full history, reminders and closing-date alerts, custom columns, capture from a pasted link, sync on 3 computers. 30-day trial |
+| Advanced | US$15/mo · US$159/yr | Unlimited   | Everything in Pro, plus: email status updates and interview cards, sync on 5 devices incl. phone (web board), the full side panel                                                                                  |
 
 Local prices in the UK, Ireland and Australia. Every item follows AGENTS.md:
 no AI/LLM vendors, local-first, least privilege, and near-zero running cost
@@ -27,7 +27,8 @@ feature on the pricing page is built. The site already advertises them all.
 - **Accounts and billing** (ADR-0009, 0011, 0012, 0013):
   - Sign-in with an email code, or with Google through rolestash.com.
   - A 30-day Pro trial.
-  - Per-plan limits of 15, 45 and 95.
+  - Per-plan limits of 15, 45 and 95 (15, 60 and unlimited since the
+    2026-10-02 revision of ADR-0013).
   - Paddle: checkout bound to the account email, billing portal, plan
     changes, signed webhooks and local prices.
   - Account deletion.

@@ -55,7 +55,7 @@ function seed(backend: MockBackend, data: ReturnType<typeof job>) {
 
 async function signIn(page: Page, site: string) {
   await page.goto(`${site}/board/`);
-  await page.getByLabel('Email').fill('jo@example.com');
+  await page.getByLabel('Email', { exact: true }).fill('jo@example.com');
   await page.getByRole('button', { name: 'Email me a sign-in code' }).click();
   await page.getByLabel(/Code sent to/).fill(E2E_CODE);
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();

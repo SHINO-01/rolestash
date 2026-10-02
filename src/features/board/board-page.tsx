@@ -34,12 +34,14 @@ import { AccountDialog } from '@/features/account/account-dialog';
 import { PlanBanner } from '@/features/account/plan-banner';
 import { UnsortedDialog } from '@/features/email/unsorted-dialog';
 import { ProfileDialog } from '@/features/autofill/profile-dialog';
+import { allows } from '@/domain/plan';
 import { InsightsDialog } from '@/features/insights/insights-dialog';
 import { useAutoEmailUpdates, useEmailState } from '@/ui/hooks/email';
 import { planChip } from '@/features/account/plan-copy';
 import { Button, IconButton, Spinner } from '@/ui/components/button';
 import { Menu } from '@/ui/components/menu';
 import { Kbd, Logo } from '@/ui/components/misc';
+import { UserAvatar } from '@/ui/components/user-avatar';
 import { useToast } from '@/ui/components/toast';
 import { useAccount } from '@/ui/hooks/account';
 import { useAutoSync } from '@/ui/hooks/sync';
@@ -172,10 +174,11 @@ export function BoardPage() {
     toast({ message: `Exported ${String(backup.jobs.length)} jobs`, tone: 'success' });
   }
 
-  // Advanced (or a build without accounts): interviews, rounds, follow-ups and closing dates.
-  const recordsAllowed = plan === undefined || plan === 'advanced';
+  // Pro and up (or a build without accounts): contacts, rounds, documents, calendar export.
+  const recordsAllowed = allows(plan, 'records');
+  const bulkAllowed = allows(plan, 'bulk');
 
-  // Bulk actions (Advanced): select mode, or Ctrl/⌘-click a card.
+  // Bulk actions (Pro and up): select mode, or Ctrl/⌘-click a card.
   const [selecting, setSelecting] = useState(false);
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
   const clearSelection = useCallback(() => {
@@ -184,7 +187,7 @@ export function BoardPage() {
   }, []);
   const pitchSelect = useCallback(() => {
     toast({
-      message: 'Selecting several jobs at once is part of Advanced.',
+      message: 'Selecting several jobs at once is part of Pro.',
       ...(account ? { action: { label: 'See plans', onClick: () => setDialog('account') } } : {}),
     });
   }, [toast, account]);
@@ -193,7 +196,7 @@ export function BoardPage() {
       active: selecting,
       selected,
       toggle: (id) => {
-        if (!recordsAllowed) {
+        if (!bulkAllowed) {
           pitchSelect();
           return;
         }
@@ -205,7 +208,7 @@ export function BoardPage() {
         });
       },
     }),
-    [selecting, selected, recordsAllowed, pitchSelect],
+    [selecting, selected, bulkAllowed, pitchSelect],
   );
   // Selected cards that are still on the board (filtered or deleted ones drop out).
   const selectedIds = useMemo(
@@ -303,7 +306,7 @@ export function BoardPage() {
           aria-label={selecting ? 'Done selecting' : 'Select'}
           title={selecting ? 'Done selecting' : 'Select several jobs'}
           onClick={() => {
-            if (!recordsAllowed) {
+            if (!bulkAllowed) {
               pitchSelect();
               return;
             }
@@ -341,7 +344,13 @@ export function BoardPage() {
         {account ? (
           <Button
             variant="ghost"
-            icon={<UserRound className="size-4" />}
+            icon={
+              accountState?.signedIn ? (
+                <UserAvatar profile={accountState.profile} email={accountState.email} size="sm" />
+              ) : (
+                <UserRound className="size-4" />
+              )
+            }
             onClick={() => setDialog('account')}
             aria-label="Account"
           >
@@ -518,7 +527,7 @@ export function BoardPage() {
         onClose={() => setDialog(null)}
         jobs={jobs}
         stages={settings.stages}
-        allowed={recordsAllowed}
+        allowed={allows(plan, 'insights')}
         onSeePlans={account ? () => setDialog('account') : undefined}
       />
       <ProfileDialog

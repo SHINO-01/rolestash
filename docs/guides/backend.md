@@ -139,6 +139,15 @@ Shared learning (ADR-0019) adds:
 The ingest secret's SHA-256 lives in `private.email_ingest_secret`. To set or
 rotate it, see [email-updates.md](email-updates.md#one-time-setup).
 
+## Account profile (ADR-0022)
+
+`account_profiles` holds one row per account:
+
+- `display_name` and `avatar` (a 128-pixel data: URL, at most 60,000 bytes, no
+  links or SVG), written by the owner through PostgREST (RLS and column grants);
+- `share_learning`, the choice made at sign-up. Only `set_email_sharing()`
+  changes it, and `my_inbox()` copies it into a new inbox.
+
 ## Edge Functions
 
 | Function          | Caller                  | Does                                                                                      |

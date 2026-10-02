@@ -74,7 +74,7 @@ test.describe('accounts', () => {
     // The mock project enables Google, so the button is offered.
     await expect(dialog.getByRole('button', { name: 'Continue with Google' })).toBeVisible();
 
-    await dialog.getByLabel('Email').fill('Jo@Example.com');
+    await dialog.getByLabel('Email', { exact: true }).fill('Jo@Example.com');
     await dialog.getByRole('button', { name: 'Email me a sign-in code' }).click();
     await dialog.getByLabel('Sign-in code').fill('000000');
     await dialog.getByRole('button', { name: 'Sign in', exact: true }).click();
@@ -82,7 +82,7 @@ test.describe('accounts', () => {
 
     await dialog.getByLabel('Sign-in code').fill(E2E_CODE);
     await dialog.getByRole('button', { name: 'Sign in', exact: true }).click();
-    await expect(dialog.getByText('Your account')).toBeVisible();
+    await expect(dialog.getByText('Your account', { exact: true })).toBeVisible();
     await expect(dialog.getByText(/Pro trial: 30 days left/)).toBeVisible();
     await expect(page.getByRole('button', { name: 'Account', exact: true })).toContainText(
       'Pro trial · 30d',
@@ -93,6 +93,50 @@ test.describe('accounts', () => {
     expect(otp?.headers.apikey).toBe('e2e-anon-key');
     const read = backend.requests.find((r) => r.path === '/rest/v1/entitlements');
     expect(read?.headers.authorization).toBe('Bearer e2e-access');
+  });
+
+  test('opting out of shared learning at sign-up, then a name and photo (ADR-0022)', async ({
+    context,
+    extensionId,
+    backend,
+  }) => {
+    const page = await context.newPage();
+    await page.goto(`chrome-extension://${extensionId}/board.html`);
+    await page.getByRole('button', { name: 'Account', exact: true }).click();
+    const dialog = page.getByRole('dialog');
+    const share = dialog.getByRole('checkbox', { name: /Help improve automatic updates/ });
+    await expect(share).toBeChecked();
+    await share.uncheck();
+    await dialog.getByLabel('Email', { exact: true }).fill('jo@example.com');
+    await dialog.getByRole('button', { name: 'Email me a sign-in code' }).click();
+    await dialog.getByLabel('Sign-in code').fill(E2E_CODE);
+    await dialog.getByRole('button', { name: 'Sign in', exact: true }).click();
+    await expect(dialog.getByText('Your account', { exact: true })).toBeVisible();
+    await expect.poll(() => backend.shareLearning).toBe(false);
+
+    const profile = dialog.getByRole('region', { name: 'Profile' });
+    await profile.getByLabel('Display name').fill('Jo Example');
+    await profile.getByRole('button', { name: 'Save' }).click();
+    await expect(page.getByText('Name saved')).toBeVisible();
+    // A 3×2 red PNG: resized on the device to a 128-pixel square before saving.
+    await profile.getByLabel('Choose a profile photo').setInputFiles({
+      name: 'me.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from(
+        'iVBORw0KGgoAAAANSUhEUgAAAAMAAAACCAIAAAASFvFNAAAAEElEQVR4nGP4z8AAQQxwFgBB0gX7h/C5SAAAAABJRU5ErkJggg==',
+        'base64',
+      ),
+    });
+    await expect(page.getByText('Photo saved')).toBeVisible();
+    expect(backend.profile?.display_name).toBe('Jo Example');
+    expect(backend.profile?.avatar).toMatch(/^data:image\/(webp|jpeg);base64,/);
+    const header = page.getByRole('button', { name: 'Account', exact: true }).locator('img');
+    await expect(header).toHaveAttribute('src', /^data:image\//);
+    const size = await header.evaluate((img: HTMLImageElement) => [
+      img.naturalWidth,
+      img.naturalHeight,
+    ]);
+    expect(size).toEqual([128, 128]);
   });
 
   test('the free plan stops the 16th active job with a clear way forward', async ({
@@ -446,7 +490,7 @@ test.describe('accounts', () => {
     await page.goto(`chrome-extension://${extensionId}/board.html#profile`);
     const dialog = page.getByRole('dialog', { name: 'Autofill profile' });
     await dialog.getByLabel('First name').fill('Sam');
-    await dialog.getByLabel('Email').fill('sam@example.com');
+    await dialog.getByLabel('Email', { exact: true }).fill('sam@example.com');
     await dialog.getByLabel('Need visa sponsorship?').selectOption('no');
     await dialog.getByRole('button', { name: 'Add a saved answer' }).click();
     await dialog.getByLabel('Question 1').fill('Why do you want to work here?');
@@ -504,7 +548,7 @@ test.describe('accounts', () => {
     await drawer.getByRole('button', { name: 'Add a contact' }).click();
     const contactForm = drawer.getByRole('form', { name: 'Contact' });
     await contactForm.getByLabel('Name').fill('Jordan Lee');
-    await contactForm.getByLabel('Email').fill('jordan@harbour.example');
+    await contactForm.getByLabel('Email', { exact: true }).fill('jordan@harbour.example');
     await contactForm.getByRole('button', { name: 'Save' }).click();
     await expect(drawer.getByRole('link', { name: 'jordan@harbour.example' })).toHaveAttribute(
       'href',
@@ -537,7 +581,7 @@ test.describe('accounts', () => {
     expect(ics).not.toContain('SQL');
   });
 
-  test('on Pro, saved records stay but adding new ones is offered as Advanced', async ({
+  test('on Free, saved records stay but adding new ones is offered as Pro', async ({
     context,
     worker,
     extensionId,
@@ -550,15 +594,14 @@ test.describe('accounts', () => {
       });
     });
     await seedSignedIn(worker, {
-      status: 'trialing',
-      trialEndsAt: new Date(Date.now() + 10 * 86_400_000).toISOString(),
+      status: 'expired',
       hasBillingAccount: false,
     });
     const page = await context.newPage();
     await page.goto(`chrome-extension://${extensionId}/board.html#job=j0`);
     const drawer = page.getByRole('dialog', { name: 'Role 0 details' });
     await expect(drawer.getByText('Kept Contact')).toBeVisible();
-    await expect(drawer.getByText('Adding these is part of Advanced.').first()).toBeVisible();
+    await expect(drawer.getByText('Adding these is part of Pro.').first()).toBeVisible();
     await expect(drawer.getByRole('button', { name: 'Add a contact' })).toHaveCount(0);
   });
 
@@ -782,23 +825,20 @@ test.describe('accounts', () => {
     await expect(card(1)).toBeVisible();
   });
 
-  test('on Pro, selecting several jobs is offered as Advanced', async ({
+  test('on Free, selecting several jobs is offered as Pro', async ({
     context,
     worker,
     extensionId,
   }) => {
     await seedActiveJobs(worker, 2);
     await seedSignedIn(worker, {
-      status: 'trialing',
-      trialEndsAt: new Date(Date.now() + 10 * 86_400_000).toISOString(),
+      status: 'expired',
       hasBillingAccount: false,
     });
     const page = await context.newPage();
     await page.goto(`chrome-extension://${extensionId}/board.html`);
     await page.getByRole('button', { name: 'Select' }).click();
-    await expect(
-      page.getByText('Selecting several jobs at once is part of Advanced.'),
-    ).toBeVisible();
+    await expect(page.getByText('Selecting several jobs at once is part of Pro.')).toBeVisible();
     await page.getByRole('button', { name: 'Role 0 at Acme' }).click({ modifiers: ['Control'] });
     await expect(page.getByRole('toolbar', { name: 'Bulk actions' })).toHaveCount(0);
   });

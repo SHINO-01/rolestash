@@ -1,11 +1,12 @@
 import type { FillReport } from '@/autofill';
+import { allows } from '@/domain/plan';
 import { hasProfile, type Profile } from '@/domain/profile';
 import type { ProfileRepository } from '@/storage/profile-repository';
 import type { PlanProvider } from './job-service';
 import type { AutofillRunner } from './ports';
 
 /**
- * Application autofill (Advanced; ADR-0020): the profile on this device, and
+ * Application autofill (Pro and up; ADR-0020): the profile on this device, and
  * filling the form in the current tab from it. Builds without accounts
  * aren't limited (there's no way to upgrade), like other plan gates.
  */
@@ -36,7 +37,7 @@ export class AutofillService {
   }
 
   async allowed(): Promise<boolean> {
-    return !this.plans || (await this.plans.currentPlan()) === 'advanced';
+    return !this.plans || allows(await this.plans.currentPlan(), 'autofill');
   }
 
   /** Why autofill can't run now, if it can't. */
@@ -63,7 +64,7 @@ export class AutofillService {
 
 export class AutofillBlockedError extends Error {
   constructor(readonly reason: AutofillBlock) {
-    super(reason === 'plan' ? 'Autofill is part of Advanced.' : 'Add your details first.');
+    super(reason === 'plan' ? 'Autofill is part of Pro.' : 'Add your details first.');
     this.name = 'AutofillBlockedError';
   }
 }

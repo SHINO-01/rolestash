@@ -1,6 +1,6 @@
 # Application autofill
 
-Advanced users save their details once (**Autofill profile…** on the board)
+Pro and Advanced users save their details once (**Autofill profile…** on the board)
 and fill application forms in one click (ADR-0020). This guide covers how a
 form is read and filled, how to support a new form, and what's verified.
 
@@ -14,7 +14,7 @@ form is read and filled, how to support a new form, and what's verified.
 | `src/autofill/fill.ts`              | Fills empty fields and reports what's left                          |
 | `src/entrypoints/autofill.ts`       | The injected script; defines `__rolestashAutofill(profile)`         |
 | `src/platform/autofill-runner.ts`   | Injects it on the `activeTab` grant, then calls it with the profile |
-| `src/services/autofill-service.ts`  | Advanced gate, profile, merges the per-frame reports                |
+| `src/services/autofill-service.ts`  | Plan gate (Pro and up), profile, merges the per-frame reports       |
 | `src/features/autofill/`            | The profile dialog and the popup's **Fill this application** bar    |
 
 The right-click menu item **Fill this application with Rolestash** runs the

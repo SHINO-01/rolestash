@@ -60,11 +60,12 @@ describe('AutofillService', () => {
     ats: 'greenhouse',
   });
 
-  it('is Advanced only, and needs a profile', async () => {
-    const pro = setup('pro');
-    expect(await pro.service.blocked()).toBe('plan');
-    await expect(pro.service.fill(1)).rejects.toBeInstanceOf(AutofillBlockedError);
+  it('is Pro and up, and needs a profile', async () => {
+    const free = setup('free');
+    expect(await free.service.blocked()).toBe('plan');
+    await expect(free.service.fill(1)).rejects.toBeInstanceOf(AutofillBlockedError);
 
+    expect(await setup('pro').service.blocked()).toBe('no_profile');
     const adv = setup('advanced');
     expect(await adv.service.blocked()).toBe('no_profile');
     await expect(adv.service.fill(1)).rejects.toMatchObject({ reason: 'no_profile' });

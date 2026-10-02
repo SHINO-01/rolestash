@@ -3,6 +3,7 @@ import { AlertCircle, CalendarCheck, Check, Columns3, LayoutGrid, Plus } from 'l
 import { useEffect, useState, type ReactNode } from 'react';
 import { browser } from 'wxt/browser';
 import type { Job } from '@/domain/job';
+import { allows } from '@/domain/plan';
 import { AutofillBar } from '@/features/autofill/autofill-bar';
 import { getActiveTab, openBoard } from '@/platform/tabs';
 import { DuplicateJobError, JobLimitError } from '@/services/job-service';
@@ -19,15 +20,15 @@ import { TodayView } from '@/web/today-view';
 
 /**
  * Rolestash docked beside the page (ADR-0021). On every plan: save the page
- * you're on and open the board. On Advanced: Today, the board and a job's
- * details, using the web board's phone-sized views, plus autofill.
+ * you're on and open the board; Pro adds autofill. On Advanced: Today, the
+ * board and a job's details, using the web board's phone-sized views.
  */
 export function SidePanel() {
   useApplyTheme();
   const { account, state } = useAccount();
   // A build without accounts isn't limited, like every plan gate.
   const plan = account ? state?.plan.plan : undefined;
-  const full = !account || plan === 'advanced';
+  const full = !account || allows(plan, 'fullSidePanel');
   useAutoSync();
   useAutoEmailUpdates(plan);
   const { tabId, page } = useActivePage();
@@ -52,7 +53,8 @@ export function SidePanel() {
       <main className="flex flex-1 flex-col gap-3 p-3">
         {/* Remounted per page, so it starts fresh after you switch tab or navigate. */}
         <ThisPage key={page} tabId={tabId} onOpen={setOpenId} />
-        {full ? <AutofillBar tabId={tabId} /> : null}
+        {/* Autofill is Pro and up; the bar hides itself on Free. */}
+        <AutofillBar tabId={tabId} />
 
         {full ? (
           <>
@@ -92,8 +94,8 @@ export function SidePanel() {
           <section className="border-line bg-surface rounded-xl border p-4 text-sm">
             <p className="font-semibold">Your whole board, right here</p>
             <p className="text-muted mt-1">
-              With Advanced, this panel shows what’s due today and your board, lets you move jobs
-              and set follow-ups without leaving the page, and fills applications for you.
+              With Advanced, this panel shows what’s due today and your board, and lets you move
+              jobs and set follow-ups without leaving the page.
             </p>
             <Button className="mt-3" size="sm" onClick={() => void openBoard({ account: true })}>
               See plans

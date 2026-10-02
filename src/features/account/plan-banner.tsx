@@ -1,5 +1,5 @@
 import { Sparkles } from 'lucide-react';
-import { ACTIVE_JOB_LIMITS, countActiveJobs, nextPlan } from '@/domain/plan';
+import { ACTIVE_JOB_LIMITS, activeJobsLabel, countActiveJobs, nextPlan } from '@/domain/plan';
 import type { AccountState } from '@/services/account-service';
 import { Button } from '@/ui/components/button';
 import { useJobs, useSettings } from '@/ui/hooks/services';
@@ -36,7 +36,7 @@ export function PlanBanner({
     const next = nextPlan(plan.plan);
     message =
       active >= limit
-        ? `You've reached the ${name} plan's ${String(limit)} active jobs. Archive finished ones or move them to Rejected or Withdrawn${next ? `, or upgrade to ${PLAN_NAMES[next]} for ${String(ACTIVE_JOB_LIMITS[next])}` : ''}.`
+        ? `You've reached the ${name} plan's ${String(limit)} active jobs. Archive finished ones or move them to Rejected or Withdrawn${next ? `, or upgrade to ${PLAN_NAMES[next]} for ${activeJobsLabel(next).toLowerCase()}` : ''}.`
         : `${String(active)} of ${String(limit)} active jobs used on ${name}.`;
     action = !next ? 'Plan' : state.signedIn ? `Get ${PLAN_NAMES[next]}` : 'Try Pro free';
   }

@@ -1,9 +1,11 @@
 import { LogOut } from 'lucide-react';
 import { planChip, planSummary } from '@/features/account/plan-copy';
+import { ProfileSection } from '@/features/account/profile-section';
 import { SyncSection } from '@/features/account/sync-section';
 import { EmailSection } from '@/features/email/email-section';
 import { Button } from '@/ui/components/button';
 import { Chip } from '@/ui/components/chip';
+import { UserAvatar } from '@/ui/components/user-avatar';
 import { useAccount } from '@/ui/hooks/account';
 import { useServices } from '@/ui/hooks/services';
 import { DEFAULT_SETTINGS } from '@/domain/settings';
@@ -33,7 +35,12 @@ export function AccountView() {
       <h1 className="text-xl font-semibold">Account</h1>
       <section className="border-line bg-surface rounded-xl border p-4">
         <div className="flex items-center justify-between gap-2">
-          <span className="truncate text-sm font-semibold">{state.email ?? 'Signed in'}</span>
+          <span className="flex min-w-0 items-center gap-2">
+            <UserAvatar profile={state.profile} email={state.email} size="sm" />
+            <span className="truncate text-sm font-semibold">
+              {state.profile.displayName ?? state.email ?? 'Signed in'}
+            </span>
+          </span>
           <Chip tone={chip.tone}>{chip.label}</Chip>
         </div>
         <p className="text-muted mt-2 text-sm">{planSummary(state.plan)}</p>
@@ -41,6 +48,7 @@ export function AccountView() {
           Change your plan, export or delete your data from Account in the Rolestash extension.
         </p>
       </section>
+      <ProfileSection key={state.profile.displayName ?? ''} account={account} state={state} />
       <SyncSection plan={state.plan.plan} />
       <EmailSection plan={state.plan.plan} />
       <Button variant="ghost" icon={<LogOut className="size-4" />} onClick={() => void signOut()}>

@@ -30,6 +30,9 @@ export interface MockBackend {
   emailEvents: { id: number; event: unknown }[];
   /** Shared-learning votes received (ADR-0014 §6). */
   votes: unknown[];
+  /** Account profile (ADR-0022) and the shared-learning switch. */
+  profile: { display_name: string | null; avatar: string | null } | undefined;
+  shareLearning: boolean;
   close(): Promise<void>;
 }
 
@@ -37,7 +40,7 @@ export const E2E_INBOX = 'k3x9q2w7m4p8r5t6abcd@in.rolestash.com';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, apikey, content-type, prefer',
   'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
 };
 
@@ -106,8 +109,25 @@ function route(
     case '/rest/v1/rpc/rotate_inbox':
       return [
         200,
-        { ok: true, address: E2E_INBOX, created_at: '2026-10-01T00:00:00Z', share_learning: true },
+        {
+          ok: true,
+          address: E2E_INBOX,
+          created_at: '2026-10-01T00:00:00Z',
+          share_learning: state.shareLearning,
+        },
       ];
+    case '/rest/v1/rpc/set_email_sharing':
+      state.shareLearning = b.p_on === true;
+      return [200, { ok: true, share_learning: state.shareLearning }];
+    case '/rest/v1/account_profiles':
+      if (method === 'POST') {
+        state.profile = {
+          display_name: (b.display_name as string | null) ?? null,
+          avatar: (b.avatar as string | null) ?? null,
+        };
+        return [201, ''];
+      }
+      return [200, state.profile ? [state.profile] : []];
     case '/rest/v1/rpc/vote_email_knowledge':
       state.votes.push(...(b.p_votes as unknown[]));
       return [200, { ok: true, recorded: (b.p_votes as unknown[]).length }];
@@ -162,6 +182,8 @@ export async function startMockBackend(): Promise<MockBackend> {
     revision: 0,
     emailEvents: [],
     votes: [],
+    profile: undefined,
+    shareLearning: true,
     close: () => Promise.resolve(),
   };
 

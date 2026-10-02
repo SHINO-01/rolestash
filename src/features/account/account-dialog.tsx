@@ -1,7 +1,13 @@
 import { ArrowLeft, ExternalLink, LogOut, Mail, RefreshCw, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { browser } from 'wxt/browser';
-import { ACTIVE_JOB_LIMITS, countActiveJobs, PAID_PLANS, type PaidPlan } from '@/domain/plan';
+import {
+  ACTIVE_JOB_LIMITS,
+  activeJobsLabel,
+  countActiveJobs,
+  PAID_PLANS,
+  type PaidPlan,
+} from '@/domain/plan';
 import type { AccountService, AccountState } from '@/services/account-service';
 import { Button } from '@/ui/components/button';
 import { Chip } from '@/ui/components/chip';
@@ -18,6 +24,8 @@ import {
   planSummary,
 } from './plan-copy';
 import { EmailSection } from '@/features/email/email-section';
+import { ProfileSection } from './profile-section';
+import { SharingChoice } from './sharing-choice';
 import { SyncSection } from './sync-section';
 
 const SITE = 'https://rolestash.com';
@@ -41,7 +49,7 @@ export function AccountDialog({
       description={
         state?.signedIn
           ? state.email
-          : 'Sign in for unlimited jobs, sync, reminders and more. No card needed.'
+          : `Sign in for ${activeJobsLabel('pro').toLowerCase()}, autofill, insights, sync and more. No card needed.`
       }
     >
       {state?.signedIn ? (
@@ -60,6 +68,8 @@ function SignIn({ account }: { account: AccountService }) {
   const [busy, setBusy] = useState<'google' | 'email' | 'code' | null>(null);
   const [error, setError] = useState<string>();
   const [google, setGoogle] = useState(false);
+  // "Help improve automatic updates": on by default, chosen here (ADR-0019, ADR-0022).
+  const [share, setShare] = useState(true);
 
   // Offer Google only when the project has it switched on.
   useEffect(() => {
@@ -76,6 +86,7 @@ function SignIn({ account }: { account: AccountService }) {
     setBusy(kind);
     setError(undefined);
     try {
+      if (kind !== 'email') await account.chooseSharingAtSignIn(share);
       await task();
     } catch (e) {
       setError(backendErrorMessage(e));
@@ -192,6 +203,8 @@ function SignIn({ account }: { account: AccountService }) {
         </form>
       )}
 
+      <SharingChoice checked={share} disabled={busy !== null} onChange={setShare} />
+
       {error ? (
         <p role="alert" className="text-sm text-rose-600 dark:text-rose-400">
           {error}
@@ -271,10 +284,15 @@ function SignedIn({ account, state }: { account: AccountService; state: AccountS
         </div>
         <p className="text-muted mt-2 text-sm">{planSummary(plan)}</p>
         <p className="text-muted mt-1 text-sm">
-          {active} of {limit} active jobs used. Rejected and withdrawn jobs don't count.
+          {Number.isFinite(limit)
+            ? `${String(active)} of ${String(limit)} active jobs used.`
+            : `${String(active)} active jobs, no limit.`}{' '}
+          Rejected and withdrawn jobs don't count.
         </p>
       </section>
 
+      {/* Keyed by the saved name, so a name saved elsewhere resets the field. */}
+      <ProfileSection key={state.profile.displayName ?? ''} account={account} state={state} />
       <SyncSection plan={plan.plan} />
       <EmailSection plan={plan.plan} />
 

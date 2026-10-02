@@ -86,6 +86,6 @@ export const PLAN_PRICES: Record<PaidPlan, Record<'month' | 'year', string>> = {
 };
 
 export const PLAN_PITCH: Record<PaidPlan, string> = {
-  pro: `${String(ACTIVE_JOB_LIMITS.pro)} active jobs, full history, reminders, custom columns, capture from a pasted link, and sync across ${String(SYNC_DEVICE_LIMITS.pro)} computers.`,
-  advanced: `${String(ACTIVE_JOB_LIMITS.advanced)} active jobs, sync across ${String(SYNC_DEVICE_LIMITS.advanced)} devices including your phone, automatic status updates from your job emails, and interview details on every card.`,
+  pro: `${String(ACTIVE_JOB_LIMITS.pro)} active jobs, application autofill, insights, contacts and documents, bulk actions, full history, reminders, custom columns, capture from a pasted link, and sync across ${String(SYNC_DEVICE_LIMITS.pro)} computers.`,
+  advanced: `Unlimited active jobs, automatic status updates from your job emails, interview details on every card, sync across ${String(SYNC_DEVICE_LIMITS.advanced)} devices including your phone, and your whole board in the side panel.`,
 };

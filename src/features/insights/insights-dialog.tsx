@@ -46,7 +46,7 @@ export function InsightsDialog({
       ) : (
         <div className="flex flex-col gap-3">
           <p className="text-muted text-sm">
-            Insights are part of Advanced: applications per week, how far your applications get, how
+            Insights are part of Pro: applications per week, how far your applications get, how
             quickly employers reply, and which job sites work best for you.
           </p>
           {onSeePlans ? (
