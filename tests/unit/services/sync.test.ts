@@ -1,3 +1,4 @@
+import type { Job } from '@/domain/job';
 import type { Plan } from '@/domain/plan';
 import {
   BackendError,
@@ -5,6 +6,7 @@ import {
   type RemoteDevice,
   type SyncChange,
 } from '@/services/backend/supabase-client';
+import { JobService } from '@/services/job-service';
 import type { RemoteJobStore } from '@/services/ports';
 import { SETTINGS_ROW, SyncService } from '@/services/sync-service';
 import { JobRepository } from '@/storage/job-repository';
@@ -79,13 +81,13 @@ class FakeServer {
 async function device(
   server: FakeServer,
   name: string,
-  opts: { plan?: Plan; start?: string } = {},
+  opts: { plan?: Plan; start?: string; ctx?: ReturnType<typeof testContext> } = {},
 ) {
   const store = new MemoryKeyValueStore();
   await migrate(store);
   const jobs = new JobRepository(store);
   const settings = new SettingsRepository(store);
-  const ctx = testContext(opts.start);
+  const ctx = opts.ctx ?? testContext(opts.start);
   let id = 0;
   const ids = { ...ctx, newId: () => `${name}-${String(++id)}` };
   const account = {
@@ -96,7 +98,8 @@ async function device(
     name,
     kind: 'computer',
   });
-  return { store, jobs, settings, sync, ctx };
+  const service = new JobService(jobs, settings, ctx);
+  return { store, jobs, settings, sync, ctx, service };
 }
 
 const titles = async (jobs: JobRepository) => (await jobs.list()).map((j) => j.title).sort();
@@ -249,5 +252,132 @@ describe('SyncService', () => {
     server.devices = []; // removed from another device
     await expect(b.sync.sync()).rejects.toThrow(BackendError);
     expect((await b.sync.state()).problem).toBe('not_allowed');
+  });
+});
+
+describe('SyncService: two devices editing the same jobs offline', () => {
+  const MIN = 60_000;
+  const board = async (jobs: JobRepository) =>
+    Object.fromEntries((await jobs.list()).map((j) => [j.id, j.title]));
+
+  /** Two devices on one clock, both holding job "j" in step. */
+  async function pair() {
+    const server = new FakeServer();
+    const clock = testContext('2026-10-01T00:00:00.000Z');
+    const a = await device(server, 'a', { ctx: clock });
+    const b = await device(server, 'b', { ctx: clock });
+    await a.jobs.save(
+      makeJob({ id: 'j', title: 'Original', updatedAt: clock.now().toISOString() }),
+    );
+    await a.sync.enable();
+    await b.sync.enable();
+    await a.sync.sync();
+    await b.sync.sync();
+    return { server, clock, a, b };
+  }
+
+  it('keeps an edit made after the job was deleted on the other device', async () => {
+    const { clock, a, b } = await pair();
+    clock.advance(MIN);
+    await b.service.remove('j'); // B deletes first…
+    clock.advance(MIN);
+    await a.service.update('j', { title: 'Edited later on A' }); // …A edits afterwards
+    clock.advance(60 * MIN);
+    await b.sync.sync(); // B comes online first, long after both changes
+    await a.sync.sync();
+    await b.sync.sync();
+    expect(await board(a.jobs)).toEqual({ j: 'Edited later on A' });
+    expect(await board(b.jobs)).toEqual({ j: 'Edited later on A' });
+  });
+
+  it('keeps a deletion made after the job was edited on the other device', async () => {
+    const { clock, a, b } = await pair();
+    clock.advance(MIN);
+    await b.service.update('j', { title: 'Edited on B' }); // B edits first…
+    clock.advance(MIN);
+    await a.service.remove('j'); // …A deletes afterwards
+    clock.advance(60 * MIN);
+    await b.sync.sync(); // B's older edit reaches the server first
+    await a.sync.sync();
+    await b.sync.sync();
+    expect(await board(a.jobs)).toEqual({});
+    expect(await board(b.jobs)).toEqual({});
+  });
+
+  it('brings a job back everywhere when its deletion is undone after syncing', async () => {
+    const { server, clock, a, b } = await pair();
+    clock.advance(MIN);
+    const removed = await a.service.remove('j');
+    clock.advance(3000);
+    await a.sync.sync(); // the board syncs 3 s after a change; the undo toast lasts longer
+    await b.sync.sync();
+    expect(await board(b.jobs)).toEqual({});
+    clock.advance(2000);
+    await a.service.restore(removed!);
+    clock.advance(3000);
+    await a.sync.sync();
+    await b.sync.sync();
+    expect(await board(a.jobs)).toEqual({ j: 'Original' });
+    expect(await board(b.jobs)).toEqual({ j: 'Original' });
+    expect(server.rows.get('j')?.deleted).toBe(false);
+  });
+
+  it('does not bring back jobs deleted while sync was off', async () => {
+    const { clock, a, b } = await pair();
+    await a.sync.disable();
+    clock.advance(MIN);
+    await a.service.remove('j');
+    clock.advance(MIN);
+    await a.sync.enable(); // a fresh start merges both ways
+    await a.sync.sync();
+    await b.sync.sync();
+    expect(await board(a.jobs)).toEqual({});
+    expect(await board(b.jobs)).toEqual({});
+  });
+
+  it('ends with the same board on both devices, whatever the order of edits, deletes, undos and syncs', async () => {
+    // A small deterministic PRNG, so a failure always replays the same way.
+    let seed = 20261003;
+    const random = () => (seed = (seed * 1103515245 + 12345) % 2 ** 31) / 2 ** 31;
+    const pick = <T>(xs: readonly T[]): T => xs[Math.floor(random() * xs.length)] as T;
+
+    for (let round = 0; round < 20; round++) {
+      const server = new FakeServer();
+      const clock = testContext('2026-10-01T00:00:00.000Z');
+      const a = await device(server, 'a', { ctx: clock });
+      const b = await device(server, 'b', { ctx: clock });
+      for (const id of ['j1', 'j2', 'j3', 'j4'])
+        await a.jobs.save(makeJob({ id, title: `${id} v0`, updatedAt: clock.now().toISOString() }));
+      await a.sync.enable();
+      await b.sync.enable();
+      await a.sync.sync();
+      await b.sync.sync();
+
+      const undo = new Map<object, Job[]>([
+        [a, []],
+        [b, []],
+      ]);
+      let edits = 0;
+      for (let step = 0; step < 40; step++) {
+        clock.advance(1 + Math.floor(random() * 10_000));
+        const d = pick([a, b]);
+        const present = (await d.jobs.list()).map((j) => j.id).sort();
+        const op = pick(['edit', 'edit', 'delete', 'undo', 'sync', 'sync']);
+        if (op === 'edit' && present.length)
+          await d.service.update(pick(present), { title: `edit ${String(++edits)}` });
+        else if (op === 'delete' && present.length) {
+          const gone = await d.service.remove(pick(present));
+          if (gone) undo.get(d)?.push(gone);
+        } else if (op === 'undo') {
+          const last = undo.get(d)?.pop();
+          if (last && !(await d.jobs.get(last.id))) await d.service.restore(last);
+        } else if (op === 'sync') await d.sync.sync();
+      }
+      clock.advance(MIN);
+      await a.sync.sync();
+      await b.sync.sync();
+      await a.sync.sync();
+      expect({ round, board: await board(b.jobs) }).toEqual({ round, board: await board(a.jobs) });
+    }
   });
 });

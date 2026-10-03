@@ -159,6 +159,7 @@ export class SyncService {
       const rows = await this.remote.pull(deviceId, state.cursor, PAGE);
       if (rows.length === 0) break;
       const local = new Map((await this.jobs.list()).map((j) => [j.id, j]));
+      const deletions = await this.jobs.deletions();
       const toSave: Job[] = [];
       for (const row of rows) {
         state.cursor = Math.max(state.cursor, row.revision);
@@ -179,6 +180,13 @@ export class SyncService {
         // device since. Don't resurrect it; the tombstone goes out in push().
         const seenAt = state.seen[row.id];
         if (!mine && seenAt !== undefined && row.updatedAt <= seenAt) continue;
+        // Deleted here after this version (perhaps while sync was off): keep
+        // it deleted, and mark it seen so push() sends the tombstone.
+        const deletedAt = deletions[row.id];
+        if (!mine && deletedAt !== undefined && row.updatedAt <= deletedAt) {
+          state.seen[row.id] = row.updatedAt;
+          continue;
+        }
         const parsed = JobSchema.safeParse(row.data);
         if (!parsed.success || parsed.data.id !== row.id) continue; // never trust shape blindly
         if (!mine || parsed.data.updatedAt > mine.updatedAt) {
@@ -221,13 +229,23 @@ export class SyncService {
     const now = this.ctx.now().toISOString();
     const current = await this.jobs.list();
     const ids = new Set(current.map((j) => j.id));
+    const deletions = await this.jobs.deletions();
+    // A tombstone carries when the job was deleted (now, if that's unknown),
+    // and is always newer than the version it deletes.
+    const deletedAt = (id: string): string => {
+      const at = deletions[id] ?? now;
+      const synced = state.seen[id];
+      return synced !== undefined && at <= synced
+        ? new Date(Date.parse(synced) + 1).toISOString()
+        : at;
+    };
     const changes: SyncChange[] = [
       ...current
         .filter((j) => state.seen[j.id] !== j.updatedAt)
         .map((j) => ({ id: j.id, updatedAt: j.updatedAt, data: j })),
       ...Object.keys(state.seen)
         .filter((id) => !ids.has(id))
-        .map((id) => ({ id, updatedAt: now, deleted: true })),
+        .map((id) => ({ id, updatedAt: deletedAt(id), deleted: true })),
     ];
     const settings = JSON.stringify(syncedSettings(await this.settings.get()));
     if (settings !== state.settingsSnapshot)
@@ -245,6 +263,11 @@ export class SyncService {
       }
       await this.save(state);
     }
+    // Sent tombstones and jobs that are back no longer need a deletion time.
+    const sent = new Set(changes.map((c) => c.id));
+    await this.jobs.forgetDeletions(
+      Object.keys(deletions).filter((id) => ids.has(id) || sent.has(id)),
+    );
     return changes.length;
   }
 

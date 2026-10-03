@@ -1,6 +1,9 @@
 import { JobSchema, type Job, type JobId } from '@/domain/job';
 import type { KeyValueStore } from './key-value-store';
-import { isJobKey, jobKey } from './keys';
+import { isJobKey, jobKey, SYNC_DELETIONS_KEY } from './keys';
+
+/** Deletion times kept for sync; the oldest go first past this many. */
+const MAX_DELETIONS = 1000;
 
 /**
  * Persistence for Job aggregates. Validates on write (so invariants hold at the
@@ -42,8 +45,31 @@ export class JobRepository {
     return valid;
   }
 
-  async delete(id: JobId): Promise<void> {
+  /**
+   * Removes a job. A user's deletion passes `deletedAt`, which is kept so
+   * sync can stamp the tombstone with when it happened (ADR-0016).
+   */
+  async delete(id: JobId, deletedAt?: string): Promise<void> {
     await this.store.remove([jobKey(id)]);
+    if (deletedAt === undefined) return;
+    const log = { ...(await this.deletions()), [id]: deletedAt };
+    const kept = Object.entries(log)
+      .sort(([, x], [, y]) => (x < y ? 1 : x > y ? -1 : 0))
+      .slice(0, MAX_DELETIONS);
+    await this.store.set({ [SYNC_DELETIONS_KEY]: Object.fromEntries(kept) });
+  }
+
+  /** When jobs were deleted on this device: jobId → ISO time. */
+  async deletions(): Promise<Record<string, string>> {
+    const raw = (await this.store.get([SYNC_DELETIONS_KEY]))[SYNC_DELETIONS_KEY];
+    return raw && typeof raw === 'object' ? (raw as Record<string, string>) : {};
+  }
+
+  async forgetDeletions(ids: readonly string[]): Promise<void> {
+    const log = await this.deletions();
+    if (!ids.some((id) => id in log)) return;
+    for (const id of ids) Reflect.deleteProperty(log, id);
+    await this.store.set({ [SYNC_DELETIONS_KEY]: log });
   }
 
   async deleteAll(): Promise<void> {

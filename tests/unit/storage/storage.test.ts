@@ -51,6 +51,20 @@ describe('JobRepository', () => {
     await jobs.delete('x');
     expect(listener).toHaveBeenCalledTimes(1);
   });
+
+  it('remembers when jobs were deleted, newest first, up to a limit', async () => {
+    const { jobs } = setup();
+    await jobs.delete('quiet'); // sync's own deletions pass no time
+    expect(await jobs.deletions()).toEqual({});
+    for (let i = 0; i < 1001; i++)
+      await jobs.delete(`j${String(i)}`, new Date(Date.UTC(2026, 9, 1, 0, 0, i)).toISOString());
+    const log = await jobs.deletions();
+    expect(Object.keys(log)).toHaveLength(1000);
+    expect(log).not.toHaveProperty('j0'); // the oldest goes first
+    expect(log.j1000).toBe('2026-10-01T00:16:40.000Z');
+    await jobs.forgetDeletions(['j1000', 'missing']);
+    expect(await jobs.deletions()).not.toHaveProperty('j1000');
+  });
 });
 
 describe('SettingsRepository', () => {

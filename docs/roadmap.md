@@ -155,4 +155,5 @@ Runbook: [guides/launch.md](guides/launch.md).
 - Component tests for the drawer and popup form (React Testing Library).
 - Visual regression screenshots in CI.
 - Performance check with 1,000+ jobs (virtualised columns if needed).
-- Sync conflict tests: two devices editing the same job offline.
+- ~~Sync conflict tests~~ done: two devices editing, deleting and undoing
+  offline, with a randomised convergence test (ADR-0016, revised).

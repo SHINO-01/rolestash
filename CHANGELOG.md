@@ -14,6 +14,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- **Sync keeps the latest change when a job is deleted on one device and
+  edited on another:** a deletion now counts from when you made it, not when
+  it synced, and undoing a deletion brings the job back on every device.
 - **Google sign-in works in the Chrome Web Store build:** rolestash.com now
   hands sign-ins to the store's extension as well as the development build.
 

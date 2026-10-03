@@ -233,13 +233,18 @@ export class JobService {
 
   async remove(jobId: JobId): Promise<Job | undefined> {
     const job = await this.jobs.get(jobId);
-    await this.jobs.delete(jobId);
+    await this.jobs.delete(jobId, this.ctx.now().toISOString());
     return job;
   }
 
-  /** Re-inserts a deleted job exactly as it was (undo). */
+  /**
+   * Re-inserts a deleted job as it was (undo). Its `updatedAt` moves to now,
+   * so the undo beats the deletion on other devices if that already synced.
+   */
   async restore(job: Job): Promise<Job> {
-    return this.jobs.save(job);
+    const [restored] = await this.restoreMany([job]);
+    if (!restored) throw new Error('Restore failed');
+    return restored;
   }
 
   // ── Bulk actions (Advanced) ──────────────────────────────────────────────
@@ -286,9 +291,12 @@ export class JobService {
     return removed;
   }
 
-  /** Puts deleted jobs back exactly as they were (undo). */
-  restoreMany(jobs: readonly Job[]): Promise<Job[]> {
-    return this.jobs.saveMany([...jobs]);
+  /** Puts deleted jobs back as they were (undo); see `restore`. */
+  async restoreMany(jobs: readonly Job[]): Promise<Job[]> {
+    const now = this.ctx.now().toISOString();
+    const restored = await this.jobs.saveMany(jobs.map((job) => ({ ...job, updatedAt: now })));
+    await this.jobs.forgetDeletions(jobs.map((job) => job.id));
+    return restored;
   }
 
   // ── Email updates (Advanced; ADR-0014) ───────────────────────────────────

@@ -6,7 +6,8 @@
  *   job:<id>      Job           — one key per job so a move writes one record
  *   account:*     Session and cached entitlement (AccountService); never backed up
  *   reminders     What reminders were already sent (ReminderService); never backed up
- *   sync:*        Sync state and lease (SyncService); never backed up
+ *   sync:*        Sync state and lease (SyncService), and when jobs were deleted
+ *                 (JobRepository); never backed up
  *   email:*       Email updates state and lease (EmailUpdateService); never backed up
  *   profile       Autofill profile (ADR-0020); this device only: never synced or backed up
  */
@@ -31,6 +32,8 @@ export const REMINDERS_KEY = 'reminders';
 /** Sync bookkeeping (ADR-0016); never backed up. */
 export const SYNC_STATE_KEY = 'sync:state';
 export const SYNC_LOCK_KEY = 'sync:lock';
+/** jobId → when it was deleted here, so its tombstone carries that time. */
+export const SYNC_DELETIONS_KEY = 'sync:deletions';
 
 /** Email updates bookkeeping (ADR-0014); never backed up. */
 export const EMAIL_STATE_KEY = 'email:state';

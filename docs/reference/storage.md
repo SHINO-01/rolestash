@@ -12,6 +12,7 @@ All data lives in `chrome.storage.local` (with `unlimitedStorage`).
 | `reminders`           | Reminders already sent (ADR-0015); not backed up                                                             |
 | `sync:state`          | Sync cursor, device id and what was last synced (ADR-0016); not backed up                                    |
 | `sync:lock`           | Short lease so two contexts don't sync at once                                                               |
+| `sync:deletions`      | When each job was deleted on this device (up to 1,000), so its tombstone carries that time; not backed up    |
 | `email:state`         | Email updates: event cursor, threads, taught senders, unsorted updates, Gmail code (ADR-0014); not backed up |
 | `profile`             | Autofill profile (ADR-0020); this device only: not synced, not backed up                                     |
 | `email:lock`          | Short lease so two contexts don't apply email updates at once                                                |

@@ -56,14 +56,15 @@ describe('bulk actions', () => {
     expect(await service.tagMany(['a'], '  ')).toEqual([]);
   });
 
-  it('deletes several jobs and puts them back exactly', async () => {
+  it('deletes several jobs and puts them back as they were', async () => {
     const { jobs, service } = await setup();
     const before = await jobs.get('a');
     const removed = await service.removeMany(['a', 'b', 'missing']);
     expect(removed.map((j) => j.id)).toEqual(['a', 'b']);
     expect(await column(jobs, 'saved')).toEqual(['c']);
     await service.restoreMany(removed);
-    expect(await jobs.get('a')).toEqual(before);
+    // Only updatedAt moves, so the undo also wins over an already-synced deletion.
+    expect(await jobs.get('a')).toEqual({ ...before, updatedAt: '2026-09-28T00:00:00.000Z' });
     expect(await column(jobs, 'saved')).toEqual(['a', 'b', 'c']);
   });
 });

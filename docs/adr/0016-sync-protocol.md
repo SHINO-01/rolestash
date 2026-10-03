@@ -62,7 +62,8 @@ ADR-0009 set the shape: a `SyncService` behind a `RemoteJobStore` port, and
 - **A sync run:**
   1. Pull in pages, applying each row unless the local copy is newer.
   2. Push every job whose `updatedAt` differs from `seen`.
-  3. Push a tombstone for every id in `seen` that's gone locally.
+  3. Push a tombstone for every id in `seen` that's gone locally, stamped
+     with when it was deleted (see _Deletion times_ below).
   4. Push settings (columns, default column, closing alerts; not the theme)
      when their hash changed.
 - **Change detection by `seen`** needs no change to how jobs are stored. So
@@ -82,12 +83,30 @@ ADR-0009 set the shape: a `SyncService` behind a `RemoteJobStore` port, and
   data stays on the server until the account is deleted, as the privacy
   policy says.
 
+### Deletion times (revised 2026-10-03)
+
+At first a tombstone carried the time it was pushed. That let a deletion
+made offline beat an edit made after it on another device, and an undo
+after the board had synced the deletion left the job on one device only:
+the restored job kept its old `updatedAt`, which the server rejected.
+
+- `JobRepository.delete` records when a user deleted each job in
+  `sync:deletions` (the newest 1,000; never backed up), and the tombstone
+  carries that time, always at least 1 ms after the version it deletes.
+- Pulling a row for a job deleted here after that version keeps it deleted
+  and sends the tombstone, even if sync was off when it was deleted.
+- Undo gives the restored job a new `updatedAt`, so it beats the deletion
+  everywhere.
+- A unit test drives two devices through random edits, deletions, undos and
+  syncs on one clock, and checks both end with the same board.
+
 ## Consequences
 
 - **Clock skew:** devices' clocks decide conflicts. That's acceptable for
   one person's devices, and the server never rewrites `updated_at`.
 - **Offline deletions:** a job deleted on one device while another edits it
-  offline resolves by timestamp, like any other edit.
+  offline resolves by timestamp, like any other edit: the later of the
+  deletion and the edit wins.
 - **Testing:** pgTAP covers limits, RLS and last-writer-wins, and unit tests
   run the SyncService against an in-memory `RemoteJobStore`.
 - **Privacy:** the privacy policy lists device names as stored data.

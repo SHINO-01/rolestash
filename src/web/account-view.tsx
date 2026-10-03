@@ -9,7 +9,7 @@ import { UserAvatar } from '@/ui/components/user-avatar';
 import { useAccount } from '@/ui/hooks/account';
 import { useServices } from '@/ui/hooks/services';
 import { DEFAULT_SETTINGS } from '@/domain/settings';
-import { EMAIL_STATE_KEY, SYNC_STATE_KEY } from '@/storage/keys';
+import { EMAIL_STATE_KEY, SYNC_DELETIONS_KEY, SYNC_STATE_KEY } from '@/storage/keys';
 import { blockExtensionSignIn } from './sign-in';
 
 /** Account on the web board: plan, synced devices, sign out (ADR-0017). */
@@ -24,7 +24,7 @@ export function AccountView() {
     await services.sync?.disable().catch(() => undefined);
     await services.jobs.deleteAll();
     await services.settings.replace(structuredClone(DEFAULT_SETTINGS));
-    await services.store.remove([SYNC_STATE_KEY, EMAIL_STATE_KEY]);
+    await services.store.remove([SYNC_STATE_KEY, SYNC_DELETIONS_KEY, EMAIL_STATE_KEY]);
     blockExtensionSignIn();
     await account?.signOut();
   }
