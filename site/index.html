@@ -26,7 +26,15 @@
       href="/assets/rolestash-film-poster.webp"
       as="image"
       type="image/webp"
-      media="(prefers-reduced-motion: no-preference)"
+      media="(prefers-reduced-motion: no-preference) and (min-width: 641px)"
+      fetchpriority="high"
+    />
+    <link
+      rel="preload"
+      href="/assets/rolestash-film-vertical-poster.webp"
+      as="image"
+      type="image/webp"
+      media="(prefers-reduced-motion: no-preference) and (max-width: 640px)"
       fetchpriority="high"
     />
     <link rel="stylesheet" href="/assets/site.css" />
@@ -278,7 +286,7 @@
         </div>
 
         <figure class="showcase">
-          <div class="film">
+          <div class="film film-wide">
             <video
               class="film-video"
               width="1920"
@@ -292,6 +300,22 @@
             >
               <source src="/assets/rolestash-film.webm" type="video/webm" />
               <source src="/assets/rolestash-film.mp4" type="video/mp4" />
+            </video>
+          </div>
+          <div class="film film-tall">
+            <video
+              class="film-video"
+              width="1080"
+              height="1920"
+              poster="/assets/rolestash-film-vertical-poster.webp"
+              muted
+              playsinline
+              loop
+              preload="metadata"
+              aria-label="Rolestash in 21 seconds: a job is saved in one click, moved across the board, and kept private."
+            >
+              <source src="/assets/rolestash-film-vertical.webm" type="video/webm" />
+              <source src="/assets/rolestash-film-vertical.mp4" type="video/mp4" />
             </video>
           </div>
           <div class="browser">

@@ -117,15 +117,22 @@ list their features), FAQ and a closing call to action.
 
 ## The hero film
 
-The homepage hero plays a 21-second product film (1920×1080, no voice) in
-place of the board screenshot. Its source is the Hyperframes project made with
+The homepage hero plays a 21-second product film (no voice) in place of the
+board screenshot: the landscape cut (1920×1080) above 640 px, and a vertical
+cut (1080×1920, `brag-output/brag-vertical.mp4`, project
+`brag-output/composition-vertical/`) on phones and small screens. Each cut
+is its own `<video>`; CSS shows one, and the hidden one never intersects, so
+it never plays. Each poster is preloaded only for its screen size. Its source is the Hyperframes project made with
 `/brag` in `brag-output/` (gitignored; plan, brief and composition live there).
 
-| File                                     | What                                       |
-| ---------------------------------------- | ------------------------------------------ |
-| `site/assets/rolestash-film.webm`        | VP9, 1920×1080, no audio, about 2.3 MB     |
-| `site/assets/rolestash-film.mp4`         | H.264, 1600×900, no audio, about 2.2 MB    |
-| `site/assets/rolestash-film-poster.webp` | The closing frame (CTA), 1600 wide, ~50 KB |
+| File                                              | What                                             |
+| ------------------------------------------------- | ------------------------------------------------ |
+| `site/assets/rolestash-film.webm`                 | VP9, 1920×1080, no audio, about 2.3 MB           |
+| `site/assets/rolestash-film.mp4`                  | H.264, 1600×900, no audio, about 2.2 MB          |
+| `site/assets/rolestash-film-poster.webp`          | The closing frame (CTA), 1600 wide, ~50 KB       |
+| `site/assets/rolestash-film-vertical.webm`        | Vertical cut, VP9, 1080×1920, no audio, ~2.2 MB  |
+| `site/assets/rolestash-film-vertical.mp4`         | Vertical cut, H.264, 900×1600, no audio, ~2.3 MB |
+| `site/assets/rolestash-film-vertical-poster.webp` | Vertical closing frame, 900 wide, ~52 KB         |
 
 - **Player:** always silent (owner's choice, 2026-10-04): the encodes carry
   no audio track, and the `<video muted playsinline loop preload="metadata">`
@@ -136,7 +143,8 @@ place of the board screenshot. Its source is the Hyperframes project made with
 - **LCP:** the poster is the hero's largest paint. It is preloaded (only when
   motion is allowed) and the film's entrance moves without fading, so it
   paints at once. Measured locally on throttled 4G with 4× CPU on
-  2026-10-04: LCP about 1.5 s on desktop and phone, CLS 0.
+  2026-10-04: LCP about 1.6 s on desktop and 1.7 s on a phone (vertical
+  poster), CLS 0.
 - **Budget (tested):** each encode under 4 MB, the poster under 150 KB.
 - **Re-encoding** from a new `brag-output/brag.mp4`:
 
@@ -145,6 +153,11 @@ place of the board screenshot. Its source is the Hyperframes project made with
   ffmpeg -i brag-output/brag.mp4 -vf scale=1600:-2 -c:v libx264 -preset veryslow -crf 24 -pix_fmt yuv420p -an -movflags +faststart site/assets/rolestash-film.mp4
   ffmpeg -i brag-output/brag.jpg -vf scale=1600:-2 -c:v libwebp -quality 78 site/assets/rolestash-film-poster.webp
   ```
+
+  The vertical cut is encoded the same way from `brag-output/brag-vertical.mp4`
+  (MP4 at `scale=900:-2`). Hyperframes pads a 1080-wide render to a multiple
+  of 16, which leaves an 8 px black strip on the right: crop it first with
+  `-vf "crop=1072:1920:0:0,scale=1080:1920"` on the rendered file.
 
   Use new file names when the film changes: assets are cached for a day.
 

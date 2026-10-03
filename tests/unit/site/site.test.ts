@@ -262,29 +262,36 @@ describe('rolestash.com static site', () => {
 
   it('plays the hero film from our own small files, always muted, with the board pictures as fallback', () => {
     const home = pages.find((p) => p.file === 'index.html')?.doc;
-    const video = home?.querySelector('.showcase .film video');
-    if (!home || !video) throw new Error('hero film missing');
-    // Muted, inline and looping so it may autoplay; only metadata until it plays.
-    for (const attr of ['muted', 'playsinline', 'loop'])
-      expect(video.hasAttribute(attr), attr).toBe(true);
+    if (!home) throw new Error('index.html missing');
+    // A landscape cut, and a vertical cut that CSS shows on small screens.
+    const wide = home.querySelector('.showcase .film-wide video');
+    const tall = home.querySelector('.showcase .film-tall video');
+    if (!wide || !tall) throw new Error('hero film missing');
+    expect(Number(wide.getAttribute('width'))).toBeGreaterThan(Number(wide.getAttribute('height')));
+    expect(Number(tall.getAttribute('height'))).toBeGreaterThan(Number(tall.getAttribute('width')));
     // Always silent: no controls to unmute it, and no buttons.
-    expect(video.hasAttribute('controls')).toBe(false);
     expect(home.querySelectorAll('.showcase button')).toHaveLength(0);
-    expect(video.hasAttribute('autoplay')).toBe(false); // theme.js plays it, never with reduced motion
-    expect(video.getAttribute('preload')).toBe('metadata');
-    expect(video.getAttribute('width')).toMatch(/^\d+$/);
-    expect(video.getAttribute('height')).toMatch(/^\d+$/);
-    const files = [
-      video.getAttribute('poster') ?? '',
-      ...[...video.querySelectorAll('source')].map((s) => s.getAttribute('src') ?? ''),
-    ];
-    expect(files).toHaveLength(3);
-    for (const file of files) {
-      expect(file).toMatch(/^\/assets\//);
-      // Keep the page light: each encode under 4 MB, the poster under 150 KB.
-      expect(statSync(join(SITE, file)).size).toBeLessThan(
-        file.endsWith('.webp') ? 150_000 : 4_000_000,
-      );
+    for (const video of [wide, tall]) {
+      // Muted, inline and looping so it may autoplay; only metadata until it plays.
+      for (const attr of ['muted', 'playsinline', 'loop'])
+        expect(video.hasAttribute(attr), attr).toBe(true);
+      expect(video.hasAttribute('controls')).toBe(false);
+      expect(video.hasAttribute('autoplay')).toBe(false); // theme.js plays it, never with reduced motion
+      expect(video.getAttribute('preload')).toBe('metadata');
+      expect(video.getAttribute('width')).toMatch(/^\d+$/);
+      expect(video.getAttribute('height')).toMatch(/^\d+$/);
+      const files = [
+        video.getAttribute('poster') ?? '',
+        ...[...video.querySelectorAll('source')].map((s) => s.getAttribute('src') ?? ''),
+      ];
+      expect(files).toHaveLength(3);
+      for (const file of files) {
+        expect(file).toMatch(/^\/assets\//);
+        // Keep the page light: each encode under 4 MB, the poster under 150 KB.
+        expect(statSync(join(SITE, file)).size).toBeLessThan(
+          file.endsWith('.webp') ? 150_000 : 4_000_000,
+        );
+      }
     }
     expect(
       home.querySelectorAll('.showcase picture.shot-light, .showcase picture.shot-dark'),

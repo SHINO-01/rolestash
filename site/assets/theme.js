@@ -74,26 +74,27 @@
   }
 
   /**
-   * The hero film (no sound) plays while a quarter of it is on screen, never
-   * with reduced motion (CSS shows the board pictures instead). Without this
-   * script it shows its poster.
+   * The hero film (no sound; a vertical cut on small screens) plays while a
+   * quarter of it is on screen, never with reduced motion (CSS shows the
+   * board pictures instead). The hidden cut never intersects, so it stays
+   * paused. Without this script the film shows its poster.
    */
   function film() {
-    const video = document.querySelector('.film video');
-    if (!video) return;
-    let visible = false;
-    const update = () => {
-      if (visible && !reduceMotion.matches) video.play().catch(() => undefined);
-      else video.pause();
-    };
-    reduceMotion.addEventListener('change', update);
-    new IntersectionObserver(
-      ([entry]) => {
-        visible = entry?.isIntersecting ?? false;
-        update();
-      },
-      { threshold: 0.25 },
-    ).observe(video);
+    for (const video of document.querySelectorAll('.film video')) {
+      let visible = false;
+      const update = () => {
+        if (visible && !reduceMotion.matches) video.play().catch(() => undefined);
+        else video.pause();
+      };
+      reduceMotion.addEventListener('change', update);
+      new IntersectionObserver(
+        ([entry]) => {
+          visible = entry?.isIntersecting ?? false;
+          update();
+        },
+        { threshold: 0.25 },
+      ).observe(video);
+    }
   }
 
   document.addEventListener('DOMContentLoaded', () => {

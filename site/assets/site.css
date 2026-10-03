@@ -739,8 +739,13 @@ kbd {
   object-fit: cover;
 }
 
+/* Phones and small screens get the vertical cut. */
+.film-tall {
+  aspect-ratio: 9 / 16;
+}
+
 @media (prefers-reduced-motion: no-preference) {
-  .film {
+  .film-wide {
     display: block;
   }
   .showcase .browser,
@@ -808,6 +813,14 @@ kbd {
   .film {
     margin-right: 16px;
     border-radius: var(--radius);
+  }
+  .showcase .film-wide {
+    display: none;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .showcase .film-tall {
+      display: block;
+    }
   }
   /* Two columns at a readable size, bleeding off the right edge. */
   .shot {

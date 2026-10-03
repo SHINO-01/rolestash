@@ -25,8 +25,8 @@ All notable changes to this project are documented here. The format follows
 
 - **A short film on the rolestash.com homepage:** 21 seconds of saving a job,
   moving it across the board and what Rolestash knows about you. It plays
-  silently while on screen; with reduced motion you see the board picture
-  instead.
+  silently while on screen, as a vertical cut on phones; with reduced motion
+  you see the board picture instead.
 - **New pages on rolestash.com:** this changelog, known issues with
   workarounds, and a sitemap, all linked from the footer.
 - **rolestash.com is easier to find:** a sitemap, robots.txt and llms.txt;
