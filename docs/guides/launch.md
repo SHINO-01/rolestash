@@ -123,8 +123,10 @@ When the beta is clean and the owner says go:
 
 1. **Owner:** dashboard → **Distribution → Visibility → Public**, then
    submit.
-2. **Ours:** merge the launch-day branch (`claude/dreamy-cray-1377h7`)
-   into `dev`. It holds:
+2. ~~**Ours:** merge the launch-day branch~~ done early, on 2026-10-03,
+   while the item was still in review (the owner chose to keep it live; its
+   store buttons work once the item is published). The branch
+   (`claude/dreamy-cray-1377h7`) held:
    - store links on the homepage hero and plan buttons, and the
      `/pricing/` free plan, instead of `/#notify`;
    - the closing section as an "Add to Chrome" call to action, with the
@@ -132,12 +134,12 @@ When the beta is clean and the owner says go:
    - `/pricing/` in the nav and in search results (no `noindex`);
    - the privacy policy without "Accounts are launching soon".
 
-   Before merging, replace `STORE_ID` in the store links with the item ID
-   (`grep -rl STORE_ID site | xargs sed -i 's/STORE_ID/<id>/g'`), and set
-   "Last updated" on the privacy policy to the launch date.
+   The store links use the item ID, and the privacy policy's "Last
+   updated" is 3 October 2026.
 
-3. **Ours:** deploy the launch-list function so its confirmation emails
-   talk about product news, not the launch:
+3. **Ours, on the go:** deploy the launch-list function so its confirmation
+   emails talk about product news, not the launch (until then they still
+   promise a launch email, which is still true):
    `npx supabase functions deploy launch-list --project-ref fhclnxqumcdsqxyunelp --use-api`.
 4. **Owner says go, then ours:** **Actions → Announce launch** with the
    store URL: _send_ off first (a dry run that shows the count), then on

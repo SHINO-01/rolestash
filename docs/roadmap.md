@@ -106,27 +106,26 @@ feature on the pricing page is built. The site already advertises them all.
 
 Runbook: [guides/launch.md](guides/launch.md).
 
-1. **Paddle live:**
-   - account approval;
-   - live products, prices and local prices;
-   - the live webhook;
-   - `PADDLE_ENV=production`;
-   - the live client token in `site/assets/pay.js`.
+1. ~~**Paddle live**~~ done (v0.4.0): account approval, live products with
+   local and regional prices, the live webhook, `PADDLE_ENV=production` and
+   the live client token in `site/assets/pay.js`.
 2. **Chrome Web Store:**
    - ~~one-time setup and an unlisted first upload~~ done (item
      `cncilbdakhabnocnjokbonggomndedgp`, in review);
    - ~~add that ID to `ROLESTASH_EXTENSION_IDS` in
      `src/services/web-handoff.ts` **and** to `site/assets/auth-google.js`
      (a test keeps the two lists equal)~~ done;
-   - point the plan CTAs on rolestash.com (now `/#notify`) at the store
-     listing (on the held launch-day branch);
+   - ~~point the plan CTAs on rolestash.com at the store listing~~ done
+     (live since 2026-10-03; the buttons work once the item is published);
    - ~~accounts build variables in the extension repo's release workflow~~
      done, and automatic store uploads are set up;
-   - a manifest policy covering `identity`, `alarms`, `notifications` and
-     the optional hosts;
-   - the listing text and new screenshots.
-3. **Privacy:** rewrite PRIVACY.md and the store privacy disclosure to match
-   what ships.
+   - ~~a manifest policy covering `identity`, `alarms`, `notifications` and
+     the optional hosts~~ done (release repo `policy/manifest-policy.json`);
+   - ~~the listing text and new screenshots~~ done (release repo
+     `store/`; the first review rejected site names in the description as
+     keyword spam).
+3. ~~**Privacy:**~~ done: PRIVACY.md, rolestash.com/privacy/ and the store
+   disclosure match what ships.
 4. ~~**Google brand verification**~~ done (name and logo on the consent
    screen).
 5. **Beta, then public:** an unlisted beta with 10–20 testers, then the
