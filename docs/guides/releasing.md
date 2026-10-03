@@ -4,7 +4,8 @@ Releases are automated end to end. See [CI/CD](ci-cd.md) for the full pipeline.
 
 1. On `dev`, make sure `CHANGELOG.md` → _Unreleased_ describes the changes.
 2. `npm run release -- patch` (or `minor`, `major`, `x.y.z`). This bumps
-   `package.json` + `package-lock.json` and dates the changelog section.
+   `package.json` + `package-lock.json`, dates the changelog section and
+   re-renders rolestash.com/changelog/ from it.
 3. Commit (`chore(release): vX.Y.Z`) and push to `dev`.
 4. CI promotes to `main` and creates tag `vX.Y.Z` + a GitHub Release.
 5. rolestash-extension builds, verifies and releases it (daily, or run

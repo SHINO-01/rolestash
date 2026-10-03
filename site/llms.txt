@@ -16,6 +16,9 @@ Key facts:
 - [Home](https://rolestash.com/): what Rolestash does, the facts behind it, and common questions
 - [Pricing](https://rolestash.com/pricing/): plans and prices in your currency
 - [Support](https://rolestash.com/support/): help with installing, capturing, autofill, sync and billing
+- [Known issues](https://rolestash.com/known-issues/): open problems, status and workarounds
+- [Changelog](https://rolestash.com/changelog/): what's new in each release
+- [Sitemap](https://rolestash.com/sitemap/): every page on the site
 
 ## Policies
 

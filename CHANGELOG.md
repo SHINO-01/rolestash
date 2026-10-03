@@ -8,6 +8,8 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- **New pages on rolestash.com:** this changelog, known issues with
+  workarounds, and a sitemap, all linked from the footer.
 - **rolestash.com is easier to find:** a sitemap, robots.txt and llms.txt;
   clearer titles and descriptions, share cards and structured data on every
   public page; more links between pages; the pricing switch fits small

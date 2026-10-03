@@ -80,7 +80,7 @@ function currentVersion(): string {
   return (JSON.parse(read('package.json')) as { version: string }).version;
 }
 
-function release(bump: string): void {
+async function release(bump: string): Promise<void> {
   const version = nextVersion(currentVersion(), bump);
   const today = new Date().toISOString().slice(0, 10);
   writeFileSync(resolve(root, 'CHANGELOG.md'), rollChangelog(read('CHANGELOG.md'), version, today));
@@ -94,13 +94,17 @@ function release(bump: string): void {
     if (rootPackage) rootPackage.version = version;
     writeFileSync(resolve(root, file), `${JSON.stringify(json, null, 2)}\n`);
   }
+  // rolestash.com/changelog/ is rendered from CHANGELOG.md. Loaded only here,
+  // so the other commands still run in CI without installing dependencies.
+  const { buildChangelogPage } = await import('./build-site-changelog.ts');
+  await buildChangelogPage();
   console.log(`Prepared v${version}. Commit ("chore(release): v${version}") and push to dev.`);
 }
 
 function main(args: string[]): void {
   const [command, arg] = args;
   if (command === 'release' && arg) {
-    release(arg);
+    void release(arg);
     return;
   }
   if (command === 'notes') {

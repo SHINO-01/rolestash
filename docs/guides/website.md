@@ -6,20 +6,23 @@ requests. An assets-only Cloudflare Worker
 serves it from `main`, so the site only changes after CI has promoted a
 tested commit (docs/guides/ci-cd.md).
 
-| Path                | Page                                                                     |
-| ------------------- | ------------------------------------------------------------------------ |
-| `site/index.html`   | Landing page: promise, three benefits, proof, FAQ, one call to action    |
-| `site/privacy/`     | Privacy policy (also the store listing URL)                              |
-| `site/terms/`       | Terms of service (Paddle wording included)                               |
-| `site/refunds/`     | Refund policy                                                            |
-| `site/support/`     | Support and FAQ                                                          |
-| `site/404.html`     | Not found                                                                |
-| `site/pay/`         | Paddle checkout (default payment link); `pay/success/` after paying      |
-| `site/pricing/`     | Local prices and Subscribe (ADR-0023); `site/welcome/` after paying      |
-| `site/auth/google/` | Google sign-in hand-off (ADR-0012); own script and CSP                   |
-| `site/notify/`      | Launch-list result pages (check email, confirmed, unsubscribed, problem) |
-| `site/_headers`     | CSP and security headers                                                 |
-| `site/assets/`      | CSS, self-hosted Bricolage Grotesque (OFL), logos, board screenshots     |
+| Path                 | Page                                                                     |
+| -------------------- | ------------------------------------------------------------------------ |
+| `site/index.html`    | Landing page: promise, three benefits, proof, FAQ, one call to action    |
+| `site/privacy/`      | Privacy policy (also the store listing URL)                              |
+| `site/terms/`        | Terms of service (Paddle wording included)                               |
+| `site/refunds/`      | Refund policy                                                            |
+| `site/support/`      | Support and FAQ                                                          |
+| `site/404.html`      | Not found                                                                |
+| `site/pay/`          | Paddle checkout (default payment link); `pay/success/` after paying      |
+| `site/pricing/`      | Local prices and Subscribe (ADR-0023); `site/welcome/` after paying      |
+| `site/auth/google/`  | Google sign-in hand-off (ADR-0012); own script and CSP                   |
+| `site/notify/`       | Launch-list result pages (check email, confirmed, unsubscribed, problem) |
+| `site/changelog/`    | Changelog, rendered from `CHANGELOG.md` (`npm run site:changelog`)       |
+| `site/known-issues/` | Known issues: open bugs with status and workarounds, and limitations     |
+| `site/sitemap/`      | Every page, for people (search engines use `sitemap.xml`)                |
+| `site/_headers`      | CSP and security headers                                                 |
+| `site/assets/`       | CSS, self-hosted Bricolage Grotesque (OFL), logos, board screenshots     |
 
 ## Rules
 
@@ -76,6 +79,13 @@ tested commit (docs/guides/ci-cd.md).
   animates under `prefers-reduced-motion`, and the content is complete
   without the animations. Prefer CSS: the theme switch is the only script,
   because remembering a choice across pages needs one.
+- **The changelog page is generated.** Never edit `site/changelog/` by
+  hand: write the entry in `CHANGELOG.md` and run `npm run site:changelog`
+  (the release command does it too). ADR references are dropped and
+  _Unreleased_ shows as "Next update".
+- **Known issues are kept by hand.** Add a confirmed bug with who it
+  affects, its status and a workaround; when a release fixes it, move it out
+  (the changelog records the fix) and update "Last updated" and the version.
 - **Legal pages describe what actually ships.** Update the privacy policy
   in the same PR as any change to what the extension or backend collects,
   and bump "Last updated".

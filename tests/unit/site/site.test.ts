@@ -1,6 +1,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { runInNewContext } from 'node:vm';
+import { format, resolveConfig } from 'prettier';
 import { stampChrome } from '../../../scripts/build-site-chrome';
 
 /** Chrome maps extension-ID hex digits 0-f to the letters a-p. */
@@ -55,7 +56,9 @@ describe('rolestash.com static site', () => {
       [
         '404.html',
         'auth/google/index.html',
+        'changelog/index.html',
         'index.html',
+        'known-issues/index.html',
         'notify/check-email/index.html',
         'notify/confirmed/index.html',
         'notify/problem/index.html',
@@ -65,6 +68,7 @@ describe('rolestash.com static site', () => {
         'pricing/index.html',
         'privacy/index.html',
         'refunds/index.html',
+        'sitemap/index.html',
         'support/index.html',
         'terms/index.html',
         'welcome/index.html',
@@ -166,6 +170,18 @@ describe('rolestash.com static site', () => {
       for (let i = 1; i < levels.length; i++)
         expect((levels[i] ?? 0) - (levels[i - 1] ?? 0)).toBeLessThanOrEqual(1);
       for (const img of doc.querySelectorAll('img')) expect(img.hasAttribute('alt')).toBe(true);
+    });
+
+    it('shows the changelog exactly as CHANGELOG.md says (npm run site:changelog)', async () => {
+      const { renderChangelog, withChangelog } =
+        await import('../../../scripts/build-site-changelog');
+      const page = readFileSync(join(SITE, 'changelog/index.html'), 'utf8');
+      const markdown = readFileSync(resolve(SITE, '../CHANGELOG.md'), 'utf8');
+      const rebuilt = await format(withChangelog(page, renderChangelog(markdown)), {
+        parser: 'html',
+        ...(await resolveConfig(join(SITE, 'changelog/index.html'))),
+      });
+      expect(page).toBe(rebuilt);
     });
 
     it('keeps the 404 page and private pages out of search', () => {
@@ -428,7 +444,8 @@ describe('rolestash.com static site', () => {
     expect(new Set(links).size).toBe(1);
     expect(links[0]).toMatch(store);
     // Nothing still points at the pre-launch "Notify me" form.
-    for (const { file, doc } of pages)
+    // The changelog quotes past releases, so it may name them.
+    for (const { file, doc } of pages.filter((p) => p.file !== 'changelog/index.html'))
       expect(doc.body.textContent, file).not.toMatch(/Notify me at launch|Launching soon/);
   });
 

@@ -60,7 +60,8 @@ entrypoints ─► features ─► ui
   (`src/storage/migrations.ts`) **and** a backup upgrade step, plus tests. See
   `docs/reference/storage.md`.
 - Significant decision? Add an ADR in `docs/adr/` (copy `0000-template.md`).
-- Update `CHANGELOG.md` under _Unreleased_.
+- Update `CHANGELOG.md` under _Unreleased_, then run `npm run site:changelog`
+  (rolestash.com/changelog/ is rendered from it; a test fails if it's stale).
 - Conventional Commits (`feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`).
 
 ## Where to start for common tasks
