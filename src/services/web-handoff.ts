@@ -12,7 +12,10 @@ export interface WebHandoffReply {
 
 /**
  * Rolestash extension IDs the board asks: the pinned development/staging ID,
- * plus the Chrome Web Store ID once assigned. Keep in step with
+ * and the Chrome Web Store ID. Keep in step with
  * site/assets/auth-google.js (a test checks).
  */
-export const ROLESTASH_EXTENSION_IDS = ['bdajnmkjahhphadpdbbkibljcheonejp'] as const;
+export const ROLESTASH_EXTENSION_IDS = [
+  'bdajnmkjahhphadpdbbkibljcheonejp',
+  'cncilbdakhabnocnjokbonggomndedgp',
+] as const;

@@ -6,6 +6,11 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- **Google sign-in works in the Chrome Web Store build:** rolestash.com now
+  hands sign-ins to the store's extension as well as the development build.
+
 ## [0.4.0] — 2026-10-02
 
 ### Added

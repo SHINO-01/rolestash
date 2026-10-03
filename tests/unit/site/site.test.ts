@@ -284,7 +284,8 @@ describe('rolestash.com static site', () => {
     const { ROLESTASH_EXTENSION_IDS } = await import('../../../src/services/web-handoff');
     const code = readFileSync(join(SITE, 'assets/auth-google.js'), 'utf8');
     const listed = /ALLOWED_EXTENSION_IDS = (\[[^\]]*\])/.exec(code)?.[1] ?? '[]';
-    expect(JSON.parse(listed.replace(/'/g, '"')) as string[]).toEqual([...ROLESTASH_EXTENSION_IDS]);
+    const ids = [...listed.matchAll(/'([a-p]{32})'/g)].map((m) => m[1]);
+    expect(ids).toEqual([...ROLESTASH_EXTENSION_IDS]);
   });
 
   it('keeps the Google hand-off page private: own script only, no referrer, not cached', () => {

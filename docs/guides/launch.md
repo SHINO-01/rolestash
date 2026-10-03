@@ -46,10 +46,15 @@ release here (`npm run release -- patch`) so _Release_ builds again.
      Paddle, not the store), all regions, and visibility **Unlisted**.
 5. **Submit for review.** Untick "publish automatically" if you'd rather
    publish by hand after approval.
-6. Copy the **item ID** (32 letters, shown on the item page and in its
+6. If it's rejected, the email quotes the offending text. The first review
+   flagged the list of job-site names in the description as keyword spam;
+   describe supported sites in general terms instead.
+7. Copy the **item ID** (32 letters, shown on the item page and in its
    URL) and send it to us.
 
 ## 3. Wire the store ID in (ours, after the owner sends the ID)
+
+Done 2026-10-03: the item ID is `cncilbdakhabnocnjokbonggomndedgp`.
 
 In one commit on `dev`:
 

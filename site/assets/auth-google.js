@@ -5,8 +5,11 @@
 // Fragments are never sent to any server, including this one.
 
 // Rolestash extension IDs allowed to receive sign-ins: the pinned
-// development/staging ID, plus the Chrome Web Store ID once assigned.
-const ALLOWED_EXTENSION_IDS = ['bdajnmkjahhphadpdbbkibljcheonejp'];
+// development/staging ID and the Chrome Web Store ID.
+const ALLOWED_EXTENSION_IDS = [
+  'bdajnmkjahhphadpdbbkibljcheonejp',
+  'cncilbdakhabnocnjokbonggomndedgp',
+];
 
 /** Where to forward `hash`, or null when it isn't for a Rolestash extension. */
 function forwardTarget(hash) {
