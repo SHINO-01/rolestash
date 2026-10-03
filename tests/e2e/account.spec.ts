@@ -116,9 +116,14 @@ test.describe('accounts', () => {
     await expect.poll(() => backend.shareLearning).toBe(false);
 
     const profile = dialog.getByRole('region', { name: 'Profile' });
-    // No name to type: the first name comes from the email (jo@example.com).
-    await expect(profile.getByText('Jo', { exact: true })).toBeVisible();
-    await expect(profile.getByLabel('Display name')).toHaveCount(0);
+    // An email says nothing about a name, so it's asked once (ADR-0024).
+    await dialog.getByLabel('Full name').fill('Jo Example');
+    await dialog.getByRole('button', { name: 'Save name' }).click();
+    await expect(profile.getByText('Jo Example', { exact: true })).toBeVisible();
+    await expect(dialog.getByText('What’s your name?')).toHaveCount(0);
+    expect(backend.profile?.display_name).toBe('Jo Example');
+    // The welcome email is asked for once, after signing in.
+    expect(backend.welcomes).toBe(1);
     // A 3×2 red PNG: resized on the device to a 128-pixel square before saving.
     await profile.getByLabel('Choose a profile photo').setInputFiles({
       name: 'me.png',
@@ -130,6 +135,8 @@ test.describe('accounts', () => {
     });
     await expect(page.getByText('Photo saved')).toBeVisible();
     expect(backend.profile?.avatar).toMatch(/^data:image\/(webp|jpeg);base64,/);
+    // Adding a photo keeps the name.
+    expect(backend.profile?.display_name).toBe('Jo Example');
     const header = page.getByRole('button', { name: 'Account', exact: true }).locator('img');
     await expect(header).toHaveAttribute('src', /^data:image\//);
     const size = await header.evaluate((img: HTMLImageElement) => [
@@ -859,6 +866,64 @@ test.describe('accounts', () => {
     await panel.reload();
     await expect(panel.getByText('Your whole board, right here')).toBeVisible();
     await expect(panel.getByRole('button', { name: 'Today' })).toHaveCount(0);
+  });
+
+  test('reports a problem from the board, showing what is sent (ADR-0024)', async ({
+    context,
+    extensionId,
+    backend,
+  }) => {
+    const page = await context.newPage();
+    await page.goto(`chrome-extension://${extensionId}/board.html`);
+    await page.getByRole('button', { name: 'Board menu' }).click();
+    await page.getByRole('menuitem', { name: 'Report a problem…' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Report a problem' });
+    await expect(dialog.getByText('We’ll also send')).toBeVisible();
+    await expect(dialog.getByText('Never your jobs, notes or profile.')).toBeVisible();
+    const send = dialog.getByRole('button', { name: 'Send report' });
+    await expect(send).toBeDisabled();
+    await dialog.getByLabel('What happened?').fill('The salary came out empty.');
+    await dialog.getByLabel('Email for our reply (optional)').fill('casey@example.com');
+    await send.click();
+    await expect(
+      page.getByText('Report #1 is with a real person.', { exact: false }),
+    ).toBeVisible();
+    expect(backend.bugReports[0]).toMatchObject({
+      message: 'The salary came out empty.',
+      contactEmail: 'casey@example.com',
+      context: { where: 'board', plan: 'free' },
+    });
+    const context0 = (backend.bugReports[0] as { context: Record<string, string> }).context;
+    expect(Object.keys(context0).sort()).toEqual(['browser', 'plan', 'version', 'where']);
+  });
+
+  test('asks for a store rating only after real use, and "Don’t ask again" ends it', async ({
+    context,
+    worker,
+    extensionId,
+  }) => {
+    await seedActiveJobs(worker, 10);
+    await worker.evaluate(async () => {
+      const weekAgo = new Date(Date.now() - 8 * 86_400_000).toISOString();
+      await chrome.storage.local.set({ 'prompts:rating': { asks: 0, firstSeenAt: weekAgo } });
+    });
+    const page = await context.newPage();
+    await page.goto(`chrome-extension://${extensionId}/board.html`);
+    const prompt = page.getByRole('complementary', { name: 'Rate Rolestash' });
+    await expect(prompt).toBeVisible({ timeout: 10_000 });
+    await expect(prompt.getByRole('link', { name: 'Rate Rolestash' })).toHaveAttribute(
+      'href',
+      /chromewebstore\.google\.com\/detail\/rolestash\/[a-p]{32}\/reviews$/,
+    );
+    await prompt.getByRole('button', { name: 'Don’t ask again' }).click();
+    await expect(prompt).toHaveCount(0);
+    await expect
+      .poll(() =>
+        worker.evaluate(
+          async () => (await chrome.storage.local.get('prompts:rating'))['prompts:rating'],
+        ),
+      )
+      .toMatchObject({ done: true, asks: 1 });
   });
 
   test('the board can make the toolbar icon open the side panel (ADR-0021)', async ({

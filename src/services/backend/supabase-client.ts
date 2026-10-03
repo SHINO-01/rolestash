@@ -599,6 +599,35 @@ export class SupabaseClient {
     if (status >= 300) this.fail(status, data);
   }
 
+  /** Asks for the welcome email; the server sends it once per account (ADR-0024). */
+  async sendWelcome(accessToken: string): Promise<boolean> {
+    const { status, data } = await this.request('/functions/v1/welcome', {
+      body: {},
+      token: accessToken,
+    });
+    if (status === 401) throw new BackendError('session_expired', status);
+    if (status >= 300) this.fail(status, data);
+    return (data as { sent?: unknown } | null)?.sent === true;
+  }
+
+  /**
+   * Sends a bug report (ADR-0024). Works signed out; when signed in, the
+   * account is attached so support can see the plan. Returns the report id.
+   */
+  async reportBug(
+    report: { message: string; contactEmail?: string; context: Record<string, string> },
+    accessToken?: string,
+  ): Promise<number> {
+    const { status, data } = await this.request('/functions/v1/bug-report', {
+      body: report,
+      ...(accessToken ? { token: accessToken } : {}),
+    });
+    if (status >= 300) this.fail(status, data);
+    const id = (data as { id?: unknown } | null)?.id;
+    if (typeof id !== 'number') throw new BackendError('server');
+    return id;
+  }
+
   async deleteAccount(accessToken: string): Promise<void> {
     const { status, data } = await this.request('/functions/v1/delete-account', {
       body: {},

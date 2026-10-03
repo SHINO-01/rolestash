@@ -2,20 +2,23 @@
 
 All data lives in `chrome.storage.local` (with `unlimitedStorage`).
 
-| Key                   | Value                                                                                                        |
-| --------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `meta`                | `{ schemaVersion: number }`                                                                                  |
-| `settings`            | `Settings`                                                                                                   |
-| `job:<id>`            | `Job` (one key per job)                                                                                      |
-| `account:session`     | Supabase session (accounts builds only; not backed up)                                                       |
-| `account:entitlement` | Cached entitlement + `checkedAt` (accounts builds only)                                                      |
-| `reminders`           | Reminders already sent (ADR-0015); not backed up                                                             |
-| `sync:state`          | Sync cursor, device id and what was last synced (ADR-0016); not backed up                                    |
-| `sync:lock`           | Short lease so two contexts don't sync at once                                                               |
-| `sync:deletions`      | When each job was deleted on this device (up to 1,000), so its tombstone carries that time; not backed up    |
-| `email:state`         | Email updates: event cursor, threads, taught senders, unsorted updates, Gmail code (ADR-0014); not backed up |
-| `profile`             | Autofill profile (ADR-0020); this device only: not synced, not backed up                                     |
-| `email:lock`          | Short lease so two contexts don't apply email updates at once                                                |
+| Key                    | Value                                                                                                        |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `meta`                 | `{ schemaVersion: number }`                                                                                  |
+| `settings`             | `Settings`                                                                                                   |
+| `job:<id>`             | `Job` (one key per job)                                                                                      |
+| `account:session`      | Supabase session (accounts builds only; not backed up)                                                       |
+| `account:entitlement`  | Cached entitlement + `checkedAt` (accounts builds only)                                                      |
+| `reminders`            | Reminders already sent (ADR-0015); not backed up                                                             |
+| `sync:state`           | Sync cursor, device id and what was last synced (ADR-0016); not backed up                                    |
+| `sync:lock`            | Short lease so two contexts don't sync at once                                                               |
+| `sync:deletions`       | When each job was deleted on this device (up to 1,000), so its tombstone carries that time; not backed up    |
+| `email:state`          | Email updates: event cursor, threads, taught senders, unsorted updates, Gmail code (ADR-0014); not backed up |
+| `profile`              | Autofill profile (ADR-0020); this device only: not synced, not backed up                                     |
+| `account:welcomed`     | Account id the welcome email was requested for (ADR-0024); the server sends it once                          |
+| `account:name-skipped` | Account id whose one-time name question was skipped on this device (ADR-0024)                                |
+| `prompts:rating`       | Store-rating prompt: first visit, times asked, snooze, done (ADR-0024); this device only, not backed up      |
+| `email:lock`           | Short lease so two contexts don't apply email updates at once                                                |
 
 Access only through `JobRepository` / `SettingsRepository`
 (`src/storage/`), which depend on the `KeyValueStore` port.

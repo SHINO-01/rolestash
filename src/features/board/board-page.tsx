@@ -1,5 +1,6 @@
 import {
   BarChart3,
+  Bug,
   Download,
   BellRing,
   CalendarDays,
@@ -30,6 +31,9 @@ import { jobsToCsv } from '@/storage/csv-export';
 import { requestNotifications } from '@/platform/notifications';
 import { setIconOpensPanel } from '@/platform/side-panel';
 import { PinTip } from './pin-tip';
+import { Greeting } from '@/features/feedback/greeting';
+import { RatingPrompt } from '@/features/feedback/rating-prompt';
+import { ReportDialog } from '@/features/feedback/report-dialog';
 import { AccountDialog } from '@/features/account/account-dialog';
 import { PlanBanner } from '@/features/account/plan-banner';
 import { UnsortedDialog } from '@/features/email/unsorted-dialog';
@@ -83,6 +87,7 @@ export function BoardPage() {
     | 'unsorted'
     | 'profile'
     | 'insights'
+    | 'report'
     | null
   >(() =>
     location.hash === '#account' ? 'account' : location.hash === '#profile' ? 'profile' : null,
@@ -288,6 +293,10 @@ export function BoardPage() {
             <Kbd>/</Kbd>
           </span>
         </div>
+        <Greeting
+          firstName={accountState?.firstName}
+          className="text-muted hidden min-w-0 truncate text-sm 2xl:block"
+        />
         <div className="flex-1" />
         <BoardStats jobs={onBoard} stages={settings.stages} />
         {unsortedCount > 0 ? (
@@ -452,6 +461,11 @@ export function BoardPage() {
               icon: <Keyboard className="size-4" />,
               onSelect: () => void browser.tabs.create({ url: 'chrome://extensions/shortcuts' }),
             },
+            {
+              label: 'Report a problem…',
+              icon: <Bug className="size-4" />,
+              onSelect: () => setDialog('report'),
+            },
           ]}
         />
       </header>
@@ -526,6 +540,14 @@ export function BoardPage() {
         onSeePlans={account ? () => setDialog('account') : undefined}
       />
       <ImportDialog open={dialog === 'import'} onClose={() => setDialog(null)} />
+      <ReportDialog
+        open={dialog === 'report'}
+        onClose={() => setDialog(null)}
+        feedback={services.feedback}
+        where="board"
+        {...(accountState?.email ? { email: accountState.email } : {})}
+      />
+      <RatingPrompt feedback={services.feedback} />
       <UnsortedDialog open={dialog === 'unsorted'} onClose={() => setDialog(null)} />
       <InsightsDialog
         open={dialog === 'insights'}

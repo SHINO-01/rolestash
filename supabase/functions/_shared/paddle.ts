@@ -226,6 +226,11 @@ export class PaddleClient {
     return (JSON.parse(text) as { data: T }).data;
   }
 
+  /** Sets the name Paddle shows on receipts and in Subscription Management. */
+  async updateCustomerName(customerId: string, name: string): Promise<void> {
+    await this.call('PATCH', `/customers/${encodeURIComponent(customerId)}`, { name });
+  }
+
   /** A checkout URL on our default payment link, carrying `_ptxn`. */
   async createCheckout(input: {
     priceId: string;

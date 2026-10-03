@@ -1,4 +1,4 @@
-import { AlertCircle, Check, LayoutGrid, PanelRight, PenLine } from 'lucide-react';
+import { AlertCircle, Bug, Check, LayoutGrid, PanelRight, PenLine } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Job } from '@/domain/job';
 import { findStage, type Stage } from '@/domain/stage';
@@ -15,6 +15,9 @@ import { draftFromResult, emptyDraft, postingFromDraft, type Draft } from './cap
 import { CaptureForm } from './capture-form';
 import { DebugPanel } from './debug-panel';
 import { AutofillBar } from '@/features/autofill/autofill-bar';
+import { Greeting } from '@/features/feedback/greeting';
+import { ReportDialog } from '@/features/feedback/report-dialog';
+import { useAccount } from '@/ui/hooks/account';
 
 type State =
   | { kind: 'loading' }
@@ -30,6 +33,8 @@ export function CapturePopup() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string>();
   const [limited, setLimited] = useState<JobLimitError>();
+  const [reporting, setReporting] = useState(false);
+  const { state: accountState } = useAccount();
   const started = useRef(false);
 
   const capture = useCallback(async () => {
@@ -105,6 +110,9 @@ export function CapturePopup() {
       <header className="bg-surface border-line flex h-12 shrink-0 items-center justify-between border-b px-4">
         <Logo />
         <div className="flex items-center gap-1">
+          <IconButton size="sm" label="Report a problem" onClick={() => setReporting(true)}>
+            <Bug className="size-4" />
+          </IconButton>
           <IconButton
             size="sm"
             label="Open side panel"
@@ -122,6 +130,10 @@ export function CapturePopup() {
           </Button>
         </div>
       </header>
+      <Greeting
+        firstName={accountState?.firstName}
+        className="text-muted border-line border-b px-4 py-2 text-[13px]"
+      />
 
       <main className="flex-1 scrollbar-thin overflow-y-auto p-4">
         {state.kind !== 'loading' && state.kind !== 'saved' ? (
@@ -194,6 +206,14 @@ export function CapturePopup() {
 
         {state.kind === 'saved' ? <Saved job={state.job} stages={settings.stages} /> : null}
       </main>
+      <ReportDialog
+        open={reporting}
+        onClose={() => setReporting(false)}
+        feedback={services.feedback}
+        where="popup"
+        {...(accountState?.email ? { email: accountState.email } : {})}
+        {...('tab' in state && state.tab?.url?.startsWith('http') ? { page: state.tab.url } : {})}
+      />
     </div>
   );
 }

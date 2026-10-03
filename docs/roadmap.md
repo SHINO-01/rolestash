@@ -135,6 +135,15 @@ Runbook: [guides/launch.md](guides/launch.md).
      [guides/website.md](guides/website.md)). Real quotes only, with
      permission.
 
+## Next
+
+- **Launch video** on rolestash.com in place of the static board image
+  (owner request, 2026-10-04; made with the brag skill, self-hosted).
+- **Operations dashboard** at `operations.rolestash.com` for us: Cloudflare,
+  Paddle (refunds, disputes, discounts), Resend, Search Console and ad
+  accounts in one place, behind owner-only sign-in. Not urgent; needs a
+  short design note first (which APIs, read-only tokens, Cloudflare Access).
+
 ## Later
 
 - Edge and Firefox builds.

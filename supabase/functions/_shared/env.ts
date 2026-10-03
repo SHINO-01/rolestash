@@ -16,7 +16,18 @@ export function readEnv(get: (name: string) => string | undefined): FunctionEnv 
   if (paddleEnv !== 'sandbox' && paddleEnv !== 'production')
     throw new Error('PADDLE_ENV must be "sandbox" or "production"');
   const environment: 'sandbox' | 'production' = paddleEnv;
+  // Email (Resend) is optional: only the welcome and bug-report functions use it.
+  const resendApiKey = get('RESEND_API_KEY');
   return {
+    ...(resendApiKey
+      ? {
+          email: {
+            resendApiKey,
+            from: get('ACCOUNT_FROM') ?? 'Rolestash <noreply@rolestash.com>',
+            support: get('SUPPORT_EMAIL') ?? 'support@rolestash.com',
+          },
+        }
+      : {}),
     supabase: {
       url: need('SUPABASE_URL'),
       anonKey: need('SUPABASE_ANON_KEY'),

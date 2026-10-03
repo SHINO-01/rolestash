@@ -32,6 +32,8 @@ const services = createServices(
     authFlow: noAuthFlow,
   },
   { name: webDeviceName(), kind: 'web' },
+  undefined,
+  { version: 'web board', browser: webDeviceName() },
 );
 
 mountApp(services, <WebBoard />);

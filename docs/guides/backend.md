@@ -167,11 +167,17 @@ It then tags the subscription with the `user_id`. `PADDLE_ENV` must be
 | ----------------- | ----------------------- | ----------------------------------------------------------------------------------------- |
 | `paddle-webhook`  | Paddle (signed, no JWT) | Verifies `Paddle-Signature`, applies `subscription.*` events                              |
 | `create-checkout` | Extension (user JWT)    | Creates a Paddle transaction with `custom_data.user_id`; returns its checkout URL         |
-| `billing-portal`  | Extension (user JWT)    | Returns a one-time Paddle customer-portal link                                            |
+| `billing-portal`  | Extension (user JWT)    | Sets the Paddle customer's name from the profile, then returns a one-time portal link     |
 | `change-plan`     | Extension (user JWT)    | Moves a live subscription between Pro and Advanced (prorated)                             |
 | `delete-account`  | Extension (user JWT)    | Cancels a live subscription immediately, then deletes the user                            |
 | `web-handoff`     | Extension (user JWT)    | Single-use sign-in token for the web board (admin `generate_link`; ADR-0017)              |
 | `launch-list`     | rolestash.com form      | Updates-list signup, confirm, unsubscribe and campaign sends (docs/guides/launch-list.md) |
+| `welcome`         | Extension (user JWT)    | Sends the welcome email once per account (claims `welcome_sent_at`; ADR-0024)             |
+| `bug-report`      | Anyone (JWT optional)   | Stores a problem report, emails support; 5 an hour per IP (hashed); ADR-0024              |
+
+`welcome` and `bug-report` need `RESEND_API_KEY` (shared with the launch
+list); `ACCOUNT_FROM` and `SUPPORT_EMAIL` are optional overrides. Without
+the key they answer 503 and the extension keeps its local fallback.
 
 All the logic is in `supabase/functions/_shared/`. It's plain TypeScript
 with injected `fetch`, unit-tested in `tests/unit/functions/` under the same

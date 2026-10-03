@@ -72,6 +72,12 @@ field to fill in:
 `…_profile_upsert_grant.sql`; RLS still limits each user to their own row. A
 pgTAP test now runs the exact upsert.
 
+## Revision (2026-10-04): a real name again
+
+ADR-0024 brings the name back as the account's full name: Google's name is
+saved automatically, email-code accounts are asked once, and the name goes
+to Paddle. The email guess remains only for the greeting's fallback.
+
 ## Alternatives considered
 
 - **Google profile photo URL:** a third-party request on every view. Rejected.

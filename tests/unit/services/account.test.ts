@@ -82,6 +82,7 @@ describe('AccountService sign-in', () => {
       plan: { plan: 'free', reason: 'no-account' },
       hasBillingAccount: false,
       profile: {},
+      needsName: false,
     });
   });
 
@@ -505,6 +506,77 @@ describe('AccountService profile and sharing choice (ADR-0022)', () => {
     await byEmail.account.verifyEmailCode('jo@example.com', '123456');
     expect((await byEmail.account.state()).firstName).toBe('Jo');
     expect((await byEmail.account.state()).profile).toEqual({});
+  });
+
+  it('names the account from Google and saves it, so Paddle and other devices see it', async () => {
+    const google = setup({
+      [`POST ${SB}/auth/v1/token`]: {
+        status: 200,
+        body: {
+          access_token: 'g1',
+          refresh_token: 'r-g1',
+          expires_in: 3600,
+          user: { ...USER, user_metadata: { full_name: 'Jo Example-Smith' } },
+        },
+      },
+      [`GET ${SB}/rest/v1/account_profiles`]: { status: 200, body: [] },
+      [`POST ${SB}/rest/v1/account_profiles`]: { status: 201, body: null },
+      [`POST ${SB}/functions/v1/welcome`]: { status: 200, body: { sent: true } },
+    });
+    await google.account.signInWithGoogle();
+    const save = google.calls.find(
+      (c) => c.method === 'POST' && c.url.includes('account_profiles'),
+    );
+    expect(save?.body).toMatchObject({ display_name: 'Jo Example-Smith' });
+    const state = await google.account.state();
+    expect(state).toMatchObject({ name: 'Jo Example-Smith', firstName: 'Jo', needsName: false });
+  });
+
+  it('asks email-code accounts for their name once, and Skip stops asking', async () => {
+    const { account, calls } = setup({
+      [`GET ${SB}/rest/v1/account_profiles`]: { status: 200, body: [] },
+      [`POST ${SB}/rest/v1/account_profiles`]: { status: 201, body: null },
+      [`POST ${SB}/functions/v1/welcome`]: { status: 200, body: { sent: true } },
+    });
+    await account.verifyEmailCode('jo@example.com', '123456');
+    expect((await account.state()).needsName).toBe(true);
+    await account.skipName();
+    expect((await account.state()).needsName).toBe(false);
+
+    await account.saveProfile({ avatar: PICTURE });
+    await account.saveName('  Joanna Example ');
+    const last = calls
+      .filter((c) => c.method === 'POST' && c.url.includes('account_profiles'))
+      .at(-1);
+    // Saving the name keeps the picture.
+    expect(last?.body).toMatchObject({ display_name: 'Joanna Example', avatar: PICTURE });
+    expect(await account.state()).toMatchObject({ name: 'Joanna Example', firstName: 'Joanna' });
+  });
+
+  it('asks for the welcome email once per account on this device', async () => {
+    const { account, calls } = setup({
+      [`GET ${SB}/rest/v1/account_profiles`]: { status: 200, body: [] },
+      [`POST ${SB}/functions/v1/welcome`]: { status: 200, body: { sent: true } },
+    });
+    await account.verifyEmailCode('jo@example.com', '123456');
+    await account.welcomeOnce();
+    await account.welcomeOnce();
+    const asks = calls.filter((c) => c.url.endsWith('/functions/v1/welcome'));
+    expect(asks).toHaveLength(1);
+    expect(asks[0]?.headers.Authorization).toBe('Bearer a1');
+  });
+
+  it('keeps asking for the welcome on later sign-ins if the server was unreachable', async () => {
+    let up = false;
+    const { account, calls } = setup({
+      [`GET ${SB}/rest/v1/account_profiles`]: { status: 200, body: [] },
+      [`POST ${SB}/functions/v1/welcome`]: () =>
+        up ? { status: 200, body: { sent: true } } : { status: 503, body: {} },
+    });
+    await account.verifyEmailCode('jo@example.com', '123456');
+    up = true;
+    await account.welcomeOnce();
+    expect(calls.filter((c) => c.url.endsWith('/functions/v1/welcome'))).toHaveLength(2);
   });
 
   it('shows prices in the user’s currency, cached for a day, US prices if offline', async () => {

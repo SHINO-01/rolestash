@@ -28,7 +28,9 @@ describe('account profile', () => {
     expect(AccountProfileSchema.parse({ displayName: '  Sam  ' }).displayName).toBe('Sam');
     expect(AccountProfileSchema.safeParse({ displayName: '   ' }).success).toBe(false);
     expect(AccountProfileSchema.safeParse({ displayName: 'a\u0007b' }).success).toBe(false);
-    expect(AccountProfileSchema.safeParse({ displayName: 'x'.repeat(51) }).success).toBe(false);
+    // Legal names can be long (ADR-0024): up to 100 characters, like the database.
+    expect(AccountProfileSchema.safeParse({ displayName: 'x'.repeat(100) }).success).toBe(true);
+    expect(AccountProfileSchema.safeParse({ displayName: 'x'.repeat(101) }).success).toBe(false);
   });
 
   it('gives each email a stable colour', () => {

@@ -24,6 +24,19 @@ export interface EntitlementRow {
   current_period_end: string | null;
 }
 
+export interface ProfileRow {
+  display_name: string | null;
+  welcome_sent_at: string | null;
+}
+
+export interface BugReportRow {
+  user_id: string | null;
+  contact_email: string | null;
+  message: string;
+  context: Record<string, unknown>;
+  ip_hash: string | null;
+}
+
 export class SupabaseAdmin {
   constructor(
     private readonly config: SupabaseAdminConfig,
@@ -48,6 +61,84 @@ export class SupabaseAdmin {
     return typeof user.id === 'string'
       ? { id: user.id, email: typeof user.email === 'string' ? user.email : null }
       : null;
+  }
+
+  /** The account's name and welcome-email state, or null with no profile row. */
+  async profile(userId: string): Promise<ProfileRow | null> {
+    const response = await this.fetchFn(
+      `${this.config.url}/rest/v1/account_profiles?user_id=eq.${encodeURIComponent(userId)}` +
+        '&select=display_name,welcome_sent_at',
+      { headers: this.serviceHeaders() },
+    );
+    if (!response.ok) throw new Error(`profile lookup failed: ${response.status}`);
+    return ((await response.json()) as ProfileRow[])[0] ?? null;
+  }
+
+  /**
+   * Marks the welcome email as sent, once: true only for the call that set
+   * it, so two devices signing in together can't both send it.
+   */
+  async claimWelcome(userId: string, at: Date): Promise<boolean> {
+    const base = `${this.config.url}/rest/v1/account_profiles`;
+    const ensure = await this.fetchFn(`${base}?on_conflict=user_id`, {
+      method: 'POST',
+      headers: { ...this.serviceHeaders(), Prefer: 'resolution=ignore-duplicates' },
+      body: JSON.stringify({ user_id: userId }),
+    });
+    if (!ensure.ok) throw new Error(`profile create failed: ${ensure.status}`);
+    const claim = await this.fetchFn(
+      `${base}?user_id=eq.${encodeURIComponent(userId)}&welcome_sent_at=is.null`,
+      {
+        method: 'PATCH',
+        headers: { ...this.serviceHeaders(), Prefer: 'return=representation' },
+        body: JSON.stringify({ welcome_sent_at: at.toISOString() }),
+      },
+    );
+    if (!claim.ok) throw new Error(`welcome claim failed: ${claim.status}`);
+    return ((await claim.json()) as unknown[]).length === 1;
+  }
+
+  /** Undoes a claim when the email couldn't be sent, so the next sign-in retries. */
+  async releaseWelcome(userId: string): Promise<void> {
+    await this.fetchFn(
+      `${this.config.url}/rest/v1/account_profiles?user_id=eq.${encodeURIComponent(userId)}`,
+      {
+        method: 'PATCH',
+        headers: this.serviceHeaders(),
+        body: JSON.stringify({ welcome_sent_at: null }),
+      },
+    );
+  }
+
+  /** How many reports came from this (hashed) address since `since`. */
+  async bugReportsSince(ipHash: string, since: Date): Promise<number> {
+    const response = await this.fetchFn(
+      `${this.config.url}/rest/v1/bug_reports?ip_hash=eq.${ipHash}` +
+        `&created_at=gte.${encodeURIComponent(since.toISOString())}&select=id`,
+      { headers: { ...this.serviceHeaders(), Prefer: 'count=exact', Range: '0-0' } },
+    );
+    if (!response.ok) throw new Error(`report count failed: ${response.status}`);
+    const total = /\/(\d+)$/.exec(response.headers.get('Content-Range') ?? '')?.[1];
+    return total ? Number(total) : 0;
+  }
+
+  /** Stores a report and returns its id; reports past 12 months are deleted. */
+  async insertBugReport(row: BugReportRow, now: Date): Promise<number> {
+    const base = `${this.config.url}/rest/v1/bug_reports`;
+    const response = await this.fetchFn(base, {
+      method: 'POST',
+      headers: { ...this.serviceHeaders(), Prefer: 'return=representation' },
+      body: JSON.stringify(row),
+    });
+    if (!response.ok) throw new Error(`report insert failed: ${response.status}`);
+    const [created] = (await response.json()) as { id: number }[];
+    const yearAgo = new Date(now.getTime() - 365 * 24 * 3600_000).toISOString();
+    await this.fetchFn(`${base}?created_at=lt.${encodeURIComponent(yearAgo)}`, {
+      method: 'DELETE',
+      headers: this.serviceHeaders(),
+    }).catch(() => undefined);
+    if (!created) throw new Error('report insert returned nothing');
+    return created.id;
   }
 
   async entitlement(userId: string): Promise<EntitlementRow | null> {

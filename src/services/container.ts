@@ -5,6 +5,7 @@ import { migrate } from '@/storage/migrations';
 import { SettingsRepository } from '@/storage/settings-repository';
 import { ProfileRepository } from '@/storage/profile-repository';
 import { AccountService } from './account-service';
+import { FeedbackService, type AboutThisCopy } from './feedback-service';
 import { AutofillService } from './autofill-service';
 import type { SupabaseClient } from './backend/supabase-client';
 import { CaptureService } from './capture-service';
@@ -30,6 +31,8 @@ export interface Services {
   runner: ExtractorRunner;
   /** Present only in builds configured with a backend (ADR-0011). */
   account?: AccountService;
+  /** Store-rating prompt and bug reports (ADR-0024). */
+  feedback: FeedbackService;
   /** Sync across devices (ADR-0016); present with `account`. */
   sync?: SyncService;
   /** Email status updates (Advanced; ADR-0014); present with `account`. */
@@ -55,6 +58,7 @@ export function createServices(
   backend?: BackendDeps,
   device: ThisDevice = { name: 'This computer', kind: 'computer' },
   autofillRunner?: AutofillRunner,
+  about: AboutThisCopy = { version: 'unknown', browser: 'unknown' },
 ): Services {
   const jobs = new JobRepository(store);
   const settings = new SettingsRepository(store);
@@ -82,6 +86,7 @@ export function createServices(
     jobService,
     columns: new ColumnService(settings, jobs, ctx, account),
     capture: new CaptureService(runner),
+    feedback: new FeedbackService(store, jobs, ctx, about, backend?.client, account),
     ready: migrate(store).then(() => undefined),
   };
 }

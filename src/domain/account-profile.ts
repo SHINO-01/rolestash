@@ -1,7 +1,9 @@
 import { z } from 'zod';
 
 /**
- * The account's display name and picture (ADR-0022). The picture is a small
+ * The account's full name and picture (ADR-0022, ADR-0024): the name on the
+ * person's Google account, or the one they typed once; used in Account, for
+ * greetings and on Paddle receipts. The picture is a small
  * image resized on the device and kept inline as a data: URL, so it is never
  * loaded from anyone else's server. Mirrors public.account_profiles.
  */
@@ -9,7 +11,8 @@ import { z } from 'zod';
 export const AVATAR_SIZE = 128;
 /** Matches the database check (60,000 bytes). */
 export const AVATAR_MAX_LENGTH = 60_000;
-export const DISPLAY_NAME_MAX = 50;
+/** Matches the database check (ADR-0024: legal names can be long). */
+export const DISPLAY_NAME_MAX = 100;
 
 const AVATAR_PATTERN = /^data:image\/(webp|png|jpeg);base64,[A-Za-z0-9+/]+={0,2}$/;
 

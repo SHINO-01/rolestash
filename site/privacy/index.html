@@ -108,7 +108,7 @@
     <main id="main" class="wrap">
       <article class="prose">
         <h1>Privacy policy</h1>
-        <p class="updated">Last updated: 3 October 2026</p>
+        <p class="updated">Last updated: 4 October 2026</p>
         <div class="callout">
           <strong>In short:</strong> the free plan keeps everything in your browser and sends
           nothing to us. If you create an account (for a trial, Pro or Advanced), we store only
@@ -136,12 +136,14 @@
           <li>
             <strong>What it stores:</strong> the job details you choose to save (title, company,
             location, salary, dates, description, posting link) and your own notes, tags and board.
-            These stay in your browser's extension storage on your device.
+            These stay in your browser's extension storage on your device. It also remembers there
+            whether it has asked you to rate Rolestash on the Chrome Web Store.
           </li>
           <li>
-            <strong>What it sends:</strong> nothing. On the free plan the extension makes no network
-            requests except to the page you are capturing. Data leaves your browser only when you
-            export a file yourself.
+            <strong>What it sends:</strong> nothing on its own. On the free plan the extension makes
+            no network requests except to the page you are capturing, and to us only if you send a
+            <a href="#problem-reports">problem report</a>. Your jobs leave your browser only when
+            you export a file yourself.
           </li>
         </ul>
 
@@ -189,13 +191,26 @@
           <tbody>
             <tr>
               <td>Email address, and your Google account ID if you sign in with Google</td>
-              <td>To create your account, sign you in and contact you about it</td>
+              <td>
+                To create your account, sign you in and contact you about it, including one welcome
+                email when you create it
+              </td>
+            </tr>
+            <tr>
+              <td>
+                Your full name: the name on your Google account if you sign in with Google, or the
+                name you type (you can skip it, and change it in Account)
+              </td>
+              <td>
+                To show who's signed in and greet you. We give it to Paddle, our payment provider,
+                so it appears on your receipts and in subscription management. Deleted with your
+                account.
+              </td>
             </tr>
             <tr>
               <td>
                 A small profile photo, if you add one. It's shrunk to a 128-pixel square on your
-                device before it's sent, and its location data is removed. We greet you by the first
-                name from your Google account, or one guessed from your email address.
+                device before it's sent, and its location data is removed.
               </td>
               <td>To show who's signed in. Deleted with your account.</td>
             </tr>
@@ -285,6 +300,32 @@
           </li>
         </ul>
 
+        <h2 id="problem-reports">Problem reports</h2>
+        <p>
+          If you use <em>Report a problem</em> in the extension or on the web board, with or without
+          an account, we receive:
+        </p>
+        <ul>
+          <li>your message;</li>
+          <li>
+            an email address for our reply, if you give one (when you're signed in, your account's
+            email is filled in for you);
+          </li>
+          <li>
+            the details shown to you before sending: the Rolestash version, your browser, your plan
+            and where you sent it from, and the page's address only if you tick the box for it;
+          </li>
+          <li>
+            if you're signed in, which account sent it, and a coded (keyed hash) form of your IP
+            address, so no one can send more than 5 reports an hour.
+          </li>
+        </ul>
+        <p>
+          A report never includes your jobs, notes or profile. We store it in our database in Sydney
+          and email a copy to our support inbox through Resend. We delete reports after 12 months at
+          most; if you delete your account first, the report stays but is no longer linked to it.
+        </p>
+
         <h2>Service providers</h2>
         <p>
           We use a small number of providers to run Rolestash. They process information only on our
@@ -317,7 +358,10 @@
             </tr>
             <tr>
               <td>Resend</td>
-              <td>Sign-in, reminder and launch-list emails</td>
+              <td>
+                Sign-in, welcome, reminder and product-news emails, and copies of problem reports to
+                our support inbox
+              </td>
               <td>United States</td>
             </tr>
             <tr>
@@ -406,6 +450,7 @@
             most.
           </li>
           <li>Paddle keeps transaction records for as long as tax law requires.</li>
+          <li>Problem reports: 12 months at most.</li>
           <li>
             Launch and product news emails: until you unsubscribe, or 30 days if you never confirm.
           </li>

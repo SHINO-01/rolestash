@@ -6,6 +6,21 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **Your name on your account:** signing in with Google fills it in; with an
+  email code, Account asks once (you can skip). Account shows your name and
+  email separately, and the name appears on your receipts and in
+  subscription management.
+- **A greeting by name** when you open Rolestash ("Good morning, Sam").
+- **A welcome email** when you create an account, with tips and where to get
+  help.
+- **Report a problem** from the board menu or the popup: you see exactly
+  what's sent (version, browser, plan, and the page only if you tick it), and
+  a real person reads it. It works without an account.
+- **A gentle ask to rate Rolestash** on the Chrome Web Store, only after
+  you've used it for a while, and never more than three times.
+
 ### Changed
 
 - **New pages on rolestash.com:** this changelog, known issues with

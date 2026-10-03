@@ -7,6 +7,7 @@
 export interface FakeResponse {
   status: number;
   body: unknown;
+  headers?: Record<string, string>;
 }
 
 export interface RecordedCall {
@@ -46,7 +47,10 @@ export function fakeFetch(
     if (!route) return Promise.reject(new Error(`Unexpected request: ${method} ${url}`));
     const res = typeof route === 'function' ? route(call) : route;
     return Promise.resolve(
-      new Response(res.status === 204 ? null : JSON.stringify(res.body), { status: res.status }),
+      new Response(res.status === 204 ? null : JSON.stringify(res.body), {
+        status: res.status,
+        ...(res.headers ? { headers: res.headers } : {}),
+      }),
     );
   };
   return { fetch: fetch, calls };

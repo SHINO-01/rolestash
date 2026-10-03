@@ -23,6 +23,7 @@ export function getServices(): Services {
         : undefined,
       { name: deviceName(), kind: 'computer' },
       new ScriptingAutofillRunner(),
+      { version: browser.runtime.getManifest().version, browser: deviceName() },
     );
   }
   return instance;

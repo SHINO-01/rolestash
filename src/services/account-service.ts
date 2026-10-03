@@ -15,6 +15,8 @@ import {
   ACCOUNT_SESSION_KEY,
   ACCOUNT_SHARING_OPT_OUT_KEY,
   ACCOUNT_PRICES_KEY,
+  ACCOUNT_NAME_SKIPPED_KEY,
+  ACCOUNT_WELCOMED_KEY,
 } from '@/storage/keys';
 import {
   BackendError,
@@ -48,10 +50,14 @@ export interface AccountState {
   hasBillingAccount: boolean;
   /** When the entitlement was last confirmed with the server. */
   checkedAt?: string;
-  /** Display name and picture (ADR-0022), as last read or saved. */
+  /** Full name and picture (ADR-0022, ADR-0024), as last read or saved. */
   profile: AccountProfile;
-  /** First name to greet by: from Google, or a best guess from the email. */
+  /** Full name: the one saved on the account, else the one Google gave. */
+  name?: string;
+  /** First name to greet by: from the name, or a best guess from the email. */
   firstName?: string;
+  /** Ask once for a name: signed in, no name anywhere, and not skipped. */
+  needsName: boolean;
 }
 
 /** Refresh the access token this long before it expires. */
@@ -90,6 +96,8 @@ export class AccountService implements PlanProvider {
   async state(): Promise<AccountState> {
     const { session, entitlement, profile } = await this.load();
     const plan = planOf(session ? entitlement : undefined, this.now());
+    const name = session ? (profile.displayName ?? session.user.name) : undefined;
+    const skipped = (await this.store.get([ACCOUNT_NAME_SKIPPED_KEY]))[ACCOUNT_NAME_SKIPPED_KEY];
     return {
       signedIn: session !== undefined,
       ...(session?.user.email ? { email: session.user.email } : {}),
@@ -97,9 +105,11 @@ export class AccountService implements PlanProvider {
       hasBillingAccount: session !== undefined && (entitlement?.hasBillingAccount ?? false),
       ...(session && entitlement ? { checkedAt: entitlement.checkedAt } : {}),
       profile: session ? profile : {},
-      ...(session && firstNameFrom(session.user.name, session.user.email)
-        ? { firstName: firstNameFrom(session.user.name, session.user.email) }
+      ...(name ? { name } : {}),
+      ...(session && firstNameFrom(name, session.user.email)
+        ? { firstName: firstNameFrom(name, session.user.email) }
         : {}),
+      needsName: session !== undefined && !name && skipped !== session.user.id,
     };
   }
 
@@ -176,6 +186,32 @@ export class AccountService implements PlanProvider {
     await this.store.set({ [ACCOUNT_SESSION_KEY]: session });
     await this.refreshEntitlement();
     await this.refreshProfile().catch(() => undefined);
+    await this.welcomeOnce().catch(() => undefined);
+  }
+
+  /**
+   * Requests the welcome email after a sign-in (ADR-0024). The server sends
+   * it once per account; this device stops asking once the server answered.
+   */
+  async welcomeOnce(): Promise<void> {
+    const { session } = await this.load();
+    if (!session) return;
+    const done = (await this.store.get([ACCOUNT_WELCOMED_KEY]))[ACCOUNT_WELCOMED_KEY];
+    if (done === session.user.id) return;
+    await this.client.sendWelcome(await this.accessToken());
+    await this.store.set({ [ACCOUNT_WELCOMED_KEY]: session.user.id });
+  }
+
+  /** Saves the account's full name (keeps the picture). */
+  async saveName(name: string): Promise<void> {
+    const { profile } = await this.load();
+    await this.saveProfile({ ...profile, displayName: name });
+  }
+
+  /** "Skip" on the one-time name question; the name can still be added in Account. */
+  async skipName(): Promise<void> {
+    const { session } = await this.load();
+    if (session) await this.store.set({ [ACCOUNT_NAME_SKIPPED_KEY]: session.user.id });
   }
 
   /**
@@ -197,10 +233,22 @@ export class AccountService implements PlanProvider {
     await this.store.remove([ACCOUNT_SHARING_OPT_OUT_KEY]);
   }
 
-  /** Re-reads the display name and picture. */
+  /**
+   * Re-reads the name and picture. An account with no saved name takes the
+   * one Google gave, so Paddle and every device see it too (ADR-0024).
+   */
   async refreshProfile(): Promise<AccountProfile> {
     const profile = await this.client.accountProfile(await this.accessToken());
     await this.store.set({ [ACCOUNT_PROFILE_KEY]: profile });
+    const { session } = await this.load();
+    const fromGoogle = session?.user.name?.trim();
+    if (!profile.displayName && fromGoogle) {
+      const named = AccountProfileSchema.safeParse({ ...profile, displayName: fromGoogle });
+      if (named.success) {
+        await this.saveProfile(named.data).catch(() => undefined);
+        return named.data;
+      }
+    }
     return profile;
   }
 
@@ -313,6 +361,7 @@ export class AccountService implements PlanProvider {
       ACCOUNT_PROFILE_KEY,
       ACCOUNT_SHARING_OPT_OUT_KEY,
       ACCOUNT_PRICES_KEY,
+      ACCOUNT_NAME_SKIPPED_KEY,
     ]);
   }
 
@@ -342,6 +391,11 @@ export class AccountService implements PlanProvider {
   }
 
   /** A valid access token, refreshing it first when close to expiry. */
+  /** A fresh access token for first-party calls made on the account's behalf. */
+  token(): Promise<string> {
+    return this.accessToken();
+  }
+
   private async accessToken(): Promise<string> {
     const { session } = await this.load();
     if (!session) throw new BackendError('session_expired');

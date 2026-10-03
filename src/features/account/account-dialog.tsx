@@ -28,6 +28,7 @@ import {
   planSummary,
 } from './plan-copy';
 import { EmailSection } from '@/features/email/email-section';
+import { NameQuestion } from './name-question';
 import { ProfileSection } from './profile-section';
 import { SharingChoice } from './sharing-choice';
 import type { LocalPrices, PlanChangePreview } from '@/services/backend/supabase-client';
@@ -326,6 +327,7 @@ function SignedIn({ account, state }: { account: AccountService; state: AccountS
         </p>
       </section>
 
+      {state.needsName ? <NameQuestion account={account} /> : null}
       <ProfileSection account={account} state={state} />
       <SyncSection plan={plan.plan} />
       <EmailSection plan={plan.plan} />

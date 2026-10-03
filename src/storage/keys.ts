@@ -10,6 +10,7 @@
  *                 (JobRepository); never backed up
  *   email:*       Email updates state and lease (EmailUpdateService); never backed up
  *   profile       Autofill profile (ADR-0020); this device only: never synced or backed up
+ *   prompts:*     Store-rating prompt state (ADR-0024); this device only, never backed up
  */
 export const META_KEY = 'meta';
 export const SETTINGS_KEY = 'settings';
@@ -26,6 +27,10 @@ export const ACCOUNT_PROFILE_KEY = 'account:profile';
 export const ACCOUNT_SHARING_OPT_OUT_KEY = 'account:sharing-opt-out';
 /** Plan prices in this user's currency, cached for a day. */
 export const ACCOUNT_PRICES_KEY = 'account:prices';
+/** The welcome email was requested for this account (ADR-0024); the server sends it once. */
+export const ACCOUNT_WELCOMED_KEY = 'account:welcomed';
+/** "Skip" on the one-time "What's your name?" question; userId it applies to. */
+export const ACCOUNT_NAME_SKIPPED_KEY = 'account:name-skipped';
 
 export const REMINDERS_KEY = 'reminders';
 
@@ -38,6 +43,9 @@ export const SYNC_DELETIONS_KEY = 'sync:deletions';
 /** Email updates bookkeeping (ADR-0014); never backed up. */
 export const EMAIL_STATE_KEY = 'email:state';
 export const EMAIL_LOCK_KEY = 'email:lock';
+
+/** Store-rating prompt state (ADR-0024); this device only, never backed up. */
+export const RATING_PROMPT_KEY = 'prompts:rating';
 
 /** The autofill profile (ADR-0020): this device only, never synced or backed up. */
 export const PROFILE_KEY = 'profile';

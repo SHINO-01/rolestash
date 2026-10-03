@@ -8,6 +8,8 @@ import {
   verifyPaddleSignature,
   type PaddleConfig,
 } from './paddle.ts';
+import { bugReportEmail, welcomeEmail } from './account-emails.ts';
+import type { Email } from './launch-emails.ts';
 import { SupabaseAdmin, type AuthUser, type SupabaseAdminConfig } from './supabase-admin.ts';
 
 /**
@@ -15,7 +17,16 @@ import { SupabaseAdmin, type AuthUser, type SupabaseAdminConfig } from './supaba
  * index.ts only wires one of these to Deno.serve with live dependencies.
  */
 
+export interface EmailConfig {
+  resendApiKey: string;
+  from: string;
+  /** Where bug reports go, and where replies to account emails land. */
+  support: string;
+}
+
 export interface FunctionEnv {
+  /** Present when RESEND_API_KEY is set. */
+  email?: EmailConfig;
   supabase: SupabaseAdminConfig;
   paddle: PaddleConfig & {
     webhookSecret: string;
@@ -165,10 +176,20 @@ export const handleChangePlan = userEndpoint(async ({ req, user, admin, paddle, 
   return json(200, { changed: true });
 });
 
-/** POST /functions/v1/billing-portal → { url } */
+/**
+ * POST /functions/v1/billing-portal → { url }. Brings Paddle's customer name
+ * up to date with the account's name first, so Subscription Management and
+ * receipts show it (ADR-0024); a failure there never blocks the portal.
+ */
 export const handleBillingPortal = userEndpoint(async ({ user, admin, paddle }) => {
   const entitlement = await admin.entitlement(user.id);
   if (!entitlement?.provider_customer_id) return json(404, { error: 'no_subscription' });
+  const name = (await admin.profile(user.id).catch(() => null))?.display_name?.trim();
+  if (name) {
+    await paddle
+      .updateCustomerName(entitlement.provider_customer_id, name)
+      .catch((error: unknown) => console.error('[rolestash] Paddle name update failed', error));
+  }
   const url = await paddle.createPortalSession(
     entitlement.provider_customer_id,
     entitlement.provider_subscription_id,
@@ -203,6 +224,127 @@ export const handleWebHandoff = userEndpoint(async ({ user, admin }) => {
   if (!user.email) return json(400, { error: 'no_email' });
   return json(200, { tokenHash: await admin.signInTokenFor(user.email) });
 });
+
+/** Sends one email through Resend; throws when Resend refuses it. */
+async function sendEmail(
+  email: EmailConfig,
+  fetchFn: typeof fetch,
+  message: { to: string; replyTo?: string; content: Email },
+): Promise<void> {
+  const response = await fetchFn('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${email.resendApiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      from: email.from,
+      to: [message.to],
+      reply_to: message.replyTo ?? email.support,
+      subject: message.content.subject,
+      html: message.content.html,
+      text: message.content.text,
+    }),
+  });
+  if (!response.ok) throw new Error(`Resend failed: ${String(response.status)}`);
+}
+
+/**
+ * POST /functions/v1/welcome → { sent }. The app calls it after every
+ * sign-in; the email goes out once per account, ever (ADR-0024).
+ */
+export async function handleWelcome(req: Request, deps: Deps): Promise<Response> {
+  return userEndpoint(async ({ user, admin, env }) => {
+    if (!env.email) return json(503, { error: 'not_configured' });
+    if (!user.email) return json(200, { sent: false });
+    if (!(await admin.claimWelcome(user.id, deps.now()))) return json(200, { sent: false });
+    const name = (await admin.profile(user.id))?.display_name ?? null;
+    try {
+      await sendEmail(env.email, deps.fetch, { to: user.email, content: welcomeEmail(name) });
+    } catch (error) {
+      await admin.releaseWelcome(user.id).catch(() => undefined);
+      throw error;
+    }
+    return json(200, { sent: true });
+  })(req, deps);
+}
+
+const REPORT_CONTEXT_KEYS = ['version', 'browser', 'platform', 'plan', 'where', 'page'] as const;
+const REPORTS_PER_HOUR = 5;
+
+/** The report's details, limited to known keys and short strings. */
+function reportContext(value: unknown): Record<string, string> {
+  const raw = value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
+  const out: Record<string, string> = {};
+  for (const key of REPORT_CONTEXT_KEYS) {
+    const v = raw[key];
+    if (typeof v === 'string' && v.trim()) out[key] = v.trim().slice(0, key === 'page' ? 500 : 200);
+  }
+  return out;
+}
+
+async function hashIp(ip: string, key: string): Promise<string> {
+  const hmac = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(key),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  );
+  const sig = await crypto.subtle.sign('HMAC', hmac, new TextEncoder().encode(ip));
+  return [...new Uint8Array(sig)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * POST /functions/v1/bug-report { message, contactEmail?, context? } → { id }.
+ * Open to everyone (the free plan has no account); a signed-in caller's
+ * account is attached. At most 5 reports an hour from one address, which is
+ * stored only as a keyed hash.
+ */
+export async function handleBugReport(req: Request, deps: Deps): Promise<Response> {
+  if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
+  if (req.method !== 'POST') return json(405, { error: 'method_not_allowed' });
+  const admin = new SupabaseAdmin(deps.env.supabase, deps.fetch);
+  try {
+    let body: { message?: unknown; contactEmail?: unknown; context?: unknown };
+    try {
+      body = (await req.json()) as typeof body;
+    } catch {
+      return json(400, { error: 'bad_request' });
+    }
+    const message = typeof body.message === 'string' ? body.message.trim() : '';
+    if (!message || message.length > 5000) return json(400, { error: 'bad_message' });
+    const contact =
+      typeof body.contactEmail === 'string' && body.contactEmail.trim()
+        ? body.contactEmail.trim()
+        : null;
+    if (contact && (contact.length > 254 || !/^[^@\s]+@[^@\s]+$/.test(contact)))
+      return json(400, { error: 'bad_email' });
+    const token = /^Bearer (.+)$/.exec(req.headers.get('Authorization') ?? '')?.[1];
+    const user = token ? await admin.userFromToken(token) : null;
+    const ip = clientIp(req);
+    const ipHash = ip ? await hashIp(ip, deps.env.supabase.serviceRoleKey) : null;
+    if (ipHash) {
+      const hourAgo = new Date(deps.now().getTime() - 3600_000);
+      if ((await admin.bugReportsSince(ipHash, hourAgo)) >= REPORTS_PER_HOUR)
+        return json(429, { error: 'too_many_reports' });
+    }
+    const context = reportContext(body.context);
+    const contactEmail = contact ?? user?.email ?? null;
+    const id = await admin.insertBugReport(
+      { user_id: user?.id ?? null, contact_email: contactEmail, message, context, ip_hash: ipHash },
+      deps.now(),
+    );
+    if (deps.env.email) {
+      await sendEmail(deps.env.email, deps.fetch, {
+        to: deps.env.email.support,
+        ...(contactEmail ? { replyTo: contactEmail } : {}),
+        content: bugReportEmail({ id, message, contactEmail, signedIn: user !== null, context }),
+      }).catch((error: unknown) => console.error('[rolestash] report email failed', error));
+    }
+    return json(200, { id });
+  } catch (error) {
+    console.error('[rolestash] bug report failed', error);
+    return json(500, { error: 'server_error' });
+  }
+}
 
 /** The caller's public IP, as the platform's proxy reports it. */
 function clientIp(req: Request): string | null {

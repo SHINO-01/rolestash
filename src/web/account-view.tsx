@@ -43,7 +43,7 @@ export function AccountView() {
               size="sm"
             />
             <span className="truncate text-sm font-semibold">
-              {state.firstName ?? state.email ?? 'Signed in'}
+              {state.name ?? state.email ?? 'Signed in'}
             </span>
           </span>
           <Chip tone={chip.tone}>{chip.label}</Chip>

@@ -33,6 +33,10 @@ export interface MockBackend {
   /** Account profile (ADR-0022) and the shared-learning switch. */
   profile: { display_name: string | null; avatar: string | null } | undefined;
   shareLearning: boolean;
+  /** Welcome emails asked for (ADR-0024); the real function sends one per account. */
+  welcomes: number;
+  /** Bug reports received (ADR-0024). */
+  bugReports: unknown[];
   close(): Promise<void>;
 }
 
@@ -186,6 +190,12 @@ function route(
       return [200, { url: `${MOCK_BACKEND}/portal` }];
     case '/functions/v1/delete-account':
       return [200, { deleted: true }];
+    case '/functions/v1/welcome':
+      state.welcomes += 1;
+      return [200, { sent: state.welcomes === 1 }];
+    case '/functions/v1/bug-report':
+      state.bugReports.push(b);
+      return [200, { id: state.bugReports.length }];
     case '/pay/':
     case '/portal':
       return [200, PAGE, 'text/html'];
@@ -211,6 +221,8 @@ export async function startMockBackend(): Promise<MockBackend> {
     votes: [],
     profile: undefined,
     shareLearning: true,
+    welcomes: 0,
+    bugReports: [],
     close: () => Promise.resolve(),
   };
 
