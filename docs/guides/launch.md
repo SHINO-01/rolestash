@@ -68,15 +68,36 @@ before beta testers try Google sign-in.
 
 ## 4. Automatic uploads (owner)
 
+Done 2026-10-03, in the Cloud project `rolestash-cws-upload`.
+
 1. Get the API credentials by following
    [chrome-webstore-upload-keys](https://github.com/fregante/chrome-webstore-upload-keys)
-   (client ID, client secret, refresh token). The publisher ID is in the
-   dashboard's account settings.
+   (client ID, client secret, refresh token), signed in as the account that
+   owns the store item. Three things the guide doesn't say:
+   - Use a **separate** Cloud project, not the one with the sign-in client:
+     its consent screen is verified, and changing it would undo that.
+   - With a Gmail account, pick audience **External**, fill in the home page
+     and privacy URLs on **Branding** (no logo, so no verification), then
+     **Audience → Publish app**. In _Testing_, Google expires the refresh
+     token after 7 days.
+   - If `npx chrome-webstore-upload-keys` fails with `ETIMEDOUT` after the
+     approval code, the network is slower than Node's 250 ms per-address
+     limit. Run it with
+     `NODE_OPTIONS="--no-network-family-autoselection --dns-result-order=ipv4first"`.
+     The approval code works once, so start again from the top.
 2. From a clone of this repo, run `bash scripts/setup-github.sh --store` and
-   paste the values when asked. From then on, _Release_ uploads and submits
-   each new version once you approve the `chrome-web-store` environment.
+   paste the values when asked. The publisher ID is the first ID in the
+   dashboard URL (also under **Account**). The last prompt is the
+   **extension ID**, which is stored as a plain variable: check it isn't the
+   refresh token still on the clipboard. If a token ever lands there, revoke
+   it at myaccount.google.com/connections, make a new one, and set
+   `CWS_REFRESH_TOKEN` again.
+3. From then on, _Release_ uploads and submits each new version once you
+   approve the `chrome-web-store` environment.
 
 ## 5. Google brand verification (owner)
+
+Done: Google verified the app (2026-10-03).
 
 Google Cloud console → **Google Auth Platform → Branding** for the OAuth
 client in `.env.staging`:

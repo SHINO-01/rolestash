@@ -113,19 +113,22 @@ Runbook: [guides/launch.md](guides/launch.md).
    - `PADDLE_ENV=production`;
    - the live client token in `site/assets/pay.js`.
 2. **Chrome Web Store:**
-   - one-time setup and an unlisted first upload, to get the store ID;
-   - add that ID to `ROLESTASH_EXTENSION_IDS` in
+   - ~~one-time setup and an unlisted first upload~~ done (item
+     `cncilbdakhabnocnjokbonggomndedgp`, in review);
+   - ~~add that ID to `ROLESTASH_EXTENSION_IDS` in
      `src/services/web-handoff.ts` **and** to `site/assets/auth-google.js`
-     (a test keeps the two lists equal);
+     (a test keeps the two lists equal)~~ done;
    - point the plan CTAs on rolestash.com (now `/#notify`) at the store
-     listing;
-   - accounts build variables in the extension repo's release workflow;
+     listing (on the held launch-day branch);
+   - ~~accounts build variables in the extension repo's release workflow~~
+     done, and automatic store uploads are set up;
    - a manifest policy covering `identity`, `alarms`, `notifications` and
      the optional hosts;
    - the listing text and new screenshots.
 3. **Privacy:** rewrite PRIVACY.md and the store privacy disclosure to match
    what ships.
-4. **Google brand verification** (name and logo on the consent screen).
+4. ~~**Google brand verification**~~ done (name and logo on the consent
+   screen).
 5. **Beta, then public:** an unlisted beta with 10–20 testers, then the
    public listing.
 
