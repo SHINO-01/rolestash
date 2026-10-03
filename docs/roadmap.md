@@ -154,6 +154,8 @@ Runbook: [guides/launch.md](guides/launch.md).
 
 - Component tests for the drawer and popup form (React Testing Library).
 - Visual regression screenshots in CI.
-- Performance check with 1,000+ jobs (virtualised columns if needed).
+- ~~Performance check with 1,000+ jobs~~ done: columns show 50 cards at a
+  time, and `npm run perf:board` measures it (guides/testing.md). Full
+  virtualisation isn't needed yet.
 - ~~Sync conflict tests~~ done: two devices editing, deleting and undoing
   offline, with a randomised convergence test (ADR-0016, revised).

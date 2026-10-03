@@ -8,6 +8,10 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- **Big boards stay quick:** each column shows its first 50 cards, with
+  _Show more_ for the rest, so dragging and opening the board don't slow down
+  as you add jobs. The count at the top of the column still includes every
+  job.
 - **Rolestash is on the Chrome Web Store:** rolestash.com's buttons install
   it from the store, Pricing in the menu opens prices in your currency, and
   the email form is now for occasional product news.

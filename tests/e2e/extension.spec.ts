@@ -204,6 +204,30 @@ test.describe('board @smoke', () => {
     expect(job.activity.at(-1)?.type).toBe('stage_changed');
   });
 
+  test('long columns show their first 50 cards, then more on request', async ({
+    context,
+    worker,
+    extensionId,
+  }) => {
+    await seed(
+      worker,
+      Array.from({ length: 60 }, (_, i) => ({
+        id: `j${String(i)}`,
+        title: `Role ${String(i + 1)}`,
+        company: 'Acme',
+      })),
+    );
+    const page = await context.newPage();
+    await page.goto(`chrome-extension://${extensionId}/board.html`);
+    const saved = page.getByRole('region', { name: 'Saved column' });
+    await expect(saved.getByText('Role 50', { exact: true })).toBeVisible();
+    await expect(saved.getByText('Role 51', { exact: true })).toHaveCount(0);
+    await expect(saved.getByText('60', { exact: true })).toBeVisible(); // the count is all of them
+    await saved.getByRole('button', { name: 'Show 10 more' }).click();
+    await expect(saved.getByText('Role 60', { exact: true })).toBeAttached();
+    await expect(saved.getByRole('button', { name: /^Show \d+ more/ })).toHaveCount(0);
+  });
+
   test('search filters cards', async ({ context, worker, extensionId }) => {
     await seed(worker, [
       { id: 'a', title: 'Platform Engineer', company: 'Canva' },

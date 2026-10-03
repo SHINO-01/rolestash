@@ -1,4 +1,10 @@
-import { findColumn, groupIntoColumns, resolveDropIndex } from '@/features/board/board-columns';
+import {
+  COLUMN_PAGE,
+  findColumn,
+  groupIntoColumns,
+  limitColumns,
+  resolveDropIndex,
+} from '@/features/board/board-columns';
 import { computeStats } from '@/features/board/stats';
 import { postingFromDraft, draftFromResult } from '@/features/capture/capture-draft';
 import { DEFAULT_STAGES } from '@/domain/stage';
@@ -32,6 +38,18 @@ describe('board columns', () => {
     expect(resolveDropIndex(all, 'x', undefined, undefined)).toBe(4);
     // Moving an existing job ignores itself.
     expect(resolveDropIndex(all, 'a', 'c', 'd')).toBe(2);
+  });
+
+  it('shows the first cards of long columns, and drops below them land where you see them', () => {
+    const ids = Array.from({ length: COLUMN_PAGE + 10 }, (_, i) => `j${String(i)}`);
+    const cols = { saved: ids, applied: ['x'] };
+    const shown = limitColumns(cols, {});
+    expect(shown.saved).toEqual(ids.slice(0, COLUMN_PAGE));
+    expect(shown.applied).toEqual(['x']);
+    expect(limitColumns(cols, { saved: COLUMN_PAGE * 2 }).saved).toEqual(ids);
+    // Dropped under the last card shown: right after it, before the hidden ones.
+    const all = ids.map((id, i) => makeJob({ id, rank: i + 1 }));
+    expect(resolveDropIndex(all, 'x', shown.saved?.at(-1), undefined)).toBe(COLUMN_PAGE);
   });
 });
 

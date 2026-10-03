@@ -34,6 +34,7 @@
     "store:screenshots": "npm run build && tsx scripts/store-screenshots.ts",
     "verify": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run build && npm run build:web",
     "test:smoke": "npm run build && playwright test --project=smoke",
+    "perf:board": "npm run build && playwright test --project=perf --reporter=list",
     "release": "node scripts/changelog.ts release",
     "test:db": "supabase db start && supabase db reset --local && supabase test db && supabase db lint --local --level warning --fail-on warning",
     "db:stop": "supabase stop"

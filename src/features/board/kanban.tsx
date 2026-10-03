@@ -19,7 +19,14 @@ import { visibleStages } from '@/domain/stage';
 import { useToast } from '@/ui/components/toast';
 import { useLiveJobs, useServices } from '@/ui/hooks/services';
 import { BoardColumn } from './board-column';
-import { findColumn, groupIntoColumns, resolveDropIndex, type Columns } from './board-columns';
+import {
+  COLUMN_PAGE,
+  findColumn,
+  groupIntoColumns,
+  limitColumns,
+  resolveDropIndex,
+  type Columns,
+} from './board-columns';
 import { JobCard } from './job-card';
 
 /**
@@ -43,10 +50,13 @@ export function Kanban({
   const live = useLiveJobs();
   const toast = useToast();
 
-  const baseColumns = useMemo(
+  const allColumns = useMemo(
     () => groupIntoColumns(visibleStages(settings.stages), visibleJobs, settings.defaultStageId),
     [settings, visibleJobs],
   );
+  // Long columns show their first cards; the rest wait behind "Show more".
+  const [shown, setShown] = useState<Record<string, number>>({});
+  const baseColumns = useMemo(() => limitColumns(allColumns, shown), [allColumns, shown]);
   const jobsById = useMemo(() => new Map(allJobs.map((j) => [j.id, j])), [allJobs]);
   const [dragColumns, setDragColumns] = useState<Columns | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -162,6 +172,11 @@ export function Kanban({
             key={stage.id}
             stage={stage}
             jobIds={columns[stage.id] ?? []}
+            total={allColumns[stage.id]?.length ?? 0}
+            more={(allColumns[stage.id]?.length ?? 0) - (baseColumns[stage.id]?.length ?? 0)}
+            onShowMore={() =>
+              setShown((s) => ({ ...s, [stage.id]: (s[stage.id] ?? COLUMN_PAGE) + COLUMN_PAGE }))
+            }
             jobsById={jobsById}
             onOpen={onOpen}
             filtered={filtered}

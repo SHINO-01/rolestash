@@ -10,6 +10,7 @@
 | End-to-end    | Playwright + Chromium | `tests/e2e/**` (project `e2e`)   | yes                                  |
 | Smoke         | Playwright + Chromium | `@smoke` tests (project `smoke`) | yes, here and in rolestash-extension |
 | Database      | pgTAP (Docker)        | `supabase/tests/database/**`     | yes (_Database_ job)                 |
+| Performance   | Playwright + Chromium | `tests/perf/**` (project `perf`) | no: run by hand                      |
 
 ## Unit tests
 
@@ -62,6 +63,28 @@ Coverage gate: `npm run test:coverage` fails below 90% lines/statements/function
 (80% branches) on `src/{domain,extraction,storage,services}`. UI and browser
 adapters are covered by E2E instead. Tests never touch the network (happy-dom
 resource loading is disabled).
+
+## Performance
+
+`npm run perf:board` seeds `PERF_N` jobs (default 1,000) into the production
+build, slows the CPU by `PERF_CPU` (default 4×, roughly a modest laptop), and
+prints how long the board takes to open, search, drag a card between columns
+and open the drawer:
+
+```bash
+PERF_N=3000 PERF_CPU=1 npm run perf:board
+```
+
+Measure the production build: the e2e build runs React in development mode,
+which is several times slower. Run it before and after changes to the board.
+Each column shows its first 50 cards (`COLUMN_PAGE`), so open and drag times
+stay flat as the board grows. Results on 2026-10-03, CPU not slowed:
+
+| Jobs  | Open   | Search | Drag (20 pointer moves) | DOM nodes |
+| ----- | ------ | ------ | ----------------------- | --------- |
+| 200   | 250 ms | 80 ms  | 1.1 s                   | 4,000     |
+| 1,000 | 340 ms | 170 ms | 1.4 s (was 2.3 s)       | 5,900     |
+| 3,000 | 470 ms | 210 ms | 1.4 s (was 5.8 s)       | 5,900     |
 
 Set `PLAYWRIGHT_CHROMIUM_PATH` to use a system Chromium instead of Playwright's download.
 

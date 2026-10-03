@@ -20,6 +20,19 @@ export function groupIntoColumns(
   return columns;
 }
 
+/** Cards a column shows before "Show more"; long columns are slow to drag over. */
+export const COLUMN_PAGE = 50;
+
+/**
+ * The first cards of each column: `shown[id]` cards, or COLUMN_PAGE. The rest
+ * behave like filtered-out jobs, so drops still land between visible neighbours.
+ */
+export function limitColumns(columns: Columns, shown: Readonly<Record<string, number>>): Columns {
+  return Object.fromEntries(
+    Object.entries(columns).map(([id, ids]) => [id, ids.slice(0, shown[id] ?? COLUMN_PAGE)]),
+  );
+}
+
 export function findColumn(columns: Columns, id: string): StageId | undefined {
   if (id in columns) return id;
   return Object.keys(columns).find((key) => columns[key]?.includes(id));
