@@ -7,7 +7,7 @@ tested commit (docs/guides/ci-cd.md).
 
 | Path                | Page                                                                     |
 | ------------------- | ------------------------------------------------------------------------ |
-| `site/index.html`   | Landing page: features, pricing, FAQ                                     |
+| `site/index.html`   | Landing page: promise, three benefits, proof, FAQ, one call to action    |
 | `site/privacy/`     | Privacy policy (also the store listing URL)                              |
 | `site/terms/`       | Terms of service (Paddle wording included)                               |
 | `site/refunds/`     | Refund policy                                                            |
@@ -18,7 +18,7 @@ tested commit (docs/guides/ci-cd.md).
 | `site/auth/google/` | Google sign-in hand-off (ADR-0012); own script and CSP                   |
 | `site/notify/`      | Launch-list result pages (check email, confirmed, unsubscribed, problem) |
 | `site/_headers`     | CSP and security headers                                                 |
-| `site/assets/`      | CSS, self-hosted Inter (OFL), logos, board screenshots                   |
+| `site/assets/`      | CSS, self-hosted Bricolage Grotesque (OFL), logos, board screenshots     |
 
 ## Rules
 
@@ -48,6 +48,23 @@ tested commit (docs/guides/ci-cd.md).
   The closing section's form (`/#notify`) is now an optional product-news
   signup. It posts to the `launch-list` Edge Function, the one form action
   the CSP allows. See [launch-list.md](launch-list.md).
+- **The homepage has one call to action, Add to Chrome.** Its sections are
+  the promise, three benefits, proof and the FAQ; plan details live on
+  `/pricing/`. Product truth and voice are in `PRODUCT.md`.
+- **Proof is facts only.** No testimonials until real beta testers agree to
+  be quoted; then add them inside the proof grid as
+  `<figure class="proof-quote"><blockquote>…</blockquote><figcaption>Name, role</figcaption></figure>`.
+- **Type is one family:** Bricolage Grotesque (variable weight and optical
+  size), from `@fontsource-variable/bricolage-grotesque`, copied to
+  `site/assets/bricolage-latin.woff2` with its licence. Inter stays only for
+  the OG image script.
+- **Motion is CSS only and explains the product.** The hero settles in on
+  load; the save form "types" itself in and a card is dragged into
+  Interviewing as they scroll into view (scroll timelines, which every
+  Chrome visitor has); FAQ answers open with a height transition. Nothing
+  animates under `prefers-reduced-motion`, and the content is complete
+  without the animations. Adding JavaScript would mean loosening the CSP,
+  so prefer CSS until something truly needs a script.
 - **Legal pages describe what actually ships.** Update the privacy policy
   in the same PR as any change to what the extension or backend collects,
   and bump "Last updated".

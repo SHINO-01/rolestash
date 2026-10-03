@@ -8,6 +8,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- **A calmer rolestash.com:** one clear promise, three benefits, the facts
+  behind them, answers to common questions and a single Add to Chrome, set in
+  Bricolage Grotesque. Plan details moved to the pricing page.
 - **Big boards stay quick:** each column shows its first 50 cards, with
   _Show more_ for the rest, so dragging and opening the board don't slow down
   as you add jobs. The count at the top of the column still includes every

@@ -13,7 +13,13 @@
     <link rel="canonical" href="https://rolestash.com/" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/assets/icon-512.png" />
-    <link rel="preload" href="/assets/inter-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link
+      rel="preload"
+      href="/assets/bricolage-latin.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
     <link rel="stylesheet" href="/assets/site.css" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Rolestash" />
@@ -44,9 +50,13 @@
         <nav class="nav" aria-label="Main">
           <a href="/#features">Features</a>
           <a href="/#privacy">Privacy</a>
+          <a href="/pricing/">Pricing</a>
           <a href="/#faq">FAQ</a>
-          <a href="/support/">Support</a>
-          <a class="btn btn-primary btn-sm" href="/pricing/">Pricing</a>
+          <a
+            class="btn btn-primary btn-sm"
+            href="https://chromewebstore.google.com/detail/rolestash/cncilbdakhabnocnjokbonggomndedgp"
+            >Add to Chrome</a
+          >
         </nav>
         <details class="menu">
           <summary>
@@ -55,656 +65,357 @@
           </summary>
           <nav class="menu-panel" aria-label="Main">
             <a href="/#features">Features</a>
-            <a href="/pricing/">Pricing</a>
             <a href="/#privacy">Privacy</a>
+            <a href="/pricing/">Pricing</a>
             <a href="/#faq">FAQ</a>
             <a href="/support/">Support</a>
+            <a
+              class="btn btn-primary"
+              href="https://chromewebstore.google.com/detail/rolestash/cncilbdakhabnocnjokbonggomndedgp"
+              >Add to Chrome</a
+            >
           </nav>
         </details>
       </div>
     </header>
 
     <main id="main">
-      <section class="hero">
-        <div class="wrap">
-          <div class="hero-copy">
-            <a
-              class="pill"
-              href="https://chromewebstore.google.com/detail/rolestash/cncilbdakhabnocnjokbonggomndedgp"
-              >Now on the Chrome Web Store</a
-            >
-            <h1>The <em>private</em> job application&nbsp;tracker.</h1>
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="wrap hero-grid">
+          <h1 id="hero-title">Know where every job application&nbsp;stands.</h1>
+          <div class="hero-side">
             <p class="lede">
-              No AI reading your applications, no access to your inbox, no data selling. Save any
-              job posting in one click from SEEK, LinkedIn, Indeed, Workday and 50+ other sites,
-              fill applications, and let your email keep the board up to date. From US$7.
+              Save any posting in one click, keep every application on one calm board, and catch
+              deadlines before they pass. Private by design: no AI reads your search.
             </p>
-            <div class="cta-row">
-              <a
-                class="btn btn-primary btn-lg"
-                href="https://chromewebstore.google.com/detail/rolestash/cncilbdakhabnocnjokbonggomndedgp"
-                >Add to Chrome, free</a
-              >
-              <a class="btn btn-ghost btn-lg" href="/#pricing">See plans</a>
-            </div>
-            <p class="fine">
-              Free for up to 30 active jobs · Try Advanced free for 14 days, no card needed
-            </p>
+            <a
+              class="btn btn-primary btn-lg"
+              href="https://chromewebstore.google.com/detail/rolestash/cncilbdakhabnocnjokbonggomndedgp"
+              >Add to Chrome, free</a
+            >
+            <p class="fine">Free for up to 30 active jobs · No account needed</p>
           </div>
-
-          <figure class="showcase">
-            <div class="browser">
-              <div class="browser-bar" aria-hidden="true">
-                <span class="dots"><i></i><i></i><i></i></span>
-                <span class="address">Rolestash · Board</span>
-              </div>
-              <picture>
-                <source
-                  media="(max-width: 640px) and (prefers-color-scheme: dark)"
-                  srcset="/assets/board-dark-sm-640.webp 640w, /assets/board-dark-sm-960.webp 960w"
-                  sizes="calc(100vw - 34px)"
-                  width="640"
-                  height="552"
-                />
-                <source
-                  media="(max-width: 640px)"
-                  srcset="
-                    /assets/board-light-sm-640.webp 640w,
-                    /assets/board-light-sm-960.webp 960w
-                  "
-                  sizes="calc(100vw - 34px)"
-                  width="640"
-                  height="552"
-                />
-                <source
-                  media="(prefers-color-scheme: dark)"
-                  srcset="
-                    /assets/board-dark-960.webp   960w,
-                    /assets/board-dark-1536.webp 1536w,
-                    /assets/board-dark-2304.webp 2304w
-                  "
-                  sizes="(min-width: 1200px) 1150px, calc(100vw - 34px)"
-                  width="1536"
-                  height="552"
-                />
-                <img
-                  class="shot"
-                  src="/assets/board-light-1536.webp"
-                  srcset="
-                    /assets/board-light-960.webp   960w,
-                    /assets/board-light-1536.webp 1536w,
-                    /assets/board-light-2304.webp 2304w
-                  "
-                  sizes="(min-width: 1200px) 1150px, calc(100vw - 34px)"
-                  width="1536"
-                  height="552"
-                  fetchpriority="high"
-                  alt="The Rolestash board: job cards with company, location, salary and priority, in Saved, Applied, Screening, Interviewing and Offer columns."
-                />
-              </picture>
-            </div>
-            <div class="toast" aria-hidden="true">
-              <span class="toast-check"></span>
-              <span><strong>Saved to Rolestash</strong> Frontend Engineer · Northwind Labs</span>
-            </div>
-          </figure>
-
-          <ul class="trust" aria-label="Our promises">
-            <li>No AI reading your data</li>
-            <li>No ads or analytics</li>
-            <li>Local-first storage</li>
-            <li>Export any time</li>
-          </ul>
         </div>
+
+        <figure class="showcase">
+          <div class="browser">
+            <div class="browser-bar" aria-hidden="true">
+              <span class="dots"><i></i><i></i><i></i></span>
+              <span class="address">Rolestash · Board</span>
+            </div>
+            <picture>
+              <source
+                media="(max-width: 640px) and (prefers-color-scheme: dark)"
+                srcset="/assets/board-dark-sm-640.webp 640w, /assets/board-dark-sm-960.webp 960w"
+                sizes="calc(100vw - 32px)"
+                width="640"
+                height="552"
+              />
+              <source
+                media="(max-width: 640px)"
+                srcset="/assets/board-light-sm-640.webp 640w, /assets/board-light-sm-960.webp 960w"
+                sizes="calc(100vw - 32px)"
+                width="640"
+                height="552"
+              />
+              <source
+                media="(prefers-color-scheme: dark)"
+                srcset="
+                  /assets/board-dark-960.webp   960w,
+                  /assets/board-dark-1536.webp 1536w,
+                  /assets/board-dark-2304.webp 2304w
+                "
+                sizes="(min-width: 1240px) 1300px, calc(100vw - 32px)"
+                width="1536"
+                height="552"
+              />
+              <img
+                class="shot"
+                src="/assets/board-light-1536.webp"
+                srcset="
+                  /assets/board-light-960.webp   960w,
+                  /assets/board-light-1536.webp 1536w,
+                  /assets/board-light-2304.webp 2304w
+                "
+                sizes="(min-width: 1240px) 1300px, calc(100vw - 32px)"
+                width="1536"
+                height="552"
+                fetchpriority="high"
+                alt="The Rolestash board: job cards with company, location, salary and priority, in Saved, Applied, Screening, Interviewing and Offer columns."
+              />
+            </picture>
+          </div>
+          <div class="toast" aria-hidden="true">
+            <span class="toast-check"></span>
+            <span
+              ><strong>Saved to Rolestash</strong>
+              <span class="toast-detail">Frontend Engineer · Northwind Labs</span></span
+            >
+          </div>
+        </figure>
       </section>
 
-      <section id="features" class="band">
+      <section id="features" class="benefits" aria-labelledby="benefits-title">
         <div class="wrap">
-          <div class="section-head">
-            <p class="eyebrow">Features</p>
-            <h2>Less copy-paste. More applications.</h2>
+          <div class="benefits-head">
+            <h2 id="benefits-title" class="section-title">One board for the whole search.</h2>
             <p>
-              Everything you need to run a job search, and nothing that reads over your shoulder.
+              Swap the spreadsheet, the bookmarks and the inbox searches for one place that knows
+              where every application is, and what needs doing next.
             </p>
           </div>
-          <div class="bento">
-            <article class="card card-wide">
-              <div class="icon" aria-hidden="true">
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path d="M12 3v12" />
-                  <path d="m7 10 5 5 5-5" />
-                  <rect x="4" y="17" width="16" height="4" rx="1.5" />
-                </svg>
-              </div>
-              <h3>One-click capture</h3>
-              <p>
-                Click the toolbar icon on a posting. Rolestash reads the page and fills in the
-                details, flags anything uncertain, and saves when you're happy.
-              </p>
-              <div class="capture-demo" aria-hidden="true">
-                <div class="field"><span>Title</span>Frontend Engineer</div>
-                <div class="field"><span>Company</span>Northwind Labs</div>
-                <div class="field"><span>Salary</span>A$150K – 175K / yr</div>
-                <div class="field"><span>Closes</span>14 Oct</div>
-              </div>
-            </article>
-            <article class="card card-wide">
-              <div class="icon" aria-hidden="true">
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <circle cx="12" cy="12" r="9" />
-                  <path d="M3 12h18" />
-                  <path d="M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18" />
-                </svg>
-              </div>
-              <h3>Works where you search</h3>
-              <p>
-                Built-in support for 50+ job boards and applicant tracking systems, from SEEK,
-                LinkedIn and Indeed to Workday, Greenhouse, Lever and government job boards.
-              </p>
-              <ul class="chips" aria-hidden="true">
-                <li>SEEK</li>
-                <li>LinkedIn</li>
-                <li>Indeed</li>
-                <li>Workday</li>
-                <li>Greenhouse</li>
-                <li>Lever</li>
-                <li>Careers pages</li>
-                <li>and more</li>
-              </ul>
-            </article>
-            <article class="card">
-              <div class="icon" aria-hidden="true">
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <rect x="3" y="4" width="5" height="16" rx="1.5" />
-                  <rect x="10" y="4" width="5" height="11" rx="1.5" />
-                  <rect x="17" y="4" width="4" height="7" rx="1.5" />
-                </svg>
-              </div>
-              <h3>A board you'll actually use</h3>
-              <p>
-                Drag cards from Saved to Applied to Offer. Notes, tags, priorities, closing-date
-                warnings and a timeline of every move.
-              </p>
-            </article>
-            <article class="card">
-              <div class="icon" aria-hidden="true">
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path d="M8 7h11" />
-                  <path d="M8 12h11" />
-                  <path d="M8 17h11" />
-                  <path d="m3 7 1 1 2-2" />
-                  <path d="m3 12 1 1 2-2" />
-                  <path d="m3 17 1 1 2-2" />
-                </svg>
-              </div>
-              <h3>No duplicates</h3>
-              <p>
-                Found the same role on two sites? Rolestash recognises it and keeps one card, with
-                the original posting link.
-              </p>
-            </article>
-            <article class="card">
-              <div class="icon" aria-hidden="true">
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path d="M12 3v12" />
-                  <path d="m17 8-5-5-5 5" />
-                  <rect x="4" y="17" width="16" height="4" rx="1.5" />
-                </svg>
-              </div>
-              <h3>Your data, portable</h3>
-              <p>
-                Export to CSV or a JSON backup whenever you like, on every plan, even after a
-                subscription ends. We never hold your job search hostage.
-              </p>
-            </article>
-            <article class="card">
-              <div class="icon" aria-hidden="true">
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-                  <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-                </svg>
-              </div>
-              <h3>Autofill, insights &amp; sync <span class="tag">Pro</span></h3>
-              <p>
-                Fill applications in one click from your profile or résumé, see how your search is
-                going, keep contacts and documents per job, and get follow-up nudges, custom
-                columns, full history and sync across up to 3 computers.
-              </p>
-            </article>
-          </div>
-        </div>
-      </section>
 
-      <section id="how-it-works">
-        <div class="wrap">
-          <div class="section-head">
-            <p class="eyebrow">How it works</p>
-            <h2>From posting to pipeline in three steps</h2>
-          </div>
-          <ol class="steps">
-            <li>
-              <h3>Open a job posting</h3>
-              <p>Browse SEEK, LinkedIn, a company careers page, anywhere you normally search.</p>
-            </li>
-            <li>
-              <h3>Click the Rolestash icon</h3>
+          <article class="benefit">
+            <div class="benefit-copy">
+              <h3>Save any job in one click</h3>
               <p>
-                Or press <kbd>Alt</kbd>+<kbd>J</kbd>. Check the details and save. Use
-                <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>J</kbd> to save instantly.
+                Open a posting on SEEK, LinkedIn, Indeed, Workday, Greenhouse or almost any careers
+                page, then click the Rolestash icon or press <kbd>Alt</kbd>+<kbd>J</kbd>. The title,
+                company, salary and closing date fill themselves in, and anything uncertain is
+                flagged for you to check.
               </p>
-            </li>
-            <li>
-              <h3>Track it to the offer</h3>
-              <p>Move the card as you hear back. Rolestash keeps the dates and the history.</p>
-            </li>
-          </ol>
-        </div>
-      </section>
-
-      <section id="email-updates" class="band">
-        <div class="wrap split">
-          <div class="split-copy">
-            <p class="eyebrow">Advanced</p>
-            <h2>Your inbox updates the board</h2>
-            <p class="muted">
-              Forward job emails to your private Rolestash address. Replies like “we’d like to
-              interview you” or “unfortunately…” move the card for you, with no AI and no mailbox
-              access.
-            </p>
-            <ol class="mini-steps">
-              <li>
-                Set a filter in Gmail or Outlook to forward job emails to your private address.
-              </li>
-              <li>
-                Rolestash reads each reply with plain rules, moves the card when it's sure, and
-                suggests the move when it isn't.
-              </li>
-              <li>Interview details land on the card. Every change can be undone.</li>
-            </ol>
-          </div>
-          <figure
-            class="flow"
-            role="img"
-            aria-label="An interview invitation from a fictional employer is forwarded to Rolestash, matched by a rule, and the job card moves from Applied to Interviewing with a Join button and an Add to calendar link."
-          >
-            <div class="flow-email">
-              <div class="flow-meta">
-                <span class="avatar">SR</span>
-                <span><strong>Summit Robotics Talent</strong> Interview: Backend Developer</span>
-              </div>
-              <p>Hi Sam, thanks for applying. We’d like to invite you to interview on…</p>
+              <p class="benefit-note">Found the same role twice? It stays one card.</p>
             </div>
-            <div class="flow-rule">
-              <span>Forwarded</span>
-              <span class="flow-arrow"></span>
-              <span class="flow-match">Rule match: interview invite</span>
-            </div>
-            <div class="flow-card">
-              <div class="flow-stage">
-                <span class="stage-from">Applied</span>
-                <span class="stage-arrow">→</span>
-                <span class="stage-to">Interviewing</span>
-              </div>
-              <p class="flow-title"><strong>Backend Developer</strong> Summit Robotics</p>
-              <div class="flow-interview">
-                <span class="cal"><b>OCT</b>3</span>
-                <span>Thu 3 Oct · 10:00 · Online</span>
-              </div>
-              <div class="flow-actions">
-                <span class="btn btn-primary btn-xs">Join</span>
-                <span class="btn btn-ghost btn-xs">Add to calendar</span>
-              </div>
-            </div>
-          </figure>
-        </div>
-        <div class="wrap duo">
-          <article class="card">
-            <div class="icon" aria-hidden="true">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+            <div class="stage">
+              <figure
+                class="artefact capture"
+                role="img"
+                aria-label="The save dialog with a job filled in: Frontend Engineer at Northwind Labs, Sydney, hybrid, A$150K to 175K a year, closing 14 October. The salary is flagged to check."
               >
-                <rect x="3" y="4" width="18" height="17" rx="2" />
-                <path d="M16 2v4" />
-                <path d="M8 2v4" />
-                <path d="M3 10h18" />
-              </svg>
+                <div class="art-head">
+                  <span class="art-mark"></span>
+                  <span>Save this job</span>
+                </div>
+                <dl class="capture-fields">
+                  <div>
+                    <dt>Title</dt>
+                    <dd>Frontend Engineer</dd>
+                  </div>
+                  <div>
+                    <dt>Company</dt>
+                    <dd>Northwind Labs</dd>
+                  </div>
+                  <div>
+                    <dt>Location</dt>
+                    <dd>Sydney NSW · Hybrid</dd>
+                  </div>
+                  <div class="flagged">
+                    <dt>Salary</dt>
+                    <dd>A$150K – 175K / yr <span class="check">Check</span></dd>
+                  </div>
+                  <div>
+                    <dt>Closes</dt>
+                    <dd>14 Oct</dd>
+                  </div>
+                </dl>
+                <div class="art-foot">
+                  <span class="art-btn">Save to board</span>
+                </div>
+              </figure>
             </div>
-            <h3>Interview-ready cards <span class="tag">Advanced</span></h3>
-            <p>
-              Online interviews get a Join button; in-person ones show the time, the location and a
-              map link, plus “Add to calendar”.
-            </p>
           </article>
-          <article class="card">
-            <div class="icon" aria-hidden="true">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M21 12a9 9 0 0 1-15.5 6.2L3 16" />
-                <path d="M3 12a9 9 0 0 1 15.5-6.2L21 8" />
-                <path d="M21 3v5h-5" />
-                <path d="M3 21v-5h5" />
-              </svg>
+
+          <article class="benefit">
+            <div class="benefit-copy">
+              <h3>See your whole search at a glance</h3>
+              <p>
+                Every application sits in its column, from Saved to Offer, with your notes, tags and
+                a timeline of each move. Closing dates and follow-ups surface before they slip, and
+                autofill puts your details into application forms.
+              </p>
+              <p class="benefit-note">Drag a card when you hear back. The dates keep themselves.</p>
             </div>
-            <h3>Everywhere you are <span class="tag">Advanced</span></h3>
-            <p>
-              Unlimited active jobs, sync across up to 5 devices including a web board for your
-              phone, and your whole board in the side panel beside any page.
-            </p>
+            <div class="stage">
+              <figure
+                class="artefact columns"
+                role="img"
+                aria-label="Two board columns. A Backend Developer card is dragged from Applied into Interviewing, with a follow-up due today. Applied still holds a Product Designer card that closes in 2 days."
+              >
+                <div class="mini-col">
+                  <p class="mini-head"><span class="dot dot-applied"></span>Applied <b>12</b></p>
+                  <div class="mini-card">
+                    <strong>Product Designer</strong>
+                    <span>Tidewater Studio</span>
+                    <em class="due due-warn">Closes in 2 days</em>
+                  </div>
+                  <div class="mini-card faded">
+                    <strong>Data Analyst</strong>
+                    <span>Kestrel Health</span>
+                  </div>
+                </div>
+                <div class="mini-col">
+                  <p class="mini-head">
+                    <span class="dot dot-interview"></span>Interviewing <b>3</b>
+                  </p>
+                  <div class="mini-card mover">
+                    <strong>Backend Developer</strong>
+                    <span>Summit Robotics</span>
+                    <em class="due">Follow up today</em>
+                  </div>
+                </div>
+              </figure>
+            </div>
+          </article>
+
+          <article id="privacy" class="benefit">
+            <div class="benefit-copy">
+              <h3>Private by design</h3>
+              <p>
+                Your search holds salaries, rejections and notes about recruiters, so Rolestash is
+                built to know as little as possible. Capture runs on plain rules, it reads a page
+                only when you ask, and the free plan keeps everything in your browser.
+              </p>
+              <p class="benefit-note">Export to CSV or JSON any time, on every plan.</p>
+            </div>
+            <div class="stage">
+              <figure class="artefact ledger" aria-label="What Rolestash knows about you">
+                <figcaption class="art-head">
+                  <span class="art-mark"></span>
+                  <span>What Rolestash knows about you</span>
+                </figcaption>
+                <dl class="ledger-rows">
+                  <div>
+                    <dt>Your inbox</dt>
+                    <dd>Never connected</dd>
+                  </div>
+                  <div>
+                    <dt>AI services</dt>
+                    <dd>None</dd>
+                  </div>
+                  <div>
+                    <dt>Ads and analytics</dt>
+                    <dd>None</dd>
+                  </div>
+                  <div>
+                    <dt>Your board</dt>
+                    <dd>In this browser</dd>
+                  </div>
+                  <div>
+                    <dt>Your data, sold</dt>
+                    <dd>Never</dd>
+                  </div>
+                </dl>
+              </figure>
+            </div>
           </article>
         </div>
       </section>
 
-      <section id="privacy" class="ink">
-        <div class="wrap promise">
-          <div class="promise-head">
-            <img src="/favicon.svg" alt="" width="56" height="56" />
-            <h2>Private by design</h2>
+      <section id="proof" class="proof" aria-labelledby="proof-title">
+        <div class="wrap">
+          <div class="proof-head">
+            <h2 id="proof-title" class="section-title">The specifics.</h2>
             <p>
-              Your job search holds salaries, rejections and notes about recruiters. So Rolestash is
-              built to know as little as possible about it.
+              Rolestash is new, so instead of borrowed praise, here is exactly what it does and
+              doesn't do, and where each line is written down.
             </p>
           </div>
-          <ul class="promise-list">
+          <ul class="evidence">
             <li>
-              <strong>No AI reading your applications.</strong> Capture is plain code that reads the
-              page's structured data. No language models, no third-party AI services.
+              <h3>50+ job sites</h3>
+              <p>
+                Built-in support for job boards and applicant tracking systems, and a careful
+                fallback for every other careers page.
+              </p>
+              <a href="#faq-sites">Which sites</a>
             </li>
             <li>
-              <strong>Reads a page only when you ask.</strong> No background tracking of the sites
-              you visit.
+              <h3>Tested on real applications</h3>
+              <p>Autofill checked on live Workday and SmartRecruiters application forms.</p>
+              <span>Checked October 2026</span>
             </li>
             <li>
-              <strong>Local-first.</strong> The free plan keeps everything in your browser. Sync
-              stores only what you save, and deleting your account deletes it.
+              <h3>No AI, anywhere</h3>
+              <p>Capture and email updates run on plain rules. Nothing is sent to an AI service.</p>
+              <a href="/privacy/">Privacy policy</a>
             </li>
-            <li><strong>No ads, no analytics, no data selling.</strong> Ever.</li>
+            <li>
+              <h3>Never in your inbox</h3>
+              <p>
+                Email updates only see the messages you choose to forward. Rolestash never connects
+                to your mailbox.
+              </p>
+              <a href="/privacy/">Privacy policy</a>
+            </li>
+            <li>
+              <h3>Yours to take</h3>
+              <p>
+                CSV and JSON export on every plan, and nothing is locked if a subscription ends.
+              </p>
+              <a href="/pricing/">Plans</a>
+            </li>
+            <li>
+              <h3>Trusted partners</h3>
+              <p>
+                Google-verified sign-in, payments through Paddle as merchant of record, and synced
+                data stored in Sydney, Australia.
+              </p>
+              <a href="/privacy/">Privacy policy</a>
+            </li>
           </ul>
         </div>
       </section>
 
-      <section id="pricing">
-        <div class="wrap">
-          <div class="section-head">
-            <p class="eyebrow">Pricing</p>
-            <h2>Simple pricing</h2>
-            <p>Start free. Upgrade when your search gets serious.</p>
-          </div>
-          <div class="plans">
-            <article class="plan">
-              <h3>Free</h3>
-              <p class="price">$0</p>
-              <p class="note">No account needed</p>
-              <p class="limit"><strong>30</strong> active jobs</p>
-              <ul>
-                <li>One-click capture from 50+ sites</li>
-                <li>Kanban board with notes, tags and priorities</li>
-                <li>Up to 30 active jobs</li>
-                <li>The last 30 days of history</li>
-                <li>Autofill your name, contact details and links</li>
-                <li>CSV and JSON export</li>
-                <li>Side panel: save a page or open your board from any tab</li>
-                <li>Stored locally in your browser</li>
-              </ul>
-              <a
-                class="btn btn-ghost plan-cta"
-                href="https://chromewebstore.google.com/detail/rolestash/cncilbdakhabnocnjokbonggomndedgp"
-                >Add to Chrome, free</a
-              >
-            </article>
-            <article class="plan">
-              <h3>Pro</h3>
-              <p class="price">US$7 <small>/ month</small></p>
-              <p class="note">or US$18 every 3 months · US$59 / year</p>
-              <p class="limit"><strong>60</strong> active jobs</p>
-              <ul>
-                <li>Everything in Free</li>
-                <li>Up to 60 active jobs</li>
-                <li>Full autofill: work details, saved answers, start from your résumé</li>
-                <li>Insights: how your search is going, and where applications end up</li>
-                <li>Contacts, interview rounds and documents, with calendar export</li>
-                <li>Bulk actions: move, tag, archive or delete many jobs</li>
-                <li>Follow-up reminders and closing-date alerts</li>
-                <li>Full history, custom columns, capture from a pasted link</li>
-                <li>Sync across up to 3 computers</li>
-              </ul>
-              <a class="btn btn-ghost plan-cta" href="/pricing/">Get Pro</a>
-            </article>
-            <article class="plan plan-pro">
-              <span class="plan-badge">14-day free trial</span>
-              <h3>Advanced</h3>
-              <p class="price">US$15 <small>/ month</small></p>
-              <p class="note">
-                or US$39 every 3 months · US$159 / year · 14-day free trial, no card needed
-              </p>
-              <p class="limit"><strong>Unlimited</strong> active jobs</p>
-              <ul>
-                <li>Everything in Pro</li>
-                <li>Unlimited active jobs</li>
-                <li>Automatic status updates from your job emails</li>
-                <li>Interview details on each card: join link, or time and map</li>
-                <li>Sync across up to 5 devices, including your phone (web board)</li>
-                <li>Your whole board in the side panel, beside any page</li>
-              </ul>
-              <a
-                class="btn btn-primary plan-cta"
-                href="https://chromewebstore.google.com/detail/rolestash/cncilbdakhabnocnjokbonggomndedgp"
-                >Start the free trial</a
-              >
-            </article>
-          </div>
-
-          <div class="compare">
-            <table>
-              <caption>
-                Compare plans
-              </caption>
-              <thead>
-                <tr>
-                  <th scope="col">Feature</th>
-                  <th scope="col">Free</th>
-                  <th scope="col">Pro</th>
-                  <th scope="col">Advanced</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <th scope="row">Active jobs</th>
-                  <td>30</td>
-                  <td>60</td>
-                  <td>Unlimited</td>
-                </tr>
-                <tr>
-                  <th scope="row">One-click capture from 50+ sites</th>
-                  <td class="yes">Included</td>
-                  <td class="yes">Included</td>
-                  <td class="yes">Included</td>
-                </tr>
-                <tr>
-                  <th scope="row">Kanban board with notes, tags and priorities</th>
-                  <td class="yes">Included</td>
-                  <td class="yes">Included</td>
-                  <td class="yes">Included</td>
-                </tr>
-                <tr>
-                  <th scope="row">CSV and JSON export</th>
-                  <td class="yes">Included</td>
-                  <td class="yes">Included</td>
-                  <td class="yes">Included</td>
-                </tr>
-                <tr>
-                  <th scope="row">Side panel beside any page</th>
-                  <td>Save and open board</td>
-                  <td>Save and open board</td>
-                  <td>Your whole board</td>
-                </tr>
-                <tr>
-                  <th scope="row">History</th>
-                  <td>Last 30 days</td>
-                  <td>Full</td>
-                  <td>Full</td>
-                </tr>
-                <tr>
-                  <th scope="row">Autofill: name, contact details and links</th>
-                  <td class="yes">Included</td>
-                  <td class="yes">Included</td>
-                  <td class="yes">Included</td>
-                </tr>
-                <tr>
-                  <th scope="row">Full autofill: work details, saved answers, from your résumé</th>
-                  <td class="no">Not included</td>
-                  <td class="yes">Included</td>
-                  <td class="yes">Included</td>
-                </tr>
-                <tr>
-                  <th scope="row">Insights</th>
-                  <td class="no">Not included</td>
-                  <td class="yes">Included</td>
-                  <td class="yes">Included</td>
-                </tr>
-                <tr>
-                  <th scope="row">Contacts, interview rounds, documents and calendar export</th>
-                  <td class="no">Not included</td>
-                  <td class="yes">Included</td>
-                  <td class="yes">Included</td>
-                </tr>
-                <tr>
-                  <th scope="row">Bulk actions: move, tag, archive or delete many jobs</th>
-                  <td class="no">Not included</td>
-                  <td class="yes">Included</td>
-                  <td class="yes">Included</td>
-                </tr>
-                <tr>
-                  <th scope="row">Follow-up reminders and closing-date alerts</th>
-                  <td class="no">Not included</td>
-                  <td class="yes">Included</td>
-                  <td class="yes">Included</td>
-                </tr>
-                <tr>
-                  <th scope="row">Custom columns</th>
-                  <td class="no">Not included</td>
-                  <td class="yes">Included</td>
-                  <td class="yes">Included</td>
-                </tr>
-                <tr>
-                  <th scope="row">Capture from a pasted link</th>
-                  <td class="no">Not included</td>
-                  <td class="yes">Included</td>
-                  <td class="yes">Included</td>
-                </tr>
-                <tr>
-                  <th scope="row">Sync across devices</th>
-                  <td class="no">Not included</td>
-                  <td>Up to 3 computers</td>
-                  <td>Up to 5, incl. phone</td>
-                </tr>
-                <tr>
-                  <th scope="row">Web board for your phone</th>
-                  <td class="no">Not included</td>
-                  <td class="no">Not included</td>
-                  <td class="yes">Included</td>
-                </tr>
-                <tr>
-                  <th scope="row">Automatic status updates from your job emails</th>
-                  <td class="no">Not included</td>
-                  <td class="no">Not included</td>
-                  <td class="yes">Included</td>
-                </tr>
-                <tr>
-                  <th scope="row">Interview details on each card</th>
-                  <td class="no">Not included</td>
-                  <td class="no">Not included</td>
-                  <td class="yes">Included</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <p class="fine center">
-            Prices shown in US dollars. You pay in your own currency (including AUD, GBP, EUR, CAD,
-            NZD and INR), with tax as your country requires, and lower prices in lower-income
-            countries:
-            <a href="/pricing/">see prices in your currency</a>. Cancel any time. See our
-            <a href="/refunds/">refund policy</a>.
-          </p>
-        </div>
-      </section>
-
-      <section id="faq" class="band">
+      <section id="faq" class="faq-section" aria-labelledby="faq-title">
         <div class="wrap faq">
           <div class="faq-head">
-            <p class="eyebrow">FAQ</p>
-            <h2>Questions</h2>
-            <p class="muted">
+            <h2 id="faq-title" class="section-title">Questions</h2>
+            <p>
               Something else? Email
-              <a href="mailto:support@rolestash.com">support@rolestash.com</a>.
+              <a href="mailto:support@rolestash.com">support@rolestash.com</a>. A real person reads
+              every message.
             </p>
           </div>
           <div class="faq-list">
             <details>
-              <summary>Which browsers does Rolestash support?</summary>
+              <summary>How much does it cost?</summary>
               <p>
-                Google Chrome and other Chromium browsers that install from the Chrome Web Store, on
-                desktop. Edge and Firefox versions are planned.
+                Free for up to 30 active jobs, with no account. Pro is US$7 a month for 60 active
+                jobs, full autofill, insights and sync across 3 computers. Advanced is US$15 a month
+                for unlimited jobs, automatic status updates and your phone, with a 14-day free
+                trial and no card needed. You pay in your own currency:
+                <a href="/pricing/">compare plans and prices</a>.
+              </p>
+            </details>
+            <details id="faq-sites">
+              <summary>Does it work on the sites I use?</summary>
+              <p>
+                Probably. Rolestash supports 50+ job boards and applicant tracking systems, from
+                SEEK, LinkedIn and Indeed to Workday, Greenhouse and Lever. Most other careers pages
+                publish structured job data it can read; for anything else it makes a best guess and
+                marks it so you can check before saving.
               </p>
             </details>
             <details>
-              <summary>Does it work on sites that aren't listed?</summary>
+              <summary>Do you use AI?</summary>
               <p>
-                Usually, yes. Most careers pages publish structured job data that Rolestash reads.
-                For anything else it makes a best guess and marks it so you can check before saving.
+                No. Capturing a job and reading status emails is deterministic code, and your data
+                is never sent to an AI service.
+              </p>
+            </details>
+            <details>
+              <summary>Do you read my inbox?</summary>
+              <p>
+                No. On Advanced you get a private address and set a filter in Gmail or Outlook to
+                forward job emails to it. Rolestash reads each forwarded reply with plain rules,
+                moves the card when it's sure (and suggests the move when it isn't), keeps the
+                extracted update and discards the email. Every change can be undone.
+              </p>
+            </details>
+            <details>
+              <summary>Where is my data stored?</summary>
+              <p>
+                On the free plan, only in your browser. If you turn on sync (Pro and Advanced), a
+                copy of your board is stored in our database in Sydney, Australia, and deleting your
+                account deletes it. See the <a href="/privacy/">privacy policy</a>.
+              </p>
+            </details>
+            <details>
+              <summary>Which browsers does it support?</summary>
+              <p>
+                Google Chrome and other Chromium browsers that install from the Chrome Web Store, on
+                desktop. Advanced adds a web board for your phone. Edge and Firefox versions are
+                planned.
               </p>
             </details>
             <details>
@@ -716,30 +427,6 @@
               </p>
             </details>
             <details>
-              <summary>Do you use AI?</summary>
-              <p>
-                No. Capturing a job is deterministic code, and your data is never sent to an AI
-                service.
-              </p>
-            </details>
-            <details>
-              <summary>How do automatic status updates work?</summary>
-              <p>
-                On Advanced you get a private forwarding address. Set a filter in Gmail or Outlook
-                to forward job emails to it. Rolestash reads each reply with plain rules (no AI),
-                moves the card when it's sure (and suggests the move when it isn't), and adds
-                interview details. Every change can be undone.
-              </p>
-            </details>
-            <details>
-              <summary>Do you read my inbox?</summary>
-              <p>
-                No. Rolestash never connects to your mailbox. It only sees the emails you choose to
-                forward, keeps the extracted update (such as "interview on 3 Oct"), and discards the
-                email itself.
-              </p>
-            </details>
-            <details>
               <summary>Who handles payments?</summary>
               <p>
                 Our online reseller Paddle.com is the merchant of record for all orders. Paddle
@@ -747,64 +434,55 @@
                 see your card details.
               </p>
             </details>
-            <details>
-              <summary>How do I contact you?</summary>
-              <p>
-                Email <a href="mailto:support@rolestash.com">support@rolestash.com</a>. A real
-                person reads every message.
-              </p>
-            </details>
           </div>
         </div>
       </section>
 
-      <section id="notify" class="closer">
+      <section id="get-started" class="closer" aria-labelledby="closer-title">
         <div class="wrap">
           <div class="closer-card">
-            <h2>Rolestash is on the Chrome Web Store</h2>
-            <p>
-              Free for up to 30 active jobs, with no account. Try Advanced free for 14 days, no card
-              needed.
-            </p>
-            <p class="closer-cta">
-              <a
-                class="btn btn-amber btn-lg"
-                href="https://chromewebstore.google.com/detail/rolestash/cncilbdakhabnocnjokbonggomndedgp"
-                >Add to Chrome</a
-              >
-            </p>
-            <form
-              class="notify-form"
-              action="https://fhclnxqumcdsqxyunelp.supabase.co/functions/v1/launch-list"
-              method="post"
+            <h2 id="closer-title">Get your job search back in order.</h2>
+            <p>Free for up to 30 active jobs, with no account. Ready in under a minute.</p>
+            <a
+              class="btn btn-amber btn-lg"
+              href="https://chromewebstore.google.com/detail/rolestash/cncilbdakhabnocnjokbonggomndedgp"
+              >Add to Chrome</a
             >
-              <p class="notify-lede">Want to hear when we ship something new?</p>
-              <div class="notify-row">
-                <label class="sr-only" for="notify-email">Email address</label>
-                <input
-                  id="notify-email"
-                  type="email"
-                  name="email"
-                  required
-                  maxlength="254"
-                  autocomplete="email"
-                  placeholder="you@example.com"
-                />
-                <button class="btn btn-ghost btn-lg" type="submit">Get product news</button>
-              </div>
-              <div class="hp" aria-hidden="true">
-                <label
-                  >Leave this empty
-                  <input type="text" name="company" tabindex="-1" autocomplete="off"
-                /></label>
-              </div>
-              <p class="notify-fine">
-                We'll email you to confirm, then now and then with product news (a few times a year
-                at most). Every email has a one-click unsubscribe link. See our
-                <a href="/privacy/#launch-list">privacy policy</a>.
-              </p>
-            </form>
           </div>
+
+          <form
+            id="notify"
+            class="notify-form"
+            action="https://fhclnxqumcdsqxyunelp.supabase.co/functions/v1/launch-list"
+            method="post"
+          >
+            <p class="notify-lede">
+              Not searching right now? Get occasional product news, a few emails a year at most.
+            </p>
+            <div class="notify-row">
+              <label class="sr-only" for="notify-email">Email address</label>
+              <input
+                id="notify-email"
+                type="email"
+                name="email"
+                required
+                maxlength="254"
+                autocomplete="email"
+                placeholder="you@example.com"
+              />
+              <button class="btn btn-ghost" type="submit">Subscribe</button>
+            </div>
+            <div class="hp" aria-hidden="true">
+              <label
+                >Leave this empty
+                <input type="text" name="company" tabindex="-1" autocomplete="off"
+              /></label>
+            </div>
+            <p class="notify-fine">
+              We'll email you to confirm. Every email has a one-click unsubscribe link. See our
+              <a href="/privacy/#launch-list">privacy policy</a>.
+            </p>
+          </form>
         </div>
       </section>
     </main>
