@@ -673,13 +673,13 @@ kbd {
 
 .showcase {
   position: relative;
-  margin: clamp(48px, 6vw, 80px) 0 0 max(16px, calc((100% - 1180px) / 2));
+  width: min(1180px, 100% - 32px);
+  margin: clamp(48px, 6vw, 80px) auto 0;
 }
 
 .browser {
   border: 1px solid var(--line);
-  border-right: 0;
-  border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+  border-radius: var(--radius-lg);
   background: var(--surface);
   box-shadow: var(--shadow-lg);
   overflow: hidden;
@@ -766,7 +766,12 @@ kbd {
 
 @media (max-width: 640px) {
   .showcase {
+    width: auto;
     margin-left: 16px;
+  }
+  .browser {
+    border-right: 0;
+    border-radius: var(--radius-lg) 0 0 var(--radius-lg);
   }
   .browser-bar {
     display: none;
