@@ -14,6 +14,7 @@ export default tseslint.config(
       'playwright-report',
       'test-results',
       'site/board', // built web board (npm run build:web)
+      'brag-output*', // local /brag video projects (gitignored)
     ],
   },
   js.configs.recommended,

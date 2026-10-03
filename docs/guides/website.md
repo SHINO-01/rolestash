@@ -1,14 +1,14 @@
 # Website (rolestash.com)
 
 The marketing and legal site is plain static HTML in `site/`: no build step,
-one small first-party script (the light/dark switch), no third-party
-requests. An assets-only Cloudflare Worker
+one small first-party script (the light/dark switch and the hero film's
+buttons), no third-party requests. An assets-only Cloudflare Worker
 serves it from `main`, so the site only changes after CI has promoted a
 tested commit (docs/guides/ci-cd.md).
 
 | Path                 | Page                                                                     |
 | -------------------- | ------------------------------------------------------------------------ |
-| `site/index.html`    | Landing page: promise, three benefits, proof, FAQ, one call to action    |
+| `site/index.html`    | Landing page: promise, hero film, three benefits, proof, FAQ, one CTA    |
 | `site/privacy/`      | Privacy policy (also the store listing URL)                              |
 | `site/terms/`        | Terms of service (Paddle wording included)                               |
 | `site/refunds/`      | Refund policy                                                            |
@@ -22,13 +22,14 @@ tested commit (docs/guides/ci-cd.md).
 | `site/known-issues/` | Known issues: open bugs with status and workarounds, and limitations     |
 | `site/sitemap/`      | Every page, for people (search engines use `sitemap.xml`)                |
 | `site/_headers`      | CSP and security headers                                                 |
-| `site/assets/`       | CSS, self-hosted Bricolage Grotesque (OFL), logos, board screenshots     |
+| `site/assets/`       | CSS, self-hosted Bricolage Grotesque (OFL), logos, screenshots, the film |
 
 ## Rules
 
 - **One script, no inline code or styles, nothing from other origins.** The
-  CSP in `_headers` is `default-src 'none'; script-src 'self'`, and
-  `tests/unit/site/site.test.ts` enforces it. Every page loads only
+  CSP in `_headers` is `default-src 'none'; script-src 'self'` (plus
+  `media-src 'self'` for the hero film), and `tests/unit/site/site.test.ts`
+  enforces it. Every page loads only
   `assets/theme.js`, first in `<head>` (not deferred) so a saved theme
   applies before the first paint.
 - **The light/dark switch** (`.theme-toggle` in the shared header) follows
@@ -72,13 +73,14 @@ tested commit (docs/guides/ci-cd.md).
   size), from `@fontsource-variable/bricolage-grotesque`, copied to
   `site/assets/bricolage-latin.woff2` with its licence. Inter stays only for
   the OG image script.
-- **Motion is CSS only and explains the product.** The hero settles in on
+- **Motion is CSS only and explains the product** (the hero film aside). The hero settles in on
   load; the save form "types" itself in and a card is dragged into
   Interviewing as they scroll into view (scroll timelines, which every
   Chrome visitor has); FAQ answers open with a height transition. Nothing
   animates under `prefers-reduced-motion`, and the content is complete
-  without the animations. Prefer CSS: the theme switch is the only script,
-  because remembering a choice across pages needs one.
+  without the animations. Prefer CSS: the one script exists because
+  remembering a theme across pages, and the film's pause and sound buttons,
+  need one.
 - **The changelog page is generated.** Never edit `site/changelog/` by
   hand: write the entry in `CHANGELOG.md` and run `npm run site:changelog`
   (the release command does it too). ADR references are dropped and
@@ -108,10 +110,47 @@ A built app, not a hand-written page (ADR-0017):
 `site/assets/site.css` holds everything, organised by section. Colours are
 custom properties on `:root`, redefined under `prefers-color-scheme: dark`;
 the privacy band and closing call to action use the always-dark `--band-*`
-tokens. The landing page is: hero (framed board screenshot), features
+tokens. The landing page is: hero (the film, with the framed board screenshot as fallback), features
 (bento grid), how it works, email updates (Advanced), privacy, pricing
 (cards everywhere, plus a comparison table above 860 px; below that the cards
 list their features), FAQ and a closing call to action.
+
+## The hero film
+
+The homepage hero plays a 21-second product film (1920×1080, no voice) in
+place of the board screenshot. Its source is the Hyperframes project made with
+`/brag` in `brag-output/` (gitignored; plan, brief and composition live there).
+
+| File                                     | What                                       |
+| ---------------------------------------- | ------------------------------------------ |
+| `site/assets/rolestash-film.webm`        | VP9 + Opus, 1920×1080, about 2.6 MB        |
+| `site/assets/rolestash-film.mp4`         | H.264 + AAC, 1600×900, about 2.5 MB        |
+| `site/assets/rolestash-film-poster.webp` | The closing frame (CTA), 1600 wide, ~50 KB |
+
+- **Player:** `<video muted playsinline loop preload="metadata" controls>`
+  with the poster. `theme.js` removes the native controls, shows our pause
+  and sound buttons, and plays the film only while a quarter of it is on
+  screen. Turning the sound on restarts it from the beginning. Without the
+  script the native controls stay and nothing plays by itself.
+- **Reduced motion:** CSS hides the film and shows the light/dark board
+  pictures (now `loading="lazy"`, so they aren't fetched while hidden).
+- **LCP:** the poster is the hero's largest paint. It is preloaded (only when
+  motion is allowed) and the film's entrance moves without fading, so it
+  paints at once. Measured locally on throttled 4G with 4× CPU on
+  2026-10-04: LCP about 1.5 s on desktop and phone, CLS 0.
+- **Budget (tested):** each encode under 4 MB, the poster under 150 KB.
+- **Re-encoding** from a new `brag-output/brag.mp4`:
+
+  ```bash
+  ffmpeg -i brag-output/brag.mp4 -c:v libvpx-vp9 -crf 34 -b:v 0 -row-mt 1 -cpu-used 2 -c:a libopus -b:a 96k site/assets/rolestash-film.webm
+  ffmpeg -i brag-output/brag.mp4 -vf scale=1600:-2 -c:v libx264 -preset veryslow -crf 24 -pix_fmt yuv420p -c:a aac -b:a 112k -movflags +faststart site/assets/rolestash-film.mp4
+  ffmpeg -i brag-output/brag.jpg -vf scale=1600:-2 -c:v libwebp -quality 78 site/assets/rolestash-film-poster.webp
+  ```
+
+  Use new file names when the film changes: assets are cached for a day.
+
+- **Copy in the film is the site's own** (fictional companies only), like the
+  screenshots.
 
 ## Board screenshots
 

@@ -720,6 +720,98 @@ kbd {
   width: 100%;
 }
 
+/* The hero film (shown unless reduced motion is asked for; the board pictures are the fallback). */
+.film {
+  display: none;
+  position: relative;
+  aspect-ratio: 16 / 9;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: #f6f4ee;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+.film-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* The buttons need the script, which adds .film-ready. */
+.film-controls {
+  display: none;
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  gap: 8px;
+}
+
+.film-ready .film-controls {
+  display: flex;
+}
+
+.film-btn {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(16 35 31 / 72%);
+  color: #fff;
+  cursor: pointer;
+  transition:
+    background-color 160ms var(--ease-out),
+    transform 160ms var(--ease-out);
+}
+
+.film-btn:hover {
+  background: rgb(16 35 31 / 90%);
+}
+
+.film-btn:active {
+  transform: scale(0.94);
+}
+
+.film-btn:focus-visible {
+  outline: 3px solid var(--amber);
+  outline-offset: 2px;
+}
+
+.film-btn svg {
+  width: 22px;
+  height: 22px;
+}
+
+.film .icon-play,
+.film[data-paused='true'] .icon-pause,
+.film .icon-sound,
+.film[data-muted='true'] .icon-sound {
+  display: none;
+}
+
+.film[data-paused='true'] .icon-play,
+.film[data-muted='false'] .icon-sound {
+  display: block;
+}
+
+.film[data-muted='false'] .icon-muted {
+  display: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .film {
+    display: block;
+  }
+  .showcase .browser,
+  .showcase .toast {
+    display: none;
+  }
+}
+
 .shot-dark {
   display: none;
 }
@@ -775,6 +867,22 @@ kbd {
   }
   .browser-bar {
     display: none;
+  }
+  .film {
+    margin-right: 16px;
+    border-radius: var(--radius);
+  }
+  .film-controls {
+    right: 10px;
+    bottom: 10px;
+  }
+  .film-btn {
+    width: 36px;
+    height: 36px;
+  }
+  .film-btn svg {
+    width: 18px;
+    height: 18px;
   }
   /* Two columns at a readable size, bleeding off the right edge. */
   .shot {
@@ -1511,6 +1619,10 @@ kbd {
   .showcase .browser {
     animation: settle 1500ms var(--ease-out) 260ms both;
   }
+  /* Movement only, no fade, so the poster paints at once (it's the LCP image). */
+  .film {
+    animation: film-in 1300ms var(--ease-out) 120ms both;
+  }
   .toast {
     animation: toast-in 900ms var(--ease-out) 1500ms both;
   }
@@ -1628,6 +1740,12 @@ kbd {
     opacity: 0;
     transform: translateY(32px);
     filter: blur(8px);
+  }
+}
+
+@keyframes film-in {
+  from {
+    transform: translateY(28px) scale(0.985);
   }
 }
 

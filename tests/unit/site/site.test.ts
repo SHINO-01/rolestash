@@ -38,7 +38,7 @@ const pages = walk(SITE)
 function urlsOf(el: Element): string[] {
   const srcset = el.getAttribute('srcset');
   if (srcset !== null) return srcset.split(',').map((c) => c.trim().split(/\s+/)[0] ?? '');
-  const url = el.getAttribute('href') ?? el.getAttribute('src');
+  const url = el.getAttribute('href') ?? el.getAttribute('src') ?? el.getAttribute('poster');
   return url === null ? [] : [url];
 }
 
@@ -101,7 +101,9 @@ describe('rolestash.com static site', () => {
       expect(doc.head.querySelector('script')?.getAttribute('src')).toBe(THEME);
       expect(doc.querySelectorAll('[style], style')).toHaveLength(0);
       const refs = [
-        ...doc.querySelectorAll('link[rel="stylesheet"], link[rel="preload"], img, source'),
+        ...doc.querySelectorAll(
+          'link[rel="stylesheet"], link[rel="preload"], img, source, video[poster]',
+        ),
       ].flatMap(urlsOf);
       expect(refs.length).toBeGreaterThan(0);
       for (const ref of refs) expect(ref).toMatch(/^\//);
@@ -208,7 +210,9 @@ describe('rolestash.com static site', () => {
 
   it.each(pages)('$file has working internal links and assets', ({ doc }) => {
     const refs = [
-      ...doc.querySelectorAll('a[href], link[href], img[src], img[srcset], source[srcset]'),
+      ...doc.querySelectorAll(
+        'a[href], link[href], img[src], img[srcset], source[srcset], source[src], video[poster]',
+      ),
     ]
       .flatMap(urlsOf)
       .filter((v) => v.startsWith('/'));
@@ -254,6 +258,38 @@ describe('rolestash.com static site', () => {
       expect(meta(doc, 'og:title')).toBeTruthy();
       expect(meta(doc, 'twitter:card')).toBe('summary_large_image');
     }
+  });
+
+  it('plays the hero film from our own small files, muted, with the board pictures as fallback', () => {
+    const home = pages.find((p) => p.file === 'index.html')?.doc;
+    const video = home?.querySelector('.showcase .film video');
+    if (!home || !video) throw new Error('hero film missing');
+    // Muted, inline and looping so it may autoplay; only metadata until it plays.
+    for (const attr of ['muted', 'playsinline', 'loop', 'controls'])
+      expect(video.hasAttribute(attr), attr).toBe(true);
+    expect(video.hasAttribute('autoplay')).toBe(false); // theme.js plays it, never with reduced motion
+    expect(video.getAttribute('preload')).toBe('metadata');
+    expect(video.getAttribute('width')).toMatch(/^\d+$/);
+    expect(video.getAttribute('height')).toMatch(/^\d+$/);
+    const files = [
+      video.getAttribute('poster') ?? '',
+      ...[...video.querySelectorAll('source')].map((s) => s.getAttribute('src') ?? ''),
+    ];
+    expect(files).toHaveLength(3);
+    for (const file of files) {
+      expect(file).toMatch(/^\/assets\//);
+      // Keep the page light: each encode under 4 MB, the poster under 150 KB.
+      expect(statSync(join(SITE, file)).size).toBeLessThan(
+        file.endsWith('.webp') ? 150_000 : 4_000_000,
+      );
+    }
+    expect(
+      home.querySelectorAll('.showcase picture.shot-light, .showcase picture.shot-dark'),
+    ).toHaveLength(2);
+    // The site-wide CSP has to allow our own media, and nothing else.
+    const headers = readFileSync(join(SITE, '_headers'), 'utf8');
+    const siteCsp = /^\/\*\n {2}Content-Security-Policy: (.+)$/m.exec(headers)?.[1] ?? '';
+    expect(siteCsp).toContain("media-src 'self';");
   });
 
   it('gives every image explicit dimensions so nothing shifts as it loads', () => {

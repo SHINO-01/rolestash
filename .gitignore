@@ -19,3 +19,6 @@ site/board/
 # Impeccable design tooling: local caches
 .impeccable/*.cache.json
 .impeccable/config.local.json
+
+# /brag launch video work (the final video is copied into site/assets)
+brag-output*/
