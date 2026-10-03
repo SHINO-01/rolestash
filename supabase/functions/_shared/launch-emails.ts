@@ -22,7 +22,7 @@ export interface News {
 const PLAN_NAMES: Record<string, string> = { free: 'Free', pro: 'Pro', advanced: 'Advanced' };
 const SENDER = 'Rolestash · New South Wales, Australia · support@rolestash.com';
 const WHY =
-  'You’re getting this because you signed up for Rolestash updates at rolestash.com. We email only about the launch and new features, a few times a year at most.';
+  'You’re getting this because you signed up for Rolestash updates at rolestash.com. We email only about new features, a few times a year at most.';
 
 const escape = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -85,7 +85,7 @@ export function confirmationEmail(confirmUrl: string, removeUrl: string): Email 
     subject: 'Confirm your Rolestash updates',
     title: 'Confirm your email',
     paragraphs: [
-      'You asked us to tell you when Rolestash launches on the Chrome Web Store. Confirm this address and we’ll email you on launch day, and now and then about new features.',
+      'You asked for Rolestash product news. Confirm this address and we’ll email you now and then when we ship something new.',
       'Didn’t ask? Ignore this email and we’ll forget your address within 30 days.',
     ],
     button: { label: 'Confirm my email', url: confirmUrl },
@@ -101,7 +101,7 @@ export function welcomeEmail(plan: string | null, unsubscribeUrl: string): Email
     subject: 'You’re on the Rolestash list',
     title: 'You’re on the list',
     paragraphs: [
-      `We’ll email you the day Rolestash goes live on the Chrome Web Store, and occasionally when we ship something new.${interest}`,
+      `We’ll email you occasionally when we ship something new.${interest}`,
       'Every email has a one-click unsubscribe link at the bottom, and there’s one in this email too. Questions? Just reply.',
     ],
     unsubscribe: unsubscribeLink(unsubscribeUrl),

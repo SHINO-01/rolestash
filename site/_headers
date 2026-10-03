@@ -15,11 +15,10 @@
   ! Content-Security-Policy
   Content-Security-Policy: default-src 'none'; script-src 'self' https://cdn.paddle.com; style-src 'self' 'unsafe-inline' https://cdn.paddle.com https://sandbox-cdn.paddle.com; img-src 'self' data: https://*.paddle.com; font-src 'self' https://cdn.paddle.com https://sandbox-cdn.paddle.com; frame-src https://buy.paddle.com https://sandbox-buy.paddle.com; connect-src https://*.paddle.com; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests
 
-# Pricing: same Paddle CSP. Kept out of search results until launch.
+# Pricing: same Paddle CSP.
 /pricing/*
   ! Content-Security-Policy
   Content-Security-Policy: default-src 'none'; script-src 'self' https://cdn.paddle.com; style-src 'self' 'unsafe-inline' https://cdn.paddle.com https://sandbox-cdn.paddle.com; img-src 'self' data: https://*.paddle.com; font-src 'self' https://cdn.paddle.com https://sandbox-cdn.paddle.com; frame-src https://buy.paddle.com https://sandbox-buy.paddle.com; connect-src https://*.paddle.com; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests
-  X-Robots-Tag: noindex
 
 # Google sign-in hand-off (ADR-0012): only our own script, no referrer, and
 # never cached, because the page runs on a URL fragment carrying an ID token.

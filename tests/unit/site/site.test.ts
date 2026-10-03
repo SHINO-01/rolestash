@@ -307,8 +307,27 @@ describe('rolestash.com static site', () => {
       expect(block).toContain('frame-src https://buy.paddle.com https://sandbox-buy.paddle.com;');
     }
     expect(headers.slice(0, headers.indexOf('/pay/*'))).not.toContain('paddle');
-    // Out of search results until launch.
-    expect(headers.slice(headers.indexOf('/pricing/*'))).toMatch(/X-Robots-Tag: noindex/);
+    // Public since launch: /pricing/ is in the nav and in search results.
+    const pricing = headers.slice(headers.indexOf('/pricing/*')).split('\n\n')[0] ?? '';
+    expect(pricing).not.toContain('X-Robots-Tag');
+  });
+
+  it('links every "Add to Chrome" to the one store listing', () => {
+    const store = /^https:\/\/chromewebstore\.google\.com\/detail\/rolestash\/[^/?#]+$/;
+    const links = [
+      ...pages.flatMap(({ doc }) =>
+        [...doc.querySelectorAll('a[href*="chromewebstore"]')].map((a) => a.getAttribute('href')),
+      ),
+      ...readFileSync(join(SITE, 'assets/pricing.js'), 'utf8').matchAll(
+        /'(https:\/\/chromewebstore[^']*)'/g,
+      ),
+    ].map((l) => (Array.isArray(l) ? l[1] : l));
+    expect(links.length).toBeGreaterThan(3);
+    expect(new Set(links).size).toBe(1);
+    expect(links[0]).toMatch(store);
+    // Nothing still points at the pre-launch "Notify me" form.
+    for (const { file, doc } of pages)
+      expect(doc.body.textContent, file).not.toMatch(/Notify me at launch|Launching soon/);
   });
 
   it.each(pages)('$file loads ES-module scripts as modules', ({ doc }) => {
