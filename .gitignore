@@ -15,3 +15,7 @@ secrets.env
 
 # Built by `npm run build:web` (CI builds it before deploying the site).
 site/board/
+
+# Impeccable design tooling: local caches
+.impeccable/*.cache.json
+.impeccable/config.local.json

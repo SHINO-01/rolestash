@@ -50,6 +50,7 @@
   --font-display: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
   --font-text: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
   --radius-sm: 10px;
   --radius: 16px;
   --radius-lg: 24px;
@@ -1178,7 +1179,7 @@ kbd {
   background: var(--surface-2)
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230b5d52' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='M12 6v12M6 12h12'/%3E%3C/svg%3E")
     center / 14px no-repeat;
-  transition: transform 220ms var(--ease-out);
+  transition: transform 320ms var(--ease-out);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -1211,9 +1212,9 @@ kbd {
     overflow-y: clip;
     opacity: 0;
     transition:
-      block-size 280ms var(--ease-out),
-      opacity 200ms ease,
-      content-visibility 280ms allow-discrete;
+      block-size 420ms var(--ease-out),
+      opacity 320ms ease,
+      content-visibility 420ms allow-discrete;
   }
   .faq-list details[open]::details-content {
     block-size: auto;
@@ -1374,23 +1375,23 @@ kbd {
 @media (prefers-reduced-motion: no-preference) {
   .hero h1,
   .hero-side {
-    animation: rise 700ms var(--ease-out) both;
+    animation: rise 1000ms var(--ease-out) both;
   }
   .hero-side {
-    animation-delay: 80ms;
+    animation-delay: 140ms;
   }
   .showcase .browser {
-    animation: settle 1000ms var(--ease-out) 180ms both;
+    animation: settle 1500ms var(--ease-out) 260ms both;
   }
   .toast {
-    animation: toast-in 600ms var(--ease-out) 1000ms both;
+    animation: toast-in 900ms var(--ease-out) 1500ms both;
   }
 
   /* The mobile menu grows from its button. */
   .menu-panel {
     transition:
-      opacity 180ms var(--ease-out),
-      transform 180ms var(--ease-out);
+      opacity 260ms var(--ease-out),
+      transform 260ms var(--ease-out);
   }
   @starting-style {
     .menu[open] .menu-panel {
@@ -1412,31 +1413,31 @@ kbd {
       animation-timeline: --stage;
     }
     .capture-fields div:nth-child(1) dd {
-      animation-range: cover 16% cover 26%;
+      animation-range: cover 14% cover 28%;
     }
     .capture-fields div:nth-child(2) dd {
-      animation-range: cover 21% cover 31%;
+      animation-range: cover 21% cover 35%;
     }
     .capture-fields div:nth-child(3) dd {
-      animation-range: cover 26% cover 36%;
+      animation-range: cover 28% cover 42%;
     }
     .capture-fields div:nth-child(4) dd {
-      animation-range: cover 31% cover 41%;
+      animation-range: cover 35% cover 49%;
     }
     .capture-fields div:nth-child(5) dd {
-      animation-range: cover 36% cover 46%;
+      animation-range: cover 42% cover 56%;
     }
     .capture-fields .flagged {
       animation: flag linear both;
       animation-timeline: --stage;
-      animation-range: cover 42% cover 50%;
+      animation-range: cover 52% cover 64%;
     }
     .mover {
       position: relative;
       z-index: 1;
-      animation: drag var(--ease-out) both;
+      animation: drag var(--ease-in-out) both;
       animation-timeline: --stage;
-      animation-range: cover 22% cover 50%;
+      animation-range: cover 20% cover 60%;
     }
   }
 }
@@ -1445,7 +1446,7 @@ kbd {
   @supports (animation-timeline: view()) {
     .mover {
       animation-name: drag-down;
-      animation-range: cover 35% cover 60%;
+      animation-range: cover 30% cover 66%;
     }
   }
 }

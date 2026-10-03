@@ -130,6 +130,10 @@ Runbook: [guides/launch.md](guides/launch.md).
    screen).
 5. **Beta, then public:** an unlisted beta with 10–20 testers, then the
    public listing.
+   - To do: ask beta testers who are happy to be quoted, and add their words
+     to the homepage proof section (the `proof-quote` snippet in
+     [guides/website.md](guides/website.md)). Real quotes only, with
+     permission.
 
 ## Later
 

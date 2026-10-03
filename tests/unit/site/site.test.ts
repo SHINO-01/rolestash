@@ -117,7 +117,7 @@ describe('rolestash.com static site', () => {
     }
   });
 
-  it('shares with a PNG link preview that apps without WebP support can show', () => {
+  it('shares a small JPEG link preview that chat apps, WhatsApp included, can show', () => {
     const meta = (doc: Document, key: string) =>
       doc.querySelector(`meta[property="${key}"], meta[name="${key}"]`)?.getAttribute('content');
     for (const file of [
@@ -129,8 +129,13 @@ describe('rolestash.com static site', () => {
       const doc = pages.find((p) => p.file === file)?.doc;
       if (!doc) throw new Error(file);
       const image = meta(doc, 'og:image') ?? '';
-      expect(image, file).toMatch(/^https:\/\/rolestash\.com\/assets\/.+\.png$/);
-      expect(existsSync(join(SITE, new URL(image).pathname))).toBe(true);
+      expect(image, file).toMatch(/^https:\/\/rolestash\.com\/assets\/.+\.(png|jpg)$/);
+      const path = join(SITE, new URL(image).pathname);
+      expect(existsSync(path)).toBe(true);
+      // WhatsApp drops preview images much over 300 KB.
+      expect(statSync(path).size).toBeLessThan(300_000);
+      expect(meta(doc, 'og:image:secure_url')).toBe(image);
+      expect(meta(doc, 'twitter:image')).toBe(image);
       expect(meta(doc, 'og:image:width')).toBe('1200');
       expect(meta(doc, 'og:image:height')).toBe('630');
       expect(meta(doc, 'og:title')).toBeTruthy();

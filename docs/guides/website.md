@@ -107,16 +107,31 @@ employers only.
 
 ## Link previews
 
-Pages share `site/assets/og-image.png` (1200×630) through Open Graph and
-Twitter card tags. It's a PNG because many chat apps don't show WebP
-previews. Regenerate it after changing the screenshots or the headline:
+Pages share `site/assets/og-card.jpg` (1200×630) through Open Graph
+(`og:image`, `og:image:secure_url`) and Twitter card (`twitter:image`) tags.
+
+- **A JPEG under 300 KB** (it's about 75 KB): WhatsApp builds previews on
+  the sender's phone and drops larger images, and some apps don't show
+  WebP. `npm run site:og` refuses anything bigger, and a site test checks
+  the size and the tags.
+- **A new file name whenever the card changes:** Meta caches images by URL
+  and won't fetch a changed file at the same address. (`og-image.png` was
+  the first card; it stays so old cached previews still have an image.)
 
 ```bash
 npm run site:og
 ```
 
-Chat apps cache previews, so a changed image can take days to show for a
-link that was already shared.
+**Meta apps cache previews for weeks**, including failed ones. After a
+change, or if WhatsApp, Facebook, Messenger or Instagram show no preview:
+
+1. Open the [Sharing Debugger](https://developers.facebook.com/tools/debug/)
+   (any Facebook login), enter `https://rolestash.com/`, and click
+   **Debug**, then **Scrape again**. Check the preview shows the card and
+   there are no errors (warnings about `fb:app_id` don't matter).
+2. Repeat for any other page you share (`/pricing/`, `/privacy/`).
+3. WhatsApp keeps its own cache per link; a new message with the URL, or the
+   URL with `?v=2` added, shows the fresh preview.
 
 ## Scripts Cloudflare injects
 
