@@ -1,8 +1,8 @@
 # Website (rolestash.com)
 
 The marketing and legal site is plain static HTML in `site/`: no build step,
-one small first-party script (the light/dark switch and the hero film's
-buttons), no third-party requests. An assets-only Cloudflare Worker
+one small first-party script (the light/dark switch, and playing the hero
+film while it's on screen), no third-party requests. An assets-only Cloudflare Worker
 serves it from `main`, so the site only changes after CI has promoted a
 tested commit (docs/guides/ci-cd.md).
 
@@ -79,8 +79,8 @@ tested commit (docs/guides/ci-cd.md).
   Chrome visitor has); FAQ answers open with a height transition. Nothing
   animates under `prefers-reduced-motion`, and the content is complete
   without the animations. Prefer CSS: the one script exists because
-  remembering a theme across pages, and the film's pause and sound buttons,
-  need one.
+  remembering a theme across pages, and playing the film only while it's
+  visible, need one.
 - **The changelog page is generated.** Never edit `site/changelog/` by
   hand: write the entry in `CHANGELOG.md` and run `npm run site:changelog`
   (the release command does it too). ADR references are dropped and
@@ -123,15 +123,14 @@ place of the board screenshot. Its source is the Hyperframes project made with
 
 | File                                     | What                                       |
 | ---------------------------------------- | ------------------------------------------ |
-| `site/assets/rolestash-film.webm`        | VP9 + Opus, 1920×1080, about 2.6 MB        |
-| `site/assets/rolestash-film.mp4`         | H.264 + AAC, 1600×900, about 2.5 MB        |
+| `site/assets/rolestash-film.webm`        | VP9, 1920×1080, no audio, about 2.3 MB     |
+| `site/assets/rolestash-film.mp4`         | H.264, 1600×900, no audio, about 2.2 MB    |
 | `site/assets/rolestash-film-poster.webp` | The closing frame (CTA), 1600 wide, ~50 KB |
 
-- **Player:** `<video muted playsinline loop preload="metadata" controls>`
-  with the poster. `theme.js` removes the native controls, shows our pause
-  and sound buttons, and plays the film only while a quarter of it is on
-  screen. Turning the sound on restarts it from the beginning. Without the
-  script the native controls stay and nothing plays by itself.
+- **Player:** always silent (owner's choice, 2026-10-04): the encodes carry
+  no audio track, and the `<video muted playsinline loop preload="metadata">`
+  has no controls or buttons. `theme.js` plays it only while a quarter of it
+  is on screen; without the script it shows the poster.
 - **Reduced motion:** CSS hides the film and shows the light/dark board
   pictures (now `loading="lazy"`, so they aren't fetched while hidden).
 - **LCP:** the poster is the hero's largest paint. It is preloaded (only when
@@ -142,8 +141,8 @@ place of the board screenshot. Its source is the Hyperframes project made with
 - **Re-encoding** from a new `brag-output/brag.mp4`:
 
   ```bash
-  ffmpeg -i brag-output/brag.mp4 -c:v libvpx-vp9 -crf 34 -b:v 0 -row-mt 1 -cpu-used 2 -c:a libopus -b:a 96k site/assets/rolestash-film.webm
-  ffmpeg -i brag-output/brag.mp4 -vf scale=1600:-2 -c:v libx264 -preset veryslow -crf 24 -pix_fmt yuv420p -c:a aac -b:a 112k -movflags +faststart site/assets/rolestash-film.mp4
+  ffmpeg -i brag-output/brag.mp4 -c:v libvpx-vp9 -crf 34 -b:v 0 -row-mt 1 -cpu-used 2 -an site/assets/rolestash-film.webm
+  ffmpeg -i brag-output/brag.mp4 -vf scale=1600:-2 -c:v libx264 -preset veryslow -crf 24 -pix_fmt yuv420p -an -movflags +faststart site/assets/rolestash-film.mp4
   ffmpeg -i brag-output/brag.jpg -vf scale=1600:-2 -c:v libwebp -quality 78 site/assets/rolestash-film-poster.webp
   ```
 

@@ -260,13 +260,16 @@ describe('rolestash.com static site', () => {
     }
   });
 
-  it('plays the hero film from our own small files, muted, with the board pictures as fallback', () => {
+  it('plays the hero film from our own small files, always muted, with the board pictures as fallback', () => {
     const home = pages.find((p) => p.file === 'index.html')?.doc;
     const video = home?.querySelector('.showcase .film video');
     if (!home || !video) throw new Error('hero film missing');
     // Muted, inline and looping so it may autoplay; only metadata until it plays.
-    for (const attr of ['muted', 'playsinline', 'loop', 'controls'])
+    for (const attr of ['muted', 'playsinline', 'loop'])
       expect(video.hasAttribute(attr), attr).toBe(true);
+    // Always silent: no controls to unmute it, and no buttons.
+    expect(video.hasAttribute('controls')).toBe(false);
+    expect(home.querySelectorAll('.showcase button')).toHaveLength(0);
     expect(video.hasAttribute('autoplay')).toBe(false); // theme.js plays it, never with reduced motion
     expect(video.getAttribute('preload')).toBe('metadata');
     expect(video.getAttribute('width')).toMatch(/^\d+$/);
