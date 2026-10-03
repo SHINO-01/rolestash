@@ -100,7 +100,8 @@ function render() {
         card.append(button);
       } else {
         const link = el('a', 'btn btn-ghost plan-cta', 'Start free');
-        link.href = 'https://chromewebstore.google.com/detail/rolestash/STORE_ID';
+        link.href =
+          'https://chromewebstore.google.com/detail/rolestash/cncilbdakhabnocnjokbonggomndedgp';
         card.append(link);
       }
       return card;
