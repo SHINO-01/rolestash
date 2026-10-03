@@ -8,6 +8,8 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- **Light and dark mode on rolestash.com:** a switch in the header, which
+  remembers your choice; the new theme spreads out from the switch.
 - **A calmer rolestash.com:** one clear promise, three benefits, the facts
   behind them, answers to common questions and a single Add to Chrome, set in
   Bricolage Grotesque. Plan details moved to the pricing page.

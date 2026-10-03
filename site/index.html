@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="/assets/theme.js"></script>
     <title>Rolestash — the private job application tracker</title>
     <meta
       name="description"
@@ -60,6 +61,12 @@
             >Add to Chrome</a
           >
         </nav>
+        <button class="theme-toggle" type="button" aria-label="Switch theme" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="8.25" />
+            <path d="M12 3.75a8.25 8.25 0 0 1 0 16.5z" />
+          </svg>
+        </button>
         <details class="menu">
           <summary>
             <span class="menu-icon" aria-hidden="true"></span>
@@ -105,30 +112,12 @@
               <span class="dots"><i></i><i></i><i></i></span>
               <span class="address">Rolestash · Board</span>
             </div>
-            <picture>
-              <source
-                media="(max-width: 640px) and (prefers-color-scheme: dark)"
-                srcset="/assets/board-dark-sm-640.webp 640w, /assets/board-dark-sm-960.webp 960w"
-                sizes="calc(100vw - 32px)"
-                width="640"
-                height="552"
-              />
+            <picture class="shot-light">
               <source
                 media="(max-width: 640px)"
                 srcset="/assets/board-light-sm-640.webp 640w, /assets/board-light-sm-960.webp 960w"
-                sizes="calc(100vw - 32px)"
+                sizes="600px"
                 width="640"
-                height="552"
-              />
-              <source
-                media="(prefers-color-scheme: dark)"
-                srcset="
-                  /assets/board-dark-960.webp   960w,
-                  /assets/board-dark-1536.webp 1536w,
-                  /assets/board-dark-2304.webp 2304w
-                "
-                sizes="(min-width: 1240px) 1300px, calc(100vw - 32px)"
-                width="1536"
                 height="552"
               />
               <img
@@ -142,8 +131,33 @@
                 sizes="(min-width: 1240px) 1300px, calc(100vw - 32px)"
                 width="1536"
                 height="552"
+                loading="lazy"
                 fetchpriority="high"
                 alt="The Rolestash board: job cards with company, location, salary and priority, in Saved, Applied, Screening, Interviewing and Offer columns."
+              />
+            </picture>
+            <picture class="shot-dark">
+              <source
+                media="(max-width: 640px)"
+                srcset="/assets/board-dark-sm-640.webp 640w, /assets/board-dark-sm-960.webp 960w"
+                sizes="600px"
+                width="640"
+                height="552"
+              />
+              <img
+                class="shot"
+                src="/assets/board-dark-1536.webp"
+                srcset="
+                  /assets/board-dark-960.webp   960w,
+                  /assets/board-dark-1536.webp 1536w,
+                  /assets/board-dark-2304.webp 2304w
+                "
+                sizes="(min-width: 1240px) 1300px, calc(100vw - 32px)"
+                width="1536"
+                height="552"
+                loading="lazy"
+                fetchpriority="high"
+                alt="The Rolestash board in dark mode: job cards with company, location, salary and priority, in Saved, Applied, Screening, Interviewing and Offer columns."
               />
             </picture>
           </div>

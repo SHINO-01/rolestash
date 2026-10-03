@@ -77,13 +77,21 @@ describe('rolestash.com static site', () => {
     ({ file, doc }) => {
       const scripts = [...doc.querySelectorAll('script')];
       for (const script of scripts) expect(script.textContent.trim()).toBe('');
-      // Only checkout and pricing (Paddle.js + our module) and the Google hand-off have scripts.
+      // Every page loads only the light/dark switch, first in <head> so a saved
+      // theme applies before paint. Checkout and pricing add Paddle.js and our
+      // module; the Google hand-off adds its forwarder.
+      const THEME = '/assets/theme.js';
       const allowed: Record<string, string[]> = {
-        'pay/index.html': ['https://cdn.paddle.com/paddle/v2/paddle.js', '/assets/pay.js'],
-        'pricing/index.html': ['https://cdn.paddle.com/paddle/v2/paddle.js', '/assets/pricing.js'],
-        'auth/google/index.html': ['/assets/auth-google.js'],
+        'pay/index.html': [THEME, 'https://cdn.paddle.com/paddle/v2/paddle.js', '/assets/pay.js'],
+        'pricing/index.html': [
+          THEME,
+          'https://cdn.paddle.com/paddle/v2/paddle.js',
+          '/assets/pricing.js',
+        ],
+        'auth/google/index.html': [THEME, '/assets/auth-google.js'],
       };
-      expect(scripts.map((el) => el.getAttribute('src'))).toEqual(allowed[file] ?? []);
+      expect(scripts.map((el) => el.getAttribute('src'))).toEqual(allowed[file] ?? [THEME]);
+      expect(doc.head.querySelector('script')?.getAttribute('src')).toBe(THEME);
       expect(doc.querySelectorAll('[style], style')).toHaveLength(0);
       const refs = [
         ...doc.querySelectorAll('link[rel="stylesheet"], link[rel="preload"], img, source'),

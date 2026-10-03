@@ -1,7 +1,8 @@
 # Website (rolestash.com)
 
 The marketing and legal site is plain static HTML in `site/`: no build step,
-no JavaScript, no third-party requests. An assets-only Cloudflare Worker
+one small first-party script (the light/dark switch), no third-party
+requests. An assets-only Cloudflare Worker
 serves it from `main`, so the site only changes after CI has promoted a
 tested commit (docs/guides/ci-cd.md).
 
@@ -22,9 +23,19 @@ tested commit (docs/guides/ci-cd.md).
 
 ## Rules
 
-- **No scripts, no inline styles, nothing from other origins.** The CSP in
-  `_headers` is `default-src 'none'`, and `tests/unit/site/site.test.ts`
-  enforces it.
+- **One script, no inline code or styles, nothing from other origins.** The
+  CSP in `_headers` is `default-src 'none'; script-src 'self'`, and
+  `tests/unit/site/site.test.ts` enforces it. Every page loads only
+  `assets/theme.js`, first in `<head>` (not deferred) so a saved theme
+  applies before the first paint.
+- **The light/dark switch** (`.theme-toggle` in the shared header) follows
+  the system setting until the visitor picks a theme, then remembers it in
+  local storage (named in the privacy policy). Dark styles are written
+  twice, as `:root[data-theme='dark'] …` and as
+  `:root:not([data-theme='light']) …` inside the dark media query. The new
+  theme grows from the switch in a circle (View Transitions); with reduced
+  motion it changes at once. The switch stays hidden if the script doesn't
+  run.
 - **The exceptions are `/pay/` and `/pricing/`.** They load Paddle.js from
   `cdn.paddle.com` and our `assets/pay.js` or `assets/pricing.js` (ES
   modules), under their own CSP. Their `_headers` rules detach the site-wide
@@ -63,8 +74,8 @@ tested commit (docs/guides/ci-cd.md).
   Interviewing as they scroll into view (scroll timelines, which every
   Chrome visitor has); FAQ answers open with a height transition. Nothing
   animates under `prefers-reduced-motion`, and the content is complete
-  without the animations. Adding JavaScript would mean loosening the CSP,
-  so prefer CSS until something truly needs a script.
+  without the animations. Prefer CSS: the theme switch is the only script,
+  because remembering a choice across pages needs one.
 - **Legal pages describe what actually ships.** Update the privacy policy
   in the same PR as any change to what the extension or backend collects,
   and bump "Last updated".
