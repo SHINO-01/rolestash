@@ -1,0 +1,7 @@
+# rolestash.com: everything public may be crawled. Checkout, sign-in and
+# email-confirmation pages carry their own noindex, so they stay crawlable
+# for search engines to see it.
+User-agent: *
+Allow: /
+
+Sitemap: https://rolestash.com/sitemap.xml

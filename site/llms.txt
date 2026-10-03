@@ -1,0 +1,24 @@
+# Rolestash
+
+> Rolestash is a private job application tracker for Chrome. It saves job postings from job boards and careers pages to a Kanban board in one click, fills application forms from the user's own details, and keeps the board up to date. No AI reads your applications, it never connects to your inbox, and it never sells data.
+
+Rolestash is made by Lumetrix Technologies, a sole trader in New South Wales, Australia (ABN 41 649 439 228). Contact: support@rolestash.com.
+
+Key facts:
+
+- Install: Chrome Web Store, https://chromewebstore.google.com/detail/rolestash/cncilbdakhabnocnjokbonggomndedgp
+- Works on 50+ job boards and applicant tracking systems (including SEEK, LinkedIn, Indeed, Workday, Greenhouse and Lever) and most other careers pages.
+- Plans: Free (up to 30 active jobs, no account needed, data stays in the browser); Pro, US$7 a month (60 active jobs, full autofill, insights, sync across 3 computers); Advanced, US$15 a month (unlimited jobs, automatic status updates from forwarded job emails, phone access through a web board, 14-day free trial with no card). Prices are charged in the buyer's currency by Paddle, the merchant of record.
+- Privacy: capture and email updates run on plain rules, not AI; nothing is sent to AI services; no ads or analytics; export to CSV or JSON on every plan. Synced data is stored in Sydney, Australia.
+
+## Pages
+
+- [Home](https://rolestash.com/): what Rolestash does, the facts behind it, and common questions
+- [Pricing](https://rolestash.com/pricing/): plans and prices in your currency
+- [Support](https://rolestash.com/support/): help with installing, capturing, autofill, sync and billing
+
+## Policies
+
+- [Privacy policy](https://rolestash.com/privacy/): what is stored, where, and for how long
+- [Terms of service](https://rolestash.com/terms/): plans, billing, acceptable use
+- [Refund policy](https://rolestash.com/refunds/): cancellation and the 14-day money-back guarantee

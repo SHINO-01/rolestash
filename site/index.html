@@ -4,14 +4,14 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="/assets/theme.js"></script>
-    <title>Rolestash — the private job application tracker</title>
+    <title>Rolestash — Private job application tracker for Chrome</title>
     <meta
       name="description"
-      content="The private job application tracker: no AI reading your applications, no inbox access, no data selling. One-click capture from 50+ job sites and autofill. Free for up to 30 active jobs; from US$7."
+      content="Save job postings in one click, keep every application on one board and catch deadlines. No AI reads your search. Free for up to 30 active jobs."
     />
+    <link rel="canonical" href="https://rolestash.com/" />
     <meta name="theme-color" content="#fbfaf7" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0b0f0e" media="(prefers-color-scheme: dark)" />
-    <link rel="canonical" href="https://rolestash.com/" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/assets/icon-512.png" />
     <link
@@ -22,12 +22,14 @@
       crossorigin
     />
     <link rel="stylesheet" href="/assets/site.css" />
+
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Rolestash" />
-    <meta property="og:title" content="Rolestash — the private job application tracker" />
+    <meta property="og:locale" content="en_AU" />
+    <meta property="og:title" content="Rolestash — Private job application tracker for Chrome" />
     <meta
       property="og:description"
-      content="The private job application tracker: no AI, no inbox access, no data selling. Free for up to 30 active jobs."
+      content="Save job postings in one click, keep every application on one board and catch deadlines. No AI reads your search. Free for up to 30 active jobs."
     />
     <meta property="og:url" content="https://rolestash.com/" />
     <meta property="og:image" content="https://rolestash.com/assets/og-card.jpg" />
@@ -37,10 +39,171 @@
     <meta property="og:image:height" content="630" />
     <meta
       property="og:image:alt"
-      content="Rolestash: stash every role you apply for. A job board with saved and applied roles."
+      content="Rolestash: know where every job application stands. The board with saved and applied jobs."
     />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Rolestash — Private job application tracker for Chrome" />
+    <meta
+      name="twitter:description"
+      content="Save job postings in one click, keep every application on one board and catch deadlines. No AI reads your search. Free for up to 30 active jobs."
+    />
     <meta name="twitter:image" content="https://rolestash.com/assets/og-card.jpg" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://rolestash.com/#org",
+            "name": "Rolestash",
+            "url": "https://rolestash.com/",
+            "logo": "https://rolestash.com/assets/icon-512.png",
+            "email": "support@rolestash.com",
+            "parentOrganization": {
+              "@type": "Organization",
+              "name": "Lumetrix Technologies",
+              "address": {
+                "@type": "PostalAddress",
+                "addressRegion": "NSW",
+                "addressCountry": "AU"
+              }
+            }
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://rolestash.com/#website",
+            "url": "https://rolestash.com/",
+            "name": "Rolestash",
+            "publisher": {
+              "@id": "https://rolestash.com/#org"
+            },
+            "inLanguage": "en"
+          },
+          {
+            "@type": "SoftwareApplication",
+            "@id": "https://rolestash.com/#app",
+            "name": "Rolestash",
+            "applicationCategory": "BusinessApplication",
+            "operatingSystem": "Chrome",
+            "browserRequirements": "Requires Google Chrome or another Chromium browser on desktop.",
+            "description": "A private job application tracker for Chrome: save job postings in one click, track every application on a board, and fill application forms. No AI reads your applications.",
+            "url": "https://rolestash.com/",
+            "installUrl": "https://chromewebstore.google.com/detail/rolestash/cncilbdakhabnocnjokbonggomndedgp",
+            "image": "https://rolestash.com/assets/og-card.jpg",
+            "publisher": {
+              "@id": "https://rolestash.com/#org"
+            },
+            "offers": [
+              {
+                "@type": "Offer",
+                "name": "Free",
+                "price": "0",
+                "priceCurrency": "USD",
+                "url": "https://chromewebstore.google.com/detail/rolestash/cncilbdakhabnocnjokbonggomndedgp"
+              },
+              {
+                "@type": "Offer",
+                "name": "Pro",
+                "price": "7",
+                "priceCurrency": "USD",
+                "url": "https://rolestash.com/pricing/",
+                "priceSpecification": {
+                  "@type": "UnitPriceSpecification",
+                  "price": "7",
+                  "priceCurrency": "USD",
+                  "billingDuration": "P1M",
+                  "unitText": "month"
+                }
+              },
+              {
+                "@type": "Offer",
+                "name": "Advanced",
+                "price": "15",
+                "priceCurrency": "USD",
+                "url": "https://rolestash.com/pricing/",
+                "priceSpecification": {
+                  "@type": "UnitPriceSpecification",
+                  "price": "15",
+                  "priceCurrency": "USD",
+                  "billingDuration": "P1M",
+                  "unitText": "month"
+                }
+              }
+            ]
+          },
+          {
+            "@type": "FAQPage",
+            "@id": "https://rolestash.com/#faq",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "How much does it cost?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Free for up to 30 active jobs, with no account. Pro is US$7 a month for 60 active jobs, full autofill, insights and sync across 3 computers. Advanced is US$15 a month for unlimited jobs, automatic status updates and your phone, with a 14-day free trial and no card needed. You pay in your own currency: compare plans and prices."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Does it work on the sites I use?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Probably. Rolestash supports 50+ job boards and applicant tracking systems, from SEEK, LinkedIn and Indeed to Workday, Greenhouse and Lever. Most other careers pages publish structured job data it can read; for anything else it makes a best guess and marks it so you can check before saving."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Do you use AI?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "No. Capturing a job and reading status emails is deterministic code, and your data is never sent to an AI service."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Do you read my inbox?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "No. On Advanced you get a private address and set a filter in Gmail or Outlook to forward job emails to it. Rolestash reads each forwarded reply with plain rules, moves the card when it's sure (and suggests the move when it isn't), keeps the extracted update and discards the email. Every change can be undone."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Where is my data stored?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "On the free plan, only in your browser. If you turn on sync (Pro and Advanced), a copy of your board is stored in our database in Sydney, Australia, and deleting your account deletes it. See the privacy policy."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Which browsers does it support?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Google Chrome and other Chromium browsers that install from the Chrome Web Store, on desktop. Advanced adds a web board for your phone. Edge and Firefox versions are planned."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "What happens when my trial or subscription ends?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "You move to the free plan. Nothing is deleted or locked: every job stays on your board, and you can keep editing and exporting. You just can't add new jobs while more than 30 are active."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Who handles payments?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Our online reseller Paddle.com is the merchant of record for all orders. Paddle processes payments, calculates and collects tax, and issues your invoices. We never see your card details."
+                }
+              }
+            ]
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <a class="skip" href="#main">Skip to content</a>
@@ -131,7 +294,6 @@
                 sizes="(min-width: 1212px) 1180px, calc(100vw - 32px)"
                 width="1536"
                 height="552"
-                loading="lazy"
                 fetchpriority="high"
                 alt="The Rolestash board: job cards with company, location, salary and priority, in Saved, Applied, Screening, Interviewing and Offer columns."
               />
@@ -156,7 +318,6 @@
                 width="1536"
                 height="552"
                 loading="lazy"
-                fetchpriority="high"
                 alt="The Rolestash board in dark mode: job cards with company, location, salary and priority, in Saved, Applied, Screening, Interviewing and Offer columns."
               />
             </picture>

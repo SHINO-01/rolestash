@@ -144,6 +144,34 @@ change, or if WhatsApp, Facebook, Messenger or Instagram show no preview:
 3. WhatsApp keeps its own cache per link; a new message with the URL, or the
    URL with `?v=2` added, shows the fresh preview.
 
+## Search
+
+Public pages (`/`, `/pricing/`, `/support/`, `/privacy/`, `/terms/`,
+`/refunds/`) are indexed; checkout, sign-in, welcome and email-confirmation
+pages carry `noindex`, as does the 404 page. Site tests enforce the rules
+below.
+
+- **`sitemap.xml`** lists exactly the indexable pages. Add a page there when
+  you add one, and bump its `lastmod` when its content changes.
+- **`robots.txt`** allows everything and points at the sitemap. It doesn't
+  block the `noindex` pages, so search engines can see their `noindex`.
+- **Every indexable page** has a unique title (60 characters or less), a
+  unique description (70–160), a canonical URL with a trailing slash,
+  matching `og:`/`twitter:` tags with the share card, and JSON-LD.
+- **JSON-LD:** the homepage describes the organisation, the website, the
+  extension with its three plans (`SoftwareApplication` offers in USD) and
+  the FAQ, copied word for word from the visible questions (a test checks).
+  Other pages carry a breadcrumb. JSON-LD is data, so the CSP doesn't apply
+  to it. Never add ratings or reviews until real ones exist.
+- **`llms.txt`** summarises the product and its pages in plain text for AI
+  assistants that look for it. Keep its facts in step with the site.
+- **One `h1` per page and headings in order**, and every image has `alt`
+  (empty for decoration).
+- **Search Console:** the domain is verified by a DNS TXT record. After
+  structural changes, open Search Console → **Sitemaps** and submit
+  `https://rolestash.com/sitemap.xml`; use **URL inspection** → _Request
+  indexing_ for a changed page.
+
 ## Scripts Cloudflare injects
 
 Checked live on 2026-10-01: Cloudflare adds two scripts to our HTML at the

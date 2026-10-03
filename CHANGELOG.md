@@ -8,6 +8,10 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- **rolestash.com is easier to find:** a sitemap, robots.txt and llms.txt;
+  clearer titles and descriptions, share cards and structured data on every
+  public page; more links between pages; the pricing switch fits small
+  phones.
 - **Light and dark mode on rolestash.com:** a switch in the header, which
   remembers your choice; the new theme spreads out from the switch.
 - **A calmer rolestash.com:** one clear promise, three benefits, the facts

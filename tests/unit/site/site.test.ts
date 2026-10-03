@@ -75,7 +75,10 @@ describe('rolestash.com static site', () => {
   it.each(pages)(
     '$file loads nothing from other origins and has no inline code',
     ({ file, doc }) => {
-      const scripts = [...doc.querySelectorAll('script')];
+      // JSON-LD is data, never executed (and the CSP doesn't apply to it).
+      for (const data of doc.querySelectorAll('script[type="application/ld+json"]'))
+        expect(() => JSON.parse(data.textContent) as unknown).not.toThrow();
+      const scripts = [...doc.querySelectorAll('script:not([type="application/ld+json"])')];
       for (const script of scripts) expect(script.textContent.trim()).toBe('');
       // Every page loads only the light/dark switch, first in <head> so a saved
       // theme applies before paint. Checkout and pricing add Paddle.js and our
@@ -100,6 +103,92 @@ describe('rolestash.com static site', () => {
       for (const ref of refs) expect(ref).toMatch(/^\//);
     },
   );
+
+  describe('search', () => {
+    const SITE_URL = 'https://rolestash.com';
+    const indexable = pages.filter(
+      ({ file, doc }) =>
+        file !== '404.html' &&
+        !(doc.querySelector('meta[name="robots"]')?.getAttribute('content') ?? '').includes(
+          'noindex',
+        ),
+    );
+    const urlOf = (file: string) => `${SITE_URL}/${file.replace(/index\.html$/, '')}`;
+
+    it('lists exactly the indexable pages in sitemap.xml, linked from robots.txt', () => {
+      const sitemap = readFileSync(join(SITE, 'sitemap.xml'), 'utf8');
+      const locs = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]).sort();
+      expect(locs).toEqual(indexable.map(({ file }) => urlOf(file)).sort());
+      for (const [, date] of sitemap.matchAll(/<lastmod>([^<]+)<\/lastmod>/g))
+        expect(date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      const robots = readFileSync(join(SITE, 'robots.txt'), 'utf8');
+      expect(robots).toContain(`Sitemap: ${SITE_URL}/sitemap.xml`);
+      expect(robots).not.toMatch(/^Disallow: \/\s*$/m);
+      expect(existsSync(join(SITE, 'llms.txt'))).toBe(true);
+    });
+
+    it.each(indexable)(
+      '$file has a title, description, canonical and share card',
+      ({ file, doc }) => {
+        const meta = (key: string) =>
+          doc
+            .querySelector(`meta[name="${key}"], meta[property="${key}"]`)
+            ?.getAttribute('content') ?? '';
+        const title = doc.title.trim();
+        expect(title.length, title).toBeGreaterThan(10);
+        expect(title.length, title).toBeLessThanOrEqual(60);
+        expect(meta('description').length).toBeGreaterThanOrEqual(70);
+        expect(meta('description').length).toBeLessThanOrEqual(160);
+        expect(doc.querySelector('link[rel="canonical"]')?.getAttribute('href')).toBe(urlOf(file));
+        expect(meta('og:url')).toBe(urlOf(file));
+        expect(meta('og:title')).toBe(title);
+        expect(meta('og:image')).toMatch(/^https:\/\/rolestash\.com\/assets\//);
+        expect(doc.querySelectorAll('script[type="application/ld+json"]').length).toBeGreaterThan(
+          0,
+        );
+      },
+    );
+
+    it('keeps unique titles and descriptions', () => {
+      const titles = indexable.map(({ doc }) => doc.title.trim());
+      const descriptions = indexable.map(({ doc }) =>
+        doc.querySelector('meta[name="description"]')?.getAttribute('content'),
+      );
+      expect(new Set(titles).size).toBe(titles.length);
+      expect(new Set(descriptions).size).toBe(descriptions.length);
+    });
+
+    it.each(pages)('$file has one h1, headings in order, and alt text on images', ({ doc }) => {
+      expect(doc.querySelectorAll('h1')).toHaveLength(1);
+      const levels = [...doc.querySelectorAll('h1, h2, h3, h4, h5, h6')].map((h) =>
+        Number(h.tagName[1]),
+      );
+      for (let i = 1; i < levels.length; i++)
+        expect((levels[i] ?? 0) - (levels[i - 1] ?? 0)).toBeLessThanOrEqual(1);
+      for (const img of doc.querySelectorAll('img')) expect(img.hasAttribute('alt')).toBe(true);
+    });
+
+    it('keeps the 404 page and private pages out of search', () => {
+      const notFound = pages.find((p) => p.file === '404.html')?.doc;
+      expect(notFound?.querySelector('meta[name="robots"]')?.getAttribute('content')).toBe(
+        'noindex',
+      );
+      expect(notFound?.querySelector('link[rel="canonical"]')).toBeNull();
+      for (const file of ['pay/index.html', 'welcome/index.html', 'auth/google/index.html'])
+        expect(indexable.map((p) => p.file)).not.toContain(file);
+    });
+
+    it('describes the homepage FAQ in structured data exactly as shown', () => {
+      const home = pages.find((p) => p.file === 'index.html')?.doc;
+      if (!home) throw new Error('index.html');
+      const data = JSON.parse(
+        home.querySelector('script[type="application/ld+json"]')?.textContent ?? '{}',
+      ) as { '@graph': { '@type': string; mainEntity?: { name: string }[] }[] };
+      const faq = data['@graph'].find((n) => n['@type'] === 'FAQPage');
+      const shown = [...home.querySelectorAll('#faq summary')].map((s) => s.textContent.trim());
+      expect(faq?.mainEntity?.map((q) => q.name)).toEqual(shown);
+    });
+  });
 
   it.each(pages)('$file has working internal links and assets', ({ doc }) => {
     const refs = [
