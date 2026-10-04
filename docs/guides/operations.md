@@ -16,6 +16,22 @@ It is read-only: it never changes anything at a provider.
   fresh numbers (8-second timeout per panel); a slow or failing provider
   shows an error in its own panel only.
 
+## Status and to-do
+
+Done (2026-10-05): the Access application (team
+`nameless-shadow-4fcf`), its AUD tag in `wrangler.jsonc`, the
+`OWNER_EMAILS` secret, the custom domain, and the accounts panel's secret.
+
+To do (owner), one token per panel, then reload the dashboard:
+
+- [ ] `PADDLE_API_KEY`: read-only Paddle key (Revenue panel)
+- [ ] `CF_ANALYTICS_TOKEN`: Zone Analytics read for rolestash.com (Site panel)
+- [ ] `GITHUB_TOKEN`: fine-grained, Actions and Dependabot alerts read (Product health panel)
+- [ ] `GOOGLE_SERVICE_ACCOUNT`: Search Console restricted user (Search panel)
+- [ ] `RESEND_API_KEY`: optional; Resend has no read-only key (Email panel)
+
+Scopes and where to create each are in the table below.
+
 ## One-time setup (owner)
 
 Do these in order: Access first, so the hostname is protected before it

@@ -13,8 +13,8 @@
   "vars": {
     // Public values. ACCESS_TEAM_DOMAIN and ACCESS_AUD come from the Access
     // application; empty means nobody gets in.
-    "ACCESS_TEAM_DOMAIN": "",
-    "ACCESS_AUD": "",
+    "ACCESS_TEAM_DOMAIN": "nameless-shadow-4fcf.cloudflareaccess.com",
+    "ACCESS_AUD": "e542ad81485b606f6539b18f981921ea294b7cfdfaf0d46bffaae8b06a72e208",
     "CF_ZONE_ID": "15510c957e2e4194f0f33670e923ad45",
     // Public values (the same as the extension's .env.staging).
     "SUPABASE_URL": "https://fhclnxqumcdsqxyunelp.supabase.co",
