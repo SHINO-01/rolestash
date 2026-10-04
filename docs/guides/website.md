@@ -6,27 +6,28 @@ film while it's on screen), no third-party requests. An assets-only Cloudflare W
 serves it from `main`, so the site only changes after CI has promoted a
 tested commit (docs/guides/ci-cd.md).
 
-| Path                                  | Page                                                                                |
-| ------------------------------------- | ----------------------------------------------------------------------------------- |
-| `site/index.html`                     | Landing page: promise, hero film, three benefits, proof, FAQ, one CTA               |
-| `site/privacy/`                       | Privacy policy (also the store listing URL)                                         |
-| `site/terms/`                         | Terms of service (Paddle wording included)                                          |
-| `site/refunds/`                       | Refund policy                                                                       |
-| `site/support/`                       | Support and FAQ                                                                     |
-| `site/404.html`                       | Not found                                                                           |
-| `site/pay/`                           | Paddle checkout (default payment link); `pay/success/` after paying                 |
-| `site/pricing/`                       | Local prices and Subscribe (ADR-0023); `site/welcome/` after paying                 |
-| `site/auth/google/`                   | Google sign-in hand-off (ADR-0012); own script and CSP                              |
-| `site/notify/`                        | Launch-list result pages (check email, confirmed, unsubscribed, problem)            |
-| `site/job-sites/`                     | Supported job sites, generated from the adapter registry (`npm run docs:sites`)     |
-| `site/australia/`                     | Rolestash for Australia: Australian sites it reads (generated list), data in Sydney |
-| `site/private-job-tracker/`           | Privacy explainer: what's stored, no AI, no inbox, questions to ask any tracker     |
-| `site/guides/track-job-applications/` | Guide: what to record, stages, follow-ups, free CSV template                        |
-| `site/changelog/`                     | Changelog, rendered from `CHANGELOG.md` (`npm run site:changelog`)                  |
-| `site/known-issues/`                  | Known issues: open bugs with status and workarounds, and limitations                |
-| `site/sitemap/`                       | Every page, for people (search engines use `sitemap.xml`)                           |
-| `site/_headers`                       | CSP and security headers                                                            |
-| `site/assets/`                        | CSS, self-hosted Bricolage Grotesque (OFL), logos, screenshots, the film            |
+| Path                                        | Page                                                                                |
+| ------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `site/index.html`                           | Landing page: promise, hero film, three benefits, proof, FAQ, one CTA               |
+| `site/privacy/`                             | Privacy policy (also the store listing URL)                                         |
+| `site/terms/`                               | Terms of service (Paddle wording included)                                          |
+| `site/refunds/`                             | Refund policy                                                                       |
+| `site/support/`                             | Support and FAQ                                                                     |
+| `site/404.html`                             | Not found                                                                           |
+| `site/pay/`                                 | Paddle checkout (default payment link); `pay/success/` after paying                 |
+| `site/pricing/`                             | Local prices and Subscribe (ADR-0023); `site/welcome/` after paying                 |
+| `site/auth/google/`                         | Google sign-in hand-off (ADR-0012); own script and CSP                              |
+| `site/notify/`                              | Launch-list result pages (check email, confirmed, unsubscribed, problem)            |
+| `site/job-sites/`                           | Supported job sites, generated from the adapter registry (`npm run docs:sites`)     |
+| `site/australia/`                           | Rolestash for Australia: Australian sites it reads (generated list), data in Sydney |
+| `site/private-job-tracker/`                 | Privacy explainer: what's stored, no AI, no inbox, questions to ask any tracker     |
+| `site/compare/teal/`, `site/compare/huntr/` | Comparisons with sources and a "facts checked" date: re-check every 3 months        |
+| `site/guides/track-job-applications/`       | Guide: what to record, stages, follow-ups, free CSV template                        |
+| `site/changelog/`                           | Changelog, rendered from `CHANGELOG.md` (`npm run site:changelog`)                  |
+| `site/known-issues/`                        | Known issues: open bugs with status and workarounds, and limitations                |
+| `site/sitemap/`                             | Every page, for people (search engines use `sitemap.xml`)                           |
+| `site/_headers`                             | CSP and security headers                                                            |
+| `site/assets/`                              | CSS, self-hosted Bricolage Grotesque (OFL), logos, screenshots, the film            |
 
 ## Rules
 
@@ -234,8 +235,13 @@ below.
   (SEEK and local sites, data in Sydney), particular job sites, and people
   outgrowing a spreadsheet. Each answers its topic directly, in the product
   voice, with question headings and a matching `FAQPage` (or `Article`)
-  JSON-LD, and links to the others. Only facts the product backs up; no
-  competitor names (owner decision pending).
+  JSON-LD, and links to the others. Only facts the product backs up.
+- **Comparison pages** (`/compare/teal/`, `/compare/huntr/`, owner decision
+  2026-10-04) name competitors, so every statement about them comes from
+  their own pricing page, privacy policy or Chrome Web Store listing, linked
+  under _Sources_, with a "Facts checked" date. Say where they're the better
+  choice. Re-check the facts every three months (and before any campaign),
+  update the date, and keep the trademark note.
 - **Generated lists:** `/job-sites/` and `/australia/` list the adapters
   between `<!-- sites:*:start/end -->` markers. `npm run docs:sites` rewrites
   them with the docs; a test fails if they're stale.

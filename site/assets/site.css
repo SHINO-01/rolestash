@@ -1949,6 +1949,24 @@ kbd {
   margin: 0;
 }
 
+.compare th[scope='row'] {
+  font-weight: 600;
+  width: 26%;
+}
+
+.compare thead th {
+  font-weight: 700;
+}
+
+.sources {
+  font-size: 15px;
+}
+
+.fine-print {
+  color: var(--muted);
+  font-size: 14px;
+}
+
 /* ───────── Footer ───────── */
 .site-footer {
   border-top: 1px solid var(--line);

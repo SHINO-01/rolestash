@@ -10,7 +10,8 @@ All notable changes to this project are documented here. The format follows
 
 - **New pages on rolestash.com:** every supported job site by region, a page
   for Australia, how Rolestash keeps your search private, and a guide to
-  tracking job applications with a free spreadsheet template.
+  tracking job applications with a free spreadsheet template, and
+  side-by-side comparisons with Teal and Huntr.
 
 ## [0.4.1] — 2026-10-04
 

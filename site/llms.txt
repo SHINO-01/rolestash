@@ -21,6 +21,8 @@ Key facts:
 - [Supported job sites](https://rolestash.com/job-sites/): the 50 job boards, job search engines, government sites and applicant tracking systems it reads, by region
 - [Private by design](https://rolestash.com/private-job-tracker/): what Rolestash stores and where, why it never reads your inbox or uses AI, and questions to ask any job tracker
 - [Rolestash for Australia](https://rolestash.com/australia/): Australian job sites it reads (SEEK, Jora, APSjobs, Workforce Australia, PageUp, JobAdder and more) and where data is kept
+- [Rolestash vs Teal](https://rolestash.com/compare/teal/): price, free plan, AI, Google access and data location compared, with sources and the date checked
+- [Rolestash vs Huntr](https://rolestash.com/compare/huntr/): price, free plan, AI, what each extension declares it collects, with sources and the date checked
 - [How to track job applications](https://rolestash.com/guides/track-job-applications/): what to record, which stages to use, when to follow up, and a free CSV template
 - [Support](https://rolestash.com/support/): help with installing, capturing, autofill, sync and billing
 - [Known issues](https://rolestash.com/known-issues/): open problems, status and workarounds

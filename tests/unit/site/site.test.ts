@@ -58,6 +58,8 @@ describe('rolestash.com static site', () => {
         'auth/google/index.html',
         'australia/index.html',
         'changelog/index.html',
+        'compare/huntr/index.html',
+        'compare/teal/index.html',
         'guides/track-job-applications/index.html',
         'index.html',
         'job-sites/index.html',
@@ -484,7 +486,10 @@ describe('rolestash.com static site', () => {
     const store = /^https:\/\/chromewebstore\.google\.com\/detail\/rolestash\/[^/?#]+$/;
     const links = [
       ...pages.flatMap(({ doc }) =>
-        [...doc.querySelectorAll('a[href*="chromewebstore"]')].map((a) => a.getAttribute('href')),
+        // Comparison pages cite other extensions' listings under Sources.
+        [...doc.querySelectorAll('a[href*="chromewebstore"]')]
+          .filter((a) => !a.closest('.sources'))
+          .map((a) => a.getAttribute('href')),
       ),
       ...readFileSync(join(SITE, 'assets/pricing.js'), 'utf8').matchAll(
         /'(https:\/\/chromewebstore[^']*)'/g,
