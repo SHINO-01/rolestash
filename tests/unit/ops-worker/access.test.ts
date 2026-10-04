@@ -39,6 +39,7 @@ const good = (extra: Record<string, unknown> = {}) => ({
   iss: `https://${TEAM}`,
   exp: SECONDS + 600,
   nbf: SECONDS - 10,
+  iat: SECONDS - 60,
   email: 'Owner@Example.com',
   ...extra,
 });
@@ -94,6 +95,9 @@ describe('Cloudflare Access check', () => {
       [{ exp: SECONDS - 1 }, 'expired'],
       [{ nbf: SECONDS + 3600 }, 'not_yet_valid'],
       [{ email: 'someone@example.com' }, 'not_allowed'],
+      // Signed in more than an hour ago, even if Access still says the session is valid.
+      [{ iat: SECONDS - 3601, exp: SECONDS + 3600 }, 'login_too_old'],
+      [{ iat: undefined }, 'login_too_old'],
     ];
     for (const [extra, reason] of cases) {
       const token = await sign(pair.privateKey, good(extra));

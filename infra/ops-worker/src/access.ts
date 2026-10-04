@@ -16,6 +16,9 @@ export interface AccessConfig {
   allowedEmails: string | undefined;
 }
 
+/** How long one sign-in lasts (owner's choice, 2026-10-05). */
+export const MAX_LOGIN_AGE_SECONDS = 60 * 60;
+
 export type AccessResult = { ok: true; email: string } | { ok: false; reason: string };
 
 interface Jwk extends JsonWebKey {
@@ -109,6 +112,10 @@ export async function verifyAccess(
     return { ok: false, reason: 'expired' };
   if (typeof payload.nbf === 'number' && payload.nbf > seconds + 60)
     return { ok: false, reason: 'not_yet_valid' };
+  // The owner wants a fresh sign-in every hour. Access's session duration
+  // should say so too; this holds even if that setting is ever changed.
+  if (typeof payload.iat !== 'number' || seconds - payload.iat > MAX_LOGIN_AGE_SECONDS)
+    return { ok: false, reason: 'login_too_old' };
 
   const email = typeof payload.email === 'string' ? payload.email.toLowerCase() : '';
   if (!allowed.includes(email)) return { ok: false, reason: 'not_allowed' };

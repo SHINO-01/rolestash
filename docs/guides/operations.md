@@ -58,6 +58,28 @@ points at the Worker.
 5. **Open** https://operations.rolestash.com, sign in through Access, and
    check every panel says "Not set up" (no tokens yet).
 
+## Sign-in policy: an emailed code, at most an hour
+
+The owner's rule (2026-10-05): every visit after an hour asks for a fresh
+one-time code by email. Set it in Cloudflare (Zero Trust):
+
+1. **Access → Applications → operations.rolestash.com → Login methods:**
+   tick only **One-time PIN**, untick every other method, and turn
+   **Instant Auth** off.
+2. Same application → **Session duration: 1 hour**.
+3. **Settings → Authentication → Global session timeout: 1 hour.** Access
+   keeps a team-wide session too; if it is longer, it can quietly renew the
+   app's sign-in without a new code.
+4. Check: open the dashboard in a private window; you should get the code
+   screen. An hour later, a reload asks again.
+
+The Worker enforces the hour as well: it refuses any Access token whose
+sign-in (`iat`) is more than an hour old (`MAX_LOGIN_AGE_SECONDS`), even if
+a session setting is changed later.
+
+An emailed code proves you can read that inbox, so the inbox is the real
+key: keep 2-Step Verification on that Google account.
+
 ## Tokens, one per panel (each optional)
 
 Set each with `npx wrangler secret put <NAME> --config infra/ops-worker/wrangler.jsonc`.
