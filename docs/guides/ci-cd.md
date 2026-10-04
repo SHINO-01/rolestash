@@ -22,6 +22,11 @@ push to dev ─┬─ Quality ────────────┐           
                                                                    Chrome Web Store: upload + submit for review
 ```
 
+After _Promote to main_, the _Deploy rolestash.com_ job deploys three
+Cloudflare Workers with the same Workers-only token: the site
+([website.md](website.md)), the email Worker ([email-updates.md](email-updates.md))
+and the operations dashboard ([operations.md](operations.md)).
+
 ## Day to day (source repo)
 
 ```bash

@@ -52,6 +52,7 @@ New decision? Copy [the template](adr/0000-template.md).
 - [Launching on the Chrome Web Store (runbook)](guides/launch.md)
 - [Email status updates (engine, fixtures, accuracy)](guides/email-updates.md)
 - [Application autofill (rules, fixtures, live checks)](guides/autofill.md)
+- [Operations dashboard (operations.rolestash.com)](guides/operations.md)
 
 ## Reference
 

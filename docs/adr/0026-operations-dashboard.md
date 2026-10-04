@@ -1,6 +1,6 @@
 # ADR-0026: An owner-only operations dashboard at operations.rolestash.com
 
-- **Status:** Proposed (design note; nothing is built until the owner approves)
+- **Status:** Accepted (owner, 2026-10-05); built in `infra/ops-worker/`, setup in [guides/operations.md](../guides/operations.md)
 - **Date:** 2026-10-04
 
 ## Context
@@ -37,8 +37,8 @@ Constraints from AGENTS.md and the privacy policy:
   Worker refuses requests that didn't come through Access. Access is free
   for up to 50 users.
 - **No storage of its own.** Each view fetches from the providers when it
-  loads, with a short cache (60 seconds, Cache API), so nothing personal is
-  copied anywhere new.
+  loads (8-second timeout per panel, no cache), so nothing personal is copied
+  anywhere new and the numbers are always current.
 - **Deployed by CI** like the site, from `infra/ops.wrangler.jsonc`, after
   the tests pass.
 
@@ -85,7 +85,19 @@ Paddle's or Supabase's own dashboard.
 - **Just bookmarks:** free, but the point is seeing what needs attention
   without opening six tabs.
 
-## Owner decisions needed
+## As built (2026-10-05)
+
+- Panels for Paddle, Resend, Search Console, Cloudflare and GitHub, each
+  "Not set up" until its token is added. The Worker deploys inert: it needs
+  the Access application, its AUD tag and the `OWNER_EMAILS` secret.
+- **Accounts panel: not built yet.** Reading account counts with the
+  Worker's own secret needs a database function callable with the public
+  key plus that secret (the email-ingest pattern). That grant is a separate
+  owner decision; until then the panel links to the Supabase dashboard.
+- **Resend has no read-only key.** Its panel stays "Not set up" unless the
+  owner accepts a separate Full-access key (guides/operations.md).
+
+## Owner decisions needed (original)
 
 1. Approve the read-only first version and the panels above (drop any?).
 2. Which Access login: Google (your account) or an emailed one-time PIN?

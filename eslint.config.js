@@ -102,8 +102,8 @@ export default tseslint.config(
     },
   },
   {
-    // The Email Worker logs its outcome (never content) to Workers logs.
-    files: ['infra/email-worker/**/*.ts'],
+    // The Email and ops Workers log outcomes (never content or secrets) to Workers logs.
+    files: ['infra/email-worker/**/*.ts', 'infra/ops-worker/**/*.ts'],
     rules: { 'no-console': 'off' },
   },
   {
