@@ -74,6 +74,8 @@ entrypoints ─► features ─► ui
 | Change what is stored       | `docs/reference/storage.md`            |
 | Accounts, billing, database | `docs/guides/backend.md`               |
 | Understand the moving parts | `docs/architecture/overview.md`        |
+| Operations dashboard        | `docs/guides/operations.md`            |
+| What's still open           | `docs/todo.md`                         |
 
 ## Gotchas
 

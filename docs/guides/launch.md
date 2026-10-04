@@ -124,6 +124,9 @@ client in `.env.staging`:
 
 ## v0.4.1 in review (to do)
 
+All open items across the launch, search and operations work are also in
+[todo.md](../todo.md).
+
 Submitted 2026-10-04 (release run 37192004589). Until it's approved:
 
 - [ ] **Owner:** paste the data disclosures from the release repo's

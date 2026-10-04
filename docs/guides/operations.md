@@ -18,9 +18,13 @@ It is read-only: it never changes anything at a provider.
 
 ## Status and to-do
 
-Done (2026-10-05): the Access application (team
-`nameless-shadow-4fcf`), its AUD tag in `wrangler.jsonc`, the
-`OWNER_EMAILS` secret, the custom domain, and the accounts panel's secret.
+**Live since 2026-10-05** at https://operations.rolestash.com, behind
+Access. Done: the Access application (team `nameless-shadow-4fcf`), its AUD
+tag in `wrangler.jsonc`, the `OWNER_EMAILS` secret, the custom domain, the
+accounts panel's secret, and the 1-hour sign-in limit in the Worker.
+
+To do (owner): set the sign-in policy below (One-time PIN only, 1-hour
+sessions) if not done yet, then add the tokens.
 
 To do (owner), one token per panel, then reload the dashboard:
 
@@ -79,6 +83,19 @@ a session setting is changed later.
 
 An emailed code proves you can read that inbox, so the inbox is the real
 key: keep 2-Step Verification on that Google account.
+
+## Troubleshooting
+
+- **The marketing site (or its "Page not found") shows instead of the
+  dashboard:** a Worker route is catching the hostname. Check Workers &
+  Pages → `rolestash-v001` → Domains for any **Route** (such as
+  `*.rolestash.com/*`) and delete it; see [website.md](website.md#deployment).
+- **"Not allowed." (403):** the Worker refused the Access token. Run
+  `npx wrangler tail rolestash-ops` and reload; the log says why
+  (`not_allowed`: email not in `OWNER_EMAILS`; `login_too_old`: sign in
+  again; `wrong_audience`: AUD tag mismatch).
+- **A panel says "Couldn't load (HTTP 401)":** its token is wrong or was
+  revoked; create a new one and `wrangler secret put` it again.
 
 ## Tokens, one per panel (each optional)
 

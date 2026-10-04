@@ -293,6 +293,11 @@ The site therefore only ever serves tested commits from `main`.
 
 - **Routes:** the config declares none, so custom domains stay managed in
   the dashboard and a deploy never changes them.
+- **Never add Worker routes for the site, least of all wildcards.** On
+  2026-10-05 a dashboard route `*.rolestash.com/*` on `rolestash-v001`
+  caught `operations.rolestash.com` before its own custom domain, so the
+  dashboard showed the marketing site. It was deleted; custom domains
+  cover every host we serve (table below).
 - **No extra URLs:** `workers_dev` and `preview_urls` are off, so no extra
   public URLs exist.
 - **No telemetry:** Wrangler's telemetry is disabled in CI.
@@ -310,7 +315,17 @@ It is enabled by three repo settings:
 
 **Domains.** `rolestash.com` is the only canonical host. `www.rolestash.com`
 is attached to the Worker and redirects to it. There is deliberately no
-`landing.rolestash.com`. Leave **Web Analytics off**, because the privacy
+`landing.rolestash.com`. Every hostname, and what serves it:
+
+| Hostname                   | Served by                                        | How                                     |
+| -------------------------- | ------------------------------------------------ | --------------------------------------- |
+| `rolestash.com`            | `rolestash-v001` (the site)                      | Custom domain                           |
+| `www.rolestash.com`        | Redirect Rule to `rolestash.com`                 | Custom domain on `rolestash-v001`       |
+| `operations.rolestash.com` | `rolestash-ops` ([operations.md](operations.md)) | Custom domain, behind Cloudflare Access |
+| `in.rolestash.com`         | `rolestash-email` (email only, no web)           | Email Routing                           |
+
+No Worker routes. To check: Workers & Pages → each Worker → Domains should
+list only "Production" custom domains. Leave **Web Analytics off**, because the privacy
 policy says the site has none.
 
 **The `www` redirect** is set up in the dashboard, because the CI token can't

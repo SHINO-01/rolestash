@@ -102,6 +102,8 @@ feature on the pricing page is built. The site already advertises them all.
   beside the page) and ~~**bulk actions**~~ done (select mode or Ctrl/⌘-click;
   move, tag, archive, delete with undo).
 
+Open to-dos for the owner and for us, in one list: [todo.md](todo.md).
+
 ## Phase 1d: Launch
 
 Runbook: [guides/launch.md](guides/launch.md).
@@ -147,8 +149,8 @@ Runbook: [guides/launch.md](guides/launch.md).
   accounts in one place, behind owner-only sign-in. Design note:
   [ADR-0026](adr/0026-operations-dashboard.md), approved 2026-10-05 and
   built read-only (`infra/ops-worker/`), live at operations.rolestash.com
-  behind Cloudflare Access. To do: the owner adds the read-only token for
-  each remaining panel ([guides/operations.md](guides/operations.md)).
+  behind Cloudflare Access since 2026-10-05, with the accounts panel. To do:
+  the per-panel tokens and sign-in policy ([todo.md](todo.md)).
 
 ## Later
 
