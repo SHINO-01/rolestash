@@ -213,6 +213,23 @@ email.
 Paddle went live on 2026-10-02: the server and `paddle-config.js` use the
 production account. The sandbox catalog is kept, matching, for reference.
 
+### Complimentary access (ADR-0025)
+
+To give an account a paid plan with no subscription (the owner's, a tester's),
+set its entitlement by hand with the service role (Supabase SQL editor or the
+connector). Billing events never change a row with `complimentary` set.
+
+```sql
+update public.entitlements
+   set status = 'active', tier = 'advanced', trial_ends_at = null,
+       current_period_end = '9999-12-31T00:00:00Z', complimentary = 'owner'
+ where user_id = (select id from auth.users where email = '<their email>');
+```
+
+The account must exist first (sign in once). To remove a grant, set
+`complimentary = null` and `status = 'expired'`. List them with
+`select user_id, tier, complimentary from public.entitlements where complimentary is not null;`.
+
 ### Going live with Paddle
 
 `scripts/paddle-setup.ts` creates or checks the whole catalog idempotently:
