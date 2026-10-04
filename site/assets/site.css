@@ -1906,6 +1906,49 @@ kbd {
   margin: 24px 0;
 }
 
+/* Content pages (job sites, Australia, privacy explainer, guides). */
+.lede-prose {
+  font-size: 19px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.site-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: 6px 24px;
+  padding: 0;
+  list-style: none;
+}
+
+.site-list li + li {
+  margin-top: 0;
+}
+
+.site-list li {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.site-meta {
+  display: block;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.page-cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 20px;
+  margin-top: 48px;
+}
+
+.page-cta p {
+  margin: 0;
+}
+
 /* ───────── Footer ───────── */
 .site-footer {
   border-top: 1px solid var(--line);
@@ -1918,7 +1961,7 @@ kbd {
 .site-footer .wrap {
   display: grid;
   gap: 32px;
-  grid-template-columns: 2fr 1fr 1fr;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
 }
 
 .footer-brand p {

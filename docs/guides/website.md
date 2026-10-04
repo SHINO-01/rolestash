@@ -6,23 +6,27 @@ film while it's on screen), no third-party requests. An assets-only Cloudflare W
 serves it from `main`, so the site only changes after CI has promoted a
 tested commit (docs/guides/ci-cd.md).
 
-| Path                 | Page                                                                     |
-| -------------------- | ------------------------------------------------------------------------ |
-| `site/index.html`    | Landing page: promise, hero film, three benefits, proof, FAQ, one CTA    |
-| `site/privacy/`      | Privacy policy (also the store listing URL)                              |
-| `site/terms/`        | Terms of service (Paddle wording included)                               |
-| `site/refunds/`      | Refund policy                                                            |
-| `site/support/`      | Support and FAQ                                                          |
-| `site/404.html`      | Not found                                                                |
-| `site/pay/`          | Paddle checkout (default payment link); `pay/success/` after paying      |
-| `site/pricing/`      | Local prices and Subscribe (ADR-0023); `site/welcome/` after paying      |
-| `site/auth/google/`  | Google sign-in hand-off (ADR-0012); own script and CSP                   |
-| `site/notify/`       | Launch-list result pages (check email, confirmed, unsubscribed, problem) |
-| `site/changelog/`    | Changelog, rendered from `CHANGELOG.md` (`npm run site:changelog`)       |
-| `site/known-issues/` | Known issues: open bugs with status and workarounds, and limitations     |
-| `site/sitemap/`      | Every page, for people (search engines use `sitemap.xml`)                |
-| `site/_headers`      | CSP and security headers                                                 |
-| `site/assets/`       | CSS, self-hosted Bricolage Grotesque (OFL), logos, screenshots, the film |
+| Path                                  | Page                                                                                |
+| ------------------------------------- | ----------------------------------------------------------------------------------- |
+| `site/index.html`                     | Landing page: promise, hero film, three benefits, proof, FAQ, one CTA               |
+| `site/privacy/`                       | Privacy policy (also the store listing URL)                                         |
+| `site/terms/`                         | Terms of service (Paddle wording included)                                          |
+| `site/refunds/`                       | Refund policy                                                                       |
+| `site/support/`                       | Support and FAQ                                                                     |
+| `site/404.html`                       | Not found                                                                           |
+| `site/pay/`                           | Paddle checkout (default payment link); `pay/success/` after paying                 |
+| `site/pricing/`                       | Local prices and Subscribe (ADR-0023); `site/welcome/` after paying                 |
+| `site/auth/google/`                   | Google sign-in hand-off (ADR-0012); own script and CSP                              |
+| `site/notify/`                        | Launch-list result pages (check email, confirmed, unsubscribed, problem)            |
+| `site/job-sites/`                     | Supported job sites, generated from the adapter registry (`npm run docs:sites`)     |
+| `site/australia/`                     | Rolestash for Australia: Australian sites it reads (generated list), data in Sydney |
+| `site/private-job-tracker/`           | Privacy explainer: what's stored, no AI, no inbox, questions to ask any tracker     |
+| `site/guides/track-job-applications/` | Guide: what to record, stages, follow-ups, free CSV template                        |
+| `site/changelog/`                     | Changelog, rendered from `CHANGELOG.md` (`npm run site:changelog`)                  |
+| `site/known-issues/`                  | Known issues: open bugs with status and workarounds, and limitations                |
+| `site/sitemap/`                       | Every page, for people (search engines use `sitemap.xml`)                           |
+| `site/_headers`                       | CSP and security headers                                                            |
+| `site/assets/`                        | CSS, self-hosted Bricolage Grotesque (OFL), logos, screenshots, the film            |
 
 ## Rules
 
@@ -208,7 +212,8 @@ change, or if WhatsApp, Facebook, Messenger or Instagram show no preview:
 ## Search
 
 Public pages (`/`, `/pricing/`, `/support/`, `/privacy/`, `/terms/`,
-`/refunds/`) are indexed; checkout, sign-in, welcome and email-confirmation
+`/refunds/`, the content pages below, and the changelog, known-issues and
+sitemap pages) are indexed; checkout, sign-in, welcome and email-confirmation
 pages carry `noindex`, as does the 404 page. Site tests enforce the rules
 below.
 
@@ -224,6 +229,18 @@ below.
   the FAQ, copied word for word from the visible questions (a test checks).
   Other pages carry a breadcrumb. JSON-LD is data, so the CSP doesn't apply
   to it. Never add ratings or reviews until real ones exist.
+- **Content pages** target searches we can honestly win, where Rolestash is
+  unusually specific: privacy (no AI, no inbox, no account), Australia
+  (SEEK and local sites, data in Sydney), particular job sites, and people
+  outgrowing a spreadsheet. Each answers its topic directly, in the product
+  voice, with question headings and a matching `FAQPage` (or `Article`)
+  JSON-LD, and links to the others. Only facts the product backs up; no
+  competitor names (owner decision pending).
+- **Generated lists:** `/job-sites/` and `/australia/` list the adapters
+  between `<!-- sites:*:start/end -->` markers. `npm run docs:sites` rewrites
+  them with the docs; a test fails if they're stale.
+- **The homepage JSON-LD** also carries a `VideoObject` for the hero film and
+  the app's feature list, screenshot, help page and store listing (`sameAs`).
 - **`llms.txt`** summarises the product and its pages in plain text for AI
   assistants that look for it. Keep its facts in step with the site.
 - **One `h1` per page and headings in order**, and every image has `alt`

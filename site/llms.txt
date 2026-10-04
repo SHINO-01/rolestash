@@ -9,12 +9,19 @@ Key facts:
 - Install: Chrome Web Store, https://chromewebstore.google.com/detail/rolestash/cncilbdakhabnocnjokbonggomndedgp
 - Works on 50+ job boards and applicant tracking systems (including SEEK, LinkedIn, Indeed, Workday, Greenhouse and Lever) and most other careers pages.
 - Plans: Free (up to 30 active jobs, no account needed, data stays in the browser); Pro, US$7 a month (60 active jobs, full autofill, insights, sync across 3 computers); Advanced, US$15 a month (unlimited jobs, automatic status updates from forwarded job emails, phone access through a web board, 14-day free trial with no card). Prices are charged in the buyer's currency by Paddle, the merchant of record.
+- Free plan: works without an account; the board stays in the browser and nothing is sent to Rolestash.
+- Capture: click the Rolestash icon or press Alt+J on a posting; title, company, location, salary, closing date and description fill in, uncertain fields are flagged, and the same job found on two sites stays one card. It reads a page only when asked.
+- Autofill fills application forms from the user's own details and never submits; it skips demographic questions.
 - Privacy: capture and email updates run on plain rules, not AI; nothing is sent to AI services; no ads or analytics; export to CSV or JSON on every plan. Synced data is stored in Sydney, Australia.
 
 ## Pages
 
 - [Home](https://rolestash.com/): what Rolestash does, the facts behind it, and common questions
 - [Pricing](https://rolestash.com/pricing/): plans and prices in your currency
+- [Supported job sites](https://rolestash.com/job-sites/): the 50 job boards, job search engines, government sites and applicant tracking systems it reads, by region
+- [Private by design](https://rolestash.com/private-job-tracker/): what Rolestash stores and where, why it never reads your inbox or uses AI, and questions to ask any job tracker
+- [Rolestash for Australia](https://rolestash.com/australia/): Australian job sites it reads (SEEK, Jora, APSjobs, Workforce Australia, PageUp, JobAdder and more) and where data is kept
+- [How to track job applications](https://rolestash.com/guides/track-job-applications/): what to record, which stages to use, when to follow up, and a free CSV template
 - [Support](https://rolestash.com/support/): help with installing, capturing, autofill, sync and billing
 - [Known issues](https://rolestash.com/known-issues/): open problems, status and workarounds
 - [Changelog](https://rolestash.com/changelog/): what's new in each release
