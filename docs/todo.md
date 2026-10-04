@@ -48,8 +48,11 @@ into the roadmap or changelog. Last reviewed 5 October 2026.
       "Renews on 31 Dec 9999" (on `dev` since 50bc3d8).
 - [ ] **After Meheraj signs in:** grant complimentary Advanced with reason
       `team` ([backend.md](guides/backend.md#complimentary-access-adr-0025)).
-- [ ] **When the owner says go:** deploy the `launch-list` function and run
-      _Announce launch_ (dry run first) ([launch.md](guides/launch.md#7-going-public)).
+- [ ] **Launch-list wording (owner's call):** the deployed function's
+      confirmation emails still promise new subscribers a launch-day email,
+      which won't be sent now the announcement is scrapped (2026-10-05).
+      Redeploying the function fixes the wording only
+      ([launch.md](guides/launch.md#7-going-public)).
 - [ ] **By 4 January 2027:** re-check the facts on `/compare/teal/` and
       `/compare/huntr/` and update their "Facts checked" date
       ([website.md](guides/website.md#search)).

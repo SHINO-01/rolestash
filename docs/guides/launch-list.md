@@ -18,8 +18,10 @@ provider.
 2. **Confirm.** The link confirms the address and sends the "You're on the
    list" email (the acknowledgement), then redirects to
    `/notify/confirmed/`.
-3. **Launch.** On launch day, run **Actions → Announce launch** with the
-   Chrome Web Store URL (campaign `launch`).
+3. **Launch.** ~~Run **Actions → Announce launch**~~: not planned (owner,
+   2026-10-05). The workflow and the `launch` campaign stay in the code but
+   aren't used. Note the deployed function's confirmation still mentions
+   launch day until it's redeployed (see [launch.md](launch.md#7-going-public)).
 4. **Product news.** Add a file to `emails/news/` (format in its README),
    then run **Actions → Send product news** with the file's name.
 5. **Unsubscribe.** It's deliberately effortless.

@@ -169,10 +169,11 @@ When the beta is clean and the owner says go:
    The store links use the item ID, and the privacy policy's "Last
    updated" is 3 October 2026.
 
-3. **Ours, on the go:** deploy the launch-list function so its confirmation
-   emails talk about product news, not the launch (until then they still
-   promise a launch email, which is still true):
-   `npx supabase functions deploy launch-list --project-ref fhclnxqumcdsqxyunelp --use-api`.
-4. **Owner says go, then ours:** **Actions → Announce launch** with the
-   store URL: _send_ off first (a dry run that shows the count), then on
-   (docs/guides/launch-list.md).
+3. ~~**Ours:** deploy the launch-list function, then run **Actions →
+   Announce launch**~~ scrapped by the owner on 2026-10-05: no launch
+   announcement email. The product-news list and form stay.
+   - **Open question:** the deployed function's confirmation and welcome
+     emails still promise new subscribers an email "on launch day". The
+     repo's version (unchanged since) says product news instead; deploying
+     it fixes the wording only:
+     `npx supabase functions deploy launch-list --project-ref fhclnxqumcdsqxyunelp --use-api`.
