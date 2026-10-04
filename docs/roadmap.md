@@ -111,14 +111,16 @@ Runbook: [guides/launch.md](guides/launch.md).
    the live client token in `site/assets/pay.js`.
 2. **Chrome Web Store:**
    - ~~one-time setup and an unlisted first upload~~ done (item
-     `cncilbdakhabnocnjokbonggomndedgp`, in review);
+     `cncilbdakhabnocnjokbonggomndedgp`; v0.4.0 approved and published,
+     unlisted, on 2026-10-04; v0.4.1 in review);
    - ~~add that ID to `ROLESTASH_EXTENSION_IDS` in
      `src/services/web-handoff.ts` **and** to `site/assets/auth-google.js`
      (a test keeps the two lists equal)~~ done;
    - ~~point the plan CTAs on rolestash.com at the store listing~~ done
      (live since 2026-10-03; the buttons work once the item is published);
    - ~~accounts build variables in the extension repo's release workflow~~
-     done, and automatic store uploads are set up;
+     done, and automatic store uploads are set up, with a credentials check
+     before each upload;
    - ~~a manifest policy covering `identity`, `alarms`, `notifications` and
      the optional hosts~~ done (release repo `policy/manifest-policy.json`);
    - ~~the listing text and new screenshots~~ done (release repo
@@ -137,8 +139,9 @@ Runbook: [guides/launch.md](guides/launch.md).
 
 ## Next
 
-- **Launch video** on rolestash.com in place of the static board image
-  (owner request, 2026-10-04; made with the brag skill, self-hosted).
+- ~~**Launch video**~~ done (2026-10-04): a silent 21-second film in the
+  rolestash.com hero, landscape on wide screens and vertical on phones
+  ([guides/website.md](guides/website.md)).
 - **Operations dashboard** at `operations.rolestash.com` for us: Cloudflare,
   Paddle (refunds, disputes, discounts), Resend, Search Console and ad
   accounts in one place, behind owner-only sign-in. Not urgent; needs a
