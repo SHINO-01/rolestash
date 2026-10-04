@@ -230,7 +230,8 @@ below.
   (empty for decoration).
 - **Search Console:** the domain is verified by a DNS TXT record. After
   structural changes, open Search Console → **Sitemaps** and submit
-  `https://rolestash.com/sitemap.xml`; use **URL inspection** → _Request
+  `https://rolestash.com/sitemap.xml` (not `/sitemap/`, which is the page
+  for people: Search Console rejects it as "Sitemap is HTML"); use **URL inspection** → _Request
   indexing_ for a changed page.
 
 ## Scripts Cloudflare injects
