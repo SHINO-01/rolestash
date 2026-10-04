@@ -10,8 +10,8 @@ provider.
 1. **Sign up.** The form at the bottom of the landing page (`#notify`) is a
    plain HTML `<form>`, so it needs no JavaScript. It posts the email and an
    optional plan interest to the `launch-list` Edge Function.
-   - The form's fine print states the consent: launch day plus occasional
-     product news.
+   - The form states the consent: occasional product news, a few emails a
+     year at most.
    - The function emails a confirmation link (double opt-in). That email
      already has a one-click "Remove this address" link.
    - Then it redirects to `/notify/check-email/`.
@@ -20,8 +20,8 @@ provider.
    `/notify/confirmed/`.
 3. **Launch.** ~~Run **Actions → Announce launch**~~: not planned (owner,
    2026-10-05). The workflow and the `launch` campaign stay in the code but
-   aren't used. Note the deployed function's confirmation still mentions
-   launch day until it's redeployed (see [launch.md](launch.md#7-going-public)).
+   aren't used. Signup emails promise product news only (redeployed
+   2026-10-05).
 4. **Product news.** Add a file to `emails/news/` (format in its README),
    then run **Actions → Send product news** with the file's name.
 5. **Unsubscribe.** It's deliberately effortless.

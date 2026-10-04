@@ -172,8 +172,6 @@ When the beta is clean and the owner says go:
 3. ~~**Ours:** deploy the launch-list function, then run **Actions →
    Announce launch**~~ scrapped by the owner on 2026-10-05: no launch
    announcement email. The product-news list and form stay.
-   - **Open question:** the deployed function's confirmation and welcome
-     emails still promise new subscribers an email "on launch day". The
-     repo's version (unchanged since) says product news instead; deploying
-     it fixes the wording only:
-     `npx supabase functions deploy launch-list --project-ref fhclnxqumcdsqxyunelp --use-api`.
+   - The launch-list function was redeployed the same day (version 10),
+     so confirmation and welcome emails promise product news only, not a
+     launch-day email.
