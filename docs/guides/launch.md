@@ -52,6 +52,10 @@ release here (`npm run release -- patch`) so _Release_ builds again.
 7. Copy the **item ID** (32 letters, shown on the item page and in its
    URL) and send it to us.
 
+Approved: v0.4.0 was published, unlisted, on 4 October 2026 (after two
+rejections for naming job sites in the description). v0.4.1 went to review
+the same day; v0.4.0 stays installable while it's reviewed.
+
 ## 3. Wire the store ID in (ours, after the owner sends the ID)
 
 Done 2026-10-03: the item ID is `cncilbdakhabnocnjokbonggomndedgp`.

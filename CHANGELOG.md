@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.4.1] — 2026-10-04
+
 ### Added
 
 - **Your name on your account:** signing in with Google fills it in; with an
