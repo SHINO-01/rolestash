@@ -1,4 +1,5 @@
 import {
+  accountsPanel,
   cloudflarePanel,
   formatTotals,
   githubPanel,
@@ -31,6 +32,7 @@ describe('ops panels', () => {
       await githubPanel({}, deps),
       await resendPanel({}, deps),
       await searchPanel({}, deps),
+      await accountsPanel({}, deps),
     ])
       expect(panel.status).toBe('not_configured');
   });
@@ -192,5 +194,45 @@ describe('ops panels', () => {
       atob((assertion.split('.')[1] ?? '').replace(/-/g, '+').replace(/_/g, '/')),
     ) as { scope: string };
     expect(claims.scope).toBe('https://www.googleapis.com/auth/webmasters.readonly');
+  });
+
+  it('reads account counts with the publishable key and its own secret', async () => {
+    const seen: { url: string; init?: RequestInit }[] = [];
+    const fetchFn = fakeFetch(
+      () => ({
+        accounts: 12,
+        signups_7d: 3,
+        trials_active: 4,
+        paid: { pro: 2, advanced: 1 },
+        past_due: 0,
+        cancelling: 1,
+        complimentary: 1,
+        devices_active_7d: 9,
+        email_inboxes: 1,
+        news_subscribers: 20,
+        problem_reports_new: 1,
+        problem_reports_7d: 2,
+      }),
+      seen,
+    );
+    const panel = await accountsPanel(
+      {
+        SUPABASE_URL: 'https://x.supabase.co',
+        SUPABASE_PUBLISHABLE_KEY: 'sb_pub',
+        OPS_STATS_SECRET: 's3cret',
+      },
+      { fetch: fetchFn, now: NOW },
+    );
+    expect(seen[0]?.url).toBe('https://x.supabase.co/rest/v1/rpc/ops_stats');
+    expect(seen[0]?.init?.body).toBe(JSON.stringify({ p_secret: 's3cret' }));
+    expect(panel.status).toBe('attention'); // a new problem report
+    expect(Object.fromEntries(panel.rows)).toMatchObject({
+      Accounts: '12',
+      'Paying: Pro': '2',
+      'Paying: Advanced': '1',
+      Complimentary: '1',
+      'Problem reports: new / this week': '1 / 2',
+    });
+    expect(JSON.stringify(panel)).not.toContain('s3cret');
   });
 });

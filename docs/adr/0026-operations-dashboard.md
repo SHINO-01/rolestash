@@ -90,10 +90,10 @@ Paddle's or Supabase's own dashboard.
 - Panels for Paddle, Resend, Search Console, Cloudflare and GitHub, each
   "Not set up" until its token is added. The Worker deploys inert: it needs
   the Access application, its AUD tag and the `OWNER_EMAILS` secret.
-- **Accounts panel: not built yet.** Reading account counts with the
-  Worker's own secret needs a database function callable with the public
-  key plus that secret (the email-ingest pattern). That grant is a separate
-  owner decision; until then the panel links to the Supabase dashboard.
+- **Accounts panel** (owner-approved 2026-10-05): `public.ops_stats`
+  returns counts only, callable with the publishable key plus the Worker's
+  `OPS_STATS_SECRET`, whose SHA-256 is in `private.ops_stats_secret` (the
+  email-ingest pattern). Signed-in users can't call it.
 - **Resend has no read-only key.** Its panel stays "Not set up" unless the
   owner accepts a separate Full-access key (guides/operations.md).
 

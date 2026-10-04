@@ -147,8 +147,7 @@ Runbook: [guides/launch.md](guides/launch.md).
   accounts in one place, behind owner-only sign-in. Design note:
   [ADR-0026](adr/0026-operations-dashboard.md), approved 2026-10-05 and
   built read-only (`infra/ops-worker/`). To go live: the owner's Access and
-  token setup in [guides/operations.md](guides/operations.md). Accounts
-  panel pending a database decision.
+  token setup in [guides/operations.md](guides/operations.md).
 
 ## Later
 

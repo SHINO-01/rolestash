@@ -213,6 +213,14 @@ email.
 Paddle went live on 2026-10-02: the server and `paddle-config.js` use the
 production account. The sandbox catalog is kept, matching, for reference.
 
+### Operations stats (ADR-0026)
+
+`public.ops_stats(secret)` returns counts for the operations dashboard
+(accounts, trials, paying by plan, devices, problem reports): no emails,
+names or ids. Only the publishable key plus the ops Worker's secret can call
+it; its SHA-256 lives in `private.ops_stats_secret`. Rotation:
+[operations.md](operations.md).
+
 ### Complimentary access (ADR-0025)
 
 To give an account a paid plan with no subscription (the owner's, a tester's),

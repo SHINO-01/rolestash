@@ -11,9 +11,14 @@ export interface Env {
   /** Secret: comma-separated emails allowed in. */
   OWNER_EMAILS?: string;
   CF_ZONE_ID?: string;
+  SUPABASE_URL?: string;
+  /** Public; the same publishable key the extension uses. */
+  SUPABASE_PUBLISHABLE_KEY?: string;
   GITHUB_REPOS?: string;
   SEARCH_CONSOLE_SITE?: string;
   /** Secrets, each read-only (see the ADR for exact scopes). */
+  /** Lets the Worker call public.ops_stats and nothing else; the database keeps its SHA-256. */
+  OPS_STATS_SECRET?: string;
   PADDLE_API_KEY?: string;
   CF_ANALYTICS_TOKEN?: string;
   GITHUB_TOKEN?: string;
@@ -397,13 +402,49 @@ export async function searchPanel(env: Env, deps: Deps): Promise<Panel> {
   };
 }
 
-/** The accounts panel needs a database decision first (see ADR-0026). */
-export function accountsPanel(): Panel {
+// ---------------------------------------------------------------- Accounts
+
+/** Counts from public.ops_stats (publishable key + the Worker's own secret). */
+export async function accountsPanel(env: Env, deps: Deps): Promise<Panel> {
+  const title = 'Accounts (Supabase)';
+  if (!env.OPS_STATS_SECRET || !env.SUPABASE_URL || !env.SUPABASE_PUBLISHABLE_KEY)
+    return notConfigured(title, 'OPS_STATS_SECRET');
+  const stats = await getJson(deps, `${env.SUPABASE_URL}/rest/v1/rpc/ops_stats`, {
+    method: 'POST',
+    headers: {
+      apikey: env.SUPABASE_PUBLISHABLE_KEY,
+      Authorization: `Bearer ${env.SUPABASE_PUBLISHABLE_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ p_secret: env.OPS_STATS_SECRET }),
+  });
+  const n = (key: string) => {
+    const value = stats[key];
+    return typeof value === 'number' ? value : 0;
+  };
+  const paid = (stats.paid ?? {}) as Record<string, number>;
+  const pastDue = n('past_due');
+  const newReports = n('problem_reports_new');
   return {
-    title: 'Accounts (Supabase)',
-    status: 'not_configured',
-    rows: [],
-    note: 'Not set up yet: needs the owner to approve how the dashboard reads account counts (ADR-0026).',
+    title,
+    status: pastDue > 0 || newReports > 0 ? 'attention' : 'ok',
+    rows: [
+      ['Accounts', String(n('accounts'))],
+      ['New this week', String(n('signups_7d'))],
+      ['Active trials', String(n('trials_active'))],
+      ['Paying: Pro', String(paid.pro ?? 0)],
+      ['Paying: Advanced', String(paid.advanced ?? 0)],
+      ['Cancelling at period end', String(n('cancelling'))],
+      ['Past due', String(pastDue)],
+      ['Complimentary', String(n('complimentary'))],
+      ['Devices active this week', String(n('devices_active_7d'))],
+      ['Email update inboxes', String(n('email_inboxes'))],
+      ['Product news subscribers', String(n('news_subscribers'))],
+      [
+        'Problem reports: new / this week',
+        `${String(newReports)} / ${String(n('problem_reports_7d'))}`,
+      ],
+    ],
     link: {
       label: 'Open Supabase',
       href: 'https://supabase.com/dashboard/project/fhclnxqumcdsqxyunelp',
@@ -413,7 +454,7 @@ export function accountsPanel(): Panel {
 
 export async function allPanels(env: Env, deps: Deps): Promise<Panel[]> {
   return Promise.all([
-    Promise.resolve(accountsPanel()),
+    safely('Accounts (Supabase)', () => accountsPanel(env, deps)),
     safely('Revenue (Paddle)', () => paddlePanel(env, deps)),
     safely('Email (Resend)', () => resendPanel(env, deps)),
     safely('Search (Search Console)', () => searchPanel(env, deps)),

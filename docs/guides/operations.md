@@ -61,16 +61,47 @@ Leave `RESEND_API_KEY` unset (the panel says "Not set up") unless you accept
 that, and if you do, use a separate key named `ops-dashboard` so it can be
 revoked on its own.
 
+## The accounts panel's secret
+
+The Worker reads account counts from `public.ops_stats`, using the
+publishable key plus its own secret, `OPS_STATS_SECRET`. The database keeps
+only that secret's SHA-256 in `private.ops_stats_secret`, and the function
+returns counts only. It was set up on 2026-10-05; the secret itself was never
+written down. To rotate it (no one needs to know the value):
+
+```bash
+SECRET=$(openssl rand -hex 32)
+printf '%s' "$SECRET" | npx wrangler secret put OPS_STATS_SECRET --config infra/ops-worker/wrangler.jsonc
+printf '%s' "$SECRET" | sha256sum   # then, as the service role:
+# insert into private.ops_stats_secret (sha256) values (decode('<hex>', 'hex'))
+#   on conflict (id) do update set sha256 = excluded.sha256;
+unset SECRET
+```
+
+## Staying on Zero Trust Free
+
+The dashboard needs only what the Free plan includes (US$0, up to 50 seats):
+
+- **One seat.** A seat is used by each person who signs in through Access.
+  The policy allows your email only, so it stays at one. Check **Zero Trust
+  → Settings → Account → Seats**, and remove anyone you don't recognise.
+- **One self-hosted Access application** (`operations.rolestash.com`), no
+  WARP client, Gateway filtering or tunnels, which the dashboard doesn't use.
+- **Logs:** Free keeps Access logs for 24 hours. That's enough: the Worker
+  also logs refused requests (reason only) to Workers logs.
+- Cloudflare may ask for a payment method when you pick the Free plan; it
+  isn't charged unless you change plans or add seats past 50.
+
 ## What it shows
 
-| Panel          | Numbers                                                                                                            | Attention when                                 |
-| -------------- | ------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------- |
-| Revenue        | Active, cancelling and past-due subscriptions; sales (7 days); refunds and chargebacks (30 days); active discounts | Anything past due, any chargeback              |
-| Email          | Domain status; sent, bounced and spam reports among the latest 100 (7 days)                                        | A bounce, a spam report, a domain not verified |
-| Search         | Clicks and views (28 days), top 5 queries, sitemap errors                                                          | A sitemap with errors                          |
-| Site           | Requests, 5xx errors and threats blocked (7 days)                                                                  | 5xx above 1%                                   |
-| Product health | Latest CI run on `dev`, latest release run, open Dependabot alerts                                                 | A failed run, any open alert                   |
-| Accounts       | Not built yet: needs a decision on how the dashboard reads account counts                                          |                                                |
+| Panel          | Numbers                                                                                                                                                | Attention when                                 |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------- |
+| Revenue        | Active, cancelling and past-due subscriptions; sales (7 days); refunds and chargebacks (30 days); active discounts                                     | Anything past due, any chargeback              |
+| Email          | Domain status; sent, bounced and spam reports among the latest 100 (7 days)                                                                            | A bounce, a spam report, a domain not verified |
+| Search         | Clicks and views (28 days), top 5 queries, sitemap errors                                                                                              | A sitemap with errors                          |
+| Site           | Requests, 5xx errors and threats blocked (7 days)                                                                                                      | 5xx above 1%                                   |
+| Product health | Latest CI run on `dev`, latest release run, open Dependabot alerts                                                                                     | A failed run, any open alert                   |
+| Accounts       | Accounts, new this week, trials, paying by plan, cancelling, past due, complimentary, active devices, email inboxes, news subscribers, problem reports | Anything past due, a new problem report        |
 
 Customer details never appear: counts and statuses only. Each panel links to
 the provider's own dashboard for a closer look.

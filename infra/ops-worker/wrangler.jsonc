@@ -16,11 +16,14 @@
     "ACCESS_TEAM_DOMAIN": "",
     "ACCESS_AUD": "",
     "CF_ZONE_ID": "15510c957e2e4194f0f33670e923ad45",
+    // Public values (the same as the extension's .env.staging).
+    "SUPABASE_URL": "https://fhclnxqumcdsqxyunelp.supabase.co",
+    "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_nqWSfXAG076gYMSj7sHvjw_UNPKnMJU",
     "GITHUB_REPOS": "SHINO-01/rolestash,SHINO-01/rolestash-extension",
     "SEARCH_CONSOLE_SITE": "sc-domain:rolestash.com",
   },
   // Secrets, set once with `wrangler secret put <NAME> --config infra/ops-worker/wrangler.jsonc`
   // (each read-only; scopes in docs/guides/operations.md):
-  //   OWNER_EMAILS, PADDLE_API_KEY, CF_ANALYTICS_TOKEN, GITHUB_TOKEN,
+  //   OWNER_EMAILS, OPS_STATS_SECRET (its SHA-256 goes in private.ops_stats_secret), PADDLE_API_KEY, CF_ANALYTICS_TOKEN, GITHUB_TOKEN,
   //   GOOGLE_SERVICE_ACCOUNT, RESEND_API_KEY
 }
