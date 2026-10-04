@@ -98,6 +98,14 @@ Done 2026-10-03, in the Cloud project `rolestash-cws-upload`.
    `CWS_REFRESH_TOKEN` again.
 3. From then on, _Release_ uploads and submits each new version once you
    approve the `chrome-web-store` environment.
+4. **Check them:** in rolestash-extension, run **Actions → Check store
+   credentials** and approve it. It names an empty or misplaced secret and
+   asks Google whether the client ID, secret and refresh token work
+   together, without printing them. _Release_ runs the same check before
+   each upload. (The v0.4.1 upload failed on an empty `CWS_PUBLISHER_ID`,
+   then on "The OAuth client was not found", meaning `CWS_CLIENT_ID` didn't
+   match a client.) To replace one value:
+   `gh secret set CWS_CLIENT_ID --repo SHINO-01/rolestash-extension --env chrome-web-store`.
 
 ## 5. Google brand verification (owner)
 

@@ -140,12 +140,33 @@ echo "  environment: chrome-web-store (approval by ${OWNER}, main branch only)"
 
 if [[ "${1:-}" == "--store" ]]; then
   say "Chrome Web Store credentials (input is hidden; see rolestash-extension README → One-time setup)"
-  for name in CWS_PUBLISHER_ID CWS_CLIENT_ID CWS_CLIENT_SECRET CWS_REFRESH_TOKEN; do
-    gh secret set "$name" --repo "$EXT" --env chrome-web-store
+  # Each prompt says what it wants, and an empty answer asks again: an empty
+  # CWS_PUBLISHER_ID once failed the v0.4.1 upload. Values go to gh on stdin,
+  # never on the command line.
+  prompts=(
+    "CWS_PUBLISHER_ID|Publisher ID (first ID in the developer dashboard's address)"
+    "CWS_CLIENT_ID|OAuth client ID (ends in .apps.googleusercontent.com)"
+    "CWS_CLIENT_SECRET|OAuth client secret (starts GOCSPX-)"
+    "CWS_REFRESH_TOKEN|Refresh token (starts 1//)"
+  )
+  for prompt in "${prompts[@]}"; do
+    name="${prompt%%|*}"
+    value=""
+    while [[ -z "$value" ]]; do
+      read -r -s -p "  ${prompt#*|}: " value
+      echo
+      [[ -z "$value" ]] && echo "  Empty; paste the value (input is hidden)."
+    done
+    if [[ "$name" == CWS_CLIENT_ID && "$value" != *.apps.googleusercontent.com ]]; then
+      echo "  That isn't a client ID. Run the script again." >&2
+      exit 1
+    fi
+    printf '%s' "$value" | gh secret set "$name" --repo "$EXT" --env chrome-web-store
+    unset value
   done
   read -r -p "Extension ID (from the Web Store dashboard): " extension_id
   gh variable set CWS_EXTENSION_ID --repo "$EXT" --body "$extension_id"
-  echo "  store publishing enabled"
+  echo "  store publishing enabled. Check it: ${EXT} → Actions → Check store credentials"
 fi
 
 say "Done."
