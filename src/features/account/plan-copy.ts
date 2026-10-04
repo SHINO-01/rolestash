@@ -37,6 +37,8 @@ export function planSummary(plan: PlanState): string {
     case 'trial':
       return `${PLAN_NAMES[plan.plan]} trial: ${String(plan.trialDaysLeft ?? 0)} days left${ends ? `, until ${ends}` : ''}. No card needed.`;
     case 'subscribed':
+      if (plan.complimentary)
+        return `${PLAN_NAMES[plan.plan]}, complimentary. No subscription needed.`;
       return ends ? `${PLAN_NAMES[plan.plan]}. Renews on ${ends}.` : `${PLAN_NAMES[plan.plan]}.`;
     case 'ending':
       return ends

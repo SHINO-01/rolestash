@@ -281,6 +281,7 @@ export class AccountService implements PlanProvider {
         ...(remote.currentPeriodEnd ? { currentPeriodEnd: remote.currentPeriodEnd } : {}),
         tier: remote.tier,
         hasBillingAccount: remote.hasBillingAccount,
+        ...(remote.complimentary ? { complimentary: true } : {}),
         checkedAt: this.now().toISOString(),
       };
       await this.store.set({ [ACCOUNT_ENTITLEMENT_KEY]: entitlement });

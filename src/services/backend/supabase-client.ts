@@ -57,6 +57,8 @@ export interface RemoteEntitlement {
   tier: PaidPlan;
   /** True once a billing provider knows this customer (portal available). */
   hasBillingAccount: boolean;
+  /** Granted by hand, with no subscription (ADR-0025). */
+  complimentary: boolean;
 }
 
 export type BackendErrorCode =
@@ -149,6 +151,7 @@ const EntitlementRow = z.object({
   current_period_end: z.string().nullish(),
   provider_customer_id: z.string().nullish(),
   tier: z.enum(['pro', 'advanced']).nullish(),
+  complimentary: z.string().nullish(),
 });
 
 const InboxResult = z.discriminatedUnion('ok', [
@@ -318,7 +321,7 @@ export class SupabaseClient {
 
   async entitlement(accessToken: string): Promise<RemoteEntitlement | undefined> {
     const { status, data } = await this.request(
-      '/rest/v1/entitlements?select=status,tier,trial_ends_at,current_period_end,provider_customer_id&limit=1',
+      '/rest/v1/entitlements?select=status,tier,trial_ends_at,current_period_end,provider_customer_id,complimentary&limit=1',
       { token: accessToken },
     );
     if (status === 401) throw new BackendError('session_expired', status);
@@ -335,6 +338,7 @@ export class SupabaseClient {
         : {}),
       tier: row.tier ?? 'pro',
       hasBillingAccount: Boolean(row.provider_customer_id),
+      complimentary: Boolean(row.complimentary),
     };
   }
 

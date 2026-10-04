@@ -144,8 +144,9 @@ Runbook: [guides/launch.md](guides/launch.md).
   ([guides/website.md](guides/website.md)).
 - **Operations dashboard** at `operations.rolestash.com` for us: Cloudflare,
   Paddle (refunds, disputes, discounts), Resend, Search Console and ad
-  accounts in one place, behind owner-only sign-in. Not urgent; needs a
-  short design note first (which APIs, read-only tokens, Cloudflare Access).
+  accounts in one place, behind owner-only sign-in. Design note:
+  [ADR-0026](adr/0026-operations-dashboard.md) (proposed; read-only first,
+  Cloudflare Access, no new storage). Waiting on the owner's approval.
 
 ## Later
 

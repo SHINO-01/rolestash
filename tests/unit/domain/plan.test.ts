@@ -90,6 +90,27 @@ describe('planOf', () => {
     });
   });
 
+  it('shows a complimentary plan with no renewal date (ADR-0025)', () => {
+    const comp = { status: 'active' as const, tier: 'advanced' as const, complimentary: true };
+    expect(planOf(ent({ ...comp, currentPeriodEnd: '9999-12-31T00:00:00.000Z' }), NOW)).toEqual({
+      plan: 'advanced',
+      reason: 'subscribed',
+      complimentary: true,
+    });
+    // Ending a grant (status no longer active) behaves like any other plan.
+    expect(
+      planOf(ent({ ...comp, status: 'expired', currentPeriodEnd: '9999-12-31T00:00:00.000Z' }), NOW)
+        .plan,
+    ).toBe('free');
+    // Still subject to the offline grace period.
+    expect(
+      planOf(
+        ent({ ...comp, currentPeriodEnd: '9999-12-31T00:00:00.000Z', checkedAt: days(-8) }),
+        NOW,
+      ).reason,
+    ).toBe('stale');
+  });
+
   it('treats paused and expired as Free', () => {
     expect(planOf(ent({ status: 'paused', currentPeriodEnd: days(5) }), NOW).plan).toBe('free');
     expect(planOf(ent({ status: 'expired' }), NOW).plan).toBe('free');

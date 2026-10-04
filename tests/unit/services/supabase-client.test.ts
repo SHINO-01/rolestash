@@ -63,6 +63,29 @@ describe('SupabaseClient error mapping', () => {
     expect(await code(broken.c.entitlement('t'))).toBe('server');
   });
 
+  it('reads a complimentary entitlement (ADR-0025)', async () => {
+    const { c } = client({
+      [`GET ${SB}/rest/v1/entitlements`]: {
+        status: 200,
+        body: [
+          {
+            status: 'active',
+            tier: 'advanced',
+            current_period_end: '9999-12-31T00:00:00+00:00',
+            provider_customer_id: null,
+            complimentary: 'owner',
+          },
+        ],
+      },
+    });
+    expect(await c.entitlement('t')).toMatchObject({
+      tier: 'advanced',
+      complimentary: true,
+      hasBillingAccount: false,
+      currentPeriodEnd: '9999-12-31T00:00:00.000Z',
+    });
+  });
+
   it('maps Edge Function responses', async () => {
     const { c } = client({
       [`POST ${SB}/functions/v1/create-checkout`]: { status: 401, body: {} },

@@ -110,6 +110,8 @@ export const EntitlementSchema = z.object({
   currentPeriodEnd: IsoDateTime.optional(),
   /** Which paid plan the trial or subscription is for. New trials are Advanced. */
   tier: z.enum(['pro', 'advanced']).default('pro'),
+  /** Granted by hand with no subscription (ADR-0025): no renewal date, no plan changes. */
+  complimentary: z.boolean().optional(),
   /** When this snapshot was fetched; drives the offline grace period. */
   checkedAt: IsoDateTime,
 });
@@ -134,6 +136,8 @@ export interface PlanState {
   endsAt?: string;
   /** Whole days of trial left (ceil), only while trialing. */
   trialDaysLeft?: number;
+  /** A complimentary plan (ADR-0025): paid features with no subscription. */
+  complimentary?: true;
 }
 
 const before = (now: Date, iso: string | undefined, slackDays = 0) =>
@@ -161,6 +165,10 @@ export function planOf(entitlement: Entitlement | undefined, now: Date): PlanSta
       break;
     case 'active':
     case 'past_due':
+      if (entitlement.complimentary && status === 'active' && before(now, currentPeriodEnd)) {
+        state = { plan: tier, reason: 'subscribed', complimentary: true };
+        break;
+      }
       state = before(now, currentPeriodEnd, RENEWAL_LEEWAY_DAYS)
         ? {
             plan: tier,

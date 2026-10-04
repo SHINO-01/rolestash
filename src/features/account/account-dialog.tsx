@@ -332,48 +332,50 @@ function SignedIn({ account, state }: { account: AccountService; state: AccountS
       <SyncSection plan={plan.plan} />
       <EmailSection plan={plan.plan} />
 
-      <section className="flex flex-col gap-3">
-        <span className="text-sm font-semibold">
-          {subscribed ? 'Change plan' : 'Choose a plan'}
-        </span>
-        {PAID_PLANS.filter((tier) => !(subscribed && tier === plan.plan)).map((tier) => (
-          <div key={tier} className="border-line flex flex-col gap-2 rounded-xl border p-3">
-            <div>
-              <span className="text-sm font-semibold">{PLAN_NAMES[tier]}</span>
-              <p className="text-muted text-sm">{PLAN_PITCH[tier]}</p>
-            </div>
-            {pending?.tier === tier ? (
-              <ConfirmSwitch
-                pending={pending}
-                busy={busy === 'confirm'}
-                onConfirm={confirmSwitch}
-                onCancel={() => setPending(undefined)}
-              />
-            ) : (
-              <div className="grid grid-cols-3 gap-2">
-                {BILLING_INTERVALS.map((interval) => (
-                  <Button
-                    key={interval}
-                    variant={interval === 'month' ? 'primary' : 'secondary'}
-                    loading={busy === `${tier}-${interval}`}
-                    disabled={busy !== null}
-                    onClick={() =>
-                      subscribed ? switchTo(tier, interval) : checkout(tier, interval)
-                    }
-                  >
-                    {planPriceLabel(tier, interval, local)}
-                  </Button>
-                ))}
+      {plan.complimentary ? null : (
+        <section className="flex flex-col gap-3">
+          <span className="text-sm font-semibold">
+            {subscribed ? 'Change plan' : 'Choose a plan'}
+          </span>
+          {PAID_PLANS.filter((tier) => !(subscribed && tier === plan.plan)).map((tier) => (
+            <div key={tier} className="border-line flex flex-col gap-2 rounded-xl border p-3">
+              <div>
+                <span className="text-sm font-semibold">{PLAN_NAMES[tier]}</span>
+                <p className="text-muted text-sm">{PLAN_PITCH[tier]}</p>
               </div>
-            )}
-          </div>
-        ))}
-        <p className="text-subtle text-xs">
-          {subscribed
-            ? 'You’ll see the cost before anything changes, and you’re charged (or credited) only the difference for the rest of this billing period. Payments are handled by Paddle, our reseller.'
-            : 'Prices in your currency, with tax as your country requires. Secure checkout by Paddle, our reseller, in a new tab. 14-day money-back guarantee.'}
-        </p>
-      </section>
+              {pending?.tier === tier ? (
+                <ConfirmSwitch
+                  pending={pending}
+                  busy={busy === 'confirm'}
+                  onConfirm={confirmSwitch}
+                  onCancel={() => setPending(undefined)}
+                />
+              ) : (
+                <div className="grid grid-cols-3 gap-2">
+                  {BILLING_INTERVALS.map((interval) => (
+                    <Button
+                      key={interval}
+                      variant={interval === 'month' ? 'primary' : 'secondary'}
+                      loading={busy === `${tier}-${interval}`}
+                      disabled={busy !== null}
+                      onClick={() =>
+                        subscribed ? switchTo(tier, interval) : checkout(tier, interval)
+                      }
+                    >
+                      {planPriceLabel(tier, interval, local)}
+                    </Button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+          <p className="text-subtle text-xs">
+            {subscribed
+              ? 'You’ll see the cost before anything changes, and you’re charged (or credited) only the difference for the rest of this billing period. Payments are handled by Paddle, our reseller.'
+              : 'Prices in your currency, with tax as your country requires. Secure checkout by Paddle, our reseller, in a new tab. 14-day money-back guarantee.'}
+          </p>
+        </section>
+      )}
 
       <div className="flex flex-wrap gap-2">
         {state.hasBillingAccount ? (
