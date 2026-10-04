@@ -122,6 +122,23 @@ client in `.env.staging`:
 - then **Verify branding**. The domain must be verified in Search Console
   for the same Google account.
 
+## v0.4.1 in review (to do)
+
+Submitted 2026-10-04 (release run 37192004589). Until it's approved:
+
+- [ ] **Owner:** paste the data disclosures from the release repo's
+      `store/listing.md` ("Collected" section) into the dashboard's
+      **Privacy** tab. Reviewers compare them with what 0.4.1 does; they
+      now include account names and problem reports.
+- [ ] **Owner:** start the beta (step 6) on the unlisted link; testers move
+      to 0.4.1 automatically once it's approved.
+
+When Google approves 0.4.1:
+
+- [ ] **Ours:** on rolestash.com/known-issues/, move the three issues fixed
+      in 0.4.1 out of _Open_ (the changelog records the fixes), and set
+      "Current version" to 0.4.1 and "Last updated" to that day.
+
 ## 6. Beta (owner, with us)
 
 Send the unlisted link to 10–20 testers. Ask them to capture a few jobs,
