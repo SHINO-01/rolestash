@@ -1,7 +1,7 @@
 -- Run with: npm run test:db  (needs Docker; see docs/guides/backend.md)
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(30);
+select plan(33);
 
 create function pg_temp.act_as(uid uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),
@@ -159,6 +159,19 @@ select is((select count(*)::int from private.knowledge_lookup('domain', 'northwi
 delete from auth.users where id = pg_temp.uid(2);
 select is((select count(*)::int from private.email_knowledge_votes where voter = private.knowledge_voter(pg_temp.uid(2))), 0,
   'deleting an account deletes its votes');
+
+-- Sharing is off when either copy of the choice says so (profile or inbox).
+select pg_temp.act_as_admin();
+update public.email_inboxes set share_learning = true where user_id = pg_temp.uid(1);
+select is(pg_temp.vote(1, 'template', repeat('c', 64), 'offer'),
+  '{"ok": false, "reason": "sharing_off"}'::jsonb, 'an inbox still saying yes doesn''t override the profile');
+select pg_temp.act_as(pg_temp.uid(4));
+select public.set_email_sharing(false);
+select is(pg_temp.vote(4, 'template', repeat('c', 64), 'offer'),
+  '{"ok": false, "reason": "sharing_off"}'::jsonb, 'an account that switched sharing off before having an inbox doesn''t vote');
+select pg_temp.act_as(pg_temp.uid(5));
+select is(pg_temp.vote(5, 'template', repeat('c', 64), 'offer'),
+  '{"ok": true, "recorded": 1}'::jsonb, 'with no choice recorded, sharing stays on (the sign-up default)');
 
 select * from finish();
 rollback;
