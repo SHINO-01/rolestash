@@ -21,6 +21,8 @@ All notable changes to this project are documented here. The format follows
 - **Buying on rolestash.com now starts with signing in:** Subscribe on the
   pricing page asks you to sign in (or create an account) first, and a
   purchase only ever applies to the account that made it.
+- **Turning off "Help improve automatic updates" always counts:** your
+  choice is now honoured even before you've set up email updates.
 
 ## [0.4.2] — 2026-10-05
 

@@ -62,10 +62,6 @@ Don't put exploit details in commits, issues or PRs until they're fixed.
 - [ ] **Work through the private security list**: one owner check and about
       ten open items for us (billing, trials, shared email learning, the
       email Worker).
-- [ ] **Deploy the Edge Functions** after the site change that sends
-      `/pricing/` through sign-in is live (`npx supabase functions deploy`;
-      ADR-0027). Then buy a plan from `/pricing/` once (sandbox, or live and
-      refunded) and check the `paddle-webhook` logs for "no verified account".
 - [ ] **Scan the rest:** only `supabase/` and `infra/` were scanned. Next,
       scan the extension (`src/`, about 220 files) and `site/assets`.
 - [ ] **UX:** the "Help improve automatic updates" switch still shows to
