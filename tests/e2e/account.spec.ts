@@ -5,6 +5,8 @@ import { analyzeEmail } from '../../src/email/analyze';
 import { E2E_CODE, E2E_INBOX, MOCK_BACKEND } from './mock-backend';
 import { serveBoard } from '../web/serve-board';
 
+const QUOKKA_TICKET = `20311001.${'2'.repeat(64)}`;
+
 /**
  * Accounts (ADR-0011). The E2E build is configured with the mock backend
  * (.env.e2e); the production build has no backend, which the smoke test
@@ -537,12 +539,16 @@ test.describe('accounts', () => {
       },
       {
         id: 2,
-        event: analyzeEmail({
-          from: 'Quokka Health HR <hr@quokkahealth.example>',
-          subject: 'Product Designer application',
-          date: new Date().toISOString(),
-          text: 'Dear Sam, we are unable to offer you a position at this time.',
-        }),
+        event: {
+          ...analyzeEmail({
+            from: 'Quokka Health HR <hr@quokkahealth.example>',
+            subject: 'Product Designer application',
+            date: new Date().toISOString(),
+            text: 'Dear Sam, we are unable to offer you a position at this time.',
+          }),
+          // As ingest_email_event adds them (ADR-0028).
+          tickets: { domain: QUOKKA_TICKET },
+        },
       },
     ];
 
@@ -572,7 +578,12 @@ test.describe('accounts', () => {
     // Filing it taught shared learning which company that sender domain is.
     await expect
       .poll(() => backend.votes)
-      .toContainEqual({ kind: 'domain', key: 'quokkahealth.example', value: 'quokka health' });
+      .toContainEqual({
+        kind: 'domain',
+        key: 'quokkahealth.example',
+        value: 'quokka health',
+        ticket: QUOKKA_TICKET,
+      });
     await unsorted.getByRole('button', { name: 'Close' }).click();
     await expect(page.getByRole('button', { name: 'Product Designer application' })).toBeVisible();
 

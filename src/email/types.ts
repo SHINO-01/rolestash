@@ -32,6 +32,9 @@ export const InterviewSchema = z.object({
 });
 export type Interview = z.infer<typeof InterviewSchema>;
 
+/** "YYYYMMDD.<64 hex>", issued by ingest_email_event (ADR-0028). */
+export const VOTE_TICKET = /^\d{8}\.[0-9a-f]{64}$/;
+
 export const EmailEventSchema = z.object({
   intent: z.enum(EMAIL_INTENTS),
   /** 0..1 */
@@ -60,6 +63,16 @@ export const EmailEventSchema = z.object({
   template: z
     .string()
     .regex(/^[0-9a-f]{64}$/)
+    .optional(),
+  /**
+   * Added by the server when the event is stored: proof this account received
+   * the email, which a shared-learning vote must carry (ADR-0028).
+   */
+  tickets: z
+    .object({
+      template: z.string().regex(VOTE_TICKET).optional(),
+      domain: z.string().regex(VOTE_TICKET).optional(),
+    })
     .optional(),
   thread: z.object({
     messageId: z.string().max(998).optional(),

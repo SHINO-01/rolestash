@@ -331,6 +331,7 @@ export class JobService {
       interview?: JobInterview;
       email: EmailNote;
       template?: string;
+      templateTicket?: string;
     },
   ): Promise<Job> {
     const job = await this.require(jobId);

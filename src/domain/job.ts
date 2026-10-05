@@ -145,6 +145,11 @@ export const SuggestionSchema = z.object({
     .string()
     .regex(/^[0-9a-f]{64}$/)
     .optional(),
+  /** The server's vote ticket for that template (ADR-0028). */
+  templateTicket: z
+    .string()
+    .regex(/^\d{8}\.[0-9a-f]{64}$/)
+    .optional(),
 });
 export type Suggestion = z.infer<typeof SuggestionSchema>;
 

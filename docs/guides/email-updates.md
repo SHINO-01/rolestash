@@ -258,13 +258,20 @@ One user's confirmation teaches every user, with nothing personal shared:
   | "Something else…" on a suggestion                       | template → the chosen intent (or `other`)                       |
   | File an unsorted update ("File here" or "Add this job") | template → intent, and domain → `normalizeCompany(job.company)` |
 
-  Mail platforms and recruiting systems never get domain votes. Only paying
-  Advanced accounts vote; on the free trial the server answers
+  Mail platforms and recruiting systems never get domain votes; the server
+  checks this too (`private.is_platform_domain`, kept in step with
+  `isPlatformDomain` by a unit test). Only paying Advanced accounts vote; on
+  the free trial the extension sends nothing and the server answers
   `plan_required`. Votes are best effort: a failure never blocks the user.
 
-- **Promotion:** an entry decides at 3+ distinct voters with at least 3× the
-  runner-up, and only suggests when contested. `ingest_email_event` applies
-  it as mail arrives.
+- **Vote tickets (ADR-0028):** each stored event carries
+  `tickets: { template, domain }`, and a vote is counted only with the
+  ticket for that email, issued to that account in the last 90 days.
+- **Promotion:** an entry decides at 5+ distinct current paid voters with at
+  least 3× the runner-up, and only suggests when contested.
+  `ingest_email_event` applies it as mail arrives, except that a decided
+  `rejected` or `offer` the email's own reading didn't apply becomes a
+  suggestion.
 - **The switch:** "Help improve automatic updates" in Account, on by
   default (`set_email_sharing`). Turning it off withdraws that account's
   votes.
@@ -274,7 +281,7 @@ One user's confirmation teaches every user, with nothing personal shared:
 ```sql
 -- What's promoted or close to it:
 select kind, key, value, count(*) as voters
-from private.email_knowledge_votes group by 1, 2, 3 having count(*) >= 2 order by 4 desc;
+from private.email_knowledge_votes group by 1, 2, 3 having count(*) >= 3 order by 4 desc;
 
 -- Revoke an entry (it stops applying immediately):
 insert into private.email_knowledge_blocked (kind, key) values ('domain', 'example.com');

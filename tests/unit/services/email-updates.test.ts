@@ -389,22 +389,35 @@ describe('JobService email updates', () => {
 
 describe('shared learning (ADR-0014 §6)', () => {
   const T = 'a'.repeat(64);
+  // Vote tickets, as ingest_email_event issues them (ADR-0028).
+  const TT = `20261001.${'1'.repeat(64)}`;
+  const DT = `20261001.${'2'.repeat(64)}`;
+  const tickets = { tickets: { template: TT, domain: DT } };
 
   it('accepting a suggestion confirms its template', async () => {
     const { jobs, inbox, service } = await setup();
     await jobs.save(northwind());
-    inbox.add({ ...rejection(), action: 'suggest', template: T });
+    inbox.add({ ...rejection(), action: 'suggest', template: T, ...tickets });
     await service.run();
-    expect((await jobs.get('nw'))?.suggestion?.template).toBe(T);
+    expect((await jobs.get('nw'))?.suggestion).toMatchObject({ template: T, templateTicket: TT });
     const job = await service.acceptSuggestion('nw');
     expect(job.stageId).toBe('rejected');
-    expect(inbox.votes).toEqual([{ kind: 'template', key: T, value: 'rejected' }]);
+    expect(inbox.votes).toEqual([{ kind: 'template', key: T, value: 'rejected', ticket: TT }]);
+  });
+
+  it('votes only with the server’s ticket for that email', async () => {
+    const { jobs, inbox, service } = await setup();
+    await jobs.save(northwind());
+    inbox.add({ ...rejection(), action: 'suggest', template: T });
+    await service.run();
+    await service.acceptSuggestion('nw');
+    expect(inbox.votes).toEqual([]);
   });
 
   it('correcting a suggestion applies and teaches the right intent', async () => {
     const { jobs, inbox, service } = await setup();
     await jobs.save(northwind());
-    inbox.add({ ...rejection(), action: 'suggest', template: T });
+    inbox.add({ ...rejection(), action: 'suggest', template: T, ...tickets });
     await service.run();
     const job = await service.correctSuggestion('nw', 'interview');
     expect(job.stageId).toBe('interviewing');
@@ -413,15 +426,15 @@ describe('shared learning (ADR-0014 §6)', () => {
       type: 'email_update',
       email: { intent: 'interview' },
     });
-    expect(inbox.votes).toEqual([{ kind: 'template', key: T, value: 'interview' }]);
+    expect(inbox.votes).toEqual([{ kind: 'template', key: T, value: 'interview', ticket: TT }]);
 
-    inbox.add({ ...rejection('<r2>'), action: 'suggest', template: T });
+    inbox.add({ ...rejection('<r2>'), action: 'suggest', template: T, ...tickets });
     await jobs.save({ ...job, stageId: 'applied' });
     await service.run();
     const cleared = await service.correctSuggestion('nw', 'other');
     expect(cleared).toMatchObject({ stageId: 'applied' });
     expect(cleared.suggestion).toBeUndefined();
-    expect(inbox.votes.at(-1)).toEqual({ kind: 'template', key: T, value: 'other' });
+    expect(inbox.votes.at(-1)).toEqual({ kind: 'template', key: T, value: 'other', ticket: TT });
     await expect(service.correctSuggestion('nw', 'offer')).rejects.toThrow();
   });
 
@@ -430,13 +443,13 @@ describe('shared learning (ADR-0014 §6)', () => {
     await jobs.save(
       makeJob({ id: 'q', ...applied, title: 'Designer', company: 'Quokka Health Pty Ltd' }),
     );
-    inbox.add({ ...invite(), template: T });
+    inbox.add({ ...invite(), template: T, ...tickets });
     await service.run();
     const [item] = (await service.state()).unsorted;
     await service.assign(item!.id, 'q');
     expect(inbox.votes).toEqual([
-      { kind: 'template', key: T, value: 'interview' },
-      { kind: 'domain', key: 'northwindlabs.example', value: 'quokka health' },
+      { kind: 'template', key: T, value: 'interview', ticket: TT },
+      { kind: 'domain', key: 'northwindlabs.example', value: 'quokka health', ticket: DT },
     ]);
   });
 
@@ -448,6 +461,7 @@ describe('shared learning (ADR-0014 §6)', () => {
       sender: { address: 'x@us.greenhouse-mail.io', domain: 'us.greenhouse-mail.io' },
       postingUrls: [],
       companyHint: undefined,
+      ...tickets,
     });
     await service.run();
     const [item] = (await service.state()).unsorted;
@@ -460,14 +474,14 @@ describe('shared learning (ADR-0014 §6)', () => {
     await jobs.save(northwind());
     await service.setSharing(false);
     expect((await service.state()).shareLearning).toBe(false);
-    inbox.add({ ...rejection(), action: 'suggest', template: T });
+    inbox.add({ ...rejection(), action: 'suggest', template: T, ...tickets });
     await service.run();
     await service.acceptSuggestion('nw');
     expect(inbox.votes).toEqual([]);
 
     await service.setSharing(true);
     inbox.failVotes = true;
-    inbox.add({ ...rejection('<r3>'), action: 'suggest', template: T });
+    inbox.add({ ...rejection('<r3>'), action: 'suggest', template: T, ...tickets });
     await jobs.save({ ...(await jobs.get('nw'))!, stageId: 'applied' });
     await service.run();
     await expect(service.acceptSuggestion('nw')).resolves.toMatchObject({ stageId: 'rejected' });
@@ -483,6 +497,7 @@ describe('shared learning (ADR-0014 §6)', () => {
       await jobService.suggestEmailUpdate('nw', {
         toStageId: 'rejected',
         template: T,
+        templateTicket: TT,
         email: {
           intent: 'rejected',
           subject: 's',

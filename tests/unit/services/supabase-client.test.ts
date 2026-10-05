@@ -328,7 +328,12 @@ describe('SupabaseClient shared learning (ADR-0014 §6)', () => {
       },
       [`POST ${SB}/rest/v1/rpc/set_email_sharing`]: { status: 200, body: { ok: true } },
     });
-    const vote = { kind: 'template' as const, key: 'a'.repeat(64), value: 'rejected' };
+    const vote = {
+      kind: 'template' as const,
+      key: 'a'.repeat(64),
+      value: 'rejected',
+      ticket: `20261001.${'1'.repeat(64)}`,
+    };
     await c.voteEmailKnowledge('tok', [vote]);
     await c.voteEmailKnowledge('tok', []);
     await c.setEmailSharing('tok', false);
