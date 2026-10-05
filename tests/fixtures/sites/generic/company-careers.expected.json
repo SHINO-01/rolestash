@@ -6,6 +6,9 @@
     "title": "Site Reliability Engineer",
     "company": "Safety Culture",
     "descriptionContains": "observability stack",
-    "provenance": { "title": "heuristic" }
+    "provenance": {
+      "title": "heuristic"
+    },
+    "location": "Sydney"
   }
 }

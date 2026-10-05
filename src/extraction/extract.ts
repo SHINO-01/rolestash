@@ -2,12 +2,14 @@ import { resolveAdapter } from './adapters/registry';
 import type { SiteAdapter } from './adapters/types';
 import { mergeOutputs, overallConfidence } from './merge';
 import { classifyWorkplace } from './normalize/classifiers';
+import { factsFromDescription } from './normalize/description-facts';
 import { cleanText } from './normalize/text';
 import { bareHost, canonicalizeUrl, tryParseUrl } from './normalize/url';
 import { adapterStrategy } from './strategies/adapter';
 import { jsonLdStrategy } from './strategies/json-ld';
 import { metaStrategy } from './strategies/meta';
 import { microdataStrategy } from './strategies/microdata';
+import { defaultCurrencyFor } from './strategies/shared';
 import {
   EXTRACTOR_VERSION,
   type ExtractionContext,
@@ -69,6 +71,23 @@ export function extractJob(
     if (inferred) {
       fields.workplaceType = inferred;
       provenance.workplaceType = { strategy: 'heuristic', confidence: 0.6 };
+    }
+  }
+  // Still missing? The posting's own words ("Location: Sydney", "a hybrid
+  // role"). Low confidence, so the form asks the user to check them.
+  if (!fields.location || !fields.salary || !fields.workplaceType) {
+    const facts = factsFromDescription(fields.description, defaultCurrencyFor(ctx));
+    if (!fields.location && facts.location) {
+      fields.location = facts.location;
+      provenance.location = { strategy: 'heuristic', confidence: 0.5 };
+    }
+    if (!fields.salary && facts.salary) {
+      fields.salary = facts.salary;
+      provenance.salary = { strategy: 'heuristic', confidence: 0.5 };
+    }
+    if (!fields.workplaceType && facts.workplaceType) {
+      fields.workplaceType = facts.workplaceType;
+      provenance.workplaceType = { strategy: 'heuristic', confidence: 0.5 };
     }
   }
 

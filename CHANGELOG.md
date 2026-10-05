@@ -17,6 +17,10 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- **Location, salary and workplace come through more often:** when a page
+  only states them in the job description ("Location: Sydney", "Salary
+  range: $120,000 – $140,000", "this is a hybrid role"), Rolestash now
+  reads them from there and marks them for you to check.
 - **The board's greeting is never cut short:** it now has a row of its own
   above the board, next to a short summary of your search, and the header
   keeps only the buttons.

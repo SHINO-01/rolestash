@@ -2,7 +2,7 @@ import type { EmploymentType, Salary, WorkplaceType } from '@/domain/job';
 import type { SiteAdapter } from './adapters/types';
 
 /** Bump when extraction output changes meaningfully; stored on each job for debugging. */
-export const EXTRACTOR_VERSION = '1.0.0';
+export const EXTRACTOR_VERSION = '1.1.0';
 
 export interface ExtractedFields {
   title: string;

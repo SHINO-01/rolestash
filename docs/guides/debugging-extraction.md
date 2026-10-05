@@ -12,6 +12,12 @@
      adapter selector with confidence above 0.95 is **not** allowed (it must stay
      below JSON-LD), so instead post-process in the adapter's `extract()` or in
      `extract.ts` if the problem is general.
+   - Location, salary or workplace from `heuristic` at confidence 0.5 → read
+     from the description (`normalize/description-facts.ts`): labelled lines
+     such as "Location:" or "Salary range:", then a few unambiguous phrases
+     ("a hybrid role", "#LI-Remote"). It only fills fields every other
+     strategy left empty. A wrong value there means a pattern is too loose;
+     add the case to `description-facts.test.ts`.
    - Nothing at all / "Couldn't read this page" → restricted page (Chrome Web
      Store, `chrome://`), or the content is in a cross-origin iframe.
 3. **Copy report** puts the full `ExtractionResult` JSON on the clipboard —
