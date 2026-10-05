@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.4.4] — 2026-10-06
+
 ### Changed
 
 - **One paid plan:** Pro and Advanced are now one plan, Pro, with
@@ -22,7 +24,6 @@ All notable changes to this project are documented here. The format follows
   a site from its menu.
 - **Chrome asks once to allow Rolestash on job sites,** so the button can
   appear there. It reads a page only when you open the panel.
-
 - **Less to read, fewer things to click:** Add job has one link box instead
   of two; Account asks for your name once, drops lines that didn't apply
   to your plan and shortens its notes; an empty board no longer shows
