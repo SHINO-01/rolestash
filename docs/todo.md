@@ -6,10 +6,10 @@ into the roadmap or changelog. Last reviewed 5 October 2026.
 
 ## Owner
 
-- [ ] **Chrome Web Store, v0.4.2 in review** (submitted 5 October, security
-      fixes; 0.4.1 is published). Check the **Privacy** tab still has the
-      data disclosures from the release repo's `store/listing.md`
-      ("Collected") ([launch.md](guides/launch.md#v041-in-review-to-do)).
+- [ ] **Chrome Web Store:** v0.4.3 (security fixes) is published, 5
+      October. Check the **Privacy** tab still has the data disclosures from
+      the release repo's `store/listing.md` ("Collected")
+      ([launch.md](guides/launch.md#v041-in-review-to-do)).
 - [ ] **Beta:** send the unlisted store link to 10–20 testers; ask for honest
       Chrome Web Store reviews, and whether they're happy to be quoted on
       the homepage ([launch.md](guides/launch.md#6-beta-owner-with-us)).
