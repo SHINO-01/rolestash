@@ -25,6 +25,8 @@ All notable changes to this project are documented here. The format follows
   choice is now honoured even before you've set up email updates.
 - **A full refund ends the plan straight away,** as the refund policy says,
   instead of at the end of the period that was refunded.
+- **Nothing is shared during the free trial:** "Help improve automatic
+  updates" now only appears once you subscribe, and a trial sends nothing.
 
 ## [0.4.2] — 2026-10-05
 

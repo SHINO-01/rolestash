@@ -58,7 +58,7 @@ class FakeInbox implements EmailInbox {
   }
 }
 
-async function setup(plan: Plan = 'advanced') {
+async function setup(plan: Plan = 'advanced', trial = false) {
   const store = new MemoryKeyValueStore();
   await migrate(store);
   const ctx = testContext('2026-10-01T00:00:00.000Z');
@@ -72,7 +72,7 @@ async function setup(plan: Plan = 'advanced') {
     settings,
     jobService,
     inbox,
-    { currentPlan: () => Promise.resolve(plan) },
+    { currentPlan: () => Promise.resolve(plan), onTrial: () => Promise.resolve(trial) },
     ctx,
   );
   return { store, jobs, jobService, inbox, service };
@@ -473,20 +473,25 @@ describe('shared learning (ADR-0014 §6)', () => {
     await expect(service.acceptSuggestion('nw')).resolves.toMatchObject({ stageId: 'rejected' });
   });
 
-  it('does not vote off Advanced', async () => {
-    const { jobs, jobService, inbox, service } = await setup('pro');
-    await jobs.save(northwind());
-    await jobService.suggestEmailUpdate('nw', {
-      toStageId: 'rejected',
-      template: T,
-      email: {
-        intent: 'rejected',
-        subject: 's',
-        sender: 'x',
-        receivedAt: '2026-10-01T00:00:00.000Z',
-      },
-    });
-    await service.acceptSuggestion('nw');
-    expect(inbox.votes).toEqual([]);
+  it('does not vote off Advanced, or on the Advanced trial', async () => {
+    for (const [plan, trial] of [
+      ['pro', false],
+      ['advanced', true],
+    ] as const) {
+      const { jobs, jobService, inbox, service } = await setup(plan, trial);
+      await jobs.save(northwind());
+      await jobService.suggestEmailUpdate('nw', {
+        toStageId: 'rejected',
+        template: T,
+        email: {
+          intent: 'rejected',
+          subject: 's',
+          sender: 'x',
+          receivedAt: '2026-10-01T00:00:00.000Z',
+        },
+      });
+      await service.acceptSuggestion('nw');
+      expect(inbox.votes).toEqual([]);
+    }
   });
 });

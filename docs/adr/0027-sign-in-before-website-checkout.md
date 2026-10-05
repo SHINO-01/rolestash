@@ -62,8 +62,8 @@ checkout made by `create-checkout` for the signed-in account.
   names the subscription and customer; refund it in Paddle.
 - Rotating the service-role key invalidates signatures on checkouts that
   haven't completed yet; subscriptions already linked keep working.
-- `user_id_for_email()` is no longer called; it stays (service role only)
-  until a cleanup migration drops it.
+- `user_id_for_email()` is no longer called; migration
+  `20261018120000_drop_user_id_for_email` drops it.
 - `/welcome/` is no longer a checkout destination; checkouts land on
   `/pay/success/`.
 
