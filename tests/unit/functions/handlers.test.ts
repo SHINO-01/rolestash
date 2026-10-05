@@ -629,7 +629,7 @@ describe('paddle-webhook', () => {
         expect(await res.json()).toEqual({ canceled: true });
         expect(cancelCall(calls)?.body).toEqual({ effective_from: 'immediately' });
         // The entitlement follows from Paddle's subscription.canceled event.
-        expect(calls.some((c) => c.url.includes(SB))).toBe(false);
+        expect(calls.some((c) => c.url.startsWith(`${SB}/`))).toBe(false);
       }
     });
 
