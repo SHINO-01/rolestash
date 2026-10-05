@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.4.2] — 2026-10-05
+
 ### Changed
 
 - **New pages on rolestash.com:** every supported job site by region, a page
