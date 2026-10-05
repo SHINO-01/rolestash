@@ -11,6 +11,9 @@ All notable changes to this project are documented here. The format follows
 - **Trial records are better protected:** the record that stops an email
   getting a second free trial is now a keyed hash, and one mailbox gets one
   trial whichever way its address is written.
+- **Shared email learning only counts current subscribers:** votes from an
+  account stop counting when its Advanced subscription ends, and count
+  again if it resubscribes.
 
 ## [0.4.2] — 2026-10-05
 

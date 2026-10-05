@@ -6,8 +6,6 @@ into the roadmap or changelog. Last reviewed 5 October 2026.
 
 ## Owner
 
-- [ ] **Deploy the Edge Functions for v0.4.2** (urgent). The command and
-      details are in the private security notes (see Security below).
 - [ ] **Chrome Web Store, v0.4.2 in review** (submitted 5 October, security
       fixes; 0.4.1 is published). Check the **Privacy** tab still has the
       data disclosures from the release repo's `store/listing.md`

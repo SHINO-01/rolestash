@@ -1,7 +1,7 @@
 -- Run with: npm run test:db  (needs Docker; see docs/guides/backend.md)
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(26);
+select plan(30);
 
 create function pg_temp.act_as(uid uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),
@@ -94,6 +94,22 @@ select is((select (value, decides)::text from private.knowledge_lookup('template
 
 -- Domains ---------------------------------------------------------------------------------
 select pg_temp.vote(i, 'domain', 'northwindlabs.example', 'northwind labs') from generate_series(1, 3) i;
+
+-- Only voters who could vote today count ------------------------------------------------------
+select pg_temp.vote(i, 'template', repeat('d', 64), 'offer') from generate_series(3, 5) i;
+select pg_temp.act_as_admin();
+select is((select (value, decides)::text from private.knowledge_lookup('template', repeat('d', 64))),
+  '(offer,t)', 'three paying voters decide');
+update public.entitlements set status = 'canceled' where user_id = pg_temp.uid(5);
+select is((select (value, decides)::text from private.knowledge_lookup('template', repeat('d', 64))),
+  '(offer,t)', 'a subscription cancelled at period end still counts until then');
+update public.entitlements set current_period_end = now() - interval '1 day' where user_id = pg_temp.uid(5);
+select is((select count(*)::int from private.knowledge_lookup('template', repeat('d', 64))), 0,
+  'a lapsed voter no longer counts (2 left: below 3)');
+update public.entitlements set status = 'active', current_period_end = now() + interval '20 days'
+  where user_id = pg_temp.uid(5);
+select is((select (value, decides)::text from private.knowledge_lookup('template', repeat('d', 64))),
+  '(offer,t)', 'and counts again after resubscribing');
 
 -- Applying knowledge on arrival -----------------------------------------------------------------
 select pg_temp.act_as_anon();
