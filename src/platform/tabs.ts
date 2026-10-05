@@ -13,6 +13,17 @@ export async function getActiveTab(): Promise<ActiveTab | undefined> {
   return { id: tab.id, url: tab.url, title: tab.title, favIconUrl: tab.favIconUrl };
 }
 
+/**
+ * The tab the widget is framed in (ADR-0030): its own tab, not whichever is
+ * active, so a second window can't swap the page. Falls back to the active
+ * tab where there is no tab of its own.
+ */
+export async function getWidgetTab(): Promise<ActiveTab | undefined> {
+  const tab = await browser.tabs.getCurrent();
+  if (tab?.id === undefined) return getActiveTab();
+  return { id: tab.id, url: tab.url, title: tab.title, favIconUrl: tab.favIconUrl };
+}
+
 export const BOARD_PATH = '/board.html';
 
 /**

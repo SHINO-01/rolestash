@@ -14,7 +14,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Job } from '@/domain/job';
 import { findStage, visibleStages, type Stage, type StageId } from '@/domain/stage';
 import { formatSalary, type ExtractionResult } from '@/extraction';
-import { getActiveTab, openBoard, type ActiveTab } from '@/platform/tabs';
+import { getWidgetTab, openBoard, type ActiveTab } from '@/platform/tabs';
 import { DuplicateJobError, JobLimitError } from '@/services/job-service';
 import { Button, IconButton, Spinner } from '@/ui/components/button';
 import { CompanyAvatar } from '@/ui/components/company-avatar';
@@ -74,7 +74,7 @@ export function CaptureWidget() {
 
   const capture = useCallback(async () => {
     await services.ready;
-    const tab = await getActiveTab();
+    const tab = await getWidgetTab();
     if (!tab) {
       setState({ kind: 'failed', message: 'No page to read.', tab: undefined });
       return;
