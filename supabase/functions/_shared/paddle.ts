@@ -204,6 +204,35 @@ export function toBillingEvent(
   };
 }
 
+/** A full refund or chargeback Paddle approved for a subscription payment. */
+export interface RefundEvent {
+  adjustmentId: string;
+  transactionId: string;
+  subscriptionId: string;
+}
+
+/**
+ * Maps a Paddle `adjustment.*` webhook to a refund that ends the plan:
+ * approved, the whole payment (`type: full`), a refund or chargeback, for a
+ * subscription. Partial refunds, credits and pending ones keep the plan.
+ */
+export function toRefundEvent(payload: unknown): RefundEvent | null {
+  if (typeof payload !== 'object' || payload === null) return null;
+  const event = payload as { event_type?: unknown; data?: Record<string, unknown> | null };
+  const type = str(event.event_type);
+  if ((type !== 'adjustment.created' && type !== 'adjustment.updated') || !event.data) return null;
+  const data = event.data;
+  const action = str(data.action);
+  if (action !== 'refund' && action !== 'chargeback') return null;
+  if (str(data.status) !== 'approved' || str(data.type) !== 'full') return null;
+  const adjustmentId = str(data.id);
+  const transactionId = str(data.transaction_id);
+  const subscriptionId = str(data.subscription_id);
+  return adjustmentId && transactionId && subscriptionId
+    ? { adjustmentId, transactionId, subscriptionId }
+    : null;
+}
+
 export interface PaddleConfig {
   apiKey: string;
   /** 'sandbox' while testing, 'production' once approved. */
@@ -394,6 +423,26 @@ export class PaddleClient {
       country: data.address?.country_code ?? null,
       totals,
     };
+  }
+
+  /** A subscription's status and when its current billing period started. */
+  async subscriptionPeriod(
+    subscriptionId: string,
+  ): Promise<{ status: string | null; startsAt: string | null }> {
+    const data = await this.call<{
+      status?: unknown;
+      current_billing_period?: { starts_at?: unknown } | null;
+    }>('GET', `/subscriptions/${encodeURIComponent(subscriptionId)}`);
+    return { status: str(data.status), startsAt: str(data.current_billing_period?.starts_at) };
+  }
+
+  /** When the billing period a transaction paid for started (null if none). */
+  async transactionPeriodStart(transactionId: string): Promise<string | null> {
+    const data = await this.call<{ billing_period?: { starts_at?: unknown } | null }>(
+      'GET',
+      `/transactions/${encodeURIComponent(transactionId)}`,
+    );
+    return str(data.billing_period?.starts_at);
   }
 
   async cancelNow(subscriptionId: string): Promise<void> {

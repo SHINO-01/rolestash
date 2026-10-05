@@ -583,6 +583,114 @@ describe('paddle-webhook', () => {
     expect(calls).toHaveLength(0);
   });
 
+  describe('refunds (the refund policy: a refund moves you to Free)', () => {
+    const adjustment = (data: Record<string, unknown> = {}, event_type = 'adjustment.updated') => ({
+      event_type,
+      occurred_at: '2026-10-01T00:00:00.000Z',
+      data: {
+        id: 'adj_01',
+        action: 'refund',
+        type: 'full',
+        status: 'approved',
+        transaction_id: 'txn_01',
+        subscription_id: 'sub_01',
+        customer_id: 'ctm_01',
+        ...data,
+      },
+    });
+    const PADDLE = 'https://sandbox-api.paddle.com';
+    const paddle = (
+      subscription: Record<string, unknown>,
+      paidFrom: string | null = '2026-10-01T00:00:00Z',
+      cancel: FakeResponse = { status: 200, body: { data: {} } },
+    ): Record<string, FakeResponse> => ({
+      [`GET ${PADDLE}/subscriptions/sub_01`]: { status: 200, body: { data: subscription } },
+      [`GET ${PADDLE}/transactions/txn_01`]: {
+        status: 200,
+        body: { data: { billing_period: paidFrom ? { starts_at: paidFrom } : null } },
+      },
+      [`POST ${PADDLE}/subscriptions/sub_01/cancel`]: cancel,
+    });
+    const live = {
+      status: 'active',
+      current_billing_period: { starts_at: '2026-10-01T00:00:00.000Z' },
+    };
+    const cancelCall = (calls: RecordedCall[]) =>
+      calls.find((c) => c.method === 'POST' && c.url.endsWith('/cancel'));
+
+    it('cancels the subscription now when the current payment is refunded in full', async () => {
+      for (const event of [
+        adjustment(),
+        adjustment({}, 'adjustment.created'),
+        adjustment({ action: 'chargeback' }),
+      ]) {
+        const { deps: d, calls } = deps(paddle(live));
+        const res = await handlePaddleWebhook(await signedRequest(event), d);
+        expect(await res.json()).toEqual({ canceled: true });
+        expect(cancelCall(calls)?.body).toEqual({ effective_from: 'immediately' });
+        // The entitlement follows from Paddle's subscription.canceled event.
+        expect(calls.some((c) => c.url.includes(SB))).toBe(false);
+      }
+    });
+
+    it('keeps the plan for partial, pending, rejected or non-subscription adjustments', async () => {
+      for (const data of [
+        { type: 'partial' },
+        { status: 'pending_approval' },
+        { status: 'rejected' },
+        { action: 'credit' },
+        { action: 'chargeback_warning' },
+        { subscription_id: null },
+      ]) {
+        const { deps: d, calls } = deps(paddle(live));
+        const res = await handlePaddleWebhook(await signedRequest(adjustment(data)), d);
+        expect(await res.json(), JSON.stringify(data)).toEqual({ ignored: true });
+        expect(calls).toHaveLength(0);
+      }
+    });
+
+    it('keeps the plan when an earlier period was refunded, or it is already canceled', async () => {
+      const earlier = deps(paddle(live, '2026-09-01T00:00:00Z'));
+      expect(
+        await (await handlePaddleWebhook(await signedRequest(adjustment()), earlier.deps)).json(),
+      ).toEqual({
+        ignored: true,
+      });
+      expect(cancelCall(earlier.calls)).toBeUndefined();
+
+      const noPeriod = deps(paddle(live, null));
+      await handlePaddleWebhook(await signedRequest(adjustment()), noPeriod.deps);
+      expect(cancelCall(noPeriod.calls)).toBeUndefined();
+
+      const canceled = deps(paddle({ status: 'canceled', current_billing_period: null }));
+      expect(
+        await (await handlePaddleWebhook(await signedRequest(adjustment()), canceled.deps)).json(),
+      ).toEqual({
+        ignored: true,
+      });
+      expect(cancelCall(canceled.calls)).toBeUndefined();
+    });
+
+    it('treats a refused cancel as done, and asks Paddle to retry on server errors', async () => {
+      const refused = deps(paddle(live, undefined, { status: 400, body: {} }));
+      expect(
+        await (await handlePaddleWebhook(await signedRequest(adjustment()), refused.deps)).json(),
+      ).toEqual({
+        canceled: true,
+      });
+      const down = deps(paddle(live, undefined, { status: 503, body: {} }));
+      expect((await handlePaddleWebhook(await signedRequest(adjustment()), down.deps)).status).toBe(
+        500,
+      );
+      const lookupDown = deps({
+        [`GET ${PADDLE}/subscriptions/sub_01`]: { status: 502, body: {} },
+      });
+      expect(
+        (await handlePaddleWebhook(await signedRequest(adjustment()), lookupDown.deps)).status,
+      ).toBe(500);
+    });
+  });
+
   it('rejects unsigned or forged requests without touching the database', async () => {
     const { deps: d, calls } = deps({});
     const forged = await signedRequest(subscriptionEvent(), 'attacker-secret');

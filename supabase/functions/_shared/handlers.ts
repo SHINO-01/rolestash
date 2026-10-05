@@ -3,6 +3,8 @@ import {
   PaddleApiError,
   PaddleClient,
   toBillingEvent,
+  toRefundEvent,
+  type RefundEvent,
   type IncomingBillingEvent,
   type BillingInterval,
   type PaidTier,
@@ -432,6 +434,36 @@ async function accountForEvent(
     : null;
 }
 
+/**
+ * A full refund or chargeback of the payment for the current period moves the
+ * account to Free, as the refund policy says: cancel the subscription now, and
+ * Paddle's subscription.canceled event updates the entitlement as usual. A
+ * refund of an earlier period's payment keeps the plan that's paid for now.
+ */
+async function endRefundedSubscription(paddle: PaddleClient, refund: RefundEvent) {
+  const subscription = await paddle.subscriptionPeriod(refund.subscriptionId);
+  if (subscription.status === 'canceled') return json(200, { ignored: true });
+  const paidFrom = await paddle.transactionPeriodStart(refund.transactionId);
+  if (
+    !paidFrom ||
+    !subscription.startsAt ||
+    Date.parse(paidFrom) !== Date.parse(subscription.startsAt)
+  ) {
+    console.error('[rolestash] webhook: refund is not for the current period; plan kept', {
+      adjustmentId: refund.adjustmentId,
+      subscriptionId: refund.subscriptionId,
+    });
+    return json(200, { ignored: true });
+  }
+  try {
+    await paddle.cancelNow(refund.subscriptionId);
+  } catch (error) {
+    // 4xx: already canceled; 5xx: let Paddle retry.
+    if (!(error instanceof PaddleApiError) || error.status >= 500) throw error;
+  }
+  return json(200, { canceled: true });
+}
+
 /** POST /functions/v1/paddle-webhook (called by Paddle, signed; no user JWT). */
 export async function handlePaddleWebhook(req: Request, deps: Deps): Promise<Response> {
   if (req.method !== 'POST') return json(405, { error: 'method_not_allowed' });
@@ -450,10 +482,19 @@ export async function handlePaddleWebhook(req: Request, deps: Deps): Promise<Res
   } catch {
     return json(400, { error: 'bad_json' });
   }
+  const paddle = new PaddleClient(deps.env.paddle, deps.fetch);
+  const refund = toRefundEvent(payload);
+  if (refund) {
+    try {
+      return await endRefundedSubscription(paddle, refund);
+    } catch (error) {
+      console.error('[rolestash] webhook refund failed', error);
+      return json(500, { error: 'server_error' });
+    }
+  }
   const incoming = toBillingEvent(payload, (priceId) => tierOfPrice(deps.env, priceId));
   if (!incoming) return json(200, { ignored: true });
   const admin = new SupabaseAdmin(deps.env.supabase, deps.fetch);
-  const paddle = new PaddleClient(deps.env.paddle, deps.fetch);
   try {
     const userId = await accountForEvent(admin, paddle, deps.env.supabase.serviceRoleKey, incoming);
     if (!userId) {

@@ -23,6 +23,8 @@ All notable changes to this project are documented here. The format follows
   purchase only ever applies to the account that made it.
 - **Turning off "Help improve automatic updates" always counts:** your
   choice is now honoured even before you've set up email updates.
+- **A full refund ends the plan straight away,** as the refund policy says,
+  instead of at the end of the period that was refunded.
 
 ## [0.4.2] — 2026-10-05
 

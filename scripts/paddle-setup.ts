@@ -31,6 +31,9 @@ const EVENTS = [
   'subscription.resumed',
   'subscription.trialing',
   'subscription.updated',
+  // Full refunds and chargebacks end the plan (refund policy; paddle-webhook).
+  'adjustment.created',
+  'adjustment.updated',
 ];
 
 const PRODUCTS: Record<Tier, { name: string; description: string }> = {
@@ -428,7 +431,13 @@ if (!hook) {
   }
 } else {
   const missing = EVENTS.filter((e) => !hook.subscribed_events.some((s) => s.name === e));
-  if (missing.length) changes.push(`webhook is missing events: ${missing.join(', ')}`);
+  if (missing.length) {
+    changes.push(`webhook is missing events: ${missing.join(', ')}`);
+    if (apply)
+      await call('PATCH', `/notification-settings/${hook.id}`, {
+        subscribed_events: [...hook.subscribed_events.map((e) => e.name), ...missing],
+      });
+  }
 }
 
 console.log(
