@@ -22,3 +22,6 @@ site/board/
 
 # /brag launch video work (the final video is copied into site/assets)
 brag-output*/
+
+# Local Claude Code settings
+.claude/
