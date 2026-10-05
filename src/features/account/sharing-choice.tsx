@@ -24,9 +24,9 @@ export function SharingChoice({
       <span>
         <span className="font-medium">Help improve automatic updates</span>
         <span className="text-muted block text-[13px]">
-          Once you subscribe to Advanced, when you accept or correct an email update, share a
-          one-way fingerprint of the email’s template, never the email or your jobs. Nothing is
-          shared during the free trial. You can change this later in Account.
+          Once you subscribe to Pro, when you accept or correct an email update, share a one-way
+          fingerprint of the email’s template, never the email or your jobs. Nothing is shared
+          during the free trial. You can change this later in Account.
         </span>
       </span>
     </label>

@@ -28,7 +28,7 @@ export function SidePanel() {
   const { account, state } = useAccount();
   // A build without accounts isn't limited, like every plan gate.
   const plan = account ? state?.plan.plan : undefined;
-  const full = !account || allows(plan, 'fullSidePanel');
+  const full = !account || allows(plan, 'webBoard');
   useAutoSync();
   useAutoEmailUpdates(plan);
   const { tabId, page } = useActivePage();

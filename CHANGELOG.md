@@ -6,6 +6,15 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- **One paid plan:** Pro and Advanced are now one plan, Pro, with
+  everything: unlimited active jobs, status updates from your job emails,
+  full autofill, Insights, contacts and documents, reminders, and sync
+  across 5 devices including your phone. It's US$12 a month, US$30 every 3
+  months or US$99 a year, in your currency, with the 14-day free trial.
+- **Canadian prices read as "$16.99 CAD".**
+
 ## [0.4.3] — 2026-10-05
 
 ### Security

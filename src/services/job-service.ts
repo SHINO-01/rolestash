@@ -247,7 +247,7 @@ export class JobService {
     return restored;
   }
 
-  // ── Bulk actions (Advanced) ──────────────────────────────────────────────
+  // ── Bulk actions (Pro) ──────────────────────────────────────────────
 
   /**
    * Moves several jobs to the top of a column, keeping their order relative
@@ -299,7 +299,7 @@ export class JobService {
     return restored;
   }
 
-  // ── Email updates (Advanced; ADR-0014) ───────────────────────────────────
+  // ── Email updates (Pro; ADR-0014) ───────────────────────────────────
 
   /**
    * Applies an update from an email: moves the job (to the top of its new

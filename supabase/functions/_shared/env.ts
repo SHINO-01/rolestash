@@ -37,18 +37,18 @@ export function readEnv(get: (name: string) => string | undefined): FunctionEnv 
       environment,
       apiKey: need('PADDLE_API_KEY'),
       webhookSecret: need('PADDLE_WEBHOOK_SECRET'),
+      // The Pro prices sold now (ADR-0029).
       prices: {
-        pro: {
-          month: need('PADDLE_PRICE_PRO_MONTHLY'),
-          quarter: need('PADDLE_PRICE_PRO_QUARTERLY'),
-          year: need('PADDLE_PRICE_PRO_YEARLY'),
-        },
-        advanced: {
-          month: need('PADDLE_PRICE_ADVANCED_MONTHLY'),
-          quarter: need('PADDLE_PRICE_ADVANCED_QUARTERLY'),
-          year: need('PADDLE_PRICE_ADVANCED_YEARLY'),
-        },
+        month: need('PADDLE_PRICE_PRO_MONTHLY'),
+        quarter: need('PADDLE_PRICE_PRO_QUARTERLY'),
+        year: need('PADDLE_PRICE_PRO_YEARLY'),
       },
+      // Prices from before the plans merged, comma-separated; their subscribers
+      // keep paying them. Optional: those prices are also tagged in Paddle.
+      legacyPrices: (get('PADDLE_LEGACY_PRICES') ?? '')
+        .split(',')
+        .map((id) => id.trim())
+        .filter(Boolean),
     },
   };
 }

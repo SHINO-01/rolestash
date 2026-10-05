@@ -15,7 +15,7 @@ import { WEB_HANDOFF_MESSAGE, type WebHandoffReply } from '@/services/web-handof
  *
  *  - Right-click "Track this job"   → capture + save straight to the board
  *  - Alt+Shift+J                    → same
- *  - Right-click "Fill this application" → fill the form from the profile (Advanced; ADR-0020)
+ *  - Right-click "Fill this application" → fill the form from the profile (Pro; ADR-0020)
  *  - Right-click the toolbar icon → "Open side panel" (ADR-0021) or "Open board"
  *  - Every 15 minutes             → follow-up reminders, closing-soon digest (ADR-0015),
  *                                   email updates (ADR-0014) and sync (ADR-0016)

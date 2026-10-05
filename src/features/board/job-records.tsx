@@ -18,14 +18,14 @@ import { Button, IconButton } from '@/ui/components/button';
 import { Field, Input, Select, Textarea } from '@/ui/components/field';
 
 /**
- * Per-job records (Advanced): interview rounds with notes, contacts, and the
+ * Per-job records (Pro): interview rounds with notes, contacts, and the
  * documents sent (by name; files are never stored). Anything already saved
- * stays visible and editable on any plan; adding needs Advanced.
+ * stays visible and editable on any plan; adding needs Pro.
  */
 
 interface Props {
   job: Job;
-  /** Whether new entries can be added (Advanced, or a build without accounts). */
+  /** Whether new entries can be added (Pro, or a build without accounts). */
   allowed: boolean;
   onPatch: (patch: JobPatch) => Promise<void>;
   onSeePlans?: (() => void) | undefined;

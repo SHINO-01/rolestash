@@ -7,7 +7,6 @@ import {
   type RefundEvent,
   type IncomingBillingEvent,
   type BillingInterval,
-  type PaidTier,
   verifyCheckoutSignature,
   verifyPaddleSignature,
   type PaddleConfig,
@@ -34,7 +33,10 @@ export interface FunctionEnv {
   supabase: SupabaseAdminConfig;
   paddle: PaddleConfig & {
     webhookSecret: string;
-    prices: Record<PaidTier, Record<BillingInterval, string>>;
+    /** The Pro prices sold now (ADR-0029). */
+    prices: Record<BillingInterval, string>;
+    /** Older prices whose subscribers keep their price (the Pro and Advanced split). */
+    legacyPrices?: readonly string[];
   };
 }
 
@@ -96,26 +98,35 @@ function userEndpoint(
   };
 }
 
-/** Parses `{ tier?, interval }`; tier defaults to Pro for older clients. */
+/**
+ * Parses `{ tier?, interval }`. There is one paid plan (ADR-0029); a tier of
+ * 'pro' or 'advanced' from extensions before 0.4.4 means it too.
+ */
 function planChoice(body: { tier?: unknown; interval?: unknown }) {
-  const tier: PaidTier | null =
-    body.tier === undefined || body.tier === 'pro'
-      ? 'pro'
-      : body.tier === 'advanced'
-        ? 'advanced'
-        : null;
+  const tier = body.tier === undefined || body.tier === 'pro' || body.tier === 'advanced';
   const interval: BillingInterval | null =
     body.interval === 'year' || body.interval === 'quarter' || body.interval === 'month'
       ? body.interval
       : null;
-  return tier && interval ? { tier, interval } : null;
+  return tier && interval ? { interval } : null;
 }
 
-/** Reverse lookup for webhooks: which tier a price ID belongs to. */
-export function tierOfPrice(env: FunctionEnv, priceId: string): PaidTier | undefined {
-  for (const tier of ['pro', 'advanced'] as const)
-    if (Object.values(env.paddle.prices[tier]).includes(priceId)) return tier;
-  return undefined;
+/** For webhooks: is this price ID one of ours, current or legacy? */
+export function isOurPrice(env: FunctionEnv, priceId: string): boolean {
+  return (
+    Object.values(env.paddle.prices).includes(priceId) ||
+    (env.paddle.legacyPrices ?? []).includes(priceId)
+  );
+}
+
+/**
+ * Paddle's formatted price, the way Canadians read it: "CA$16.99" becomes
+ * "$16.99 CAD". Other currencies keep Paddle's format.
+ */
+export function displayPrice(formatted: string, currency: string): string {
+  if (currency !== 'CAD') return formatted;
+  const amount = /\d[\d,]*(?:\.\d+)?/.exec(formatted)?.[0];
+  return amount ? `$${amount} CAD` : formatted;
 }
 
 /** POST /functions/v1/create-checkout  { tier, interval } → { url } */
@@ -142,7 +153,7 @@ export const handleCreateCheckout = userEndpoint(async ({ req, user, admin, padd
     entitlement?.provider_customer_id ??
     (user.email ? await paddle.customerForEmail(user.email) : null);
   const url = await paddle.createCheckout({
-    priceId: env.paddle.prices[choice.tier][choice.interval],
+    priceId: env.paddle.prices[choice.interval],
     userId: user.id,
     signature: await checkoutSignature(env.supabase.serviceRoleKey, user.id),
     customerId,
@@ -154,8 +165,8 @@ export const handleCreateCheckout = userEndpoint(async ({ req, user, admin, padd
  * POST /functions/v1/change-plan  { tier, interval, preview? }.
  * With `preview: true` → { preview: { action, amount, currency } }: what the
  * switch would charge or credit now, so the user confirms the amount first.
- * Without it → { changed: true }: moves a live subscription between Pro and
- * Advanced (or monthly and yearly); Paddle prorates and charges the saved
+ * Without it → { changed: true }: moves a live subscription to another
+ * interval (or from a legacy price to today's); Paddle prorates and charges the saved
  * payment method, the plan changes only if that payment succeeds, and the
  * webhook updates the entitlement.
  */
@@ -170,13 +181,13 @@ export const handleChangePlan = userEndpoint(async ({ req, user, admin, paddle, 
   if (body.preview === true) {
     const preview = await paddle.previewChangePrice(
       entitlement.provider_subscription_id,
-      env.paddle.prices[choice.tier][choice.interval],
+      env.paddle.prices[choice.interval],
     );
     return json(200, { preview });
   }
   await paddle.changePrice(
     entitlement.provider_subscription_id,
-    env.paddle.prices[choice.tier][choice.interval],
+    env.paddle.prices[choice.interval],
   );
   return json(200, { changed: true });
 });
@@ -364,7 +375,7 @@ const PRICE_CACHE_MS = 10 * 60_000;
 /**
  * GET /functions/v1/prices → { currency, country, prices: { pro, advanced } }
  * with Paddle's formatted price per interval, for the caller's location
- * (ADR-0013). Public (prices are public); nothing is stored. The IP goes to
+ * (ADR-0013). `advanced` repeats `pro` for extensions before 0.4.4 (ADR-0029). Public (prices are public); nothing is stored. The IP goes to
  * Paddle only to pick the currency, as Paddle.js does on the website.
  */
 export async function handlePrices(req: Request, deps: Deps): Promise<Response> {
@@ -378,19 +389,19 @@ export async function handlePrices(req: Request, deps: Deps): Promise<Response> 
   if (cached && now - cached.at < PRICE_CACHE_MS) return json(200, cached.body);
   try {
     const ids = deps.env.paddle.prices;
-    const all = (['pro', 'advanced'] as const).flatMap((t) =>
-      (['month', 'quarter', 'year'] as const).map((i) => ids[t][i]),
+    const local = await new PaddleClient(deps.env.paddle, deps.fetch).localPrices(
+      [ids.month, ids.quarter, ids.year],
+      ip,
     );
-    const local = await new PaddleClient(deps.env.paddle, deps.fetch).localPrices(all, ip);
-    const pick = (t: PaidTier) => ({
-      month: local.totals[ids[t].month],
-      quarter: local.totals[ids[t].quarter],
-      year: local.totals[ids[t].year],
-    });
+    const show = (id: string) => {
+      const total = local.totals[id];
+      return total === undefined ? undefined : displayPrice(total, local.currency);
+    };
+    const pro = { month: show(ids.month), quarter: show(ids.quarter), year: show(ids.year) };
     const body = {
       currency: local.currency,
       country: local.country,
-      prices: { pro: pick('pro'), advanced: pick('advanced') },
+      prices: { pro, advanced: pro },
     };
     if (priceCache.size > 1000) priceCache.clear();
     priceCache.set(key, { at: now, body });
@@ -492,7 +503,7 @@ export async function handlePaddleWebhook(req: Request, deps: Deps): Promise<Res
       return json(500, { error: 'server_error' });
     }
   }
-  const incoming = toBillingEvent(payload, (priceId) => tierOfPrice(deps.env, priceId));
+  const incoming = toBillingEvent(payload, (priceId) => isOurPrice(deps.env, priceId));
   if (!incoming) return json(200, { ignored: true });
   const admin = new SupabaseAdmin(deps.env.supabase, deps.fetch);
   try {

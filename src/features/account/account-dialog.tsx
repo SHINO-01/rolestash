@@ -21,7 +21,6 @@ import { useJobs, useSettings } from '@/ui/hooks/services';
 import {
   backendErrorMessage,
   formatMinor,
-  PLAN_NAMES,
   PLAN_PITCH,
   planPriceLabel,
   planChip,
@@ -55,7 +54,7 @@ export function AccountDialog({
       description={
         state?.signedIn
           ? state.email
-          : `${String(TRIAL_DAYS)} days of Advanced: unlimited jobs, email updates, autofill, insights, sync and more. No card needed.`
+          : `${String(TRIAL_DAYS)} days of Pro: unlimited jobs, email updates, autofill, insights, sync and more. No card needed.`
       }
     >
       {state?.signedIn ? (
@@ -305,8 +304,8 @@ function SignedIn({ account, state }: { account: AccountService; state: AccountS
       toast({
         message:
           action === 'charge'
-            ? `Switched to ${PLAN_NAMES[pending.tier]}. You were charged ${formatMinor(amount, currency)}; your receipt is on its way by email.`
-            : `Switched to ${PLAN_NAMES[pending.tier]}.`,
+            ? `Billing changed. You were charged ${formatMinor(amount, currency)}; your receipt is on its way by email.`
+            : 'Billing changed.',
         tone: 'success',
       });
     });
@@ -335,14 +334,11 @@ function SignedIn({ account, state }: { account: AccountService; state: AccountS
       {plan.complimentary ? null : (
         <section className="flex flex-col gap-3">
           <span className="text-sm font-semibold">
-            {subscribed ? 'Change plan' : 'Choose a plan'}
+            {subscribed ? 'Change how often you pay' : 'Get Pro'}
           </span>
-          {PAID_PLANS.filter((tier) => !(subscribed && tier === plan.plan)).map((tier) => (
+          {PAID_PLANS.map((tier) => (
             <div key={tier} className="border-line flex flex-col gap-2 rounded-xl border p-3">
-              <div>
-                <span className="text-sm font-semibold">{PLAN_NAMES[tier]}</span>
-                <p className="text-muted text-sm">{PLAN_PITCH[tier]}</p>
-              </div>
+              {subscribed ? null : <p className="text-muted text-sm">{PLAN_PITCH[tier]}</p>}
               {pending?.tier === tier ? (
                 <ConfirmSwitch
                   pending={pending}

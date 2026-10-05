@@ -13,11 +13,14 @@ export interface CheckoutIntent {
 
 const KEY = 'rolestash:checkout-intent';
 
-/** `pro-month` → { tier: 'pro', interval: 'month' }; null for anything else. */
+/**
+ * `pro-month` → { tier: 'pro', interval: 'month' }; null for anything else.
+ * `advanced-…` links from before the plans merged mean Pro (ADR-0029).
+ */
 export function parseCheckoutIntent(value: string | null): CheckoutIntent | null {
   const [tier, interval, ...rest] = (value ?? '').split('-');
   if (rest.length) return null;
-  const plan = PAID_PLANS.find((p) => p === tier);
+  const plan = PAID_PLANS.find((p) => p === (tier === 'advanced' ? 'pro' : tier));
   const every = BILLING_INTERVALS.find((i) => i === interval);
   return plan && every ? { tier: plan, interval: every } : null;
 }

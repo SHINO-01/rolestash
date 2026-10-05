@@ -9,16 +9,12 @@
 export const PADDLE = {
   environment: 'production',
   token: 'live_0ec65d3d8ea14ba4c9a617381d7',
+  // One paid plan since 2026-10-06 (ADR-0029): US$12 / 30 / 99.
   prices: {
     pro: {
-      month: 'pri_01m3y715y2eep9wssnpra9e239',
-      quarter: 'pri_01m3y7167ce2c70mpmneqctxsk',
-      year: 'pri_01m3y716j3y2va7xyhpxzhj2xs',
-    },
-    advanced: {
-      month: 'pri_01m3y718bn1h0vjn0eyep7s0yq',
-      quarter: 'pri_01m3y718m74mxxmh6ncza0fbbd',
-      year: 'pri_01m3y718xs5rrc4fe760rfzd95',
+      month: 'pri_01m46d6r756r2swxzfz1zsrwgt',
+      quarter: 'pri_01m46d6rvpxtwwykg397j0rfam',
+      year: 'pri_01m46d6scqqy0stz0hwcwsxm40',
     },
   },
 };

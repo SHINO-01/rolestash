@@ -2,7 +2,8 @@ import {
   TRIAL_DAYS,
   activeJobsLabel,
   allows,
-  featurePlanName,
+  FEATURES,
+  SYNC_DEVICE_LIMITS,
   ACTIVE_JOB_LIMITS,
   checkJobLimit,
   nextPlan,
@@ -67,23 +68,23 @@ describe('planOf', () => {
     );
   });
 
-  it('follows the tier of the subscription or trial', () => {
+  it('reads either server tier as Pro (ADR-0029)', () => {
     const adv = { tier: 'advanced' as const, currentPeriodEnd: days(10) };
-    expect(planOf(ent({ ...adv, status: 'active' }), NOW).plan).toBe('advanced');
+    expect(planOf(ent({ ...adv, status: 'active' }), NOW).plan).toBe('pro');
+    expect(planOf(ent({ ...adv, tier: 'pro', status: 'active' }), NOW).plan).toBe('pro');
     expect(planOf(ent({ ...adv, status: 'canceled' }), NOW)).toMatchObject({
-      plan: 'advanced',
+      plan: 'pro',
       reason: 'ending',
     });
     expect(planOf(ent({ ...adv, status: 'active', currentPeriodEnd: days(-4) }), NOW).plan).toBe(
       'free',
     );
-    // New trials are 14 days of Advanced; trials started before that are Pro.
     expect(
       planOf(ent({ status: 'trialing', tier: 'advanced', trialEndsAt: days(14) }), NOW),
-    ).toMatchObject({ plan: 'advanced', reason: 'trial', trialDaysLeft: 14 });
+    ).toMatchObject({ plan: 'pro', reason: 'trial', trialDaysLeft: 14 });
     expect(planOf(ent({ status: 'trialing', trialEndsAt: days(3) }), NOW).plan).toBe('pro');
     expect(TRIAL_DAYS).toBe(14);
-    // A stale Advanced snapshot drops to Free too, not to Pro.
+    // A stale snapshot drops to Free.
     expect(planOf(ent({ ...adv, status: 'active', checkedAt: days(-8) }), NOW)).toEqual({
       plan: 'free',
       reason: 'stale',
@@ -93,7 +94,7 @@ describe('planOf', () => {
   it('shows a complimentary plan with no renewal date (ADR-0025)', () => {
     const comp = { status: 'active' as const, tier: 'advanced' as const, complimentary: true };
     expect(planOf(ent({ ...comp, currentPeriodEnd: '9999-12-31T00:00:00.000Z' }), NOW)).toEqual({
-      plan: 'advanced',
+      plan: 'pro',
       reason: 'subscribed',
       complimentary: true,
     });
@@ -138,41 +139,31 @@ describe('free-plan job limit', () => {
     expect(countActiveJobs(jobs, DEFAULT_STAGES)).toBe(3);
   });
 
-  it('holds 30 on Free and 60 on Pro; Advanced is unlimited', () => {
-    expect(ACTIVE_JOB_LIMITS).toEqual({ free: 30, pro: 60, advanced: Infinity });
+  it('holds 30 on Free; Pro is unlimited', () => {
+    expect(ACTIVE_JOB_LIMITS).toEqual({ free: 30, pro: Infinity });
     expect(FREE_ACTIVE_JOB_LIMIT).toBe(30);
-    expect(checkJobLimit('advanced', 100_000, 500).allowed).toBe(true);
-    expect(activeJobsLabel('pro')).toBe('60 active jobs');
-    expect(activeJobsLabel('advanced')).toBe('Unlimited active jobs');
-    for (const [plan, limit] of (
-      Object.entries(ACTIVE_JOB_LIMITS) as [keyof typeof ACTIVE_JOB_LIMITS, number][]
-    ).filter(([, l]) => Number.isFinite(l))) {
-      expect(checkJobLimit(plan, limit - 1).allowed).toBe(true);
-      expect(checkJobLimit(plan, limit)).toEqual({ allowed: false, active: limit, limit });
-    }
+    expect(checkJobLimit('pro', 100_000, 500).allowed).toBe(true);
+    expect(activeJobsLabel('free')).toBe('30 active jobs');
+    expect(activeJobsLabel('pro')).toBe('Unlimited active jobs');
+    expect(checkJobLimit('free', 29).allowed).toBe(true);
+    expect(checkJobLimit('free', 30)).toEqual({ allowed: false, active: 30, limit: 30 });
     expect(checkJobLimit('free', 25, 6).allowed).toBe(false);
     // After a downgrade, an account over the limit keeps its jobs but can't add.
     expect(checkJobLimit('free', 60).allowed).toBe(false);
   });
 
-  it('puts on-device features on Pro and server features on Advanced', () => {
-    for (const f of ['fullAutofill', 'insights', 'records', 'bulk', 'sync', 'reminders'] as const) {
+  it('puts every paid feature on Pro (ADR-0029)', () => {
+    for (const f of FEATURES) {
       expect(allows('free', f)).toBe(false);
       expect(allows('pro', f)).toBe(true);
-      expect(allows('advanced', f)).toBe(true);
-    }
-    for (const f of ['emailUpdates', 'webBoard', 'fullSidePanel'] as const) {
-      expect(allows('pro', f)).toBe(false);
-      expect(allows('advanced', f)).toBe(true);
     }
     // A build without accounts has nothing to upgrade to, so nothing is held back.
     expect(allows(undefined, 'emailUpdates')).toBe(true);
-    expect(featurePlanName('fullAutofill')).toBe('Pro');
+    expect(SYNC_DEVICE_LIMITS).toEqual({ free: 0, pro: 5 });
   });
 
   it('suggests the next plan up', () => {
     expect(nextPlan('free')).toBe('pro');
-    expect(nextPlan('pro')).toBe('advanced');
-    expect(nextPlan('advanced')).toBeUndefined();
+    expect(nextPlan('pro')).toBeUndefined();
   });
 });

@@ -42,7 +42,6 @@ describe('history window', () => {
   it('is 30 days on Free and unlimited on paid plans or without accounts', () => {
     expect(free?.toISOString()).toBe(daysAgo(FREE_HISTORY_DAYS));
     expect(historyStart('pro', NOW)).toBeUndefined();
-    expect(historyStart('advanced', NOW)).toBeUndefined();
     expect(historyStart(undefined, NOW)).toBeUndefined();
   });
 

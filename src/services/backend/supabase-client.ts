@@ -53,8 +53,8 @@ export interface RemoteEntitlement {
   status: (typeof ENTITLEMENT_STATUSES)[number];
   trialEndsAt?: string;
   currentPeriodEnd?: string;
-  /** Plan of the trial or subscription (trials are Pro). */
-  tier: PaidPlan;
+  /** The server's tier; both mean Pro since ADR-0029. */
+  tier: 'pro' | 'advanced';
   /** True once a billing provider knows this customer (portal available). */
   hasBillingAccount: boolean;
   /** Granted by hand, with no subscription (ADR-0025). */
@@ -377,7 +377,7 @@ export class SupabaseClient {
     const parsed = z
       .object({
         currency: z.string(),
-        prices: z.object({ pro: tier, advanced: tier }),
+        prices: z.object({ pro: tier }),
       })
       .safeParse(data);
     if (!parsed.success) throw new BackendError('server');
@@ -511,7 +511,7 @@ export class SupabaseClient {
 
   // ── Email updates (ADR-0014) ─────────────────────────────────────────────
 
-  /** The forwarding address (Advanced), created on first call; or why there isn't one. */
+  /** The forwarding address (Pro), created on first call; or why there isn't one. */
   async myInbox(accessToken: string, rotate = false): Promise<InboxInfo> {
     const data = await this.rpc(rotate ? 'rotate_inbox' : 'my_inbox', accessToken, {});
     const parsed = InboxResult.safeParse(data);

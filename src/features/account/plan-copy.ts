@@ -1,5 +1,4 @@
 import {
-  ACTIVE_JOB_LIMITS,
   SYNC_DEVICE_LIMITS,
   type BillingInterval,
   type PaidPlan,
@@ -80,15 +79,14 @@ export function backendErrorMessage(error: unknown): string {
 }
 
 export function limitMessage(error: JobLimitError): string {
-  return `Your plan holds ${String(error.check.limit)} active jobs, and you have ${String(error.check.active)}. Archive finished jobs or move them to Rejected or Withdrawn, or open Account for a bigger plan.`;
+  return `Your plan holds ${String(error.check.limit)} active jobs, and you have ${String(error.check.active)}. Archive finished jobs or move them to Rejected or Withdrawn, or upgrade to Pro for unlimited jobs.`;
 }
 
-export const PLAN_NAMES = { free: 'Free', pro: 'Pro', advanced: 'Advanced' } as const;
+export const PLAN_NAMES = { free: 'Free', pro: 'Pro' } as const;
 
 /** Prices shown in the extension (USD). Checkout shows local prices where set. */
 export const PLAN_PRICES: Record<PaidPlan, Record<BillingInterval, string>> = {
-  pro: { month: 'US$7 / month', quarter: 'US$18 / 3 months', year: 'US$59 / year' },
-  advanced: { month: 'US$15 / month', quarter: 'US$39 / 3 months', year: 'US$159 / year' },
+  pro: { month: 'US$12 / month', quarter: 'US$30 / 3 months', year: 'US$99 / year' },
 };
 
 /** "A$10.00 / month" in the user's currency when known, else the US price. */
@@ -103,8 +101,7 @@ export function planPriceLabel(
 }
 
 export const PLAN_PITCH: Record<PaidPlan, string> = {
-  pro: `${String(ACTIVE_JOB_LIMITS.pro)} active jobs, full autofill (work details, saved answers, from your résumé), insights, contacts and documents, bulk actions, full history, reminders, custom columns, capture from a pasted link, and sync across ${String(SYNC_DEVICE_LIMITS.pro)} computers.`,
-  advanced: `Unlimited active jobs, automatic status updates from your job emails, interview details on every card, sync across ${String(SYNC_DEVICE_LIMITS.advanced)} devices including your phone, and your whole board in the side panel.`,
+  pro: `Unlimited active jobs, status updates from your job emails, full autofill, insights, contacts and documents, reminders, and sync across ${String(SYNC_DEVICE_LIMITS.pro)} devices including your phone.`,
 };
 
 /** "US$8.48" from minor units, with the currency's own decimals. */

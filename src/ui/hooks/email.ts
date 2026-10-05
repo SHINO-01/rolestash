@@ -8,7 +8,7 @@ import { useServices } from './services';
 const POLL_MS = 5 * 60_000;
 
 /**
- * Applies email updates (Advanced; ADR-0014) while a board is open: when it
+ * Applies email updates (Pro; ADR-0014) while a board is open: when it
  * opens, when it regains focus, and every few minutes. The background worker
  * covers the rest of the time. `onRun` hears about runs that changed something.
  */
@@ -20,7 +20,7 @@ export function useAutoEmailUpdates(plan: Plan | undefined, onRun?: (run: EmailR
   }, [onRun]);
 
   useEffect(() => {
-    if (!email || plan !== 'advanced') return;
+    if (!email || plan !== 'pro') return;
     const run = () =>
       void email
         .run()

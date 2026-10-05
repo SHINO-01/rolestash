@@ -8,7 +8,7 @@ import { webConfig } from './config';
 import { WebBoard } from './web-board';
 
 /**
- * The web board (ADR-0017): rolestash.com/board/, for Advanced. The same
+ * The web board (ADR-0017): rolestash.com/board/, for Pro. The same
  * domain, storage and sync code as the extension, on IndexedDB, syncing as a
  * `web` device. Built by web/vite.config.ts; never part of the extension.
  */

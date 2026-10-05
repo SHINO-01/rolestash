@@ -143,7 +143,7 @@ function isEqual(a: unknown, b: unknown): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
 }
 
-// ── Email updates (Advanced; ADR-0014) ─────────────────────────────────────
+// ── Email updates (Pro; ADR-0014) ─────────────────────────────────────
 
 export interface EmailUpdate {
   /** Column to move to, with its rank there; omitted when the job stays put. */

@@ -4,7 +4,7 @@ import { findStage, type Stage } from './stage';
 
 /**
  * History rules (ADR-0013). Free shows finished (won/lost) and archived jobs,
- * and timeline entries, from the last 30 days; Pro and Advanced show
+ * and timeline entries, from the last 30 days; Pro show
  * everything. Nothing is deleted: older items are only hidden, and exports
  * always contain everything.
  */

@@ -99,7 +99,7 @@ export function BoardPage() {
   const plan = account ? (accountState?.plan.plan ?? 'free') : undefined;
   const historyFrom = useMemo(() => historyStart(plan, new Date()), [plan]);
 
-  // Email updates (Advanced; ADR-0014): apply new ones while the board is open.
+  // Email updates (Pro; ADR-0014): apply new ones while the board is open.
   const emailState = useEmailState();
   const unsortedCount = emailState?.unsorted.length ?? 0;
   useAutoEmailUpdates(
@@ -179,11 +179,11 @@ export function BoardPage() {
     toast({ message: `Exported ${String(backup.jobs.length)} jobs`, tone: 'success' });
   }
 
-  // Pro and up (or a build without accounts): contacts, rounds, documents, calendar export.
+  // Pro (or a build without accounts): contacts, rounds, documents, calendar export.
   const recordsAllowed = allows(plan, 'records');
   const bulkAllowed = allows(plan, 'bulk');
 
-  // Bulk actions (Pro and up): select mode, or Ctrl/⌘-click a card.
+  // Bulk actions (Pro): select mode, or Ctrl/⌘-click a card.
   const [selecting, setSelecting] = useState(false);
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
   const clearSelection = useCallback(() => {

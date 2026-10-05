@@ -28,7 +28,7 @@ import { DuplicateJobError, type JobService } from './job-service';
 import type { EmailInbox } from './ports';
 
 /**
- * Email status updates on this device (Advanced; ADR-0014). Pulls the
+ * Email status updates on this device (Pro; ADR-0014). Pulls the
  * extracted events the Email Worker stored, matches each to a job locally
  * (the jobs never leave this device for this), then:
  *
@@ -223,8 +223,7 @@ export class EmailUpdateService {
   /** Pulls new events and applies, suggests or files each one. */
   async run(): Promise<EmailRun> {
     const none: EmailRun = { applied: 0, suggested: 0, unsorted: 0 };
-    if ((await this.account.currentPlan()) !== 'advanced')
-      return { ...none, skipped: 'not_advanced' };
+    if ((await this.account.currentPlan()) !== 'pro') return { ...none, skipped: 'not_advanced' };
     if (!(await this.lock())) return { ...none, skipped: 'busy' };
     const state = await this.state();
     const result = { ...none };
@@ -466,7 +465,7 @@ export class EmailUpdateService {
   private async vote(votes: KnowledgeVote[]): Promise<void> {
     if (votes.length === 0) return;
     if ((await this.state()).shareLearning === false) return;
-    if ((await this.account.currentPlan()) !== 'advanced') return;
+    if ((await this.account.currentPlan()) !== 'pro') return;
     // The server only counts paying subscribers' votes, so a trial sends none.
     if (await this.account.onTrial()) return;
     try {

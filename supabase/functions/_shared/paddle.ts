@@ -5,6 +5,12 @@
  */
 
 export type PaidTier = 'pro' | 'advanced';
+/**
+ * The tier stored for every paid subscription. Pro and Advanced merged into
+ * one plan, sold as Pro (ADR-0029); the database's checks use `advanced` for
+ * the full plan, so every paid event records that.
+ */
+export const PAID_TIER = 'advanced' satisfies PaidTier;
 export type BillingInterval = 'month' | 'quarter' | 'year';
 
 export type EntitlementStatus =
@@ -143,8 +149,8 @@ const str = (v: unknown): string | null => (typeof v === 'string' && v !== '' ? 
  */
 export function toBillingEvent(
   payload: unknown,
-  /** Maps our Paddle price IDs to tiers (from the PADDLE_PRICE_* secrets). */
-  tierOfPrice: (priceId: string) => PaidTier | undefined,
+  /** Is this one of our Paddle prices (from the PADDLE_PRICE_* secrets)? */
+  isOurPrice: (priceId: string) => boolean,
 ): IncomingBillingEvent | null {
   if (typeof payload !== 'object' || payload === null) return null;
   const event = payload as PaddleSubscriptionEvent;
@@ -166,15 +172,16 @@ export function toBillingEvent(
     endsAt && (reported === 'active' || reported === 'past_due') ? 'canceled' : reported;
   if ((claimed && !userId) || !subscriptionId || !occurredAt || !status) return null;
 
-  // The tier comes from the subscribed price: our price map first, then the
-  // price's own custom_data. An unknown price is ignored rather than guessed.
+  // The subscribed price must be ours: a current price, or an older one tagged
+  // with a tier in its custom_data (the $7 Pro and $15 Advanced prices before
+  // ADR-0029, which keep their price and now get everything). An unknown
+  // price is ignored rather than guessed.
   const price = data.items?.[0]?.price;
   const priceId = str(price?.id);
   const tagged = str(price?.custom_data?.tier);
-  const tier =
-    (priceId ? tierOfPrice(priceId) : undefined) ??
-    (tagged === 'pro' || tagged === 'advanced' ? tagged : undefined);
-  if (!tier) return null;
+  const ours =
+    (priceId !== null && isOurPrice(priceId)) || tagged === 'pro' || tagged === 'advanced';
+  if (!ours) return null;
 
   // Paddle bills quarterly plans as every 3 months.
   const cycle = str(data.billing_cycle?.interval);
@@ -200,7 +207,7 @@ export function toBillingEvent(
     billingInterval: interval,
     customerId: str(data.customer_id),
     subscriptionId,
-    tier,
+    tier: PAID_TIER,
   };
 }
 

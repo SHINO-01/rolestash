@@ -32,7 +32,7 @@ import {
 type Tab = 'today' | 'board' | 'account';
 
 /**
- * The web board (Advanced; ADR-0017): sign in, check the plan, join sync as
+ * The web board (Pro; ADR-0017): sign in, check the plan, join sync as
  * this browser's `web` device, then a phone-first app: Today, Board, Account.
  */
 export function WebBoard() {
@@ -59,7 +59,7 @@ export function WebBoard() {
         }}
       />
     );
-  if (state.plan.plan !== 'advanced') return <AdvancedOnly account={account} />;
+  if (state.plan.plan !== 'pro') return <ProOnly account={account} />;
   return (
     <JoinSync>
       <WebApp />
@@ -144,7 +144,7 @@ function WebSignIn({
     <Shell>
       {intent ? (
         <div>
-          <h1 className="text-xl font-semibold">Sign in to get {PLAN_NAMES[intent.tier]}</h1>
+          <h1 className="text-xl font-semibold">Sign in to get Pro</h1>
           <p className="text-muted mt-1 text-sm">
             Your plan is added to the account you sign in to. Use the account you use in the
             Rolestash extension, or a new one with your email.
@@ -155,7 +155,7 @@ function WebSignIn({
           <h1 className="text-xl font-semibold">Your board, on your phone</h1>
           <p className="text-muted mt-1 text-sm">
             Sign in with the account you use in the Rolestash extension. The web board is part of
-            Advanced.
+            Pro.
           </p>
         </div>
       )}
@@ -243,8 +243,6 @@ function WebSignIn({
   );
 }
 
-const PLAN_NAMES = { pro: 'Pro', advanced: 'Advanced' } as const;
-
 /**
  * After signing in from /pricing/ (ADR-0027): confirm the account, then open
  * checkout made by create-checkout for it. An account that already has a live
@@ -309,7 +307,7 @@ function CheckoutStep({
   return (
     <Shell>
       <div>
-        <h1 className="text-xl font-semibold">Get {PLAN_NAMES[intent.tier]}</h1>
+        <h1 className="text-xl font-semibold">Get Pro</h1>
         <p className="text-muted mt-2 text-sm">
           {planPriceLabel(intent.tier, intent.interval, local)}
           {email ? ` for ${email}` : ''}. You’ll pay on Paddle, our merchant of record.
@@ -345,7 +343,7 @@ function CheckoutStep({
   );
 }
 
-function AdvancedOnly({ account }: { account: AccountService }) {
+function ProOnly({ account }: { account: AccountService }) {
   const [busy, setBusy] = useState(false);
   const [local, setLocal] = useState<LocalPrices>();
   useEffect(() => {
@@ -354,9 +352,9 @@ function AdvancedOnly({ account }: { account: AccountService }) {
   return (
     <Shell>
       <div>
-        <h1 className="text-xl font-semibold">The web board is part of Advanced</h1>
+        <h1 className="text-xl font-semibold">The web board is part of Pro</h1>
         <p className="text-muted mt-2 text-sm">
-          Advanced puts your whole board on your phone: today’s follow-ups and closing dates, every
+          Pro puts your whole board on your phone: today’s follow-ups and closing dates, every
           column, notes, and quick updates that sync back to your computer. It also syncs up to 5
           devices and updates your board from job emails.
         </p>
@@ -367,12 +365,12 @@ function AdvancedOnly({ account }: { account: AccountService }) {
         onClick={() => {
           setBusy(true);
           void account
-            .checkoutUrl('advanced', 'month')
+            .checkoutUrl('pro', 'month')
             .then((url) => location.assign(url))
             .finally(() => setBusy(false));
         }}
       >
-        Get Advanced: {planPriceLabel('advanced', 'month', local)}
+        Get Pro: {planPriceLabel('pro', 'month', local)}
       </Button>
       <Button variant="ghost" onClick={() => void account.signOut()}>
         Sign out
@@ -406,7 +404,7 @@ function JoinSync({ children }: { children: ReactNode }) {
         <p className="text-sm">
           You’re already syncing 5 devices. Remove one to use the web board on this browser.
         </p>
-        <SyncSection plan="advanced" />
+        <SyncSection plan="pro" />
       </Shell>
     );
   return (
@@ -434,8 +432,8 @@ const online = {
 
 function WebApp() {
   useAutoSync();
-  // Only Advanced reaches the web board, and email updates are Advanced.
-  useAutoEmailUpdates('advanced');
+  // Only Pro reaches the web board, and email updates are Pro.
+  useAutoEmailUpdates('pro');
   const unsorted = useEmailState()?.unsorted.length ?? 0;
   const [sorting, setSorting] = useState(false);
   const sync = useSyncState();

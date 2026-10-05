@@ -64,7 +64,7 @@ test.describe('accounts', () => {
     'needs the backend-configured build',
   );
 
-  test('signs in with an email code and starts the Advanced trial', async ({
+  test('signs in with an email code and starts the Pro trial', async ({
     context,
     extensionId,
     backend,
@@ -86,9 +86,9 @@ test.describe('accounts', () => {
     await dialog.getByLabel('Sign-in code').fill(E2E_CODE);
     await dialog.getByRole('button', { name: 'Sign in', exact: true }).click();
     await expect(dialog.getByText('Your account', { exact: true })).toBeVisible();
-    await expect(dialog.getByText(/Advanced trial: 14 days left/)).toBeVisible();
+    await expect(dialog.getByText(/Pro trial: 14 days left/)).toBeVisible();
     await expect(page.getByRole('button', { name: 'Account', exact: true })).toContainText(
-      'Advanced trial · 14d',
+      'Pro trial · 14d',
     );
 
     const otp = backend.requests.find((r) => r.path === '/auth/v1/otp');
@@ -187,7 +187,7 @@ test.describe('accounts', () => {
       expect(elsewhere).toEqual([]);
     });
 
-  test('switching a paid plan shows what it costs now and changes only on confirm', async ({
+  test('changing the billing period shows what it costs now and changes only on confirm', async ({
     context,
     worker,
     extensionId,
@@ -211,25 +211,25 @@ test.describe('accounts', () => {
     await page.goto(`chrome-extension://${extensionId}/board.html#account`);
     const dialog = page.getByRole('dialog');
     // Prices in the user's currency (the mock answers as the UK).
-    await expect(dialog.getByRole('button', { name: '£31.00 / 3 months' })).toBeVisible();
-    await dialog.getByRole('button', { name: '£11.99 / month' }).click();
+    await expect(dialog.getByRole('button', { name: '£24.00 / 3 months' })).toBeVisible();
+    await dialog.getByRole('button', { name: '£79.00 / year' }).click();
     const confirm = dialog.getByRole('group', { name: 'Confirm plan change' });
     await expect(confirm).toContainText('You’ll be charged $8.48 now');
-    await expect(confirm).toContainText(/Then \$15\.00 a month from/);
+    await expect(confirm).toContainText(/Then \$99\.00 a year from/);
     const changes = () => backend.requests.filter((r) => r.path === '/functions/v1/change-plan');
     expect(changes().map((r) => r.body)).toEqual([
-      { tier: 'advanced', interval: 'month', preview: true },
+      { tier: 'pro', interval: 'year', preview: true },
     ]);
     // Cancel changes nothing; confirming makes the one real change.
     await confirm.getByRole('button', { name: 'Cancel' }).click();
     await expect(confirm).toHaveCount(0);
-    await dialog.getByRole('button', { name: '£11.99 / month' }).click();
+    await dialog.getByRole('button', { name: '£79.00 / year' }).click();
     await dialog.getByRole('button', { name: /Pay .*8\.48 and switch/ }).click();
-    await expect(page.getByText(/Switched to Advanced\. You were charged \$8\.48/)).toBeVisible();
+    await expect(page.getByText(/Billing changed\. You were charged \$8\.48/)).toBeVisible();
     expect(changes().map((r) => r.body)).toEqual([
-      { tier: 'advanced', interval: 'month', preview: true },
-      { tier: 'advanced', interval: 'month', preview: true },
-      { tier: 'advanced', interval: 'month' },
+      { tier: 'pro', interval: 'year', preview: true },
+      { tier: 'pro', interval: 'year', preview: true },
+      { tier: 'pro', interval: 'year' },
     ]);
   });
 
@@ -304,7 +304,7 @@ test.describe('accounts', () => {
 
     const [checkout] = await Promise.all([
       context.waitForEvent('page'),
-      dialog.getByRole('button', { name: '£5.50 / month' }).click(),
+      dialog.getByRole('button', { name: '£9.99 / month' }).click(),
     ]);
     await checkout.waitForLoadState();
     expect(checkout.url()).toBe(`${MOCK_BACKEND}/pay/?_ptxn=txn_e2e`);
@@ -867,16 +867,6 @@ test.describe('accounts', () => {
       .click();
     await panel.getByRole('button', { name: 'Save this page' }).click();
     await expect(panel.getByText(/click the Rolestash icon/)).toBeVisible();
-
-    await seedSignedIn(worker, {
-      status: 'trialing',
-      tier: 'pro',
-      trialEndsAt: new Date(Date.now() + 10 * 86_400_000).toISOString(),
-      hasBillingAccount: false,
-    });
-    await panel.reload();
-    await expect(panel.getByText('Your whole board, right here')).toBeVisible();
-    await expect(panel.getByRole('button', { name: 'Today' })).toHaveCount(0);
   });
 
   test('reports a problem from the board, showing what is sent (ADR-0024)', async ({

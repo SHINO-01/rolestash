@@ -3,88 +3,72 @@ import type { Job } from './job';
 import { findStage, type Stage } from './stage';
 
 /**
- * Free, Pro and Advanced (ADR-0009, ADR-0013). Pure rules only: where the
+ * Free and Pro (ADR-0009, ADR-0013, ADR-0029). Pure rules only: where the
  * entitlement comes from (Supabase) and where limits are enforced
  * (JobService) live elsewhere.
+ *
+ * Until 2026-10-06 there were two paid plans, Pro; they merged
+ * into one Pro plan with everything (ADR-0029). The server still stores the
+ * paid tier as `advanced`, and entitlements may say either; both mean Pro.
  */
 
-/** Plans, lowest first. Trials are of Advanced (since 2026-10-02; earlier ones were Pro). */
-export const PLANS = ['free', 'pro', 'advanced'] as const;
+/** Plans, lowest first. */
+export const PLANS = ['free', 'pro'] as const;
 export type Plan = (typeof PLANS)[number];
-/** The paid plans a subscription can be on. */
+/** The paid plan a subscription can be on. */
 export type PaidPlan = Exclude<Plan, 'free'>;
-export const PAID_PLANS: readonly PaidPlan[] = ['pro', 'advanced'];
+export const PAID_PLANS: readonly PaidPlan[] = ['pro'];
 /** How often a paid plan bills. Quarterly suits a typical ~3-month job search. */
 export const BILLING_INTERVALS = ['month', 'quarter', 'year'] as const;
 export type BillingInterval = (typeof BILLING_INTERVALS)[number];
 
 /**
- * Jobs outside a `lost` stage each plan may hold. Advanced has no limit; the
+ * Jobs outside a `lost` stage each plan may hold. Pro has no limit; the
  * server's 5,000 synced-job cap (synced_jobs_cap) is the fair-use backstop.
  */
 export const ACTIVE_JOB_LIMITS: Readonly<Record<Plan, number>> = {
   free: 30,
-  pro: 60,
-  advanced: Number.POSITIVE_INFINITY,
+  pro: Number.POSITIVE_INFINITY,
 };
 
-/**
- * Which plan each paid feature starts on (ADR-0013, 2026-10-02 revision):
- * Pro has everything that runs on your computer; Advanced adds what runs on
- * our servers (email updates, the web board and phone, more devices) and the
- * full side panel.
- */
-export const FEATURE_PLANS = {
-  history: 'pro',
-  reminders: 'pro',
-  customColumns: 'pro',
-  pasteLink: 'pro',
-  sync: 'pro',
+/** The paid features. Every one is part of Pro (ADR-0029). */
+export const FEATURES = [
+  'history',
+  'reminders',
+  'customColumns',
+  'pasteLink',
+  'sync',
   /** Autofill beyond the basic fields, saved answers and résumé import. Basic autofill is free. */
-  fullAutofill: 'pro',
-  insights: 'pro',
-  records: 'pro',
-  bulk: 'pro',
-  emailUpdates: 'advanced',
-  webBoard: 'advanced',
-  fullSidePanel: 'advanced',
-} as const satisfies Record<string, PaidPlan>;
-export type Feature = keyof typeof FEATURE_PLANS;
+  'fullAutofill',
+  'insights',
+  'records',
+  'bulk',
+  'emailUpdates',
+  'webBoard',
+] as const;
+export type Feature = (typeof FEATURES)[number];
 
 /**
  * May this plan use the feature? `undefined` is a build without accounts,
  * where nothing is limited because there is no way to upgrade.
  */
-export function allows(plan: Plan | undefined, feature: Feature): boolean {
-  if (plan === undefined) return true;
-  return PLANS.indexOf(plan) >= PLANS.indexOf(FEATURE_PLANS[feature]);
+export function allows(plan: Plan | undefined, _feature: Feature): boolean {
+  return plan === undefined || plan !== 'free';
 }
 
-/** "Pro" or "Advanced": the plan to mention when pitching a feature. */
-export function featurePlanName(feature: Feature): 'Pro' | 'Advanced' {
-  return FEATURE_PLANS[feature] === 'pro' ? 'Pro' : 'Advanced';
-}
-
-/** "60 active jobs" or "Unlimited active jobs". */
+/** "30 active jobs" or "Unlimited active jobs". */
 export function activeJobsLabel(plan: Plan): string {
   const limit = ACTIVE_JOB_LIMITS[plan];
   return Number.isFinite(limit) ? `${String(limit)} active jobs` : 'Unlimited active jobs';
 }
-/**
- * Devices that may sync one account (ADR-0013 revision). Pro: computers only
- * (signed-in Chrome installs). Advanced: any device, including a phone through
- * the web board.
- */
+/** Devices that may sync one account, phones (through the web board) included. */
 export const SYNC_DEVICE_LIMITS: Readonly<Record<Plan, number>> = {
   free: 0,
-  pro: 3,
-  advanced: 5,
+  pro: 5,
 };
-/** Only Advanced can use the web board (the way phones sync). */
-export const WEB_BOARD_PLANS: readonly Plan[] = ['advanced'];
 export const FREE_ACTIVE_JOB_LIMIT = ACTIVE_JOB_LIMITS.free;
 export const TRIAL_DAYS = 14;
-/** How long a cached Pro entitlement stays valid without reaching the server. */
+/** How long a cached paid entitlement stays valid without reaching the server. */
 export const OFFLINE_GRACE_DAYS = 7;
 /** Slack after a period ends, so a late renewal webhook doesn't flip a payer to Free. */
 export const RENEWAL_LEEWAY_DAYS = 3;
@@ -108,8 +92,8 @@ export const EntitlementSchema = z.object({
   status: z.enum(ENTITLEMENT_STATUSES),
   trialEndsAt: IsoDateTime.optional(),
   currentPeriodEnd: IsoDateTime.optional(),
-  /** Which paid plan the trial or subscription is for. New trials are Advanced. */
-  tier: z.enum(['pro', 'advanced']).default('pro'),
+  /** The server's tier. Both values mean Pro since the plans merged (ADR-0029). */
+  tier: z.enum(['pro', 'advanced']).optional(),
   /** Granted by hand with no subscription (ADR-0025): no renewal date, no plan changes. */
   complimentary: z.boolean().optional(),
   /** When this snapshot was fetched; drives the offline grace period. */
@@ -146,7 +130,7 @@ const before = (now: Date, iso: string | undefined, slackDays = 0) =>
 export function planOf(entitlement: Entitlement | undefined, now: Date): PlanState {
   if (!entitlement) return { plan: 'free', reason: 'no-account' };
   const { status, trialEndsAt, currentPeriodEnd, checkedAt } = entitlement;
-  const tier = entitlement.tier;
+  const tier: PaidPlan = 'pro';
 
   let state: PlanState;
   switch (status) {
@@ -227,5 +211,5 @@ export function checkJobLimit(plan: Plan, active: number, adding = 1): LimitChec
 
 /** The next plan up that holds more jobs, if any (for upgrade prompts). */
 export function nextPlan(plan: Plan): PaidPlan | undefined {
-  return plan === 'free' ? 'pro' : plan === 'pro' ? 'advanced' : undefined;
+  return plan === 'free' ? 'pro' : undefined;
 }

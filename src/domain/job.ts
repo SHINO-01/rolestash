@@ -93,7 +93,7 @@ export const ACTIVITY_TYPES = [
   'edited',
   'archived',
   'unarchived',
-  /** A change made from a forwarded email (Advanced; ADR-0014). Undoable. */
+  /** A change made from a forwarded email (Pro; ADR-0014). Undoable. */
   'email_update',
 ] as const;
 
@@ -153,7 +153,7 @@ export const SuggestionSchema = z.object({
 });
 export type Suggestion = z.infer<typeof SuggestionSchema>;
 
-// ── Contacts, interview rounds and documents (Advanced) ─────────────────────
+// ── Contacts, interview rounds and documents (Pro) ─────────────────────
 
 const optionalText = (max: number) => z.string().trim().max(max).optional();
 
@@ -251,15 +251,15 @@ export const JobSchema = PostingSchema.extend({
   followUpAt: IsoDateTime.optional(),
   /** Set while the job is archived: off the board, in History, not counted as active. */
   archivedAt: IsoDateTime.optional(),
-  /** The next interview, from email updates (Advanced; ADR-0014). */
+  /** The next interview, from email updates (Pro; ADR-0014). */
   interview: JobInterviewSchema.optional(),
   /** A pending email update for the user to accept or dismiss. */
   suggestion: SuggestionSchema.optional(),
-  /** People at the company (Advanced). */
+  /** People at the company (Pro). */
   contacts: z.array(ContactSchema).max(30).optional(),
-  /** Interview rounds and their notes (Advanced). */
+  /** Interview rounds and their notes (Pro). */
   rounds: z.array(InterviewRoundSchema).max(30).optional(),
-  /** Documents sent, by name only (Advanced). */
+  /** Documents sent, by name only (Pro). */
   documents: z.array(DocumentRefSchema).max(30).optional(),
 });
 export type Job = z.infer<typeof JobSchema>;

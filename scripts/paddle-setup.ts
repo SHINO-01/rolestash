@@ -1,8 +1,9 @@
 /**
  * Creates (or checks) the Rolestash catalog and webhook in a Paddle account,
- * idempotently: products, the six prices (monthly, quarterly, yearly × Pro,
- * Advanced) with local prices, and the notification destination for
- * paddle-webhook. Run it for the sandbox or, at go-live, for production.
+ * idempotently: the Pro product, its three prices (monthly, quarterly,
+ * yearly) with local prices, and the notification destination for
+ * paddle-webhook. One paid plan since ADR-0029; the Advanced product and the
+ * older Pro prices stay in Paddle for the subscribers who still pay them. Run it for the sandbox or, at go-live, for production.
  *
  *   set -a; . ./secrets.env; set +a
  *   npx tsx scripts/paddle-setup.ts sandbox            # dry run: what would change
@@ -17,7 +18,7 @@ import { appendFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 type Env = 'sandbox' | 'production';
-type Tier = 'pro' | 'advanced';
+type Tier = 'pro';
 type Interval = 'month' | 'quarter' | 'year';
 
 const ROOT = resolve(import.meta.dirname, '..');
@@ -40,29 +41,23 @@ const PRODUCTS: Record<Tier, { name: string; description: string }> = {
   pro: {
     name: 'Rolestash Pro',
     description:
-      '60 active jobs, full autofill, Insights, contacts and documents, reminders and sync across 3 computers.',
-  },
-  advanced: {
-    name: 'Rolestash Advanced',
-    description:
-      'Unlimited active jobs, automatic status updates from your job emails, and sync across 5 devices including your phone.',
+      'Unlimited active jobs, status updates from your job emails, full autofill, Insights, contacts and documents, reminders, and sync across 5 devices including your phone.',
   },
 };
 
-/** Minor units: USD, and the tax-inclusive GBP (UK), EUR (eurozone) and AUD (Australia) prices. ADR-0013. */
+/**
+ * Minor units: USD, and the tax-inclusive GBP (UK), EUR (eurozone) and AUD
+ * (Australia) prices. ADR-0013; US$12 a month since ADR-0029, and every local
+ * price below is scaled from it.
+ */
 const PRICES: Record<
   Tier,
   Record<Interval, [usd: number, gbp: number, eur: number, aud: number]>
 > = {
   pro: {
-    month: [700, 550, 650, 1000],
-    quarter: [1800, 1400, 1650, 2600],
-    year: [5900, 4800, 5500, 8900],
-  },
-  advanced: {
-    month: [1500, 1199, 1399, 2299],
-    quarter: [3900, 3100, 3600, 5900],
-    year: [15900, 12900, 14500, 23900],
+    month: [1200, 999, 1099, 1799],
+    quarter: [3000, 2400, 2700, 4400],
+    year: [9900, 7900, 8900, 14900],
   },
 };
 /** The eurozone: one tax-inclusive euro price everywhere (Ireland's). */
@@ -92,15 +87,16 @@ const EUROZONE = [
 /**
  * Round prices for other markets whose currency is enabled in Paddle, instead
  * of Paddle's unrounded conversion. Same slot order as REGIONAL. Tax-inclusive,
- * except Canada, where tax depends on the province and is added at checkout.
+ * except Canada, where tax depends on the province and is added at checkout
+ * (shown as "$16.99 CAD").
  */
 const ROUND: { countries: string[]; currency: string; amounts: number[] }[] = [
-  { countries: ['CA'], currency: 'CAD', amounts: [999, 2499, 7900, 1999, 5200, 20900] },
-  { countries: ['NZ'], currency: 'NZD', amounts: [1199, 2900, 9900, 2499, 6500, 25900] },
-  { countries: ['CH'], currency: 'CHF', amounts: [690, 1790, 5900, 1490, 3800, 15500] },
-  { countries: ['SE'], currency: 'SEK', amounts: [7900, 19900, 64900, 16900, 42900, 174900] },
+  { countries: ['CA'], currency: 'CAD', amounts: [1699, 4199, 12900] },
+  { countries: ['NZ'], currency: 'NZD', amounts: [1999, 4900, 15900] },
+  { countries: ['CH'], currency: 'CHF', amounts: [1190, 2990, 9900] },
+  { countries: ['SE'], currency: 'SEK', amounts: [13900, 32900, 109900] },
   // JPY has no minor unit.
-  { countries: ['JP'], currency: 'JPY', amounts: [1100, 2800, 9200, 2300, 6000, 24000] },
+  { countries: ['JP'], currency: 'JPY', amounts: [1900, 4600, 15000] },
 ];
 
 /**
@@ -136,14 +132,14 @@ const expectedTotal = (country: string, amount: number) =>
 /**
  * Regional (purchasing-power) prices: round local amounts chosen by hand for
  * lower-income markets, not conversions of the US price (ADR-0013, 2026-10-02).
- * Minor units, by tier: [pro month, pro quarter, pro year, adv month, adv quarter, adv year].
+ * Minor units: [month, quarter, year].
  * Volatile currencies (ARS, TRY) are priced in USD. Sanctioned countries,
  * where Paddle doesn't sell, are left out.
  */
 const REGIONAL: { countries: string[]; currency: string; amounts: number[] }[] = [
   // Low and lower-middle income, in local currency.
-  { countries: ['IN'], currency: 'INR', amounts: [24900, 64900, 219900, 54900, 139900, 499900] },
-  { countries: ['VN'], currency: 'VND', amounts: [69000, 179000, 599000, 149000, 389000, 1299000] },
+  { countries: ['IN'], currency: 'INR', amounts: [44900, 109900, 369900] },
+  { countries: ['VN'], currency: 'VND', amounts: [119000, 299000, 999000] },
   // Low and lower-middle income, in USD.
   {
     countries: [
@@ -187,19 +183,19 @@ const REGIONAL: { countries: string[]; currency: string; amounts: number[] }[] =
       'GN',
     ],
     currency: 'USD',
-    amounts: [300, 800, 2500, 600, 1600, 5900],
+    amounts: [500, 1200, 3900],
   },
   // Upper-middle income, in local currency.
-  { countries: ['BR'], currency: 'BRL', amounts: [1990, 4990, 16900, 3990, 9990, 34900] },
-  { countries: ['MX'], currency: 'MXN', amounts: [7900, 19900, 69900, 16900, 44900, 149900] },
+  { countries: ['BR'], currency: 'BRL', amounts: [3290, 7990, 26900] },
+  { countries: ['MX'], currency: 'MXN', amounts: [13900, 33900, 114900] },
   {
     countries: ['CO'],
     currency: 'COP',
-    amounts: [1490000, 3990000, 12990000, 3290000, 8490000, 28990000],
+    amounts: [2590000, 6490000, 21490000],
   },
-  { countries: ['ZA'], currency: 'ZAR', amounts: [7900, 19900, 69900, 16900, 43900, 149900] },
-  { countries: ['TH'], currency: 'THB', amounts: [14900, 37900, 129000, 29900, 79000, 269000] },
-  { countries: ['CN'], currency: 'CNY', amounts: [2900, 7500, 24900, 5900, 15900, 54900] },
+  { countries: ['ZA'], currency: 'ZAR', amounts: [13900, 33900, 114900] },
+  { countries: ['TH'], currency: 'THB', amounts: [24900, 62900, 209000] },
+  { countries: ['CN'], currency: 'CNY', amounts: [4900, 11900, 39900] },
   // Upper-middle income, in USD.
   {
     countries: [
@@ -230,7 +226,7 @@ const REGIONAL: { countries: string[]; currency: string; amounts: number[] }[] =
       'FJ',
     ],
     currency: 'USD',
-    amounts: [450, 1200, 3900, 950, 2500, 9900],
+    amounts: [750, 1900, 5900],
   },
 ];
 
@@ -242,7 +238,7 @@ interface Override {
 /** Every local price for one plan and interval: UK, Ireland, Australia, then the regions. */
 function overridesFor(tier: Tier, interval: Interval): Override[] {
   const [, gbp, eur, aud] = PRICES[tier][interval];
-  const slot = (tier === 'pro' ? 0 : 3) + ['month', 'quarter', 'year'].indexOf(interval);
+  const slot = ['month', 'quarter', 'year'].indexOf(interval);
   const groups: Override[] = [];
   for (const r of [...ROUND, ...REGIONAL]) {
     const amount = r.amounts[slot] ?? 0;
@@ -335,10 +331,10 @@ interface Price {
 }
 
 const changes: string[] = [];
-const ids: Record<Tier, Partial<Record<Interval, string>>> = { pro: {}, advanced: {} };
+const ids: Record<Tier, Partial<Record<Interval, string>>> = { pro: {} };
 
 const products = await call<Product[]>('GET', '/products?status=active&per_page=200');
-for (const tier of ['pro', 'advanced'] as const) {
+for (const tier of ['pro'] as const) {
   const want = PRODUCTS[tier];
   let product = products.find(
     (p) => p.custom_data?.app === 'rolestash' && p.custom_data.tier === tier,
@@ -387,7 +383,7 @@ for (const tier of ['pro', 'advanced'] as const) {
       }
       continue;
     }
-    const name = `${tier === 'pro' ? 'Pro' : 'Advanced'} ${LABEL[interval]}`;
+    const name = `Pro ${LABEL[interval]}`;
     changes.push(`create price ${name}: US$${String(usd / 100)}`);
     if (!apply) continue;
     const created = await call<Price>('POST', '/prices', {
@@ -453,9 +449,7 @@ console.log(JSON.stringify({ prices: ids }, null, 2));
 if (check) {
   const intended = new Map<string, number[]>();
   for (const r of [...ROUND, ...REGIONAL]) for (const c of r.countries) intended.set(c, r.amounts);
-  const order = (['pro', 'advanced'] as const).flatMap((t) =>
-    (['month', 'quarter', 'year'] as const).map((i) => ids[t][i] ?? ''),
-  );
+  const order = (['month', 'quarter', 'year'] as const).map((i) => ids.pro[i] ?? '');
   const off: string[] = [];
   for (const [country, amounts] of intended) {
     if (country === 'CA') continue;

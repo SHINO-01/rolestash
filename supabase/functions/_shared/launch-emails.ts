@@ -19,7 +19,7 @@ export interface News {
   button?: { label: string; url: string };
 }
 
-const PLAN_NAMES: Record<string, string> = { free: 'Free', pro: 'Pro', advanced: 'Advanced' };
+const PLAN_NAMES: Record<string, string> = { free: 'Free', pro: 'Pro', advanced: 'Pro' };
 const SENDER = 'Rolestash · New South Wales, Australia · support@rolestash.com';
 const WHY =
   'You’re getting this because you signed up for Rolestash updates at rolestash.com. We email only about new features, a few times a year at most.';
@@ -111,8 +111,8 @@ export function welcomeEmail(plan: string | null, unsubscribeUrl: string): Email
 export function launchEmail(plan: string | null, storeUrl: string, unsubscribeUrl: string): Email {
   const trial =
     plan === 'pro' || plan === 'advanced'
-      ? 'Try Advanced free for 14 days, no card needed.'
-      : 'It’s free for up to 30 active jobs, and you can try Advanced free for 14 days.';
+      ? 'Try Pro free for 14 days, no card needed.'
+      : 'It’s free for up to 30 active jobs, and you can try Pro free for 14 days.';
   return build({
     subject: 'Rolestash is live on the Chrome Web Store',
     title: 'Rolestash is live',

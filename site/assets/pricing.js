@@ -9,7 +9,7 @@
 import { initPaddle, PADDLE } from './paddle-config.js';
 
 /** @typedef {'month' | 'quarter' | 'year'} Interval */
-/** @typedef {{ name: 'Free' | 'Pro' | 'Advanced', description: string, features: string[], priceId: Record<Interval, string> | null, badge?: string }} Tier */
+/** @typedef {{ name: 'Free' | 'Pro', description: string, features: string[], priceId: Record<Interval, string> | null, badge?: string }} Tier */
 
 /** @type {Tier[]} */
 const TIERS = [
@@ -17,7 +17,7 @@ const TIERS = [
     name: 'Free',
     description: 'No account needed',
     features: [
-      'One-click capture from 50+ sites',
+      'One-click capture from 50+ job sites',
       'Kanban board with notes, tags and priorities',
       'Up to 30 active jobs (rejected ones don’t count)',
       'Autofill your name, contact details and links',
@@ -27,27 +27,15 @@ const TIERS = [
   },
   {
     name: 'Pro',
-    description: 'Everything on your computer',
-    features: [
-      'Up to 60 active jobs',
-      'Full autofill: work details, saved answers, from your résumé',
-      'Insights, contacts, documents and bulk actions',
-      'Reminders, custom columns and full history',
-      'Sync across up to 3 computers',
-    ],
-    priceId: PADDLE.prices.pro,
-  },
-  {
-    name: 'Advanced',
-    description: 'Plus automatic updates and your phone',
+    description: 'Everything Rolestash does',
     features: [
       'Unlimited active jobs',
-      'Automatic status updates from your job emails',
-      'Interview details on each card',
-      'Sync across up to 5 devices, including your phone',
-      'Your whole board in the side panel',
+      'Status updates from your job emails, with interview details',
+      'Full autofill: work details, saved answers, from your résumé',
+      'Insights, contacts, documents, reminders and full history',
+      'Sync across 5 devices, including your phone',
     ],
-    priceId: PADDLE.prices.advanced,
+    priceId: PADDLE.prices.pro,
     badge: '14-day free trial in the app',
   },
 ];
@@ -62,6 +50,13 @@ const toggle = document.querySelectorAll('[data-interval]');
 let interval = 'month';
 /** priceId → Paddle's formatted total for this visitor. */
 const totals = new Map();
+
+/** Paddle's "CA$16.99" the way Canadians read it: "$16.99 CAD". Others unchanged. */
+export function displayPrice(formatted, currency) {
+  if (currency !== 'CAD') return formatted;
+  const amount = /\d[\d,]*(?:\.\d+)?/.exec(formatted)?.[0];
+  return amount ? `$${amount} CAD` : formatted;
+}
 
 function el(tag, className, text) {
   const node = document.createElement(tag);
@@ -134,7 +129,10 @@ try {
     .PricePreview({ items })
     .then((result) => {
       for (const line of result.data.details.lineItems)
-        totals.set(line.price.id, line.formattedTotals.total);
+        totals.set(
+          line.price.id,
+          displayPrice(line.formattedTotals.total, result.data.currencyCode),
+        );
       render();
     })
     .catch((error) => {

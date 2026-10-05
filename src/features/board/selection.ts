@@ -1,7 +1,7 @@
 import { createContext, useContext } from 'react';
 
 /**
- * Selecting several cards for bulk actions (Advanced). Provided by the board;
+ * Selecting several cards for bulk actions (Pro). Provided by the board;
  * cards read it to toggle themselves on Ctrl/⌘-click or in select mode.
  */
 export interface Selection {

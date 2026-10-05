@@ -3,7 +3,7 @@ import type { InterviewKind, Job } from './job';
 
 /**
  * iCalendar (RFC 5545) files built on the device: "Add to calendar" for one
- * interview, and "Export calendar" for the whole board (Advanced). Events
+ * interview, and "Export calendar" for the whole board (Pro). Events
  * carry stable UIDs, so importing again updates them instead of duplicating.
  * Notes and contacts never go into a calendar file: calendars get shared.
  */

@@ -93,7 +93,7 @@ timestamp as their version. Rewrite it to the file's version in
 Migration `…_sync.sql` adds `devices` and `synced_jobs`. Clients reach them
 only through these RPCs, which check the plan and the device:
 
-- `register_device`, which enforces the limits: Pro 3 computers, Advanced 5
+- `register_device`, which enforces the limits: 5 devices on the paid plan (stored tier `advanced`, ADR-0029)
   devices including the web board;
 - `push_jobs`, where the newest edit wins;
 - `pull_jobs`, which pages by a revision cursor.
@@ -186,7 +186,7 @@ earlier period's payment keep the plan, and the last of these is logged as
 | `paddle-webhook`  | Paddle (signed, no JWT) | Verifies `Paddle-Signature`, applies `subscription.*` events; ends the plan on a full refund |
 | `create-checkout` | Extension (user JWT)    | Creates a Paddle transaction with a signed `custom_data.user_id`; returns its checkout URL   |
 | `billing-portal`  | Extension (user JWT)    | Sets the Paddle customer's name from the profile, then returns a one-time portal link        |
-| `change-plan`     | Extension (user JWT)    | Moves a live subscription between Pro and Advanced (prorated)                                |
+| `change-plan`     | Extension (user JWT)    | Moves a live subscription to another billing interval (prorated)                             |
 | `delete-account`  | Extension (user JWT)    | Cancels a live subscription immediately, then deletes the user                               |
 | `web-handoff`     | Extension (user JWT)    | Single-use sign-in token for the web board (admin `generate_link`; ADR-0017)                 |
 | `launch-list`     | rolestash.com form      | Updates-list signup, confirm, unsubscribe and campaign sends (docs/guides/launch-list.md)    |
@@ -206,9 +206,9 @@ coverage gate as the core. Each `index.ts` only wires a handler to
 
 ```bash
 npx supabase secrets set PADDLE_ENV=sandbox PADDLE_API_KEY=… PADDLE_WEBHOOK_SECRET=… \
-  PADDLE_PRICE_PRO_MONTHLY=pri_… PADDLE_PRICE_PRO_YEARLY=pri_… \
-  PADDLE_PRICE_ADVANCED_MONTHLY=pri_… PADDLE_PRICE_ADVANCED_YEARLY=pri_…
-npx supabase functions deploy
+  PADDLE_PRICE_PRO_MONTHLY=pri_… PADDLE_PRICE_PRO_QUARTERLY=pri_… PADDLE_PRICE_PRO_YEARLY=pri_… \
+  PADDLE_LEGACY_PRICES=pri_…,pri_…   # optional: prices from before ADR-0029
+npx supabase functions deploy --project-ref fhclnxqumcdsqxyunelp --no-verify-jwt
 ```
 
 **Paddle dashboard:**
@@ -278,10 +278,10 @@ sandbox was set up the same way, and a dry run changes nothing.
    `--apply`. The webhook secret lands in `secrets.env` as
    `PADDLE_LIVE_WEBHOOK_SECRET`.
 3. **Supabase secrets:** `PADDLE_ENV=production`, `PADDLE_API_KEY`
-   (the live key), `PADDLE_WEBHOOK_SECRET` (the live secret), and the six
-   `PADDLE_PRICE_*` IDs printed by step 2. Then redeploy the functions.
+   (the live key), `PADDLE_WEBHOOK_SECRET` (the live secret), and the three
+   `PADDLE_PRICE_PRO_*` IDs printed by step 2. Then redeploy the functions.
 4. **`site/assets/paddle-config.js`:** `environment: 'production'`, the
-   `live_` token and the six live price IDs, in one commit.
+   `live_` token and the three live price IDs, in one commit.
    `initPaddle()` refuses a mismatch.
 5. **Clear sandbox subscriptions** from test accounts. Their
    `provider_subscription_id` values don't exist in live, so "Manage

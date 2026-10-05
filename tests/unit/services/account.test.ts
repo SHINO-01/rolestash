@@ -593,14 +593,14 @@ describe('AccountService profile and sharing choice (ADR-0022)', () => {
               body: {
                 currency: 'AUD',
                 prices: {
-                  pro: { month: 'A$10.00', quarter: 'A$26.00', year: 'A$89.00' },
-                  advanced: { month: 'A$22.99', quarter: 'A$59.00', year: 'A$239.00' },
+                  pro: { month: 'A$17.99', quarter: 'A$44.00', year: 'A$149.00' },
+                  advanced: { month: 'A$17.99', quarter: 'A$44.00', year: 'A$149.00' },
                 },
               },
             };
       },
     });
-    expect((await account.localPrices())?.prices.advanced.month).toBe('A$22.99');
+    expect((await account.localPrices())?.prices.pro.month).toBe('A$17.99');
     await account.localPrices();
     expect(calls).toBe(1);
     ctx.advance(25 * 3_600_000);

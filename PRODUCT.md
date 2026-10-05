@@ -40,15 +40,15 @@ and sync are optional and paid.
   priorities, closing-date warnings and a timeline; side panel beside any page.
 - Autofill on application forms (basic free; full on Pro), never demographic
   questions, never submits.
-- Advanced: forward job emails to a private address and the board moves the
+- Pro: forward job emails to a private address and the board moves the
   card, with interview times on the card.
 - Export to CSV or JSON on every plan.
 
 ## Capabilities and Constraints
 
-- Plans: Free (30 active jobs), Pro US$7/mo (60, sync up to 3 computers),
-  Advanced US$15/mo (unlimited, email updates, phone via the web board,
-  14-day free trial, no card). Full comparison lives on `/pricing/`.
+- Plans: Free (30 active jobs) and Pro US$12/mo (unlimited, email updates,
+  autofill, insights, sync on 5 devices incl. phone via the web board, 14-day
+  free trial, no card; ADR-0029). Full comparison lives on `/pricing/`.
 - Prices in the buyer's currency through Paddle, merchant of record.
 - The site is static HTML with a strict CSP: no scripts (except `/pay/` and
   `/pricing/`), no inline styles, nothing from other origins; fonts and images

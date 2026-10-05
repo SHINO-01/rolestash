@@ -2,7 +2,7 @@ import { isManualUrl, type Job } from './job';
 import type { Stage } from './stage';
 
 /**
- * Insights (Advanced): how your search is going, worked out on this device
+ * Insights (Pro): how your search is going, worked out on this device
  * from your own board. Nothing is tracked or sent. Pure functions of the jobs,
  * the columns and "now", so they're easy to test.
  *

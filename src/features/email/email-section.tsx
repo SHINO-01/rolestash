@@ -16,7 +16,7 @@ const PROBLEM = {
   error: 'The last check didn’t finish. It will try again shortly.',
 } as const;
 
-/** Automatic status updates from forwarded email (Advanced; ADR-0014), in Account. */
+/** Automatic status updates from forwarded email (Pro; ADR-0014), in Account. */
 export function EmailSection({ plan, trial = false }: { plan: Plan; trial?: boolean }) {
   const { email } = useServices();
   const state = useEmailState();
@@ -40,9 +40,9 @@ export function EmailSection({ plan, trial = false }: { plan: Plan; trial?: bool
     [toast],
   );
 
-  // Creates the address on first visit (Advanced only).
+  // Creates the address on first visit (Pro only).
   useEffect(() => {
-    if (!email || plan !== 'advanced') return;
+    if (!email || plan !== 'pro') return;
     let active = true;
     email
       .address()
@@ -64,12 +64,12 @@ export function EmailSection({ plan, trial = false }: { plan: Plan; trial?: bool
 
   if (!email) return null;
 
-  if (plan !== 'advanced') {
+  if (plan !== 'pro') {
     return (
       <section className="border-line rounded-xl border p-4">
         <Header />
         <p className="text-muted mt-2 text-sm">
-          With Advanced, forward your job emails to a private address and your board updates itself:
+          With Pro, forward your job emails to a private address and your board updates itself:
           applications received, assessments, interviews (with Join and map links), rejections and
           offers. Plain rules, no AI.
         </p>
@@ -231,7 +231,7 @@ function Header({ status }: { status?: string | undefined }) {
   return (
     <div className="flex items-center justify-between gap-2">
       <span className="flex items-center gap-2 text-sm font-semibold">
-        Automatic status updates <Chip tone="accent">Advanced</Chip>
+        Automatic status updates <Chip tone="accent">Pro</Chip>
       </span>
       {status ? <span className="text-muted text-xs">{status}</span> : null}
     </div>

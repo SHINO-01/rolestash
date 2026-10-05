@@ -6,7 +6,8 @@ import {
   handlePaddleWebhook,
   handlePrices,
   handleWebHandoff,
-  tierOfPrice,
+  isOurPrice,
+  displayPrice,
   type Deps,
 } from '../../../supabase/functions/_shared/handlers.ts';
 import { readEnv } from '../../../supabase/functions/_shared/env.ts';
@@ -30,9 +31,7 @@ const ENV = readEnv(
       PADDLE_PRICE_PRO_MONTHLY: 'pri_pro_month',
       PADDLE_PRICE_PRO_QUARTERLY: 'pri_pro_quarter',
       PADDLE_PRICE_PRO_YEARLY: 'pri_pro_year',
-      PADDLE_PRICE_ADVANCED_MONTHLY: 'pri_adv_month',
-      PADDLE_PRICE_ADVANCED_QUARTERLY: 'pri_adv_quarter',
-      PADDLE_PRICE_ADVANCED_YEARLY: 'pri_adv_year',
+      PADDLE_LEGACY_PRICES: 'pri_adv_month, pri_adv_quarter,pri_adv_year',
     })[name],
 );
 
@@ -253,7 +252,7 @@ describe('user endpoints', () => {
 });
 
 describe('plan choice and change-plan', () => {
-  it('create-checkout uses the price for the chosen tier and interval', async () => {
+  it('create-checkout uses the Pro price for the chosen interval, whatever the tier', async () => {
     const { deps: d, calls } = deps({
       [`GET ${SB}/rest/v1/entitlements`]: entitlementRoute({
         status: 'expired',
@@ -273,9 +272,13 @@ describe('plan choice and change-plan', () => {
     expect(calls.filter((c) => c.url.endsWith('/transactions')).at(-1)?.body).toMatchObject({
       items: [{ price_id: 'pri_pro_quarter' }],
     });
+    // Extensions before 0.4.4 still send 'advanced'; it buys today's Pro (ADR-0029).
     expect(calls.find((c) => c.url.endsWith('/transactions'))?.body).toMatchObject({
-      items: [{ price_id: 'pri_adv_year' }],
+      items: [{ price_id: 'pri_pro_year' }],
     });
+    expect((await handleCreateCheckout(post({ tier: 'team', interval: 'year' }), d)).status).toBe(
+      400,
+    );
   });
 
   it('create-checkout refuses a second subscription while a cancelled one still runs', async () => {
@@ -302,11 +305,11 @@ describe('plan choice and change-plan', () => {
         body: { data: {} },
       },
     });
-    const res = await handleChangePlan(post({ tier: 'advanced', interval: 'month' }), d);
+    const res = await handleChangePlan(post({ tier: 'pro', interval: 'month' }), d);
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ changed: true });
     expect(calls.find((c) => c.method === 'PATCH')?.body).toEqual({
-      items: [{ price_id: 'pri_adv_month', quantity: 1 }],
+      items: [{ price_id: 'pri_pro_month', quantity: 1 }],
       proration_billing_mode: 'prorated_immediately',
       on_payment_failure: 'prevent_change',
     });
@@ -333,10 +336,7 @@ describe('plan choice and change-plan', () => {
         },
       },
     });
-    const res = await handleChangePlan(
-      post({ tier: 'advanced', interval: 'month', preview: true }),
-      d,
-    );
+    const res = await handleChangePlan(post({ tier: 'pro', interval: 'month', preview: true }), d);
     expect(await res.json()).toEqual({
       // In the customer's own currency, now and from the next bill.
       preview: {
@@ -388,10 +388,17 @@ describe('plan choice and change-plan', () => {
     expect((await handleChangePlan(post({ tier: 'pro' }), d)).status).toBe(400);
   });
 
-  it('maps price IDs back to tiers', () => {
-    expect(tierOfPrice(ENV, 'pri_adv_year')).toBe('advanced');
-    expect(tierOfPrice(ENV, 'pri_pro_month')).toBe('pro');
-    expect(tierOfPrice(ENV, 'pri_unknown')).toBeUndefined();
+  it('knows our current and legacy prices', () => {
+    expect(isOurPrice(ENV, 'pri_pro_month')).toBe(true);
+    expect(isOurPrice(ENV, 'pri_adv_year')).toBe(true);
+    expect(isOurPrice(ENV, 'pri_unknown')).toBe(false);
+  });
+
+  it('shows Canadian prices as "$16.99 CAD"', () => {
+    expect(displayPrice('CA$16.99', 'CAD')).toBe('$16.99 CAD');
+    expect(displayPrice('$1,299.00', 'CAD')).toBe('$1,299.00 CAD');
+    expect(displayPrice('A$17.99', 'AUD')).toBe('A$17.99');
+    expect(displayPrice('£9.99', 'GBP')).toBe('£9.99');
   });
 });
 
@@ -442,7 +449,7 @@ describe('paddle-webhook', () => {
       p_provider: 'paddle',
       p_customer_id: 'ctm_01',
       p_subscription_id: 'sub_01',
-      p_tier: 'pro',
+      p_tier: 'advanced',
     });
     expect(applyCall(calls)?.headers.apikey).toBe('service');
   });
@@ -717,7 +724,7 @@ describe('paddle-webhook', () => {
     });
   });
 
-  it('records the tier of the subscribed price', async () => {
+  it('records the full plan for a legacy price, too', async () => {
     const { deps: d, calls } = deps({
       ...ownCustomer,
       [`POST ${SB}/rest/v1/rpc/apply_billing_event`]: { status: 200, body: true },
@@ -765,12 +772,9 @@ describe('prices', () => {
   it('returns Paddle’s prices for the caller’s location, cached briefly', async () => {
     const { deps: d, calls } = deps({
       'POST https://sandbox-api.paddle.com/pricing-preview': preview('GBP', [
-        ['pri_pro_month', '£5.50'],
-        ['pri_pro_quarter', '£14.00'],
-        ['pri_pro_year', '£48.00'],
-        ['pri_adv_month', '£11.99'],
-        ['pri_adv_quarter', '£31.00'],
-        ['pri_adv_year', '£129.00'],
+        ['pri_pro_month', '£9.99'],
+        ['pri_pro_quarter', '£24.00'],
+        ['pri_pro_year', '£79.00'],
       ]),
     });
     const request = () =>
@@ -779,9 +783,10 @@ describe('prices', () => {
     expect(await res.json()).toEqual({
       currency: 'GBP',
       country: 'GB',
+      // `advanced` repeats Pro for extensions before 0.4.4.
       prices: {
-        pro: { month: '£5.50', quarter: '£14.00', year: '£48.00' },
-        advanced: { month: '£11.99', quarter: '£31.00', year: '£129.00' },
+        pro: { month: '£9.99', quarter: '£24.00', year: '£79.00' },
+        advanced: { month: '£9.99', quarter: '£24.00', year: '£79.00' },
       },
     });
     expect(calls[0]?.body).toMatchObject({ customer_ip_address: '81.2.69.142' });

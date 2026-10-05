@@ -26,11 +26,8 @@ async function sign(body: string, ts = TS, secret = SECRET): Promise<string> {
 }
 
 const USER = '11111111-1111-4111-8111-111111111111';
-const PRICE_TIERS: Record<string, 'pro' | 'advanced'> = {
-  pri_pro_month: 'pro',
-  pri_adv_month: 'advanced',
-};
-const TIERS = (id: string) => PRICE_TIERS[id];
+const OUR_PRICES = new Set(['pri_pro_month', 'pri_adv_month']);
+const TIERS = (id: string) => OUR_PRICES.has(id);
 
 describe('verifyPaddleSignature', () => {
   const body = '{"event_type":"subscription.created"}';
@@ -87,16 +84,16 @@ describe('toBillingEvent', () => {
       billingInterval: 'month',
       customerId: 'ctm_01',
       subscriptionId: 'sub_01',
-      tier: 'pro',
+      // Every paid plan is stored as the full tier (ADR-0029).
+      tier: 'advanced',
     });
   });
 
-  it('takes the tier from our price map, then the price custom_data, else ignores it', () => {
+  it('accepts our prices and tagged legacy ones, and ignores any other', () => {
     const withPrice = (price: unknown) => subscriptionEvent({ items: [{ price }] });
     expect(toBillingEvent(withPrice({ id: 'pri_adv_month' }), TIERS)?.tier).toBe('advanced');
     expect(
-      toBillingEvent(withPrice({ id: 'pri_other', custom_data: { tier: 'advanced' } }), TIERS)
-        ?.tier,
+      toBillingEvent(withPrice({ id: 'pri_other', custom_data: { tier: 'pro' } }), TIERS)?.tier,
     ).toBe('advanced');
     expect(toBillingEvent(withPrice({ id: 'pri_other' }), TIERS)).toBeNull();
     expect(toBillingEvent(subscriptionEvent({ items: [] }), TIERS)).toBeNull();

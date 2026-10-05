@@ -16,7 +16,7 @@ import {
 import type { RemoteJobStore } from './ports';
 
 /**
- * Sync across devices (Pro and Advanced; ADR-0016). Local storage stays the
+ * Sync across devices (Pro; ADR-0016). Local storage stays the
  * source of truth: a run pulls what changed on the server, then pushes what
  * changed here. The newest `updatedAt` wins per job; deletions travel as
  * tombstones. The server enforces plans and device limits.

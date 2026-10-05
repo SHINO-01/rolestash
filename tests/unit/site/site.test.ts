@@ -324,7 +324,10 @@ describe('rolestash.com static site', () => {
     );
     for (const file of ['terms/index.html', 'privacy/index.html', 'refunds/index.html'])
       expect(text(file)).toContain('support@rolestash.com');
-    expect(text('index.html')).toContain('US$7');
+    expect(text('index.html')).toContain('US$12');
+    expect(text('terms/index.html')).toContain(
+      'US$12 per month, US$30 every 3 months or US$99 per year',
+    );
   });
 
   it('posts the launch-list form only to our own function, which the CSP allows', () => {

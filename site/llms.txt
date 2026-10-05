@@ -8,7 +8,7 @@ Key facts:
 
 - Install: Chrome Web Store, https://chromewebstore.google.com/detail/rolestash/cncilbdakhabnocnjokbonggomndedgp
 - Works on 50+ job boards and applicant tracking systems (including SEEK, LinkedIn, Indeed, Workday, Greenhouse and Lever) and most other careers pages.
-- Plans: Free (up to 30 active jobs, no account needed, data stays in the browser); Pro, US$7 a month (60 active jobs, full autofill, insights, sync across 3 computers); Advanced, US$15 a month (unlimited jobs, automatic status updates from forwarded job emails, phone access through a web board, 14-day free trial with no card). Prices are charged in the buyer's currency by Paddle, the merchant of record.
+- Plans: Free (up to 30 active jobs, no account needed, data stays in the browser); Pro, US$12 a month (unlimited jobs, automatic status updates from forwarded job emails, full autofill, insights, sync across 5 devices including a phone web board, 14-day free trial with no card). Prices are charged in the buyer's currency by Paddle, the merchant of record.
 - Free plan: works without an account; the board stays in the browser and nothing is sent to Rolestash.
 - Capture: click the Rolestash icon or press Alt+J on a posting; title, company, location, salary, closing date and description fill in, uncertain fields are flagged, and the same job found on two sites stays one card. It reads a page only when asked.
 - Autofill fills application forms from the user's own details and never submits; it skips demographic questions.

@@ -169,8 +169,8 @@ function route(
           currency: 'GBP',
           country: 'GB',
           prices: {
-            pro: { month: '£5.50', quarter: '£14.00', year: '£48.00' },
-            advanced: { month: '£11.99', quarter: '£31.00', year: '£129.00' },
+            pro: { month: '£9.99', quarter: '£24.00', year: '£79.00' },
+            advanced: { month: '£9.99', quarter: '£24.00', year: '£79.00' },
           },
         },
       ];
@@ -183,7 +183,7 @@ function route(
                 action: 'charge',
                 amount: 848,
                 currency: 'USD',
-                recurring: 1500,
+                recurring: 9900,
                 nextBilledAt: '2031-11-02T12:00:00Z',
               },
             },

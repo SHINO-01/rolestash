@@ -1,6 +1,6 @@
 # ADR-0013: Offer three plans (Free, Pro, Advanced) with per-plan job limits and local prices
 
-- **Status:** Accepted (replaces the single-paid-plan pricing in ADR-0009)
+- **Status:** Superseded by ADR-0029 (one paid plan, 2026-10-06); replaced the single-paid-plan pricing in ADR-0009
 - **Date:** 2026-10-01
 
 ## Context

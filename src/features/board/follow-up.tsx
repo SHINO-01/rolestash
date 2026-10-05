@@ -24,7 +24,7 @@ export function FollowUp({
   onSeePlans,
 }: {
   job: Job;
-  /** Pro and Advanced, or a build without accounts. */
+  /** Pro, or a build without accounts. */
   allowed: boolean;
   onPatch: (patch: JobPatch) => Promise<void>;
   onSeePlans?: (() => void) | undefined;

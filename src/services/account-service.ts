@@ -337,7 +337,7 @@ export class AccountService implements PlanProvider {
     return this.client.previewPlanChange(await this.accessToken(), { tier, interval });
   }
 
-  /** Switches a live subscription between Pro and Advanced, then re-reads the plan. */
+  /** Switches a live subscription between Pro, then re-reads the plan. */
   async changePlan(tier: PaidPlan, interval: BillingInterval): Promise<void> {
     await this.client.changePlan(await this.accessToken(), { tier, interval });
     await this.refreshEntitlement();

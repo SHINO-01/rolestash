@@ -7,7 +7,7 @@ import { useToast } from '@/ui/components/toast';
 import { useLiveJobs, useServices } from '@/ui/hooks/services';
 
 /**
- * Bulk actions for the selected cards (Advanced): move, tag, archive, delete.
+ * Bulk actions for the selected cards (Pro): move, tag, archive, delete.
  * Deleting can be undone from the toast.
  */
 export function BulkBar({

@@ -60,9 +60,9 @@ export function JobDrawer({
   stages: readonly Stage[];
   /** Start of the plan's visible history (Free: 30 days); undefined shows all. */
   historyFrom?: Date | undefined;
-  /** Whether follow-up reminders are available (Pro and up, or no accounts). */
+  /** Whether follow-up reminders are available (Pro, or no accounts). */
   remindersAllowed?: boolean;
-  /** Whether contacts, interview rounds and documents can be added (Advanced, or no accounts). */
+  /** Whether contacts, interview rounds and documents can be added (Pro, or no accounts). */
   recordsAllowed?: boolean;
   onSeePlans?: (() => void) | undefined;
   onClose: () => void;

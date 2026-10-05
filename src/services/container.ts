@@ -26,7 +26,7 @@ export interface Services {
   jobService: JobService;
   columns: ColumnService;
   capture: CaptureService;
-  /** Application autofill (Advanced; ADR-0020); present where pages can be filled. */
+  /** Application autofill (Pro; ADR-0020); present where pages can be filled. */
   autofill?: AutofillService;
   runner: ExtractorRunner;
   /** Present only in builds configured with a backend (ADR-0011). */
@@ -35,7 +35,7 @@ export interface Services {
   feedback: FeedbackService;
   /** Sync across devices (ADR-0016); present with `account`. */
   sync?: SyncService;
-  /** Email status updates (Advanced; ADR-0014); present with `account`. */
+  /** Email status updates (Pro; ADR-0014); present with `account`. */
   email?: EmailUpdateService;
   /** Resolves once storage migrations have run in this context. */
   ready: Promise<void>;

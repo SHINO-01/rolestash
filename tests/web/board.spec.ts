@@ -61,19 +61,17 @@ async function signIn(page: Page, site: string) {
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
 }
 
-test('offers Advanced to other plans', async ({ page, site, backend }) => {
+test('offers Pro once a trial or plan has ended', async ({ page, site, backend }) => {
   expect(backend.devices).toEqual([]);
   backend.entitlement = {
-    status: 'active',
-    tier: 'pro',
+    status: 'expired',
+    tier: 'advanced',
     trial_ends_at: null,
     current_period_end: new Date(Date.now() + 20 * 86_400_000).toISOString(),
     provider_customer_id: null,
   };
   await signIn(page, site);
-  await expect(
-    page.getByRole('heading', { name: 'The web board is part of Advanced' }),
-  ).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'The web board is part of Pro' })).toBeVisible();
 });
 
 test('from /pricing/: signs in, then opens checkout for that account', async ({
@@ -90,7 +88,7 @@ test('from /pricing/: signs in, then opens checkout for that account', async ({
   await page.getByLabel(/Code sent to/).fill(E2E_CODE);
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Get Pro' })).toBeVisible();
-  await expect(page.getByText('£48.00 / year for jo@example.com')).toBeVisible();
+  await expect(page.getByText('£79.00 / year for jo@example.com')).toBeVisible();
   await page.getByRole('button', { name: 'Continue to checkout' }).click();
   await page.waitForURL(/\/pay\/\?_ptxn=txn_e2e/);
   const call = backend.requests.find((r) => r.path === '/functions/v1/create-checkout');
@@ -112,13 +110,13 @@ test('from /pricing/ with a live plan: no second subscription', async ({ page, s
   await page.getByRole('button', { name: 'Continue to checkout' }).click();
   await expect(page.getByRole('heading', { name: 'You already have a plan' })).toBeVisible();
   await page.getByRole('button', { name: 'Continue' }).click();
-  // The pending choice is cleared; Pro sees the usual Advanced offer.
-  await expect(
-    page.getByRole('heading', { name: 'The web board is part of Advanced' }),
-  ).toBeVisible();
+  // The pending choice is cleared, and the subscriber gets the board (old
+  // `advanced-…` links buy Pro since ADR-0029).
+  await expect(page.getByRole('heading', { name: 'You already have a plan' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: /part of Pro/ })).toHaveCount(0);
 });
 
-test('Advanced: Today, the board, quick updates and quick add, synced back', async ({
+test('Pro: Today, the board, quick updates and quick add, synced back', async ({
   page,
   site,
   backend,

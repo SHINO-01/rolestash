@@ -65,20 +65,16 @@ describe('AutofillService', () => {
     expect(await free.service.blocked()).toBe('no_profile');
     await expect(free.service.fill(1)).rejects.toBeInstanceOf(AutofillBlockedError);
 
-    expect(await setup('pro').service.blocked()).toBe('no_profile');
-    const adv = setup('advanced');
-    expect(await adv.service.blocked()).toBe('no_profile');
-    await expect(adv.service.fill(1)).rejects.toMatchObject({ reason: 'no_profile' });
+    const pro = setup('pro');
+    expect(await pro.service.blocked()).toBe('no_profile');
+    await expect(pro.service.fill(1)).rejects.toMatchObject({ reason: 'no_profile' });
 
     // A build without accounts isn't limited.
     expect(await setup().service.allowed()).toBe(true);
   });
 
   it('fills every frame and merges the reports', async () => {
-    const { service, calls } = setup('advanced', [
-      report(2),
-      { filled: [], skipped: [], files: [] },
-    ]);
+    const { service, calls } = setup('pro', [report(2), { filled: [], skipped: [], files: [] }]);
     await service.saveProfile({ ...EMPTY_PROFILE, email: 'sam@example.com' });
     expect(await service.blocked()).toBeUndefined();
     const outcome = await service.fill(7);

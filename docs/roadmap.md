@@ -1,12 +1,11 @@
 # Roadmap
 
-Rolestash is a freemium product with three plans (ADR-0013):
+Rolestash is a freemium product with two plans (ADR-0013, merged by ADR-0029):
 
-| Plan     | Price                            | Active jobs | Features                                                                                                                                                                                                  |
-| -------- | -------------------------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Free     | US$0, no account                 | 30          | Capture from every supported site, board, basic autofill (contact details and links), CSV/JSON export, last 30 days of history                                                                            |
-| Pro      | US$7/mo · US$18/qtr · US$59/yr   | 60          | Everything in Free, plus: full autofill, Insights, contacts and documents, bulk actions, full history, reminders and closing-date alerts, custom columns, capture from a pasted link, sync on 3 computers |
-| Advanced | US$15/mo · US$39/qtr · US$159/yr | Unlimited   | Everything in Pro, plus: email status updates and interview cards, sync on 5 devices incl. phone (web board), the full side panel. 14-day free trial                                                      |
+| Plan | Price                           | Active jobs | Features                                                                                                                                                                                                                                                             |
+| ---- | ------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Free | US$0, no account                | 30          | Capture from every supported site, board, basic autofill (contact details and links), CSV/JSON export, last 30 days of history                                                                                                                                       |
+| Pro  | US$12/mo · US$30/qtr · US$99/yr | Unlimited   | Everything in Free, plus: email status updates and interview cards, full autofill, Insights, contacts and documents, bulk actions, full history, reminders, custom columns, capture from a pasted link, sync on 5 devices incl. phone (web board). 14-day free trial |
 
 Local prices in the UK, Ireland and Australia. Every item follows AGENTS.md:
 no AI/LLM vendors, local-first, least privilege, and near-zero running cost

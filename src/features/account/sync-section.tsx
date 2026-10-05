@@ -70,7 +70,7 @@ export function SyncSection({ plan }: { plan: Plan }) {
         setFull(true);
         await loadDevices();
       } else {
-        toast({ message: 'Sync is part of Pro and Advanced.', tone: 'error' });
+        toast({ message: 'Sync is part of Pro.', tone: 'error' });
       }
     });
 
@@ -94,14 +94,14 @@ export function SyncSection({ plan }: { plan: Plan }) {
 
       {plan === 'free' ? (
         <p className="text-muted mt-2 text-sm">
-          Pro syncs your board across up to 3 computers. Advanced syncs up to 5 devices, including
-          your phone. Your board always stays on this device too.
+          Pro syncs your board across up to {SYNC_DEVICE_LIMITS.pro} devices, including your phone.
+          Your board always stays on this device too.
         </p>
       ) : !state?.enabled ? (
         <>
           <p className="text-muted mt-2 text-sm">
-            Keep this board in step on up to {limit} {plan === 'advanced' ? 'devices' : 'computers'}
-            . Everything stays on this device too, and works offline.
+            Keep this board in step on up to {limit} devices. Everything stays on this device too,
+            and works offline.
           </p>
           {full ? (
             <p className="mt-2 text-sm text-amber-800 dark:text-amber-300">
@@ -161,7 +161,7 @@ export function SyncSection({ plan }: { plan: Plan }) {
         </>
       )}
 
-      {plan === 'advanced' && !location.pathname.startsWith('/board') ? (
+      {plan === 'pro' && !location.pathname.startsWith('/board') ? (
         <p className="text-muted mt-3 text-sm">
           On your phone, open{' '}
           <a

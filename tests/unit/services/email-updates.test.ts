@@ -58,7 +58,7 @@ class FakeInbox implements EmailInbox {
   }
 }
 
-async function setup(plan: Plan = 'advanced', trial = false) {
+async function setup(plan: Plan = 'pro', trial = false) {
   const store = new MemoryKeyValueStore();
   await migrate(store);
   const ctx = testContext('2026-10-01T00:00:00.000Z');
@@ -290,11 +290,11 @@ describe('EmailUpdateService', () => {
     });
   });
 
-  it('skips everything off Advanced, when busy, and on malformed or "other" events', async () => {
-    const pro = await setup('pro');
-    pro.inbox.add(rejection());
-    expect(await pro.service.run()).toMatchObject({ skipped: 'not_advanced' });
-    expect(pro.inbox.rows).toHaveLength(1);
+  it('skips everything off Pro, when busy, and on malformed or "other" events', async () => {
+    const free = await setup('free');
+    free.inbox.add(rejection());
+    expect(await free.service.run()).toMatchObject({ skipped: 'not_advanced' });
+    expect(free.inbox.rows).toHaveLength(1);
 
     const { store, jobs, inbox, service } = await setup();
     await store.set({ [EMAIL_LOCK_KEY]: Date.parse('2026-10-01T00:00:30.000Z') });
@@ -487,11 +487,8 @@ describe('shared learning (ADR-0014 §6)', () => {
     await expect(service.acceptSuggestion('nw')).resolves.toMatchObject({ stageId: 'rejected' });
   });
 
-  it('does not vote off Advanced, or on the Advanced trial', async () => {
-    for (const [plan, trial] of [
-      ['pro', false],
-      ['advanced', true],
-    ] as const) {
+  it('does not vote during the trial', async () => {
+    for (const [plan, trial] of [['pro', true]] as const) {
       const { jobs, jobService, inbox, service } = await setup(plan, trial);
       await jobs.save(northwind());
       await jobService.suggestEmailUpdate('nw', {
