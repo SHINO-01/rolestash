@@ -141,9 +141,11 @@ export function resolveTimeZone(name: string | undefined): string | undefined {
   if (windows) return windows;
   const abbreviation = TZ_ABBREVIATIONS[trimmed.toUpperCase()];
   if (abbreviation) return abbreviation;
-  // "/mozilla.org/20050126_1/Australia/Sydney" and similar prefixes.
+  // "/mozilla.org/20050126_1/Australia/Sydney" and similar prefixes. IANA
+  // names have at most three segments, so only the last three are tried.
+  if (trimmed.length > 200) return undefined;
   const segments = trimmed.split('/').filter(Boolean);
-  for (let i = 0; i < segments.length; i++) {
+  for (let i = Math.max(0, segments.length - 3); i < segments.length; i++) {
     const candidate = segments.slice(i).join('/');
     if (/^[A-Za-z_]+(?:\/[A-Za-z_+-]+)+$|^UTC$/.test(candidate) && isValidTimeZone(candidate))
       return candidate;
@@ -174,10 +176,13 @@ const MONTH =
   '(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sept?(?:ember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\\.?';
 const WEEKDAY = '(?:mon|tues?|wed(?:nes)?|thu(?:rs?)?|fri|sat(?:ur)?|sun)(?:day)?\\.?';
 const DAY = '(\\d{1,2})(?:st|nd|rd|th)?';
-const TIME = '(\\d{1,2})(?:[:.](\\d{2}))?\\s*(am|pm|a\\.m\\.|p\\.m\\.)?';
+// Every optional part owns the whitespace before it, and each `\\s*` follows
+// a required token: adjacent optional `\\s*` runs backtrack polynomially on
+// long whitespace (ReDoS).
+const TIME = '(\\d{1,2})(?:[:.](\\d{2}))?(?:\\s*(am|pm|a\\.m\\.|p\\.m\\.))?';
 const ZONE_WORDS = Object.keys(TZ_ABBREVIATIONS).join('|');
-const ZONE = `(?:\\(?\\s*(${ZONE_WORDS}|[A-Z][a-z]+/[A-Za-z_]+)\\b\\)?)?`;
-const TIME_RANGE = `${TIME}(?:\\s*(?:-|–|—|to|until)\\s*${TIME})?\\s*${ZONE}`;
+const ZONE = `(?:(?:\\s*\\(\\s*|\\s*)(${ZONE_WORDS}|[A-Z][a-z]+/[A-Za-z_]+)\\b\\)?)?`;
+const TIME_RANGE = `${TIME}(?:\\s*(?:-|–|—|to|until)\\s*${TIME})?${ZONE}`;
 
 export interface TextDateTime {
   start: string;
@@ -275,12 +280,12 @@ function finish(
  */
 export function findDateTime(text: string, emailDate: string): TextDateTime | undefined {
   const ref = localDateOf(emailDate);
-  const sep = '\\s*,?\\s*(?:at|@|from|,|-|–)?\\s*';
+  const sep = '\\s*(?:,\\s*)?(?:(?:at|@|from|,|-|–)\\s*)?';
   const found: TextDateTime[] = [];
 
   // "Thursday 3 October 2026 at 10am AEST", "3rd Oct, 10:00-11:00"
   const dayMonth = new RegExp(
-    `(?:${WEEKDAY}\\s*,?\\s*)?\\b${DAY}\\s+(?:of\\s+)?${MONTH}(?:\\s*,?\\s*(\\d{4}))?${sep}${TIME_RANGE}`,
+    `(?:${WEEKDAY}\\s*(?:,\\s*)?)?\\b${DAY}\\s+(?:of\\s+)?${MONTH}(?:\\s*(?:,\\s*)?(\\d{4}))?${sep}${TIME_RANGE}`,
     'gi',
   );
   for (const m of text.matchAll(dayMonth)) {
@@ -294,7 +299,7 @@ export function findDateTime(text: string, emailDate: string): TextDateTime | un
 
   // "Thursday, October 3 at 10:00 AM PT", "Oct 3rd, 2026, 2:30 pm"
   const monthDay = new RegExp(
-    `(?:${WEEKDAY}\\s*,?\\s*)?\\b${MONTH}\\s+${DAY}(?:\\s*,?\\s*(\\d{4}))?${sep}${TIME_RANGE}`,
+    `(?:${WEEKDAY}\\s*(?:,\\s*)?)?\\b${MONTH}\\s+${DAY}(?:\\s*(?:,\\s*)?(\\d{4}))?${sep}${TIME_RANGE}`,
     'gi',
   );
   for (const m of text.matchAll(monthDay)) {

@@ -85,6 +85,8 @@ function fakeFetch(...responses: (Response | Error)[]) {
 
 const json = (body: unknown, status = 200): Response =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+/** The inbox check's answer for a live address. */
+const live = (): Response => json({ ok: true });
 
 describe('tokenFrom', () => {
   it.each([
@@ -102,11 +104,16 @@ describe('tokenFrom', () => {
 
 describe('handleEmail', () => {
   it('parses MIME, runs the rules and stores only the event', async () => {
-    const { fn, calls } = fakeFetch(json({ ok: true, stored: true }));
+    const { fn, calls } = fakeFetch(live(), json({ ok: true, stored: true }));
     expect(await handleEmail(message(REJECTION), env, fn)).toBe('stored');
 
-    expect(calls).toHaveLength(1);
-    const call = calls[0]!;
+    expect(calls).toHaveLength(2);
+    expect(calls[0]!.url).toBe('https://project.supabase.example/rest/v1/rpc/email_inbox_check');
+    expect(JSON.parse(calls[0]!.init.body as string)).toEqual({
+      p_secret: 'ingest-secret',
+      p_token: TOKEN,
+    });
+    const call = calls[1]!;
     expect(call.url).toBe('https://project.supabase.example/rest/v1/rpc/ingest_email_event');
     expect(call.init.headers).toEqual({
       apikey: 'sb_publishable_test',
@@ -140,7 +147,7 @@ describe('handleEmail', () => {
     const { fn, calls } = fakeFetch();
     await handleEmail(message(INVITE), env, fn, new Date('2026-10-01T00:00:00Z'));
     const event = (
-      JSON.parse(calls[0]!.init.body as string) as { p_event: Record<string, unknown> }
+      JSON.parse(calls[1]!.init.body as string) as { p_event: Record<string, unknown> }
     ).p_event;
     expect(event).toMatchObject({
       intent: 'interview',
@@ -171,22 +178,44 @@ describe('handleEmail', () => {
     [{ ok: false, reason: 'rate_limited' }, 'rate_limited'],
     [{ ok: false, reason: 'something new' }, 'store_failed'],
   ])('reports the database answer %j as %s', async (answer, outcome) => {
-    const { fn } = fakeFetch(json(answer));
+    const { fn } = fakeFetch(live(), json(answer));
     expect(await handleEmail(message(REJECTION), env, fn)).toBe(outcome);
   });
 
+  it.each([
+    [{ ok: false, reason: 'unknown_address' }, 'unknown_address'],
+    [{ ok: false, reason: 'not_advanced' }, 'not_advanced'],
+    [{ ok: false, reason: 'rate_limited' }, 'rate_limited'],
+  ])('never parses mail the inbox check refuses (%j)', async (answer, outcome) => {
+    const parse = vi.spyOn(PostalMime, 'parse');
+    const { fn, calls } = fakeFetch(json(answer));
+    expect(await handleEmail(message(REJECTION), env, fn)).toBe(outcome);
+    expect(calls).toHaveLength(1);
+    expect(parse).not.toHaveBeenCalled();
+    parse.mockRestore();
+  });
+
+  it('drops mail unread when the inbox check is unreachable', async () => {
+    const parse = vi.spyOn(PostalMime, 'parse');
+    const { fn, calls } = fakeFetch(json({}, 503), new Error('offline'));
+    expect(await handleEmail(message(REJECTION), env, fn)).toBe('store_failed');
+    expect(calls).toHaveLength(2);
+    expect(parse).not.toHaveBeenCalled();
+    parse.mockRestore();
+  });
+
   it('retries once on a network error or 5xx, then gives up', async () => {
-    const retry = fakeFetch(new Error('offline'), json({ ok: true, stored: true }));
+    const retry = fakeFetch(live(), new Error('offline'), json({ ok: true, stored: true }));
     expect(await handleEmail(message(REJECTION), env, retry.fn)).toBe('stored');
-    expect(retry.calls).toHaveLength(2);
+    expect(retry.calls).toHaveLength(3);
 
-    const down = fakeFetch(json({}, 503), json({}, 502));
+    const down = fakeFetch(live(), json({}, 503), json({}, 502));
     expect(await handleEmail(message(REJECTION), env, down.fn)).toBe('store_failed');
-    expect(down.calls).toHaveLength(2);
+    expect(down.calls).toHaveLength(3);
 
-    const refused = fakeFetch(json({ message: 'not allowed' }, 403));
+    const refused = fakeFetch(live(), json({ message: 'not allowed' }, 403));
     expect(await handleEmail(message(REJECTION), env, refused.fn)).toBe('store_failed');
-    expect(refused.calls).toHaveLength(1);
+    expect(refused.calls).toHaveLength(2);
   });
 
   it('copes with a message with no headers or body', async () => {
@@ -194,7 +223,7 @@ describe('handleEmail', () => {
     expect(await handleEmail(message(''), env, fn, new Date('2026-10-01T00:00:00Z'))).toBe(
       'stored',
     );
-    expect(JSON.parse(calls[0]!.init.body as string)).toMatchObject({
+    expect(JSON.parse(calls[1]!.init.body as string)).toMatchObject({
       p_event: { intent: 'other', action: 'none' },
     });
   });
@@ -203,7 +232,7 @@ describe('handleEmail', () => {
     const parse = vi.spyOn(PostalMime, 'parse').mockRejectedValueOnce(new Error('too deep'));
     const { fn, calls } = fakeFetch();
     expect(await handleEmail(message(REJECTION), env, fn)).toBe('unparseable');
-    expect(calls).toHaveLength(0);
+    expect(calls).toHaveLength(1); // only the inbox check
     parse.mockRestore();
   });
 });

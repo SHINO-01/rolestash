@@ -1,7 +1,7 @@
 -- Run with: npm run test:db  (needs Docker; see docs/guides/backend.md)
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(31);
+select plan(38);
 
 create function pg_temp.act_as(uid uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),
@@ -65,6 +65,18 @@ select throws_ok($$select public.ingest_email_event('wrong', 'x', '{}'::jsonb)$$
   'a wrong secret is refused');
 select throws_ok($$select public.ingest_email_event(null, 'x', '{}'::jsonb)$$, '42501', null,
   'a missing secret is refused');
+-- The pre-check the Worker makes before parsing.
+select throws_ok($$select public.email_inbox_check('wrong', 'x')$$, '42501', null,
+  'the inbox check refuses a wrong secret');
+select is(public.email_inbox_check('test-ingest-secret', 'nosuchtokennosuchtok'),
+  '{"ok": false, "reason": "unknown_address"}'::jsonb, 'the inbox check rejects an unknown address');
+select is(public.email_inbox_check('test-ingest-secret',
+  upper((select address_token from tokens where user_id = '11111111-1111-4111-8111-111111111111'))),
+  '{"ok": true}'::jsonb, 'the inbox check accepts a live address (case-insensitive)');
+select pg_temp.act_as('11111111-1111-4111-8111-111111111111');
+select throws_ok($$select public.email_inbox_check('test-ingest-secret', 'x')$$, '42501', null,
+  'signed-in users cannot call the inbox check');
+select pg_temp.act_as_anon();
 select is(public.ingest_email_event('test-ingest-secret', split_part((select address from first_address), '@', 1),
   pg_temp.event('<m0>')), '{"ok": false, "reason": "unknown_address"}'::jsonb, 'mail to a rotated address is dropped');
 select is(public.ingest_email_event('test-ingest-secret', 'nosuchtokennosuchtok', pg_temp.event('<m0>')),
@@ -99,6 +111,9 @@ select pg_temp.act_as_anon();
 select is(public.ingest_email_event('test-ingest-secret',
   (select address_token from tokens where user_id = '11111111-1111-4111-8111-111111111111'),
   pg_temp.event('<m2>')), '{"ok": false, "reason": "rate_limited"}'::jsonb, 'at most 30 events an hour per address');
+select is(public.email_inbox_check('test-ingest-secret',
+  (select address_token from tokens where user_id = '11111111-1111-4111-8111-111111111111')),
+  '{"ok": false, "reason": "rate_limited"}'::jsonb, 'the inbox check reports the rate limit too');
 
 select pg_temp.act_as_admin();
 update public.email_events set created_at = now() - interval '2 hours'
@@ -116,6 +131,13 @@ select is((select count(*)::int from cron.job where jobname = 'email-events-rete
 -- Lapsed plans ----------------------------------------------------------------------
 update public.entitlements set status = 'expired' where user_id = '33333333-3333-4333-8333-333333333333';
 insert into public.email_inboxes (user_id, address_token) values ('33333333-3333-4333-8333-333333333333', 'abcdefghijkmnpqrstuv');
+select pg_temp.act_as_anon();
+select is(public.email_inbox_check('test-ingest-secret', 'abcdefghijkmnpqrstuv'),
+  '{"ok": false, "reason": "not_advanced"}'::jsonb, 'the inbox check rejects a lapsed account');
+select pg_temp.act_as_admin();
+select isnt((select paused_at from public.email_inboxes where user_id = '33333333-3333-4333-8333-333333333333'),
+  null, 'and marks its inbox paused');
+update public.email_inboxes set paused_at = null where user_id = '33333333-3333-4333-8333-333333333333';
 select pg_temp.act_as_anon();
 select is(public.ingest_email_event('test-ingest-secret', 'abcdefghijkmnpqrstuv', pg_temp.event('<m4>')),
   '{"ok": false, "reason": "not_advanced"}'::jsonb, 'mail for a lapsed account is dropped');

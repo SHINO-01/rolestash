@@ -11,6 +11,10 @@
   // No HTTP surface: email only.
   "workers_dev": false,
   "preview_urls": false,
+  // CPU: no "limits.cpu_ms" here. The account is on the Workers Free plan,
+  // which caps every invocation at 10 ms of CPU and rejects that setting.
+  // If it moves to a paid plan, add "limits": { "cpu_ms": 50 } so one hostile
+  // email can't run for the paid default of 30 seconds.
   "vars": {
     // Public values (the same as the extension's .env.staging).
     "SUPABASE_URL": "https://fhclnxqumcdsqxyunelp.supabase.co",

@@ -157,4 +157,12 @@ describe('url canonicalisation', () => {
     expect(canonicalizeUrl('chrome://extensions')).toBe('chrome://extensions');
     expect(canonicalizeUrl('not a url')).toBe('not a url');
   });
+
+  it('trims every trailing slash, in linear time', () => {
+    expect(canonicalizeUrl('https://example.com/jobs///')).toBe('https://example.com/jobs');
+    expect(canonicalizeUrl('https://example.com/')).toBe('https://example.com/');
+    const start = performance.now();
+    canonicalizeUrl(`https://example.com/x${'/'.repeat(200_000)}x`);
+    expect(performance.now() - start).toBeLessThan(1000);
+  });
 });

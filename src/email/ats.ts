@@ -139,7 +139,7 @@ export function companyFromSenderName(
 }
 
 const JOB_ID_TEXT =
-  /\b(?:job|req(?:uisition)?|reference|ref|vacancy|position)\.? ?(?:id|no\.?|number|#|code)\s*[:#]?\s*(?<id>[A-Z0-9][A-Z0-9_-]{2,24})\b/i;
+  /\b(?:job|req(?:uisition)?|reference|ref|vacancy|position)\.? ?(?:id|no\.?|number|#|code)\s*(?:[:#]\s*)?(?<id>[A-Z0-9][A-Z0-9_-]{2,24})\b/i;
 
 /** A recruiting-system job id from a posting link (Workday `_R12345`, Greenhouse `/jobs/123`, …). */
 export function jobIdFromUrl(href: string): string | undefined {

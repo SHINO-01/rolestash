@@ -307,7 +307,7 @@ const TRAPS: { re: RegExp; label: string; received?: number }[] = [
   {
     label: 'cannot reply to everyone',
     received: 1.5,
-    re: /\b(?:unfortunately,? )?(?:(?:due to|because of|given) (?:the )?(?:very )?(?:high|large|overwhelming)? ?(?:volume|number) of (?:applications|applicants|responses)[^.]*?)?(?:we|i) (?:are|am)? ?(?:unable|not able|cannot|will not be able|may not be able|not always able) to (?:reply|respond|provide (?:individual |personal )?feedback|get back|contact)(?: to)?(?: (?:every|each|all|individual|everyone|everybody|unsuccessful)\w*)?[^.]*/g,
+    re: /\b(?:unfortunately,? )?(?:(?:due to|because of|given) (?:the )?(?:very )?(?:high|large|overwhelming)? ?(?:volume|number) of (?:applications|applicants|responses)[^.]{0,200}?)?(?:we|i) (?:are|am)? ?(?:unable|not able|cannot|will not be able|may not be able|not always able) to (?:reply|respond|provide (?:individual |personal )?feedback|get back|contact)(?: to)?(?: (?:every|each|all|individual|everyone|everybody|unsuccessful)\w*)?[^.]*/g,
   },
   {
     label: 'not an offer of employment',

@@ -30,10 +30,23 @@ export interface Sender {
   name?: string;
 }
 
+/** `Name <address>` or a bare address. A string scan: a regex here backtracked on long whitespace. */
 export function parseSender(from: string): Sender {
-  const angle = /^\s*"?([^"<]*?)"?\s*<([^>]+)>\s*$/.exec(from);
-  const address = (angle?.[2] ?? from).trim().toLowerCase();
-  const name = angle?.[1]?.trim() ? angle[1].trim() : undefined;
+  const s = from.trim();
+  const open = s.indexOf('<');
+  let address = s;
+  let name: string | undefined;
+  if (open >= 0 && s.endsWith('>')) {
+    const inner = s.slice(open + 1, -1);
+    let display = s.slice(0, open).trim();
+    if (display.startsWith('"')) display = display.slice(1);
+    if (display.endsWith('"')) display = display.slice(0, -1);
+    if (inner && !inner.includes('>') && !/["<]/.test(display)) {
+      address = inner;
+      name = display.trim() || undefined;
+    }
+  }
+  address = address.trim().toLowerCase();
   const domain = address.includes('@') ? (address.split('@').pop() ?? '') : '';
   return { address, domain, name };
 }
@@ -127,13 +140,29 @@ function prepare(input: EmailInput): Prepared {
  * for emails too short to identify a template.
  */
 export function emailSkeleton(input: EmailInput): string | undefined {
-  const { sender, subject, body } = prepare(input);
+  return skeletonFrom(prepare(input));
+}
+
+function skeletonFrom({ sender, subject, body }: Prepared): string | undefined {
   if (sender.address === GMAIL_VERIFIER) return undefined;
   return skeletonOf(subject, body);
 }
 
+/** analyzeEmail and emailSkeleton together, cleaning the email once (the Worker's path). */
+export function analyzeEmailWithSkeleton(input: EmailInput): {
+  event: EmailEvent;
+  skeleton: string | undefined;
+} {
+  const prepared = prepare(input);
+  return { event: analyzePrepared(input, prepared), skeleton: skeletonFrom(prepared) };
+}
+
 export function analyzeEmail(input: EmailInput): EmailEvent {
-  const { sender, subject, raw, body, html } = prepare(input);
+  return analyzePrepared(input, prepare(input));
+}
+
+function analyzePrepared(input: EmailInput, prepared: Prepared): EmailEvent {
+  const { sender, subject, raw, body, html } = prepared;
   const links = [...(html?.links ?? []), ...linksInText(body)];
   const classified = classifyLinks(links);
   const reasons: string[] = [];

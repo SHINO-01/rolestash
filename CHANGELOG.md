@@ -14,6 +14,10 @@ All notable changes to this project are documented here. The format follows
 - **Shared email learning only counts current subscribers:** votes from an
   account stop counting when its Advanced subscription ends, and count
   again if it resubscribes.
+- **Email updates do less work for mail nobody should receive:** a
+  forwarded email is only read once its Rolestash address is confirmed
+  active, and more of the email rules keep a steady speed however an email
+  is written.
 
 ## [0.4.2] — 2026-10-05
 

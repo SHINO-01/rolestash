@@ -58,6 +58,10 @@ owns a given address.
 - **Ingest is exposed to anon:** the function is reachable with the public
   key, so it must keep rejecting calls without the secret. A pgTAP test
   covers this.
+- **Check before analysing** (added October 2026): the Worker first calls
+  `email_inbox_check` (same secret and rules as ingest, no event), so mail
+  to an unknown, paused or rate-limited address is never parsed or
+  analysed. Ingest still checks everything itself.
 - **Small bundle:** the Worker bundles `src/email` without zod, at about
   180 KiB (a test guards it). The engine takes well under a millisecond per
   email, inside the Workers free plan's CPU limit.

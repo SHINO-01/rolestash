@@ -1,10 +1,12 @@
 import { analyzeEmail, parseSender } from '@/email';
+import { analyzeEmailWithSkeleton, emailSkeleton } from '@/email/analyze';
 import {
   companyFromSenderName,
   detectAts,
   extractHints,
   isPlatformDomain,
   jobIdFromUrl,
+  readTemplate,
 } from '@/email/ats';
 import {
   canonicalWords,
@@ -94,6 +96,65 @@ describe('htmlToText', () => {
     const links = linksInText(`http://${'.'.repeat(200_000)}x`);
     expect(performance.now() - start).toBeLessThan(1000);
     expect(links).toHaveLength(1);
+  });
+});
+
+// The same holds for the plain-text rules: every pattern that runs on the
+// body or headers must stay linear on long runs of whitespace (CWE-1333).
+// Before these were rewritten, a few thousand newlines took minutes.
+describe('linear time on hostile text', () => {
+  const ws = '\n'.repeat(200_000);
+  const fast = (run: () => unknown): void => {
+    const start = performance.now();
+    run();
+    expect(performance.now() - start).toBeLessThan(1000);
+  };
+
+  it.each([
+    ['after a date', `3 October${ws}x`],
+    ['after a time', `3 October at 10${ws}x`],
+    ['after a weekday', `Monday${ws}x`],
+    ['around a zone bracket', `Oct 3 10am${ws}(${ws}`],
+  ])('finds dates %s', (_, text) => {
+    fast(() => findDateTime(text, '2026-10-01T00:00:00Z'));
+  });
+
+  it('reads senders, job ids, time zones and the "can\'t reply" trap', () => {
+    fast(() => parseSender(`${ws}"${' '.repeat(200_000)}`));
+    fast(() => readTemplate({ subject: '', body: `job id${ws}`, postingUrls: [] }));
+    fast(() => resolveTimeZone('/a'.repeat(100_000)));
+    fast(() => scoreIntents('', 'due to the volume of applications '.repeat(10_000)));
+  });
+
+  it('still reads the patterns it guards', () => {
+    expect(
+      findDateTime('Thursday, 3 October 2026, at 10:00 am (AEST)', '2026-10-01T00:00:00Z'),
+    ).toMatchObject({
+      start: '2026-10-03T00:00:00.000Z',
+    });
+    expect(parseSender('Bob" <bob@x.example>')).toMatchObject({
+      name: 'Bob',
+      address: 'bob@x.example',
+    });
+    expect(parseSender('a "b" c <x@y.example>').address).toBe('a "b" c <x@y.example>');
+    expect(resolveTimeZone('/mozilla.org/20050126_1/America/Argentina/Buenos_Aires')).toBe(
+      'America/Argentina/Buenos_Aires',
+    );
+  });
+});
+
+describe('analyzeEmailWithSkeleton', () => {
+  it('matches analyzeEmail and emailSkeleton run separately', () => {
+    const input = {
+      from: 'Northwind Labs <no-reply@northwindlabs.example>',
+      subject: 'Your application',
+      date: '2026-10-01T00:00:00Z',
+      text: 'Unfortunately, we will not be moving forward with your application at this time.',
+    };
+    expect(analyzeEmailWithSkeleton(input)).toEqual({
+      event: analyzeEmail(input),
+      skeleton: emailSkeleton(input),
+    });
   });
 });
 

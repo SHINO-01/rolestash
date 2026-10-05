@@ -1,5 +1,5 @@
 import PostalMime, { type Address, type Email } from 'postal-mime';
-import { analyzeEmail, emailSkeleton } from '../../../src/email/analyze';
+import { analyzeEmailWithSkeleton } from '../../../src/email/analyze';
 import type { EmailInput } from '../../../src/email/constants';
 import type { EmailEvent } from '../../../src/email/types';
 
@@ -78,38 +78,56 @@ export function toEmailInput(email: Email, now: Date): EmailInput {
   };
 }
 
+interface RpcResult {
+  ok?: boolean;
+  stored?: boolean;
+  reason?: string;
+}
+
+/** Calls one ingest RPC with the Worker's secret; undefined when it can't be reached. */
+async function rpc(
+  env: Env,
+  name: 'email_inbox_check' | 'ingest_email_event',
+  args: Record<string, unknown>,
+  fetchFn: typeof fetch,
+): Promise<RpcResult | undefined> {
+  const body = JSON.stringify({ p_secret: env.EMAIL_INGEST_SECRET, ...args });
+  // One retry for a network blip or a 5xx; then the mail is dropped.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const response = await fetchFn(`${env.SUPABASE_URL}/rest/v1/rpc/${name}`, {
+        method: 'POST',
+        headers: { apikey: env.SUPABASE_PUBLISHABLE_KEY, 'Content-Type': 'application/json' },
+        body,
+      });
+      if (response.status >= 500) continue;
+      if (!response.ok) return undefined;
+      return (await response.json()) as RpcResult;
+    } catch {
+      // retry
+    }
+  }
+  return undefined;
+}
+
+/** The outcome for a refused address, or undefined when the RPC said ok. */
+function refusal(result: RpcResult | undefined): Outcome | undefined {
+  if (!result) return 'store_failed';
+  if (result.ok) return undefined;
+  const reason = result.reason;
+  return reason === 'unknown_address' || reason === 'not_advanced' || reason === 'rate_limited'
+    ? reason
+    : 'store_failed';
+}
+
 async function store(
   env: Env,
   token: string,
   event: EmailEvent,
   fetchFn: typeof fetch,
 ): Promise<Outcome> {
-  const body = JSON.stringify({
-    p_secret: env.EMAIL_INGEST_SECRET,
-    p_token: token,
-    p_event: event,
-  });
-  // One retry for a network blip or a 5xx; then the event is dropped.
-  for (let attempt = 0; attempt < 2; attempt++) {
-    try {
-      const response = await fetchFn(`${env.SUPABASE_URL}/rest/v1/rpc/ingest_email_event`, {
-        method: 'POST',
-        headers: { apikey: env.SUPABASE_PUBLISHABLE_KEY, 'Content-Type': 'application/json' },
-        body,
-      });
-      if (response.status >= 500) continue;
-      if (!response.ok) return 'store_failed';
-      const result = (await response.json()) as { ok?: boolean; stored?: boolean; reason?: string };
-      if (result.ok) return result.stored ? 'stored' : 'duplicate';
-      const reason = result.reason;
-      return reason === 'unknown_address' || reason === 'not_advanced' || reason === 'rate_limited'
-        ? reason
-        : 'store_failed';
-    } catch {
-      // retry
-    }
-  }
-  return 'store_failed';
+  const result = await rpc(env, 'ingest_email_event', { p_token: token, p_event: event }, fetchFn);
+  return refusal(result) ?? (result?.stored ? 'stored' : 'duplicate');
 }
 
 export async function sha256Hex(text: string): Promise<string> {
@@ -126,6 +144,10 @@ export async function handleEmail(
   const token = tokenFrom(message.to);
   if (!token) return 'invalid_address';
   if (message.rawSize > MAX_RAW_BYTES) return 'too_large';
+  // Ask first, so mail to an unknown, paused or rate-limited address is
+  // never parsed or analysed. Ingest still checks everything itself.
+  const refused = refusal(await rpc(env, 'email_inbox_check', { p_token: token }, fetchFn));
+  if (refused) return refused;
 
   let email: Email;
   try {
@@ -134,9 +156,8 @@ export async function handleEmail(
     return 'unparseable';
   }
   const input = toEmailInput(email, now);
-  const event = analyzeEmail(input);
+  const { event, skeleton } = analyzeEmailWithSkeleton(input);
   // Shared learning (ADR-0014 §6): only a one-way fingerprint of the template.
-  const skeleton = emailSkeleton(input);
   if (skeleton) event.template = await sha256Hex(skeleton);
   return store(env, token, event, fetchFn);
 }

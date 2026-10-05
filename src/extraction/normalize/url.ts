@@ -47,7 +47,12 @@ export function canonicalizeUrl(href: string): string {
   for (const [name, value] of kept) url.searchParams.append(name, value);
 
   if (!/^#!?\//.test(url.hash)) url.hash = '';
-  if (url.pathname.length > 1) url.pathname = url.pathname.replace(/\/+$/, '');
+  if (url.pathname.length > 1) {
+    // A loop, not /\/+$/: that regex is quadratic on long runs of slashes.
+    let end = url.pathname.length;
+    while (end > 0 && url.pathname[end - 1] === '/') end--;
+    url.pathname = url.pathname.slice(0, end);
+  }
 
   return url.toString();
 }
