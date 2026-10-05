@@ -6,10 +6,12 @@ into the roadmap or changelog. Last reviewed 5 October 2026.
 
 ## Owner
 
-- [ ] **Chrome Web Store, v0.4.1 in review:** paste the data disclosures
-      from the release repo's `store/listing.md` ("Collected") into the
-      dashboard's **Privacy** tab, if not done yet
-      ([launch.md](guides/launch.md#v041-in-review-to-do)).
+- [ ] **Deploy the Edge Functions for v0.4.2** (urgent). The command and
+      details are in the private security notes (see Security below).
+- [ ] **Chrome Web Store, v0.4.2 in review** (submitted 5 October, security
+      fixes; 0.4.1 is published). Check the **Privacy** tab still has the
+      data disclosures from the release repo's `store/listing.md`
+      ("Collected") ([launch.md](guides/launch.md#v041-in-review-to-do)).
 - [ ] **Beta:** send the unlisted store link to 10–20 testers; ask for honest
       Chrome Web Store reviews, and whether they're happy to be quoted on
       the homepage ([launch.md](guides/launch.md#6-beta-owner-with-us)).
@@ -40,12 +42,10 @@ into the roadmap or changelog. Last reviewed 5 October 2026.
 
 ## Ours
 
-- [ ] **When Google approves 0.4.1:** move the three fixed issues off
+- [ ] **0.4.1 is approved:** move the three fixed issues off
       `/known-issues/`, set "Current version" to 0.4.1 and the date
-      ([launch.md](guides/launch.md#v041-in-review-to-do)).
-- [ ] **Then release v0.4.2** (`npm run release -- patch`): the account
-      dialog shows complimentary plans as "complimentary" instead of
-      "Renews on 31 Dec 9999" (on `dev` since 50bc3d8).
+      ([launch.md](guides/launch.md#v041-in-review-to-do)). When 0.4.2 is
+      approved, set it to 0.4.2.
 - [ ] **After Meheraj signs in:** grant complimentary Advanced with reason
       `team` ([backend.md](guides/backend.md#complimentary-access-adr-0025)).
 - [ ] **By 4 January 2027:** re-check the facts on `/compare/teal/` and
@@ -53,6 +53,21 @@ into the roadmap or changelog. Last reviewed 5 October 2026.
       ([website.md](guides/website.md#search)).
 - [ ] **Beta quotes:** add real, permitted quotes to the homepage proof
       section as they arrive ([website.md](guides/website.md#rules)).
+
+## Security
+
+The repo is public, so open security issues are tracked privately, in the
+git-ignored `CLAUDE-SECURITY-20261005-025920/OPEN-SECURITY-ISSUES.md` on the
+owner's machine (from the scan of `supabase/` and `infra/`, 5 October 2026).
+Don't put exploit details in commits, issues or PRs until they're fixed.
+
+- [ ] **Work through the private security list**: one owner check and about
+      ten open items for us (billing, trials, shared email learning, the
+      email Worker).
+- [ ] **Scan the rest:** only `supabase/` and `infra/` were scanned. Next,
+      scan the extension (`src/`, about 220 files) and `site/assets`.
+- [ ] **UX:** the "Help improve automatic updates" switch still shows to
+      trial users, whose votes no longer count.
 
 ## Later (not urgent)
 
