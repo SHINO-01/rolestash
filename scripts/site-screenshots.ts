@@ -188,7 +188,8 @@ async function main() {
           ];
         }),
       );
-      await chrome.storage.local.set(entries);
+      // The "Pin Rolestash" tip is for real installs, not the website.
+      await chrome.storage.local.set({ ...entries, 'tips:pinDismissed': true });
     }, JOBS);
 
     const shots: { name: string; viewport: { width: number; height: number }; widths: number[] }[] =
