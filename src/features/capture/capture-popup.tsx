@@ -132,7 +132,7 @@ export function CapturePopup() {
       </header>
       <Greeting
         firstName={accountState?.firstName}
-        className="text-muted border-line border-b px-4 py-2 text-[13px]"
+        className="text-muted border-line block border-b px-4 py-2 text-[13px]"
       />
 
       <main className="flex-1 scrollbar-thin overflow-y-auto p-4">

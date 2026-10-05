@@ -15,6 +15,12 @@ All notable changes to this project are documented here. The format follows
   months or US$99 a year, in your currency, with the 14-day free trial.
 - **Canadian prices read as "$16.99 CAD".**
 
+### Fixed
+
+- **The board's greeting is never cut short:** it now has a row of its own
+  above the board, next to a short summary of your search, and the header
+  keeps only the buttons.
+
 ## [0.4.3] — 2026-10-05
 
 ### Security

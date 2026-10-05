@@ -293,12 +293,7 @@ export function BoardPage() {
             <Kbd>/</Kbd>
           </span>
         </div>
-        <Greeting
-          firstName={accountState?.firstName}
-          className="text-muted hidden min-w-0 truncate text-sm 2xl:block"
-        />
         <div className="flex-1" />
-        <BoardStats jobs={onBoard} stages={settings.stages} />
         {unsortedCount > 0 ? (
           <Button
             variant="ghost"
@@ -309,30 +304,13 @@ export function BoardPage() {
           </Button>
         ) : null}
         <Button
-          variant={selecting ? 'secondary' : 'ghost'}
-          icon={<ListChecks className="size-4" />}
-          aria-pressed={selecting}
-          aria-label={selecting ? 'Done selecting' : 'Select'}
-          title={selecting ? 'Done selecting' : 'Select several jobs'}
-          onClick={() => {
-            if (!bulkAllowed) {
-              pitchSelect();
-              return;
-            }
-            if (selecting) clearSelection();
-            else setSelecting(true);
-          }}
-        >
-          <span className="hidden 2xl:inline">{selecting ? 'Done' : 'Select'}</span>
-        </Button>
-        <Button
           variant="ghost"
           icon={<BarChart3 className="size-4" />}
           onClick={() => setDialog('insights')}
           aria-label="Insights"
           title="Insights"
         >
-          <span className="hidden 2xl:inline">Insights</span>
+          <span className="hidden lg:inline">Insights</span>
         </Button>
         <Button
           variant="ghost"
@@ -341,7 +319,7 @@ export function BoardPage() {
           aria-label="History"
           title="History"
         >
-          <span className="hidden 2xl:inline">History</span>
+          <span className="hidden lg:inline">History</span>
         </Button>
         <Button
           variant="primary"
@@ -470,6 +448,37 @@ export function BoardPage() {
         />
       </header>
 
+      {/* The greeting has a row of its own, so it's never cut short (it was squeezed into the header). */}
+      {jobs.length > 0 ? (
+        <div className="flex min-h-11 flex-wrap items-center gap-x-4 gap-y-1 px-6 pb-1">
+          <h1 className="text-ink text-lg font-semibold tracking-tight">
+            {accountState?.firstName ? (
+              <Greeting firstName={accountState.firstName} />
+            ) : (
+              'Your board'
+            )}
+          </h1>
+          <BoardStats jobs={onBoard} stages={settings.stages} />
+          <div className="flex-1" />
+          <Button
+            size="sm"
+            variant={selecting ? 'secondary' : 'ghost'}
+            icon={<ListChecks className="size-4" />}
+            aria-pressed={selecting}
+            title={selecting ? 'Done selecting' : 'Select several jobs'}
+            onClick={() => {
+              if (!bulkAllowed) {
+                pitchSelect();
+                return;
+              }
+              if (selecting) clearSelection();
+              else setSelecting(true);
+            }}
+          >
+            {selecting ? 'Done' : 'Select'}
+          </Button>
+        </div>
+      ) : null}
       <PinTip />
       {accountState ? (
         <PlanBanner state={accountState} onOpenAccount={() => setDialog('account')} />

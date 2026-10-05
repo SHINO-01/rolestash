@@ -6,5 +6,5 @@ import { greetingFor } from '@/domain/feedback';
  */
 export function Greeting({ firstName, className }: { firstName?: string; className?: string }) {
   if (!firstName) return null;
-  return <p className={className}>{greetingFor(firstName, new Date())}</p>;
+  return <span className={className}>{greetingFor(firstName, new Date())}</span>;
 }

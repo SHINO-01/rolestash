@@ -6,19 +6,22 @@ import { computeStats } from './stats';
 export function BoardStats({ jobs, stages }: { jobs: readonly Job[]; stages: readonly Stage[] }) {
   const stats = useMemo(() => computeStats(jobs, stages), [jobs, stages]);
   const items = [
-    ['Active', stats.active],
-    ['Applied this week', stats.appliedThisWeek],
-    ['Interviewing', stats.interviewing],
-    ['Offers', stats.offers],
+    ['active', stats.active],
+    ['applied this week', stats.appliedThisWeek],
+    ['interviewing', stats.interviewing],
+    [stats.offers === 1 ? 'offer' : 'offers', stats.offers],
   ] as const;
+  // A quiet summary under the greeting; zeros other than "active" are left out.
   return (
-    <dl className="mr-2 hidden items-center gap-5 whitespace-nowrap xl:flex">
-      {items.map(([label, value]) => (
-        <div key={label} className="flex items-baseline gap-1.5">
-          <dd className="text-sm font-semibold tabular-nums">{value}</dd>
-          <dt className="text-subtle text-xs">{label}</dt>
-        </div>
-      ))}
+    <dl className="text-muted flex flex-wrap items-baseline gap-x-3 text-sm">
+      {items
+        .filter(([label, value]) => label === 'active' || value > 0)
+        .map(([label, value]) => (
+          <div key={label} className="flex items-baseline gap-1">
+            <dd className="text-ink font-medium tabular-nums">{value}</dd>
+            <dt>{label}</dt>
+          </div>
+        ))}
     </dl>
   );
 }
