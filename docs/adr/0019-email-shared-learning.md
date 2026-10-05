@@ -51,6 +51,8 @@ value, voter)`.
   - Only Advanced accounts with "Help improve automatic updates" on may
     vote. The switch is on by default, stored on the inbox, and turning it
     off withdraws that account's votes.
+  - The free Advanced trial doesn't vote: it needs no card, so sign-ups
+    are cheap (`20261013120000_knowledge_votes_paid_only.sql`).
   - Deleting an account deletes its votes, through a trigger on
     `auth.users`.
   - The owner revokes an entry by adding it to

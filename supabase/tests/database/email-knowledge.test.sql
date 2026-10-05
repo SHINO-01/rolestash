@@ -1,7 +1,7 @@
 -- Run with: npm run test:db  (needs Docker; see docs/guides/backend.md)
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(24);
+select plan(26);
 
 create function pg_temp.act_as(uid uuid) returns void language sql as $$
   select set_config('role', 'authenticated', true),
@@ -17,7 +17,8 @@ create function pg_temp.uid(n int) returns uuid language sql as $$
   select ('00000000-0000-4000-8000-' || lpad(n::text, 12, '0'))::uuid;
 $$;
 
--- Five Advanced users and one Pro user; user 1 has an inbox for ingest tests.
+-- Five Advanced users, one Pro user and one on the sign-up Advanced trial
+-- (user 7); user 1 has an inbox for ingest tests.
 insert into auth.users (id, email, aud, role)
   select pg_temp.uid(i), 'u' || i || '@example.com', 'authenticated', 'authenticated'
   from generate_series(1, 6) i;
@@ -25,6 +26,8 @@ insert into auth.users (id, email, aud, role)
 update public.entitlements set tier = 'pro';
 update public.entitlements set tier = 'advanced', status = 'active', current_period_end = now() + interval '20 days'
   where user_id in (select pg_temp.uid(i) from generate_series(1, 5) i);
+insert into auth.users (id, email, aud, role)
+  values (pg_temp.uid(7), 'u7@example.com', 'authenticated', 'authenticated');
 insert into public.email_inboxes (user_id, address_token)
   values (pg_temp.uid(1), 'abcdefghijkmnpqrstuv');
 insert into private.email_ingest_secret (sha256)
@@ -46,8 +49,11 @@ end;
 $$;
 
 -- Voting rules ------------------------------------------------------------------------
+select is(private.plan_tier_of(pg_temp.uid(7)), 'advanced', 'a trial counts as Advanced for its own features');
 select is(pg_temp.vote(6, 'template', repeat('a', 64), 'received'),
   '{"ok": false, "reason": "plan_required"}'::jsonb, 'only Advanced accounts vote');
+select is(pg_temp.vote(7, 'template', repeat('a', 64), 'received'),
+  '{"ok": false, "reason": "plan_required"}'::jsonb, 'an Advanced trial doesn''t vote: only paying accounts do');
 select is(pg_temp.vote(1, 'template', repeat('a', 64), 'received'),
   '{"ok": true, "recorded": 1}'::jsonb, 'Advanced votes are recorded');
 select throws_ok($$select pg_temp.vote(1, 'template', 'not-a-hash', 'received')$$, '23514', null,

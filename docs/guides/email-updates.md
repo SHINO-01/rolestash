@@ -258,8 +258,9 @@ One user's confirmation teaches every user, with nothing personal shared:
   | "Something else…" on a suggestion                       | template → the chosen intent (or `other`)                       |
   | File an unsorted update ("File here" or "Add this job") | template → intent, and domain → `normalizeCompany(job.company)` |
 
-  Mail platforms and recruiting systems never get domain votes. Votes are
-  best effort: a failure never blocks the user.
+  Mail platforms and recruiting systems never get domain votes. Only paying
+  Advanced accounts vote; on the free trial the server answers
+  `plan_required`. Votes are best effort: a failure never blocks the user.
 
 - **Promotion:** an entry decides at 3+ distinct voters with at least 3× the
   runner-up, and only suggests when contested. `ingest_email_event` applies
