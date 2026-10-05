@@ -29,13 +29,15 @@ export function parseCheckoutIntent(value: string | null): CheckoutIntent | null
  */
 export function takeCheckoutIntent(): CheckoutIntent | null {
   const url = new URL(location.href);
-  const fromUrl = parseCheckoutIntent(url.searchParams.get('checkout'));
+  const raw = url.searchParams.get('checkout');
+  const fromUrl = parseCheckoutIntent(raw);
   if (url.searchParams.has('checkout')) {
     url.searchParams.delete('checkout');
     history.replaceState(history.state, '', url);
   }
   try {
-    if (fromUrl) sessionStorage.setItem(KEY, `${fromUrl.tier}-${fromUrl.interval}`);
+    // Only a plan and interval (e.g. "pro-month"), and only once it parses.
+    if (fromUrl && raw) sessionStorage.setItem(KEY, raw);
     return parseCheckoutIntent(sessionStorage.getItem(KEY));
   } catch {
     return fromUrl;
