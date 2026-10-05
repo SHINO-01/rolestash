@@ -52,6 +52,7 @@ Optional fields added without a migration:
 - `contacts`, `rounds`, `documents`: per-job records (Pro and up).
 - `interview`, `suggestion`, and the `email_update` activity type (with
   `email`, `setInterview`, `undone`): email status updates (ADR-0014).
+- `suggestion.templateTicket`: the server's vote ticket (ADR-0028).
 - `settings.closingAlerts`: absent means on.
 - `stage.archived`: custom columns. Archived columns are hidden from the
   board and pickers, but kept so jobs and History still name them.

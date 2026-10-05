@@ -173,6 +173,8 @@ export interface KnowledgeVote {
   kind: 'template' | 'domain';
   key: string;
   value: string;
+  /** The server's proof that this account received the email (ADR-0028). */
+  ticket: string;
 }
 
 export interface EmailEventRow {

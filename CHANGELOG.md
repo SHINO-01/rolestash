@@ -27,6 +27,10 @@ All notable changes to this project are documented here. The format follows
   instead of at the end of the period that was refunded.
 - **Nothing is shared during the free trial:** "Help improve automatic
   updates" now only appears once you subscribe, and a trial sends nothing.
+- **Shared learning is harder to game:** an account can only teach Rolestash
+  about emails it actually received, it now takes five subscribers to agree,
+  and shared learning alone never marks a job rejected or as an offer; it
+  suggests instead.
 
 ## [0.4.2] — 2026-10-05
 

@@ -16,6 +16,7 @@ import {
   matchEvent,
   normalizeCompany,
   targetStage,
+  VOTE_TICKET,
   type EmailEvent,
 } from '@/email';
 import type { JobRepository } from '@/storage/job-repository';
@@ -68,6 +69,9 @@ const UnsortedSchema = z.object({
   /** Template fingerprint and sender domain, for shared learning. */
   template: z.string().optional(),
   senderDomain: z.string().optional(),
+  /** The server's vote tickets for them (ADR-0028). */
+  templateTicket: z.string().optional(),
+  domainTicket: z.string().optional(),
   /** Likely jobs, best first. */
   candidates: z.array(z.string()),
 });
@@ -140,22 +144,29 @@ function interviewOf(interview: EmailEvent['interview']): JobInterview | undefin
   return rest.start || rest.meetingUrl || rest.schedulingUrl || rest.location ? rest : undefined;
 }
 
+/** A vote needs the server's ticket for the email (ADR-0028); without one, none. */
 function templateVote(
   template: string | undefined,
   intent: EmailUpdateIntent | 'other',
+  ticket: string | undefined,
 ): KnowledgeVote[] {
-  return template && /^[0-9a-f]{64}$/.test(template)
-    ? [{ kind: 'template', key: template, value: intent }]
+  return template && /^[0-9a-f]{64}$/.test(template) && ticket && VOTE_TICKET.test(ticket)
+    ? [{ kind: 'template', key: template, value: intent, ticket }]
     : [];
 }
 
 /** Sender domain → company, never for mail platforms or recruiting systems. */
-function domainVote(domain: string | undefined, company: string): KnowledgeVote[] {
+function domainVote(
+  domain: string | undefined,
+  company: string,
+  ticket: string | undefined,
+): KnowledgeVote[] {
   const key = domain?.toLowerCase();
   const value = normalizeCompany(company);
-  if (!key || isPlatformDomain(key) || !/^[a-z0-9]+( [a-z0-9]+)*$/.test(value)) return [];
+  if (!key || !ticket || !VOTE_TICKET.test(ticket)) return [];
+  if (isPlatformDomain(key) || !/^[a-z0-9]+( [a-z0-9]+)*$/.test(value)) return [];
   if (value.length < 2 || value.length > 100) return [];
-  return [{ kind: 'domain', key, value }];
+  return [{ kind: 'domain', key, value, ticket }];
 }
 
 export class EmailUpdateService {
@@ -294,6 +305,8 @@ export class EmailUpdateService {
           ...(event.thread.messageId ? { messageId: event.thread.messageId } : {}),
           ...(event.template ? { template: event.template } : {}),
           ...(event.sender.domain ? { senderDomain: event.sender.domain } : {}),
+          ...(event.tickets?.template ? { templateTicket: event.tickets.template } : {}),
+          ...(event.tickets?.domain ? { domainTicket: event.tickets.domain } : {}),
           candidates: match.candidates.map((c) => c.jobId),
         },
       ].slice(-MAX_UNSORTED);
@@ -307,6 +320,7 @@ export class EmailUpdateService {
       intent === 'interview' ? interviewOf(event.interview) : undefined,
       event.action === 'apply',
       event.template,
+      event.tickets?.template,
     );
     return changed ? (event.action === 'apply' ? 'applied' : 'suggested') : undefined;
   }
@@ -318,6 +332,7 @@ export class EmailUpdateService {
     interview: JobInterview | undefined,
     apply: boolean,
     template?: string,
+    templateTicket?: string,
   ): Promise<boolean> {
     const { stages } = await this.settings.get();
     const toStageId = targetStage(email.intent, job, stages);
@@ -332,6 +347,7 @@ export class EmailUpdateService {
       await this.jobService.suggestEmailUpdate(job.id, {
         ...update,
         ...(template ? { template } : {}),
+        ...(template && templateTicket ? { templateTicket } : {}),
       });
     return true;
   }
@@ -363,8 +379,8 @@ export class EmailUpdateService {
       true,
     );
     await this.vote([
-      ...templateVote(item.template, item.intent),
-      ...domainVote(item.senderDomain, job.company),
+      ...templateVote(item.template, item.intent, item.templateTicket),
+      ...domainVote(item.senderDomain, job.company, item.domainTicket),
     ]);
     return (await this.jobs.get(jobId)) ?? job;
   }
@@ -407,7 +423,10 @@ export class EmailUpdateService {
   async acceptSuggestion(jobId: string): Promise<Job> {
     const suggestion = (await this.jobs.get(jobId))?.suggestion;
     const job = await this.jobService.acceptSuggestion(jobId);
-    if (suggestion) await this.vote(templateVote(suggestion.template, suggestion.email.intent));
+    if (suggestion)
+      await this.vote(
+        templateVote(suggestion.template, suggestion.email.intent, suggestion.templateTicket),
+      );
     return job;
   }
 
@@ -431,7 +450,7 @@ export class EmailUpdateService {
         email: { ...suggestion.email, intent },
       });
     }
-    await this.vote(templateVote(suggestion.template, intent));
+    await this.vote(templateVote(suggestion.template, intent, suggestion.templateTicket));
     return next;
   }
 

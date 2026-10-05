@@ -1,6 +1,6 @@
 # ADR-0019: Shared learning for email updates: template fingerprints and domain votes, applied in the database
 
-- **Status:** Accepted
+- **Status:** Accepted; hardened by [ADR-0028](0028-harden-shared-learning.md) (vote tickets, 5 voters, no big moves alone)
 - **Date:** 2026-10-02
 
 ## Context
