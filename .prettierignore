@@ -9,3 +9,6 @@ tests/fixtures/**/*.html
 docs/reference/supported-sites.md
 supabase/.temp
 site/board
+
+# Claude Security scan reports (git-ignored)
+CLAUDE-SECURITY-*/

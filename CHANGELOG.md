@@ -13,6 +13,14 @@ All notable changes to this project are documented here. The format follows
   tracking job applications with a free spreadsheet template, and
   side-by-side comparisons with Teal and Huntr.
 
+### Security
+
+- **Shared email learning only counts paying accounts:** accounts on the free
+  trial no longer vote on how other people's forwarded emails are read.
+- **Safer billing:** a subscription is only linked to your account when its
+  billing customer is already yours or carries your email.
+- **Email updates stay fast** however a forwarded email is built.
+
 ## [0.4.1] — 2026-10-04
 
 ### Added
