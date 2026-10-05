@@ -2,7 +2,7 @@
 
 Everything still open, in one place, with who does it. Details live in the
 linked guides; tick items here when they're done and move finished work
-into the roadmap or changelog. Last reviewed 5 October 2026.
+into the roadmap or changelog. Last reviewed 6 October 2026.
 
 ## Owner
 
@@ -14,6 +14,18 @@ into the roadmap or changelog. Last reviewed 5 October 2026.
   4. `npx tsx scripts/paddle-migrate-legacy.ts production` (dry run). Anyone
      listed bought at the old price; email them 30 days' notice (the terms
      promise it), then run it with `--apply`.
+- [ ] **Ship v0.4.4** (one Pro plan, the floating widget; ADR-0029, ADR-0030),
+      after the steps above:
+  1. In rolestash-extension, merge the `release-0.4.4-widget` PR (policy:
+     job-site host permissions and the widget's content script; listing;
+     screenshots). Its Integration check passes once the source tag v0.4.4
+     exists.
+  2. Run _Release_ there. The upload asks for new permissions, so expect a
+     longer Web Store review.
+  3. Copy `store/listing.md` into the dashboard by hand (description,
+     permission justifications, screenshot 4 is now the widget).
+  4. After it's live: existing users see Chrome's "new permissions"
+     prompt once and approve it to keep Rolestash on.
 - [ ] **Chrome Web Store:** v0.4.3 (security fixes) is published, 5
       October. Check the **Privacy** tab still has the data disclosures from
       the release repo's `store/listing.md` ("Collected")
