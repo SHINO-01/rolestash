@@ -2,7 +2,7 @@ import { browser } from 'wxt/browser';
 import { flashBadge } from '@/platform/badge';
 import { ChromeNotifier } from '@/platform/notifications';
 import { getServices } from '@/platform/services';
-import { openSidePanel, setIconOpensPanel } from '@/platform/side-panel';
+import { toggleWidget } from '@/platform/widget';
 import { openBoard } from '@/platform/tabs';
 import { AutofillBlockedError } from '@/services/autofill-service';
 import { DuplicateJobError, JobLimitError } from '@/services/job-service';
@@ -13,10 +13,12 @@ import { WEB_HANDOFF_MESSAGE, type WebHandoffReply } from '@/services/web-handof
  * Background service worker. Deliberately thin: it wires browser events to
  * services and holds no state (MV3 workers are killed when idle).
  *
+ *  - Toolbar icon / Alt+J          → the floating widget on this page (ADR-0030);
+ *                                   the board where pages can't have it
  *  - Right-click "Track this job"   → capture + save straight to the board
  *  - Alt+Shift+J                    → same
  *  - Right-click "Fill this application" → fill the form from the profile (Pro; ADR-0020)
- *  - Right-click the toolbar icon → "Open side panel" (ADR-0021) or "Open board"
+ *  - Right-click the toolbar icon → "Open board"
  *  - Every 15 minutes             → follow-up reminders, closing-soon digest (ADR-0015),
  *                                   email updates (ADR-0014) and sync (ADR-0016)
  *  - The web board asks to sign in → a single-use token for this account (ADR-0017)
@@ -25,7 +27,6 @@ import { WEB_HANDOFF_MESSAGE, type WebHandoffReply } from '@/services/web-handof
 const MENU_TRACK = 'rolestash.track';
 const MENU_OPEN_BOARD = 'rolestash.openBoard';
 const MENU_AUTOFILL = 'rolestash.autofill';
-const MENU_SIDE_PANEL = 'rolestash.sidePanel';
 const COMMAND_TRACK = 'track-current-tab';
 const ALARM_REMINDERS = 'rolestash.reminders';
 /** Where the web board may message from (also limited by externally_connectable). */
@@ -73,18 +74,13 @@ async function syncAndEmail(): Promise<void> {
   await services.sync?.sync().catch(() => undefined);
 }
 
-/** Re-applies "the toolbar icon opens the side panel" from settings (ADR-0021). */
-async function applyIconSetting(): Promise<void> {
-  const services = getServices();
-  await services.ready;
-  const { iconOpensPanel } = await services.settings.get();
-  await setIconOpensPanel(iconOpensPanel === true).catch(() => undefined);
-}
-
 export default defineBackground(() => {
   browser.runtime.onStartup.addListener(() => {
     void ensureReminderAlarm();
-    void applyIconSetting();
+  });
+  browser.action.onClicked.addListener((tab) => {
+    if (tab.id === undefined) return;
+    void toggleWidget(tab.id).then((shown) => (shown ? undefined : openBoard()));
   });
   browser.alarms.onAlarm.addListener((alarm) => {
     if (alarm.name !== ALARM_REMINDERS) return;
@@ -111,7 +107,6 @@ export default defineBackground(() => {
   browser.runtime.onInstalled.addListener(() => {
     void getServices().ready;
     void ensureReminderAlarm();
-    void applyIconSetting();
     void browser.contextMenus.removeAll().then(() => {
       browser.contextMenus.create({
         id: MENU_TRACK,
@@ -124,11 +119,6 @@ export default defineBackground(() => {
         contexts: ['page', 'frame', 'editable'],
       });
       browser.contextMenus.create({
-        id: MENU_SIDE_PANEL,
-        title: 'Open side panel',
-        contexts: ['action'],
-      });
-      browser.contextMenus.create({
         id: MENU_OPEN_BOARD,
         title: 'Open Rolestash board',
         contexts: ['action'],
@@ -138,7 +128,6 @@ export default defineBackground(() => {
 
   browser.contextMenus.onClicked.addListener((info, tab) => {
     if (info.menuItemId === MENU_OPEN_BOARD) void openBoard();
-    else if (info.menuItemId === MENU_SIDE_PANEL) void openSidePanel(tab?.windowId);
     else if (info.menuItemId === MENU_AUTOFILL && tab?.id !== undefined) void autofill(tab.id);
     else if (info.menuItemId === MENU_TRACK && tab?.id !== undefined)
       void quickSave(tab.id, tab.url);
@@ -168,7 +157,7 @@ async function autofill(tabId: number): Promise<void> {
   }
 }
 
-/** One-gesture save with badge feedback; the popup is the path for reviewing first. */
+/** One-gesture save with badge feedback; the widget is the path for reviewing first. */
 async function quickSave(tabId: number, tabUrl: string | undefined): Promise<void> {
   const services = getServices();
   await services.ready;

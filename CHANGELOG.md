@@ -14,6 +14,18 @@ All notable changes to this project are documented here. The format follows
   across 5 devices including your phone. It's US$12 a month, US$30 every 3
   months or US$99 a year, in your currency, with the 14-day free trial.
 - **Canadian prices read as "$16.99 CAD".**
+- **Rolestash now floats on job sites:** on SEEK, LinkedIn, Indeed, Workday
+  and the other supported sites, a small Rolestash button sits at the edge
+  of the page. It opens a compact panel to save the job, fill the
+  application and mark it applied, without leaving the page. The toolbar
+  icon opens the same panel on any other site. You can hide the button on
+  a site from its menu.
+- **Chrome asks once to allow Rolestash on job sites,** so the button can
+  appear there. It reads a page only when you open the panel.
+
+### Removed
+
+- **The side panel and the popup:** the floating panel replaces both.
 
 ### Fixed
 

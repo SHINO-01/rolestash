@@ -161,16 +161,22 @@ const JOBS: Seed[] = [
   },
 ];
 
-/** A fictional careers page to show beside the side panel. */
-const CAREERS_PAGE = `<!doctype html><meta charset="utf-8"><style>
+/** A fictional careers page for the widget to read (served at CAREERS_URL). */
+const CAREERS_URL = 'https://boards.greenhouse.io/ironwoodgrid/jobs/4021';
+const CAREERS_PAGE = `<!doctype html><meta charset="utf-8"><title>Platform Engineer - Ironwood Grid</title>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"JobPosting","title":"Platform Engineer",
+"hiringOrganization":{"@type":"Organization","name":"Ironwood Grid"},"employmentType":"FULL_TIME",
+"jobLocation":{"@type":"Place","address":{"@type":"PostalAddress","addressLocality":"Perth","addressRegion":"WA","addressCountry":"AU"}},
+"baseSalary":{"@type":"MonetaryAmount","currency":"AUD","value":{"@type":"QuantitativeValue","minValue":140000,"maxValue":160000,"unitText":"YEAR"}},
+"description":"Help us build the systems that keep a renewable grid in balance. This is a hybrid role."}</script><style>
 body{margin:0;font:15px/1.5 system-ui,sans-serif;color:#1f2937;background:#f8fafc}
 header{background:#14532d;color:#fff;padding:18px 40px;font-weight:700;font-size:18px}
 main{padding:32px 40px;max-width:720px}h1{margin:0 0 4px;font-size:28px}
 .meta{color:#6b7280;margin-bottom:20px}label{display:block;font-weight:600;margin:14px 0 4px}
 input{width:100%;padding:9px 10px;border:1px solid #cbd5e1;border-radius:8px;font:inherit;box-sizing:border-box}
 button{margin-top:20px;background:#14532d;color:#fff;border:0;border-radius:8px;padding:10px 18px;font:inherit}
-</style><header>Kestrel Energy · Careers</header><main><h1>Software Engineer</h1>
-<div class="meta">Perth WA · Full-time · A$140K – 160K</div>
+</style><header>Ironwood Grid · Careers</header><main><h1>Platform Engineer</h1>
+<div class="meta">Perth WA · Hybrid · Full-time · A$140K – 160K</div>
 <p>Help us build the systems that keep a renewable grid in balance.</p>
 <label>First name</label><input value="Sam"><label>Last name</label><input value="Taylor">
 <label>Email</label><input value="sam.taylor@example.com"><label>Phone</label><input value="+61 400 123 456">
@@ -284,7 +290,7 @@ async function main() {
     await seed(first);
     // The "pin Rolestash" tip is for real installs, not the store.
     await first.evaluate(() => chrome.storage.local.set({ 'tips:pinDismissed': true }));
-    // A fictional autofill profile, so the side panel offers "Fill this application".
+    // A fictional autofill profile, so the widget offers "Fill this application".
     await first.evaluate(() =>
       chrome.storage.local.set({
         profile: {
@@ -317,22 +323,21 @@ async function main() {
     await save(page, '3-insights.png');
     await page.close();
 
-    // 4. The side panel beside a careers page: two captures, composed by Chromium.
-    const careers = await context.newPage();
-    await careers.setViewportSize({ width: 880, height: 800 });
-    await careers.setContent(CAREERS_PAGE);
-    const left = (await careers.screenshot()).toString('base64');
-    await careers.close();
-    const panel = await open(`chrome-extension://${id}/sidepanel.html`);
-    await panel.setViewportSize({ width: 400, height: 800 });
-    await panel.getByRole('button', { name: 'Today' }).waitFor();
-    const right = (await panel.screenshot()).toString('base64');
-    await panel.close();
+    // 4. The floating widget on a careers page (ADR-0030), served at a job-site address.
     page = await context.newPage();
-    await page.setContent(
-      `<body style="margin:0;display:flex;background:#e5e7eb"><img src="data:image/png;base64,${left}" width="880" height="800"><img src="data:image/png;base64,${right}" width="400" height="800" style="box-shadow:-1px 0 0 #d1d5db"></body>`,
+    await page.emulateMedia({ colorScheme: 'light', reducedMotion: 'reduce' });
+    await page.route(CAREERS_URL, (route) =>
+      route.fulfill({ contentType: 'text/html', body: CAREERS_PAGE }),
     );
-    await save(page, '4-side-panel.png');
+    await page.goto(CAREERS_URL);
+    // The launcher sits in a closed shadow root at the right edge (launcher.content.ts).
+    await page.waitForTimeout(800);
+    await page.mouse.click(VIEWPORT.width - 22, VIEWPORT.height - 112 - 22);
+    await page.waitForTimeout(1500);
+    const widget = page.frames().find((f) => f.url().endsWith('/widget.html'));
+    await widget?.getByText('Save job').waitFor();
+    await page.waitForTimeout(500);
+    await save(page, '4-widget.png');
     await page.close();
 
     // 5. The autofill profile, started from a résumé (from an empty profile).

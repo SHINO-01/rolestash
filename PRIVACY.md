@@ -9,10 +9,13 @@ Full policy: https://rolestash.com/privacy/
 
 ## What the extension reads
 
-- **The page you choose:** the content of a tab, only when you click the
-  Rolestash icon, use its right-click menu item or press its keyboard
-  shortcut on that tab. It does not track the sites you visit, and the side
-  panel has no access to pages.
+- **The page you choose:** the content of a tab, only when you open the
+  Rolestash widget (its button on a job site, or the Rolestash icon), use
+  its right-click menu item or press its keyboard shortcut on that tab.
+- **Job sites:** Rolestash has access to the job sites it supports (SEEK,
+  LinkedIn, Indeed, Workday and others) so it can show its button there. The
+  button reads nothing from the page and sends nothing anywhere until you
+  open it. Rolestash does not track the sites you visit.
 - **Pasted links (Pro):** when you paste a job link into _Add job_, Rolestash
   asks for access to that one site, then fetches that one page without your
   cookies. If the page needs JavaScript, it briefly opens the page in a

@@ -1,7 +1,7 @@
 # Debugging a bad capture
 
-1. **Reproduce in the popup.** Open the posting, click the icon, expand
-   **Extraction details**. For each field you'll see the strategy
+1. **Reproduce in the widget.** Open the posting, open the widget (its button
+   or the icon), then **⋯** → **Extraction details**. For each field you'll see the strategy
    (`json-ld`, `microdata`, `adapter:selector`, `adapter:title-pattern`,
    `adapter:url`, `adapter:custom`, `meta`, `heuristic`) and its confidence.
 2. **Read the table:**

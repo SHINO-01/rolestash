@@ -88,6 +88,7 @@ stay flat as the board grows. Results on 2026-10-03, CPU not slowed:
 
 Set `PLAYWRIGHT_CHROMIUM_PATH` to use a system Chromium instead of Playwright's download.
 
-Not covered by E2E: opening the real toolbar popup (Playwright can't click the
-toolbar). The popup's logic is covered by unit tests of `CaptureService`,
-`JobService` and `capture-draft`.
+Not covered by E2E: clicking the real toolbar icon (Playwright can't click the
+toolbar). The E2E tests send the same message the click sends
+(`rolestash:widget-toggle`), and open the widget from its button on fixture
+pages, which the `e2e` build treats as job sites.

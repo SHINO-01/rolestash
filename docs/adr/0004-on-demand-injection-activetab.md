@@ -1,6 +1,6 @@
 # ADR-0004: Inject the extractor on demand using `activeTab`
 
-- **Status:** Accepted
+- **Status:** Accepted; amended by ADR-0030 (the floating widget has host access to the supported job sites, and still reads a page only when it opens)
 - **Date:** 2026-09-29
 
 ## Context

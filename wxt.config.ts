@@ -1,6 +1,7 @@
 import tailwindcss from '@tailwindcss/vite';
 import { loadEnv } from 'vite';
 import { defineConfig } from 'wxt';
+import { JOB_SITE_MATCHES } from './src/extraction/adapters/job-sites';
 
 /**
  * WXT configuration. See docs/architecture/overview.md for how entrypoints map
@@ -22,6 +23,14 @@ export default defineConfig({
   vite: () => ({
     plugins: [tailwindcss()],
   }),
+  hooks: {
+    // E2E fixture pages are served locally; let the widget appear there too.
+    'build:manifestGenerated': (wxt, manifest) => {
+      if (wxt.config.mode !== 'e2e') return;
+      for (const script of manifest.content_scripts ?? [])
+        script.matches = [...(script.matches ?? []), 'http://localhost/*', 'http://127.0.0.1/*'];
+    },
+  },
   manifest: ({ mode }) => {
     // Accounts are on only when the build has backend settings (ADR-0011).
     const env = loadEnv(mode, process.cwd(), 'WXT_');
@@ -34,7 +43,7 @@ export default defineConfig({
         'Save any job posting to a Kanban board in one click. Local-first and no AI; accounts and sync are optional.',
       minimum_chrome_version: '116',
       permissions: [
-        // Read the current tab only after an explicit user gesture (popup, menu, shortcut).
+        // Read the current tab only after an explicit user gesture (toolbar icon, menu, shortcut).
         'activeTab',
         // Inject the extractor into that tab on demand.
         'scripting',
@@ -45,8 +54,6 @@ export default defineConfig({
         'contextMenus',
         // Wakes the worker every 15 minutes to check follow-up reminders (ADR-0015). No install warning.
         'alarms',
-        // The docked side panel for one-click access (ADR-0021). No install warning, no page access.
-        'sidePanel',
         // Google sign-in via chrome.identity.launchWebAuthFlow; accounts builds only.
         ...(accounts ? ['identity'] : []),
       ],
@@ -69,11 +76,21 @@ export default defineConfig({
       // Capture from a pasted link (Pro): access to that one site, asked for in the click and
       // given back afterwards. Optional, so installs show no warning.
       optional_host_permissions: ['https://*/*', 'http://*/*'],
-      ...(mode === 'e2e' ? { host_permissions: ['<all_urls>'] } : {}),
+      // The floating widget appears by itself on the supported job sites (ADR-0030):
+      // "Read and change your data on" those sites, listed at install. Anywhere else
+      // it opens only from the toolbar icon (activeTab).
+      host_permissions: mode === 'e2e' ? ['<all_urls>'] : [...JOB_SITE_MATCHES],
+      // The widget's panel is this page in an iframe on the job page. The icon is its
+      // launcher's image. Any page may load them; they hold no data of their own.
+      web_accessible_resources: [
+        { resources: ['widget.html', 'icon/48.png'], matches: ['<all_urls>'] },
+      ],
+      // No popup: the icon opens the widget on the page (background.ts).
+      action: { default_title: 'Rolestash: save this job' },
       commands: {
         _execute_action: {
           suggested_key: { default: 'Alt+J' },
-          description: 'Open Rolestash on the current page',
+          description: 'Open Rolestash on this page',
         },
         'track-current-tab': {
           suggested_key: { default: 'Alt+Shift+J' },

@@ -1,15 +1,15 @@
 import { Pin, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { isPinned } from '@/platform/side-panel';
+import { isPinned } from '@/platform/widget';
 import { IconButton } from '@/ui/components/button';
 import { useServices } from '@/ui/hooks/services';
 
 const DISMISSED_KEY = 'tips:pinDismissed';
 
 /**
- * "Pin Rolestash" until the icon is on the toolbar (ADR-0021): one click to
- * save a job or open the side panel, instead of digging through the
- * extensions menu. Hidden once pinned or dismissed.
+ * "Pin Rolestash" until the icon is on the toolbar: one click opens the
+ * widget on any careers page, not just the job sites where it appears by
+ * itself (ADR-0030). Hidden once pinned or dismissed.
  */
 export function PinTip() {
   const { store } = useServices();
@@ -33,8 +33,8 @@ export function PinTip() {
     >
       <Pin className="size-4 shrink-0" />
       <p className="flex-1">
-        <b className="font-semibold">Pin Rolestash for one-click access.</b> Click the puzzle-piece
-        icon in Chrome’s toolbar, then the pin next to Rolestash.
+        <b className="font-semibold">Pin Rolestash to save jobs from any site.</b> Click the
+        puzzle-piece icon in Chrome’s toolbar, then the pin next to Rolestash.
       </p>
       <IconButton
         size="sm"

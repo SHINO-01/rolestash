@@ -59,13 +59,13 @@ _Load unpacked_ → select `.output/chrome-mv3`.
 
 ```
 src/
-  entrypoints/   Extension surfaces: background worker, popup, board page, injected extractor
+  entrypoints/   Extension surfaces: background worker, widget (launcher + panel), board page, injected extractor
   domain/        Pure business model (Job, Stage, ranking, state transitions) — zod schemas
   extraction/    Pure extraction engine: strategies, normalisers, 50 site adapters
   storage/       Repositories over a KeyValueStore port, migrations, backup format
   services/      Application use cases (JobService, CaptureService) + composition root
   platform/      The only code that touches chrome.* APIs (adapters for the ports)
-  features/      UI features: board/ (Kanban, drawer, dialogs), capture/ (popup)
+  features/      UI features: board/ (Kanban, drawer, dialogs), capture/ (the widget)
   ui/            Design system: tokens, primitives, hooks
 tests/
   unit/          Vitest (happy-dom) — domain, extraction, storage, services, board logic

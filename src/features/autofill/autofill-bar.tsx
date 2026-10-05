@@ -1,6 +1,7 @@
 import { CheckCircle2, FileUp, Wand2, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { openBoard } from '@/platform/tabs';
+import { closeWidget } from '@/features/capture/widget-frame';
 import {
   AutofillBlockedError,
   type AutofillBlock,
@@ -21,7 +22,7 @@ const LEFT_FOR_YOU = {
 const TIP_DISMISSED_KEY = 'tips:autofillDismissed';
 
 /**
- * "Fill this application" in the popup and side panel (ADR-0020): basic
+ * "Fill this application" in the widget (ADR-0020, ADR-0030): basic
  * details on every plan, everything on Pro. Fills the
  * current tab's form from the profile and says what's left to do.
  */
@@ -61,7 +62,7 @@ export function AutofillBar({ tabId }: { tabId: number | undefined }) {
           <button
             type="button"
             className="text-accent font-medium hover:underline"
-            onClick={() => void openBoard({ profile: true }).then(() => window.close())}
+            onClick={() => void openBoard({ profile: true }).then(closeWidget)}
           >
             Set up autofill
           </button>

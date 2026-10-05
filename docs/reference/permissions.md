@@ -5,23 +5,34 @@ usually an ADR) because it changes the install prompt and store review.
 
 | Permission         | Why                                                                                                                | Install warning       |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------ | --------------------- |
-| `activeTab`        | Read the job page the user is looking at, only after they click the icon / menu / shortcut                         | none                  |
+| `activeTab`        | Open the widget on, and read, a page outside the job sites, only after a click on the icon / menu / shortcut       | none                  |
 | `scripting`        | Inject the bundled extractor, or the autofill filler (Pro and up; ADR-0020), into that tab                         | none (with activeTab) |
 | `storage`          | Save jobs and settings locally                                                                                     | none                  |
 | `unlimitedStorage` | Description snapshots can exceed the 10 MB default quota over time                                                 | none                  |
 | `contextMenus`     | "Track this job" and "Fill this application" on the page; "Open board" on the toolbar icon                         | none                  |
-| `sidePanel`        | The docked side panel for one-click access (ADR-0021); no access to pages                                          | none                  |
 | `alarms`           | Wakes the worker every 15 minutes to check follow-up reminders and the closing digest (ADR-0015)                   | none                  |
 | `identity`         | **Accounts builds only** (ADR-0011): Google sign-in via `launchWebAuthFlow`. Absent from builds without a backend. | none                  |
 
+Host permissions (ADR-0030):
+
+| Permission                                     | Why                                                                                                                                                                              | Install warning                                     |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| `host_permissions` for the supported job sites | The floating widget's button appears on these sites by itself, and opening it reads the posting. The list is `src/extraction/adapters/job-sites.ts`, tested against the adapters | "Read and change your data on" those sites (a list) |
+| Content script `launcher` on the same sites    | Draws the button and the panel's frame. It reads nothing from the page and sends nothing until the widget opens                                                                  | (same as above)                                     |
+
 Not requested, on purpose:
 
-- **Host permissions / `<all_urls>`**: would show "read and change all your data
-  on all websites". Only the `e2e` build mode adds it, for Playwright.
+- **`<all_urls>`**: would show "read and change all your data on all
+  websites". Elsewhere the widget opens only from the toolbar icon
+  (`activeTab`). Only the `e2e` build mode adds `<all_urls>`, for Playwright.
 - **`tabs`**: not needed; `activeTab` exposes the current tab's URL after a
   gesture, and `runtime.getContexts` finds our own board tab.
 - **`favicon`**: tried and removed (see ADR-0002).
   Manifest keys that aren't permissions:
+
+| Key                        | Why                                                                                                                                       |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `web_accessible_resources` | `widget.html` (the widget's panel, framed in the page) and `icon/48.png` (its button). No data; lets a page detect Rolestash is installed |
 
 | Key                                        | Why                                                                                                                                                       |
 | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -46,7 +57,7 @@ Capture from a pasted link runs in the board page:
 
 | Command             | Default shortcut | Action                     |
 | ------------------- | ---------------- | -------------------------- |
-| `_execute_action`   | Alt+J            | Open the popup             |
+| `_execute_action`   | Alt+J            | Open or close the widget   |
 | `track-current-tab` | Alt+Shift+J      | Instant save, badge result |
 
 Users can rebind them at `chrome://extensions/shortcuts`.

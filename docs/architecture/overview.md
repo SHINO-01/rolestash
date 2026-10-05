@@ -10,14 +10,14 @@ none of it.
 
 ## Extension surfaces (entrypoints)
 
-| Entrypoint                      | Runs in                | Responsibility                                                    |
-| ------------------------------- | ---------------------- | ----------------------------------------------------------------- |
-| `src/entrypoints/popup/`        | Toolbar popup          | Capture the active tab, let the user review/edit, save            |
-| `src/entrypoints/board/`        | Extension page (tab)   | The Kanban board, job drawer, import/export                       |
-| `src/entrypoints/sidepanel/`    | Docked side panel      | Save this page, open the board; Advanced: Today, board, job sheet |
-| `src/entrypoints/background.ts` | MV3 service worker     | Context menu + shortcut "instant save", badge feedback, reminders |
-| `src/entrypoints/extractor.ts`  | Injected into the page | Runs `extractJob(document, location.href)` and returns the result |
-| `src/entrypoints/autofill.ts`   | Injected into the page | Fills an application form from the local profile, on a click      |
+| Entrypoint                            | Runs in                    | Responsibility                                                           |
+| ------------------------------------- | -------------------------- | ------------------------------------------------------------------------ |
+| `src/entrypoints/launcher.content.ts` | Job sites (content script) | The widget's launcher and panel frame on the page (ADR-0030)             |
+| `src/entrypoints/widget/`             | Iframe in the page         | The widget: save the job, move it, fill the application                  |
+| `src/entrypoints/board/`              | Extension page (tab)       | The Kanban board, job drawer, import/export                              |
+| `src/entrypoints/background.ts`       | MV3 service worker         | Toolbar icon → widget, context menu + shortcut "instant save", reminders |
+| `src/entrypoints/extractor.ts`        | Injected into the page     | Runs `extractJob(document, location.href)` and returns the result        |
+| `src/entrypoints/autofill.ts`         | Injected into the page     | Fills an application form from the local profile, on a click             |
 
 The extractor is an **unlisted script**: it is never registered as a content
 script, only injected with `chrome.scripting.executeScript` after a user

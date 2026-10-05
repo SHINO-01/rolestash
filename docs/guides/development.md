@@ -33,12 +33,12 @@ reloads (it's tied to the extension id, which is stable for an unpacked folder).
 
 ## Debugging
 
-- **Popup:** right-click the popup → _Inspect_.
+- **Widget:** right-click inside the widget's panel → _Inspect_ (it's an iframe of `widget.html`).
 - **Board:** it's a normal tab — DevTools as usual.
 - **Background worker:** `chrome://extensions` → _Service worker_ link.
 - **Storage:** DevTools on the board → Application → _Extension storage_, or
   run `await chrome.storage.local.get(null)` in the board's console.
-- **Extraction:** popup → _Extraction details_ (see [debugging-extraction](debugging-extraction.md)).
+- **Extraction:** widget → **⋯** → _Extraction details_ (see [debugging-extraction](debugging-extraction.md)).
 
 ## Branches
 

@@ -1,6 +1,6 @@
 # ADR-0021: One-click access through a docked side panel and a pinned icon, not a widget on web pages
 
-- **Status:** Accepted
+- **Status:** Superseded by ADR-0030 (floating widget, 2026-10-06)
 - **Date:** 2026-10-02
 
 ## Context

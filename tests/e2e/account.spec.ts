@@ -246,12 +246,12 @@ test.describe('accounts', () => {
     });
     const panel = await context.newPage();
     await panel.setViewportSize({ width: 380, height: 800 });
-    await panel.goto(`chrome-extension://${extensionId}/sidepanel.html`);
+    await panel.goto(`chrome-extension://${extensionId}/widget.html`);
     await expect(panel.getByRole('button', { name: 'Set up autofill' })).toBeVisible();
     await panel.getByRole('button', { name: 'Dismiss autofill suggestion' }).click();
     await expect(panel.getByRole('button', { name: 'Set up autofill' })).toHaveCount(0);
     await panel.reload();
-    await expect(panel.getByRole('button', { name: 'Save this page' })).toBeVisible();
+    await expect(panel.getByRole('button', { name: 'Add it yourself' })).toBeVisible();
     await expect(panel.getByRole('button', { name: 'Set up autofill' })).toHaveCount(0);
   });
 
@@ -678,9 +678,9 @@ test.describe('accounts', () => {
     await expect(dialog.getByRole('button', { name: 'Add a saved answer' })).toHaveCount(0);
     await dialog.getByRole('button', { name: 'Save profile' }).click();
     await expect(dialog).toBeHidden();
-    // The side panel offers filling straight away, on Free.
+    // The widget offers filling straight away, on Free.
     const panel = await context.newPage();
-    await panel.goto(`chrome-extension://${extensionId}/sidepanel.html`);
+    await panel.goto(`chrome-extension://${extensionId}/widget.html`);
     await expect(panel.getByRole('button', { name: 'Fill this application' })).toBeVisible();
   });
 
@@ -823,52 +823,6 @@ test.describe('accounts', () => {
     await expect(drawer.getByRole('button', { name: 'Add a contact' })).toHaveCount(0);
   });
 
-  test('the side panel: Today and a job on Advanced, save and a pitch on Pro (ADR-0021)', async ({
-    context,
-    worker,
-    extensionId,
-    backend,
-  }) => {
-    const end = new Date(Date.now() + 20 * 86_400_000).toISOString();
-    await seedActiveJobs(worker, 1);
-    await worker.evaluate(async () => {
-      const job = (await chrome.storage.local.get('job:j0'))['job:j0'] as Record<string, unknown>;
-      await chrome.storage.local.set({
-        'job:j0': { ...job, followUpAt: new Date().toISOString() },
-      });
-    });
-    await seedSignedIn(worker, {
-      status: 'active',
-      tier: 'advanced',
-      currentPeriodEnd: end,
-      hasBillingAccount: false,
-    });
-    backend.entitlement = {
-      status: 'active',
-      tier: 'advanced',
-      trial_ends_at: null,
-      current_period_end: end,
-      provider_customer_id: null,
-    };
-    const panel = await context.newPage();
-    await panel.setViewportSize({ width: 380, height: 800 });
-    await panel.goto(`chrome-extension://${extensionId}/sidepanel.html`);
-    await expect(panel.getByRole('button', { name: 'Save this page' })).toBeVisible();
-    await expect(panel.getByRole('button', { name: 'Today', pressed: true })).toBeVisible();
-    await panel
-      .getByRole('button', { name: /Role 0/ })
-      .first()
-      .click();
-    await expect(panel.getByRole('dialog', { name: 'Role 0 details' })).toBeVisible();
-    // The panel itself can't be saved; it says how to give access.
-    await panel
-      .getByRole('dialog', { name: 'Role 0 details' })
-      .getByRole('button', { name: 'Close' })
-      .click();
-    await panel.getByRole('button', { name: 'Save this page' }).click();
-    await expect(panel.getByText(/click the Rolestash icon/)).toBeVisible();
-  });
-
   test('reports a problem from the board, showing what is sent (ADR-0024)', async ({
     context,
     extensionId,
@@ -925,33 +879,6 @@ test.describe('accounts', () => {
         ),
       )
       .toMatchObject({ done: true, asks: 1 });
-  });
-
-  test('the board can make the toolbar icon open the side panel (ADR-0021)', async ({
-    context,
-    worker,
-    extensionId,
-  }) => {
-    await seedActiveJobs(worker, 1);
-    const page = await context.newPage();
-    await page.goto(`chrome-extension://${extensionId}/board.html`);
-    await page.getByRole('button', { name: 'Board menu' }).click();
-    await page.getByRole('menuitem', { name: 'Toolbar icon opens the side panel' }).click();
-    await expect(page.getByText('now opens the side panel')).toBeVisible();
-    const behaviour = await worker.evaluate(async () => ({
-      popup: await chrome.action.getPopup({}),
-      title: await chrome.action.getTitle({}),
-      panel: (await chrome.sidePanel.getPanelBehavior()).openPanelOnActionClick,
-      setting: (
-        (await chrome.storage.local.get('settings')).settings as { iconOpensPanel?: boolean }
-      ).iconOpensPanel,
-    }));
-    expect(behaviour).toEqual({
-      popup: '',
-      title: 'Rolestash: open the side panel',
-      panel: true,
-      setting: true,
-    });
   });
 
   test('insights: applications per week, how far they get, replies and sources (Advanced)', async ({
@@ -1177,7 +1104,7 @@ test('@smoke the production build: accounts exactly as configured', async ({
   }
 });
 
-test('@smoke the production build: Insights, bulk actions and the side panel for its mode', async ({
+test('@smoke the production build: Insights, bulk actions and the widget for its mode', async ({
   context,
   worker,
   extensionId,
@@ -1210,16 +1137,10 @@ test('@smoke the production build: Insights, bulk actions and the side panel for
   }
   await expect(page.getByText(/forwarding address/i)).toHaveCount(0);
 
+  // No popup: the icon opens the widget, which works on every plan.
+  expect(await worker.evaluate(() => chrome.action.getPopup({}))).toBe('');
   const panel = await context.newPage();
   await panel.setViewportSize({ width: 380, height: 800 });
-  await panel.goto(`chrome-extension://${extensionId}/sidepanel.html`);
-  await expect(panel.getByRole('button', { name: 'Save this page' })).toBeVisible();
-  if (on) {
-    await expect(panel.getByText('Your whole board, right here')).toBeVisible();
-    await expect(panel.getByRole('button', { name: 'Today' })).toHaveCount(0);
-  } else {
-    await expect(panel.getByRole('button', { name: 'Today' })).toBeVisible();
-    await expect(panel.getByText('Your whole board, right here')).toHaveCount(0);
-    await expect(panel.getByText(/sign in/i)).toHaveCount(0);
-  }
+  await panel.goto(`chrome-extension://${extensionId}/widget.html`);
+  await expect(panel.getByRole('button', { name: 'Add it yourself' })).toBeVisible();
 });

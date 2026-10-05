@@ -356,3 +356,68 @@ test.describe('reminders', () => {
     await expect(drawer.getByText(/Pro reminds you when it's time to follow up/)).toBeVisible();
   });
 });
+
+test.describe('the floating widget (ADR-0030)', () => {
+  test('appears on a job site, saves the job and moves it to Applied', async ({
+    context,
+    worker,
+    fixtureServer,
+  }) => {
+    const page = await context.newPage();
+    await page.goto(fixtureServer.url('sites/greenhouse/board.html'));
+    await page.getByRole('button', { name: 'Open Rolestash' }).click();
+    const widget = page.frameLocator('iframe[title="Rolestash"]');
+    await expect(widget.getByText('Backend Engineer (Payments)')).toBeVisible();
+    await expect(widget.getByText(/A\$160K – 200K/)).toBeVisible();
+    // The launcher steps aside while the panel is open.
+    await expect(page.getByRole('button', { name: 'Open Rolestash' })).toHaveCount(0);
+
+    await widget.getByRole('button', { name: 'Save job' }).click();
+    await expect(widget.getByRole('status')).toHaveText('Saved · Saved');
+    await widget.getByRole('radio', { name: 'Applied' }).click();
+    await expect(widget.getByRole('status')).toHaveText('On your board · Applied');
+    const stored = await worker.evaluate(async () =>
+      Object.entries(await chrome.storage.local.get(null))
+        .filter(([key]) => key.startsWith('job:'))
+        .map(([, job]) => (job as { title: string; stageId: string }).stageId),
+    );
+    expect(stored).toEqual(['applied']);
+
+    // Closing and opening again finds it on the board.
+    await widget.getByRole('button', { name: 'Close' }).click();
+    await expect(page.locator('iframe[title="Rolestash"]')).toHaveCount(0);
+    await page.getByRole('button', { name: 'Open Rolestash' }).click();
+    await expect(widget.getByRole('status')).toHaveText('On your board · Applied');
+  });
+
+  test('the toolbar icon toggles it, and it can be hidden on a site', async ({
+    context,
+    worker,
+    fixtureServer,
+  }) => {
+    expect(await worker.evaluate(() => chrome.action.getPopup({}))).toBe('');
+    const url = fixtureServer.url('sites/generic/company-careers.html');
+    const page = await context.newPage();
+    await page.goto(url);
+    await expect(page.getByRole('button', { name: 'Open Rolestash' })).toBeVisible();
+    // What the toolbar click does (background.ts → toggleWidget).
+    const toggle = () =>
+      worker.evaluate(async (target) => {
+        const [tab] = await chrome.tabs.query({ url: target });
+        await chrome.tabs.sendMessage(tab!.id!, { type: 'rolestash:widget-toggle' });
+      }, url);
+    await toggle();
+    const widget = page.frameLocator('iframe[title="Rolestash"]');
+    await expect(widget.getByLabel('Job title')).toHaveValue('Site Reliability Engineer');
+    await widget.getByRole('button', { name: 'More' }).click();
+    await widget.getByRole('menuitem', { name: 'Hide the button on 127.0.0.1' }).click();
+    await expect(page.locator('iframe[title="Rolestash"]')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Open Rolestash' })).toHaveCount(0);
+    await page.reload();
+    await page.waitForTimeout(500);
+    await expect(page.getByRole('button', { name: 'Open Rolestash' })).toHaveCount(0);
+    // The icon still opens it there.
+    await toggle();
+    await expect(widget.getByLabel('Job title')).toBeVisible();
+  });
+});
