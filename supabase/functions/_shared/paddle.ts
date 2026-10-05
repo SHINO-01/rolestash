@@ -108,6 +108,8 @@ const str = (v: unknown): string | null => (typeof v === 'string' && v !== '' ? 
  * Maps a Paddle `subscription.*` webhook to a billing event. Returns null for
  * events we don't act on. `userId` is null when the checkout didn't carry one
  * (a purchase on the website); the webhook then finds the account by email.
+ * A `userId` is only what the checkout claimed (a buyer can set it), so the
+ * webhook checks the customer belongs to that account before applying it.
  */
 export function toBillingEvent(
   payload: unknown,

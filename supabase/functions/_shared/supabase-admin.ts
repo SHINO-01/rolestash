@@ -175,6 +175,18 @@ export class SupabaseAdmin {
     return typeof id === 'string' ? id : null;
   }
 
+  /** The email an account signs in with, or null for an unknown account. */
+  async userEmail(userId: string): Promise<string | null> {
+    const response = await this.fetchFn(
+      `${this.config.url}/auth/v1/admin/users/${encodeURIComponent(userId)}`,
+      { headers: this.serviceHeaders() },
+    );
+    if (response.status === 404) return null;
+    if (!response.ok) throw new Error(`user lookup failed: ${response.status}`);
+    const user = (await response.json()) as { email?: unknown };
+    return typeof user.email === 'string' && user.email !== '' ? user.email : null;
+  }
+
   /**
    * Creates an account for someone who bought on the website before signing
    * up. They sign in later with this email (code or Google); no email is sent.

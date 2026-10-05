@@ -161,6 +161,11 @@ Checkouts opened from rolestash.com/pricing/ carry no `user_id`. The
 It then tags the subscription with the `user_id`. `PADDLE_ENV` must be
 `sandbox` or `production`; anything else stops the functions.
 
+A buyer can also set `custom_data.user_id` themselves (Paddle.js
+`customData`), so an event that carries one is applied only when its Paddle
+customer is already on that account or has the account's email; otherwise
+the webhook ignores it.
+
 ## Edge Functions
 
 | Function          | Caller                  | Does                                                                                      |

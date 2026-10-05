@@ -10,7 +10,7 @@ import {
   type Deps,
 } from '../../../supabase/functions/_shared/handlers.ts';
 import { readEnv } from '../../../supabase/functions/_shared/env.ts';
-import { fakeFetch, type FakeResponse } from '../helpers/fake-fetch';
+import { fakeFetch, type FakeResponse, type RecordedCall } from '../helpers/fake-fetch';
 import { subscriptionEvent } from './fixtures';
 
 const SB = 'https://ref.supabase.co';
@@ -410,14 +410,22 @@ describe('paddle-webhook', () => {
     });
   }
 
+  // The event's customer is the one already on the account its user_id names.
+  const ownCustomer = {
+    [`GET ${SB}/rest/v1/entitlements`]: entitlementRoute({ provider_customer_id: 'ctm_01' }),
+  };
+  const applyCall = (calls: RecordedCall[]) =>
+    calls.find((c) => c.url.includes('apply_billing_event'));
+
   it('applies a verified subscription event via apply_billing_event', async () => {
     const { deps: d, calls } = deps({
+      ...ownCustomer,
       [`POST ${SB}/rest/v1/rpc/apply_billing_event`]: { status: 200, body: true },
     });
     const res = await handlePaddleWebhook(await signedRequest(subscriptionEvent()), d);
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ applied: true });
-    expect(calls[0]?.body).toEqual({
+    expect(applyCall(calls)?.body).toEqual({
       p_user_id: USER.id,
       p_occurred_at: '2026-10-01T00:00:00.000Z',
       p_status: 'active',
@@ -428,7 +436,76 @@ describe('paddle-webhook', () => {
       p_subscription_id: 'sub_01',
       p_tier: 'pro',
     });
-    expect(calls[0]?.headers.apikey).toBe('service');
+    expect(applyCall(calls)?.headers.apikey).toBe('service');
+  });
+
+  describe('a user id the checkout claimed (buyers can set it)', () => {
+    const noCustomerYet = {
+      [`GET ${SB}/rest/v1/entitlements`]: entitlementRoute({ provider_customer_id: null }),
+    };
+    const account = (email: string | null): Record<string, FakeResponse> => ({
+      [`GET ${SB}/auth/v1/admin/users/${USER.id}`]: email
+        ? { status: 200, body: { id: USER.id, email } }
+        : { status: 404, body: {} },
+    });
+    const customerWith = (email: string): Record<string, FakeResponse> => ({
+      'GET https://sandbox-api.paddle.com/customers/ctm_01': {
+        status: 200,
+        body: { data: { email } },
+      },
+    });
+
+    it('applies to that account when the customer has its email', async () => {
+      const { deps: d, calls } = deps({
+        ...noCustomerYet,
+        ...account(USER.email),
+        ...customerWith('A@Example.com'),
+        [`POST ${SB}/rest/v1/rpc/apply_billing_event`]: { status: 200, body: true },
+      });
+      const res = await handlePaddleWebhook(await signedRequest(subscriptionEvent()), d);
+      expect(await res.json()).toEqual({ applied: true });
+      expect(applyCall(calls)?.body).toMatchObject({
+        p_user_id: USER.id,
+        p_customer_id: 'ctm_01',
+      });
+    });
+
+    it("ignores it when the customer is someone else's", async () => {
+      const { deps: d, calls } = deps({
+        [`GET ${SB}/rest/v1/entitlements`]: entitlementRoute({ provider_customer_id: 'ctm_mine' }),
+        ...account(USER.email),
+        ...customerWith('victim@example.com'),
+      });
+      const res = await handlePaddleWebhook(await signedRequest(subscriptionEvent()), d);
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({ ignored: true });
+      expect(applyCall(calls)).toBeUndefined();
+      expect(calls.every((c) => c.method === 'GET')).toBe(true);
+    });
+
+    it('ignores it for an unknown account, or an event without a customer', async () => {
+      const unknown = deps({ ...noCustomerYet, ...account(null) });
+      const res = await handlePaddleWebhook(await signedRequest(subscriptionEvent()), unknown.deps);
+      expect(await res.json()).toEqual({ ignored: true });
+      expect(applyCall(unknown.calls)).toBeUndefined();
+
+      const noCustomer = deps({});
+      const bare = await signedRequest(subscriptionEvent({ customer_id: null }));
+      expect(await (await handlePaddleWebhook(bare, noCustomer.deps)).json()).toEqual({
+        ignored: true,
+      });
+      expect(noCustomer.calls).toHaveLength(0);
+    });
+
+    it('asks Paddle to retry when the check fails', async () => {
+      const { deps: d } = deps({
+        ...noCustomerYet,
+        ...account(USER.email),
+        'GET https://sandbox-api.paddle.com/customers/ctm_01': { status: 503, body: {} },
+      });
+      const res = await handlePaddleWebhook(await signedRequest(subscriptionEvent()), d);
+      expect(res.status).toBe(500);
+    });
   });
 
   describe('a purchase made on the website (no user id)', () => {
@@ -523,6 +600,7 @@ describe('paddle-webhook', () => {
 
   it('records a quarterly plan (billed every 3 months)', async () => {
     const { deps: d, calls } = deps({
+      ...ownCustomer,
       [`POST ${SB}/rest/v1/rpc/apply_billing_event`]: { status: 200, body: true },
     });
     const quarterly = subscriptionEvent({
@@ -530,16 +608,20 @@ describe('paddle-webhook', () => {
       billing_cycle: { interval: 'month', frequency: 3 },
     });
     await handlePaddleWebhook(await signedRequest(quarterly), d);
-    expect(calls[0]?.body).toMatchObject({ p_tier: 'advanced', p_billing_interval: 'quarter' });
+    expect(applyCall(calls)?.body).toMatchObject({
+      p_tier: 'advanced',
+      p_billing_interval: 'quarter',
+    });
   });
 
   it('records the tier of the subscribed price', async () => {
     const { deps: d, calls } = deps({
+      ...ownCustomer,
       [`POST ${SB}/rest/v1/rpc/apply_billing_event`]: { status: 200, body: true },
     });
     const upgraded = subscriptionEvent({ items: [{ price: { id: 'pri_adv_year' } }] });
     await handlePaddleWebhook(await signedRequest(upgraded), d);
-    expect(calls[0]?.body).toMatchObject({ p_tier: 'advanced' });
+    expect(applyCall(calls)?.body).toMatchObject({ p_tier: 'advanced' });
   });
 
   it('acknowledges events it ignores, and asks Paddle to retry on failure', async () => {
@@ -551,6 +633,7 @@ describe('paddle-webhook', () => {
     expect(await res.json()).toEqual({ ignored: true });
 
     const failing = deps({
+      ...ownCustomer,
       [`POST ${SB}/rest/v1/rpc/apply_billing_event`]: { status: 503, body: {} },
     });
     expect(

@@ -417,6 +417,28 @@ async function accountForCustomer(
   return userId;
 }
 
+/**
+ * Whether a subscription's Paddle customer belongs to the account its
+ * custom_data.user_id names. Anyone can put any user_id in a checkout
+ * (Paddle.js takes customData from the browser), so the claim counts only for
+ * the customer already on that account, or one with the account's email:
+ * create-checkout always binds checkout to one of those.
+ */
+async function customerBelongsTo(
+  admin: SupabaseAdmin,
+  paddle: PaddleClient,
+  userId: string,
+  customerId: string | null,
+): Promise<boolean> {
+  if (!customerId) return false;
+  if ((await admin.entitlement(userId))?.provider_customer_id === customerId) return true;
+  const accountEmail = await admin.userEmail(userId);
+  if (!accountEmail) return false;
+  const customerEmail = await paddle.customerEmail(customerId);
+  const normalise = (email: string) => email.trim().toLowerCase();
+  return customerEmail !== null && normalise(customerEmail) === normalise(accountEmail);
+}
+
 /** POST /functions/v1/paddle-webhook (called by Paddle, signed; no user JWT). */
 export async function handlePaddleWebhook(req: Request, deps: Deps): Promise<Response> {
   if (req.method !== 'POST') return json(405, { error: 'method_not_allowed' });
@@ -438,16 +460,21 @@ export async function handlePaddleWebhook(req: Request, deps: Deps): Promise<Res
   const incoming = toBillingEvent(payload, (priceId) => tierOfPrice(deps.env, priceId));
   if (!incoming) return json(200, { ignored: true });
   const admin = new SupabaseAdmin(deps.env.supabase, deps.fetch);
+  const paddle = new PaddleClient(deps.env.paddle, deps.fetch);
   try {
     let userId = incoming.userId;
+    if (userId && !(await customerBelongsTo(admin, paddle, userId, incoming.customerId))) {
+      // The checkout named an account this customer doesn't belong to: applying
+      // it would give that account someone else's customer, or overwrite theirs.
+      console.error('[rolestash] webhook: customer is not the claimed account', {
+        subscriptionId: incoming.subscriptionId,
+      });
+      return json(200, { ignored: true });
+    }
     if (!userId) {
       // Bought on the website: find (or create) the account for this
       // customer, then tag the subscription so later events carry the id.
-      userId = await accountForCustomer(
-        admin,
-        new PaddleClient(deps.env.paddle, deps.fetch),
-        incoming,
-      );
+      userId = await accountForCustomer(admin, paddle, incoming);
       if (!userId) return json(200, { ignored: true });
     }
     const applied = await admin.applyBillingEvent({ ...incoming, userId }, 'paddle');
