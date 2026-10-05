@@ -43,3 +43,30 @@
 
 /board/assets/*
   Cache-Control: public, max-age=31536000, immutable
+
+# Styles and scripts change together with the pages (a deploy can change both
+# the pricing script and the grid it needs), so browsers check them on every
+# load (a cheap ETag check) instead of keeping a day-old copy.
+/assets/auth-google.js
+  ! Cache-Control
+  Cache-Control: public, max-age=0, must-revalidate
+
+/assets/paddle-config.js
+  ! Cache-Control
+  Cache-Control: public, max-age=0, must-revalidate
+
+/assets/pay.js
+  ! Cache-Control
+  Cache-Control: public, max-age=0, must-revalidate
+
+/assets/pricing.js
+  ! Cache-Control
+  Cache-Control: public, max-age=0, must-revalidate
+
+/assets/site.css
+  ! Cache-Control
+  Cache-Control: public, max-age=0, must-revalidate
+
+/assets/theme.js
+  ! Cache-Control
+  Cache-Control: public, max-age=0, must-revalidate

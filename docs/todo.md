@@ -60,6 +60,12 @@ into the roadmap or changelog. Last reviewed 6 October 2026.
 
 ## Ours
 
+- [ ] **New launch film:** the homepage film (`site/assets/rolestash-film*`,
+      landscape and vertical, plus posters) still shows the old popup and
+      two paid plans. Re-cut it with the floating widget (save, fill the
+      application, move to Applied) and one Pro plan at US$12, fictional
+      companies only ([website.md](guides/website.md)).
+
 - [ ] **0.4.1 is approved:** move the three fixed issues off
       `/known-issues/`, set "Current version" to 0.4.1 and the date
       ([launch.md](guides/launch.md#v041-in-review-to-do)). When 0.4.2 is

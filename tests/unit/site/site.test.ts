@@ -330,6 +330,16 @@ describe('rolestash.com static site', () => {
     );
   });
 
+  it('has browsers revalidate every stylesheet and script, so a deploy shows at once', () => {
+    const headers = readFileSync(join(SITE, '_headers'), 'utf8');
+    const code = readdirSync(join(SITE, 'assets')).filter((f) => /\.(css|js)$/.test(f));
+    expect(code.length).toBeGreaterThan(3);
+    for (const file of code)
+      expect(headers, file).toContain(
+        `/assets/${file}\n  ! Cache-Control\n  Cache-Control: public, max-age=0, must-revalidate`,
+      );
+  });
+
   it('posts the launch-list form only to our own function, which the CSP allows', () => {
     const headers = readFileSync(join(SITE, '_headers'), 'utf8');
     const siteWide = headers.slice(0, headers.indexOf('/assets/*'));
