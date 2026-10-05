@@ -1,7 +1,7 @@
 -- Run with: npm run test:db  (needs Docker; see docs/guides/backend.md)
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(30);
+select plan(37);
 
 -- Helpers: act as a signed-in user, or as nobody.
 create function pg_temp.act_as(uid uuid) returns void language sql as $$
@@ -33,8 +33,13 @@ select is(
   'advanced', 'the trial is of Advanced');
 select is((select count(*)::int from public.trial_claims), 2, 'each sign-up records a trial claim');
 select ok(
-  not exists (select 1 from public.trial_claims where email_sha256 like '%@%' or length(email_sha256) <> 64),
-  'trial claims hold SHA-256 hashes, never email addresses');
+  not exists (select 1 from public.trial_claims where octet_length(claim) <> 32),
+  'trial claims hold 32-byte hashes, never email addresses');
+select ok(
+  not exists (
+    select 1 from public.trial_claims
+    where claim in (extensions.digest('alice@example.com', 'sha256'), extensions.digest('bob@example.com', 'sha256'))),
+  'trial claims are keyed, not a plain SHA-256 of the email');
 
 -- One trial per email, even after deleting the account -----------------------
 delete from auth.users where id = '22222222-2222-4222-8222-222222222222';
@@ -46,6 +51,31 @@ insert into auth.users (id, email, aud, role)
 select is(
   (select status::text from public.entitlements where user_id = '33333333-3333-4333-8333-333333333333'),
   'expired', 'the same email (any case/spacing) gets no second trial');
+
+-- Aliases of one mailbox share a trial --------------------------------------------
+select is(private.canonical_email(' J.Doe+jobs@GoogleMail.com '), 'jdoe@gmail.com', 'Gmail dots, +tags and googlemail are canonicalised');
+select is(private.canonical_email('j.doe+x@example.com'), 'j.doe@example.com', 'other domains keep their dots but lose +tags');
+insert into auth.users (id, email, aud, role) values
+  ('55555555-5555-4555-8555-555555555555', 'carol.smith@gmail.com', 'authenticated', 'authenticated'),
+  ('66666666-6666-4666-8666-666666666666', 'CarolSmith+2@googlemail.com', 'authenticated', 'authenticated'),
+  ('77777777-7777-4777-8777-777777777777', 'bob+again@example.com', 'authenticated', 'authenticated');
+select is(
+  (select status::text from public.entitlements where user_id = '55555555-5555-4555-8555-555555555555'),
+  'trialing', 'a new Gmail address gets a trial');
+select is(
+  (select status::text from public.entitlements where user_id = '66666666-6666-4666-8666-666666666666'),
+  'expired', 'a dotted, tagged or googlemail alias gets no second trial');
+select is(
+  (select status::text from public.entitlements where user_id = '77777777-7777-4777-8777-777777777777'),
+  'expired', 'a +tag alias of a deleted account gets no second trial');
+-- A claim from before canonicalisation (keyed hash of the lowercased email).
+insert into public.trial_claims (claim)
+  values (private.trial_claim_of(extensions.digest('dave.x+old@gmail.com', 'sha256')));
+insert into auth.users (id, email, aud, role)
+  values ('88888888-8888-4888-8888-888888888888', 'Dave.X+old@gmail.com', 'authenticated', 'authenticated');
+select is(
+  (select status::text from public.entitlements where user_id = '88888888-8888-4888-8888-888888888888'),
+  'expired', 'an email claimed before canonicalisation gets no second trial');
 
 -- Row Level Security -------------------------------------------------------------
 select pg_temp.act_as('11111111-1111-4111-8111-111111111111');

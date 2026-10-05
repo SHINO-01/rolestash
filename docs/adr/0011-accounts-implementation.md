@@ -37,7 +37,9 @@ release builds while `main` keeps promoting.
 3. **Trials and entitlements are server-side** (`supabase/migrations`):
    - A trigger on `auth.users` creates a 30-day trial.
    - A hash of the email in `trial_claims` stops a deleted-and-recreated
-     account from getting a second trial.
+     account from getting a second trial. Since migration `20261014120000`
+     it is an HMAC under a database-only key of the canonical email (no
+     `+tag`; Gmail dots removed, `googlemail.com` read as `gmail.com`).
    - Only Edge Functions (service role) write `entitlements`. RLS lets users
      read only their own row, and pgTAP tests prove it in CI.
    - `public.has_pro()` mirrors `planOf()` for future RLS on sync tables.
