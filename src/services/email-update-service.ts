@@ -108,6 +108,8 @@ export interface EmailRun {
 
 export interface EmailUpdateAccount {
   currentPlan(): Promise<Plan>;
+  /** True during the free trial: trial accounts get updates but don't vote. */
+  onTrial(): Promise<boolean>;
 }
 
 /** Keeps the newest `max` entries of an insertion-ordered record. */
@@ -446,6 +448,8 @@ export class EmailUpdateService {
     if (votes.length === 0) return;
     if ((await this.state()).shareLearning === false) return;
     if ((await this.account.currentPlan()) !== 'advanced') return;
+    // The server only counts paying subscribers' votes, so a trial sends none.
+    if (await this.account.onTrial()) return;
     try {
       await this.inbox.vote(votes);
     } catch {

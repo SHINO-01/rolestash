@@ -17,7 +17,7 @@ const PROBLEM = {
 } as const;
 
 /** Automatic status updates from forwarded email (Advanced; ADR-0014), in Account. */
-export function EmailSection({ plan }: { plan: Plan }) {
+export function EmailSection({ plan, trial = false }: { plan: Plan; trial?: boolean }) {
   const { email } = useServices();
   const state = useEmailState();
   const toast = useToast();
@@ -193,23 +193,32 @@ export function EmailSection({ plan }: { plan: Plan }) {
           Mail to the current address stops arriving at once. Update your mail filter afterwards.
         </p>
       ) : null}
-      <label className="mt-4 flex items-start gap-2.5 text-sm">
-        <input
-          type="checkbox"
-          className="accent-accent mt-0.5 size-4"
-          checked={state?.shareLearning !== false}
-          disabled={busy !== null}
-          onChange={(e) => void share(e.target.checked)}
-        />
-        <span>
-          <span className="font-medium">Help improve automatic updates</span>
-          <span className="text-muted block text-[13px]">
-            When you accept or correct an update, share what it taught us: a one-way fingerprint of
-            the email’s template and which company a sender domain belongs to. Never the email, its
-            subject, or which jobs you applied for. Turning this off withdraws what you shared.
+      {trial ? (
+        // Trial accounts don't vote (only subscribers' votes count), so nothing is shared.
+        <p className="text-muted mt-4 text-[13px]">
+          During your free trial, nothing you accept or correct is shared. “Help improve automatic
+          updates” becomes available once you subscribe.
+        </p>
+      ) : (
+        <label className="mt-4 flex items-start gap-2.5 text-sm">
+          <input
+            type="checkbox"
+            className="accent-accent mt-0.5 size-4"
+            checked={state?.shareLearning !== false}
+            disabled={busy !== null}
+            onChange={(e) => void share(e.target.checked)}
+          />
+          <span>
+            <span className="font-medium">Help improve automatic updates</span>
+            <span className="text-muted block text-[13px]">
+              When you accept or correct an update, share what it taught us: a one-way fingerprint
+              of the email’s template and which company a sender domain belongs to. Never the email,
+              its subject, or which jobs you applied for. Turning this off withdraws what you
+              shared.
+            </span>
           </span>
-        </span>
-      </label>
+        </label>
+      )}
       <p className="text-subtle mt-3 text-xs">
         Results are deleted from our server once your board has them, and after 90 days at most. To
         stop, delete your mail filter or get a new address.

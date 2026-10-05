@@ -117,6 +117,10 @@ export class AccountService implements PlanProvider {
     return (await this.state()).plan.plan;
   }
 
+  async onTrial(): Promise<boolean> {
+    return (await this.state()).plan.reason === 'trial';
+  }
+
   /** Fires when the session or entitlement changes in any extension context. */
   subscribe(listener: () => void): () => void {
     return this.store.subscribe((changes) => {

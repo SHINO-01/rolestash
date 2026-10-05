@@ -84,6 +84,7 @@ describe('AccountService sign-in', () => {
       profile: {},
       needsName: false,
     });
+    expect(await account.onTrial()).toBe(false);
   });
 
   it('signs in with an email code and picks up the trial', async () => {
@@ -101,6 +102,7 @@ describe('AccountService sign-in', () => {
       hasBillingAccount: false,
       checkedAt: START,
     });
+    expect(await account.onTrial()).toBe(true);
     // The entitlement read uses the user's token, so RLS scopes it.
     const read = calls.find((c) => c.url.includes('/rest/v1/entitlements'));
     expect(read?.headers.Authorization).toBe('Bearer a1');

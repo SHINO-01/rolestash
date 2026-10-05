@@ -55,7 +55,7 @@ export function AccountView() {
       </section>
       <ProfileSection account={account} state={state} />
       <SyncSection plan={state.plan.plan} />
-      <EmailSection plan={state.plan.plan} />
+      <EmailSection plan={state.plan.plan} trial={state.plan.reason === 'trial'} />
       <Button variant="ghost" icon={<LogOut className="size-4" />} onClick={() => void signOut()}>
         Sign out and clear this browser
       </Button>

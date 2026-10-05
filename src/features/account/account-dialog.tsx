@@ -330,7 +330,7 @@ function SignedIn({ account, state }: { account: AccountService; state: AccountS
       {state.needsName ? <NameQuestion account={account} /> : null}
       <ProfileSection account={account} state={state} />
       <SyncSection plan={plan.plan} />
-      <EmailSection plan={plan.plan} />
+      <EmailSection plan={plan.plan} trial={plan.reason === 'trial'} />
 
       {plan.complimentary ? null : (
         <section className="flex flex-col gap-3">
