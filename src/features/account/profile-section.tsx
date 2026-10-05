@@ -103,10 +103,6 @@ export function ProfileSection({
               </button>
             </p>
           )}
-          <p className="text-muted truncate text-[13px]">
-            <span className="text-subtle">Email </span>
-            {state.email}
-          </p>
           <div className="mt-2 flex flex-wrap gap-2">
             <Button
               size="sm"
@@ -153,8 +149,8 @@ export function ProfileSection({
         />
       </div>
       <p className="text-subtle mt-3 text-xs">
-        Your name appears in Account and on your receipts. Your photo is shrunk to a small square on
-        this device and kept with your account; it’s never loaded from Google or anywhere else.
+        Your name goes on receipts. Your photo is shrunk on this device and never loaded from
+        elsewhere.
       </p>
     </section>
   );

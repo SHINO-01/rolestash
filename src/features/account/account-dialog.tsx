@@ -318,16 +318,21 @@ function SignedIn({ account, state }: { account: AccountService; state: AccountS
           <Chip tone={chip.tone}>{chip.label}</Chip>
         </div>
         <p className="text-muted mt-2 text-sm">{planSummary(plan)}</p>
-        <p className="text-muted mt-1 text-sm">
-          {Number.isFinite(limit)
-            ? `${String(active)} of ${String(limit)} active jobs used.`
-            : `${String(active)} active jobs, no limit.`}{' '}
-          Rejected and withdrawn jobs don't count.
-        </p>
+        {/* Only a limited plan needs counting. */}
+        {Number.isFinite(limit) ? (
+          <p className="text-muted mt-1 text-sm">
+            {String(active)} of {String(limit)} active jobs used. Rejected and withdrawn jobs don't
+            count.
+          </p>
+        ) : null}
       </section>
 
-      {state.needsName ? <NameQuestion account={account} /> : null}
-      <ProfileSection account={account} state={state} />
+      {/* One place to give a name: the question first, then the profile once it's answered. */}
+      {state.needsName ? (
+        <NameQuestion account={account} />
+      ) : (
+        <ProfileSection account={account} state={state} />
+      )}
       <SyncSection plan={plan.plan} />
       <EmailSection plan={plan.plan} trial={plan.reason === 'trial'} />
 

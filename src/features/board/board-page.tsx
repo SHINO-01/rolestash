@@ -288,24 +288,29 @@ export function BoardPage() {
             Unsorted ({unsortedCount})
           </Button>
         ) : null}
-        <Button
-          variant="ghost"
-          icon={<BarChart3 className="size-4" />}
-          onClick={() => setDialog('insights')}
-          aria-label="Insights"
-          title="Insights"
-        >
-          <span className="hidden lg:inline">Insights</span>
-        </Button>
-        <Button
-          variant="ghost"
-          icon={<History className="size-4" />}
-          onClick={() => setDialog('history')}
-          aria-label="History"
-          title="History"
-        >
-          <span className="hidden lg:inline">History</span>
-        </Button>
+        {/* Nothing to look back on yet on an empty board. */}
+        {jobs.length > 0 ? (
+          <>
+            <Button
+              variant="ghost"
+              icon={<BarChart3 className="size-4" />}
+              onClick={() => setDialog('insights')}
+              aria-label="Insights"
+              title="Insights"
+            >
+              <span className="hidden lg:inline">Insights</span>
+            </Button>
+            <Button
+              variant="ghost"
+              icon={<History className="size-4" />}
+              onClick={() => setDialog('history')}
+              aria-label="History"
+              title="History"
+            >
+              <span className="hidden lg:inline">History</span>
+            </Button>
+          </>
+        ) : null}
         <Button
           variant="primary"
           icon={<Plus className="size-4" />}

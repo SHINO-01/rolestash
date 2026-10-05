@@ -67,7 +67,7 @@ export function EmailSection({ plan, trial = false }: { plan: Plan; trial?: bool
   if (plan !== 'pro') {
     return (
       <section className="border-line rounded-xl border p-4">
-        <Header />
+        <Header pitch />
         <p className="text-muted mt-2 text-sm">
           With Pro, forward your job emails to a private address and your board updates itself:
           applications received, assessments, interviews (with Join and map links), rejections and
@@ -227,11 +227,12 @@ export function EmailSection({ plan, trial = false }: { plan: Plan; trial?: bool
   );
 }
 
-function Header({ status }: { status?: string | undefined }) {
+/** The plan chip is a pitch, so only people without Pro see it. */
+function Header({ status, pitch = false }: { status?: string | undefined; pitch?: boolean }) {
   return (
     <div className="flex items-center justify-between gap-2">
       <span className="flex items-center gap-2 text-sm font-semibold">
-        Automatic status updates <Chip tone="accent">Pro</Chip>
+        Automatic status updates {pitch ? <Chip tone="accent">Pro</Chip> : null}
       </span>
       {status ? <span className="text-muted text-xs">{status}</span> : null}
     </div>

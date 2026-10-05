@@ -23,6 +23,11 @@ All notable changes to this project are documented here. The format follows
 - **Chrome asks once to allow Rolestash on job sites,** so the button can
   appear there. It reads a page only when you open the panel.
 
+- **Less to read, fewer things to click:** Add job has one link box instead
+  of two; Account asks for your name once, drops lines that didn't apply
+  to your plan and shortens its notes; an empty board no longer shows
+  Insights and History, and says where the new button is.
+
 ### Removed
 
 - **The side panel and the popup:** the floating panel replaces both.

@@ -138,7 +138,8 @@ export function AddJobDialog({
     setSaving(true);
     setError(undefined);
     try {
-      const url = form.url.trim();
+      // With "Fill in from link" on offer, its box is the job's link too: one link field, not two.
+      const url = (canLink ? link : form.url).trim();
       if (url && !/^https?:\/\//i.test(url))
         throw new Error('The link must start with http:// or https://');
       const job = await jobService.createManual({
@@ -200,7 +201,7 @@ export function AddJobDialog({
       open={open}
       onClose={close}
       title="Add a job"
-      description="Tip: on a job page, click the Rolestash icon (Alt+J) to fill this in automatically."
+      description="On a job site, the Rolestash button at the edge of the page saves the job for you."
       footer={
         <>
           <Button variant="ghost" onClick={close}>
@@ -266,17 +267,19 @@ export function AddJobDialog({
         <Field label="Location">
           {(id) => <Input id={id} value={form.location} onChange={set('location')} />}
         </Field>
-        <Field label="Link (optional)" className="col-span-2">
-          {(id) => (
-            <Input
-              id={id}
-              type="url"
-              value={form.url}
-              onChange={set('url')}
-              placeholder="https://"
-            />
-          )}
-        </Field>
+        {canLink ? null : (
+          <Field label="Link (optional)" className="col-span-2">
+            {(id) => (
+              <Input
+                id={id}
+                type="url"
+                value={form.url}
+                onChange={set('url')}
+                placeholder="https://"
+              />
+            )}
+          </Field>
+        )}
         <Field label="Column" className="col-span-2">
           {(id) => (
             <Select id={id} value={form.stageId} onChange={set('stageId')}>

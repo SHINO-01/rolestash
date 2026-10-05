@@ -21,9 +21,9 @@ export function EmptyBoard({ onAdd }: { onAdd: () => void }) {
         </div>
         <h1 className="text-xl font-semibold tracking-tight">Your job board is empty</h1>
         <p className="text-muted mt-2 text-sm leading-relaxed">
-          Open any job posting and click the Rolestash icon in your toolbar, press <Kbd>Alt+J</Kbd>,
-          or right-click the page and choose{' '}
-          <span className="text-ink font-medium">Track this job</span>.
+          Open a job on SEEK, LinkedIn, Indeed or another job site and click the{' '}
+          <span className="text-ink font-medium">Rolestash</span> button at the edge of the page. On
+          any other careers page, click the Rolestash icon or press <Kbd>Alt+J</Kbd>.
         </p>
         <div className="mt-6 flex gap-2">
           <Button variant="primary" icon={<Plus className="size-4" />} onClick={onAdd}>
