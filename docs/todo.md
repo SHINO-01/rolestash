@@ -59,13 +59,10 @@ git-ignored `CLAUDE-SECURITY-20261005-025920/OPEN-SECURITY-ISSUES.md` on the
 owner's machine (from the scan of `supabase/` and `infra/`, 5 October 2026).
 Don't put exploit details in commits, issues or PRs until they're fixed.
 
-- [ ] **Work through the private security list**: one owner check and about
-      ten open items for us (billing, trials, shared email learning, the
-      email Worker).
 - [ ] **Scan the rest:** only `supabase/` and `infra/` were scanned. Next,
-      scan the extension (`src/`, about 220 files) and `site/assets`.
-- [ ] **UX:** the "Help improve automatic updates" switch still shows to
-      trial users, whose votes no longer count.
+      scan the extension (`src/`, about 220 files) and `site/assets`
+      (locally, with Claude Security). Everything from the first scan is
+      fixed and shipped in v0.4.3.
 
 ## Later (not urgent)
 
