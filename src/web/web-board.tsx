@@ -3,7 +3,7 @@ import { CalendarCheck, Columns3, Inbox, Plus, UserRound, WifiOff } from 'lucide
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react';
 import type { AccountService } from '@/services/account-service';
 import { backendErrorMessage, planPriceLabel } from '@/features/account/plan-copy';
-import type { LocalPrices } from '@/services/backend/supabase-client';
+import { BackendError, type LocalPrices } from '@/services/backend/supabase-client';
 import { SyncSection } from '@/features/account/sync-section';
 import { Button, Spinner } from '@/ui/components/button';
 import { Field, Input } from '@/ui/components/field';
@@ -20,8 +20,10 @@ import { JobSheet } from './job-sheet';
 import { QuickAdd } from './quick-add';
 import { TodayView } from './today-view';
 import { webConfig } from './config';
+import { clearCheckoutIntent, takeCheckoutIntent, type CheckoutIntent } from './checkout-intent';
 import {
   allowExtensionSignIn,
+  blockExtensionSignIn,
   completeGoogleSignIn,
   signInFromExtension,
   startGoogleSignIn,
@@ -36,6 +38,7 @@ type Tab = 'today' | 'board' | 'account';
 export function WebBoard() {
   const { account } = useServices();
   const { state } = useAccount();
+  const [intent, setIntent] = useState(takeCheckoutIntent);
   if (!account) return <Centered>The web board isn’t available right now.</Centered>;
   if (!state)
     return (
@@ -43,7 +46,19 @@ export function WebBoard() {
         <Spinner /> Loading…
       </Centered>
     );
-  if (!state.signedIn) return <WebSignIn account={account} />;
+  if (!state.signedIn) return <WebSignIn account={account} intent={intent} />;
+  if (intent)
+    return (
+      <CheckoutStep
+        account={account}
+        intent={intent}
+        email={state.email}
+        onDone={() => {
+          clearCheckoutIntent();
+          setIntent(null);
+        }}
+      />
+    );
   if (state.plan.plan !== 'advanced') return <AdvancedOnly account={account} />;
   return (
     <JoinSync>
@@ -71,7 +86,13 @@ function Shell({ children }: { children: ReactNode }) {
   );
 }
 
-function WebSignIn({ account }: { account: AccountService }) {
+function WebSignIn({
+  account,
+  intent,
+}: {
+  account: AccountService;
+  intent: CheckoutIntent | null;
+}) {
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [sent, setSent] = useState(false);
@@ -121,13 +142,23 @@ function WebSignIn({ account }: { account: AccountService }) {
 
   return (
     <Shell>
-      <div>
-        <h1 className="text-xl font-semibold">Your board, on your phone</h1>
-        <p className="text-muted mt-1 text-sm">
-          Sign in with the account you use in the Rolestash extension. The web board is part of
-          Advanced.
-        </p>
-      </div>
+      {intent ? (
+        <div>
+          <h1 className="text-xl font-semibold">Sign in to get {PLAN_NAMES[intent.tier]}</h1>
+          <p className="text-muted mt-1 text-sm">
+            Your plan is added to the account you sign in to. Use the account you use in the
+            Rolestash extension, or a new one with your email.
+          </p>
+        </div>
+      ) : (
+        <div>
+          <h1 className="text-xl font-semibold">Your board, on your phone</h1>
+          <p className="text-muted mt-1 text-sm">
+            Sign in with the account you use in the Rolestash extension. The web board is part of
+            Advanced.
+          </p>
+        </div>
+      )}
       {webConfig.googleClientId ? (
         <>
           <Button
@@ -208,6 +239,108 @@ function WebSignIn({ account }: { account: AccountService }) {
       <p className="text-subtle text-xs">
         Signed in to the Rolestash extension on this computer? This page signs you in by itself.
       </p>
+    </Shell>
+  );
+}
+
+const PLAN_NAMES = { pro: 'Pro', advanced: 'Advanced' } as const;
+
+/**
+ * After signing in from /pricing/ (ADR-0027): confirm the account, then open
+ * checkout made by create-checkout for it. An account that already has a live
+ * subscription is sent to change it instead of buying a second one.
+ */
+function CheckoutStep({
+  account,
+  intent,
+  email,
+  onDone,
+}: {
+  account: AccountService;
+  intent: CheckoutIntent;
+  email: string | undefined;
+  onDone: () => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [subscribed, setSubscribed] = useState(false);
+  const [error, setError] = useState<string>();
+  const [local, setLocal] = useState<LocalPrices>();
+  useEffect(() => {
+    void account.localPrices().then(setLocal);
+  }, [account]);
+
+  async function run(task: () => Promise<void>) {
+    setBusy(true);
+    setError(undefined);
+    try {
+      await task();
+    } catch (e) {
+      if (e instanceof BackendError && e.code === 'already_subscribed') setSubscribed(true);
+      else setError(backendErrorMessage(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (subscribed)
+    return (
+      <Shell>
+        <div>
+          <h1 className="text-xl font-semibold">You already have a plan</h1>
+          <p className="text-muted mt-2 text-sm">
+            To switch plans, use Account in the Rolestash extension: you only pay the difference. To
+            change your payment details or cancel, manage your subscription.
+          </p>
+        </div>
+        <Button
+          variant="primary"
+          loading={busy}
+          onClick={() => void run(async () => location.assign(await account.billingPortalUrl()))}
+        >
+          Manage subscription
+        </Button>
+        <Button variant="ghost" onClick={onDone}>
+          Continue
+        </Button>
+        {error ? <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p> : null}
+      </Shell>
+    );
+
+  return (
+    <Shell>
+      <div>
+        <h1 className="text-xl font-semibold">Get {PLAN_NAMES[intent.tier]}</h1>
+        <p className="text-muted mt-2 text-sm">
+          {planPriceLabel(intent.tier, intent.interval, local)}
+          {email ? ` for ${email}` : ''}. You’ll pay on Paddle, our merchant of record.
+        </p>
+      </div>
+      <Button
+        variant="primary"
+        loading={busy}
+        onClick={() =>
+          void run(async () =>
+            location.assign(await account.checkoutUrl(intent.tier, intent.interval)),
+          )
+        }
+      >
+        Continue to checkout
+      </Button>
+      <Button variant="ghost" disabled={busy} onClick={onDone}>
+        Not now
+      </Button>
+      <Button
+        variant="ghost"
+        disabled={busy}
+        onClick={() => {
+          // Otherwise the extension in this browser signs the same account back in.
+          blockExtensionSignIn();
+          void account.signOut();
+        }}
+      >
+        Use a different account
+      </Button>
+      {error ? <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p> : null}
     </Shell>
   );
 }

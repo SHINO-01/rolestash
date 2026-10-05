@@ -152,29 +152,6 @@ export class SupabaseAdmin {
     return rows[0] ?? null;
   }
 
-  /** The account already billed as this Paddle customer, if any. */
-  async userIdForCustomer(customerId: string): Promise<string | null> {
-    const response = await this.fetchFn(
-      `${this.config.url}/rest/v1/entitlements?provider_customer_id=eq.${encodeURIComponent(customerId)}&select=user_id&limit=1`,
-      { headers: this.serviceHeaders() },
-    );
-    if (!response.ok) throw new Error(`customer lookup failed: ${response.status}`);
-    const rows = (await response.json()) as { user_id?: unknown }[];
-    return typeof rows[0]?.user_id === 'string' ? rows[0].user_id : null;
-  }
-
-  /** The account for an email (service role only; public.user_id_for_email). */
-  async userIdForEmail(email: string): Promise<string | null> {
-    const response = await this.fetchFn(`${this.config.url}/rest/v1/rpc/user_id_for_email`, {
-      method: 'POST',
-      headers: this.serviceHeaders(),
-      body: JSON.stringify({ p_email: email }),
-    });
-    if (!response.ok) throw new Error(`email lookup failed: ${response.status}`);
-    const id = (await response.json()) as unknown;
-    return typeof id === 'string' ? id : null;
-  }
-
   /** The email an account signs in with, or null for an unknown account. */
   async userEmail(userId: string): Promise<string | null> {
     const response = await this.fetchFn(
@@ -185,22 +162,6 @@ export class SupabaseAdmin {
     if (!response.ok) throw new Error(`user lookup failed: ${response.status}`);
     const user = (await response.json()) as { email?: unknown };
     return typeof user.email === 'string' && user.email !== '' ? user.email : null;
-  }
-
-  /**
-   * Creates an account for someone who bought on the website before signing
-   * up. They sign in later with this email (code or Google); no email is sent.
-   */
-  async createUser(email: string): Promise<string> {
-    const response = await this.fetchFn(`${this.config.url}/auth/v1/admin/users`, {
-      method: 'POST',
-      headers: this.serviceHeaders(),
-      body: JSON.stringify({ email, email_confirm: true }),
-    });
-    if (!response.ok) throw new Error(`create user failed: ${response.status}`);
-    const user = (await response.json()) as { id?: unknown };
-    if (typeof user.id !== 'string') throw new Error('create user returned no id');
-    return user.id;
   }
 
   /** True when applied; false when stale, duplicate or for an unknown user. */

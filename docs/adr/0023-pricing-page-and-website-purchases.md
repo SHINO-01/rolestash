@@ -1,6 +1,6 @@
 # ADR-0023: A pricing page with local prices, and purchases matched by email
 
-- **Status:** Accepted
+- **Status:** Accepted; purchase matching superseded by [ADR-0027](0027-sign-in-before-website-checkout.md) (2026-10-05)
 - **Date:** 2026-10-02
 
 ## Context

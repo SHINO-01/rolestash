@@ -2,6 +2,8 @@ import {
   PaddleApiError,
   PaddleClient,
   toBillingEvent,
+  checkoutSignature,
+  verifyCheckoutSignature,
   verifyPaddleSignature,
 } from '../../../supabase/functions/_shared/paddle.ts';
 import { fakeFetch } from '../helpers/fake-fetch';
@@ -59,10 +61,26 @@ describe('verifyPaddleSignature', () => {
   });
 });
 
+describe('checkout signatures', () => {
+  it('verify only for the same account and secret', async () => {
+    const sig = await checkoutSignature('secret', USER);
+    expect(sig).toMatch(/^[0-9a-f]{64}$/);
+    expect(await verifyCheckoutSignature('secret', USER, sig)).toBe(true);
+    expect(await verifyCheckoutSignature('secret', USER, sig.toUpperCase())).toBe(true);
+    expect(await verifyCheckoutSignature('other', USER, sig)).toBe(false);
+    const someoneElse = '22222222-2222-4222-8222-222222222222';
+    expect(await verifyCheckoutSignature('secret', someoneElse, sig)).toBe(false);
+    expect(await verifyCheckoutSignature('secret', USER, null)).toBe(false);
+    expect(await verifyCheckoutSignature('', USER, sig)).toBe(false);
+    await expect(checkoutSignature('', USER)).rejects.toThrow();
+  });
+});
+
 describe('toBillingEvent', () => {
   it('maps an active subscription', () => {
     expect(toBillingEvent(subscriptionEvent(), TIERS)).toEqual({
       userId: USER,
+      checkoutSignature: null,
       occurredAt: '2026-10-01T00:00:00.000Z',
       status: 'active',
       currentPeriodEnd: '2026-11-01T00:00:00Z',
@@ -123,14 +141,12 @@ describe('toBillingEvent', () => {
 
   it('ignores events we do not act on', () => {
     expect(toBillingEvent({ event_type: 'transaction.completed', data: {} }, TIERS)).toBeNull();
-    // A website purchase has no user id: kept, to be matched by the customer.
+    // No user id: kept, so the webhook logs the purchase it can't apply.
     expect(toBillingEvent(subscriptionEvent({ custom_data: null }), TIERS)).toMatchObject({
       userId: null,
+      checkoutSignature: null,
       customerId: 'ctm_01',
     });
-    expect(
-      toBillingEvent(subscriptionEvent({ custom_data: null, customer_id: null }), TIERS),
-    ).toBeNull();
     expect(
       toBillingEvent(subscriptionEvent({ custom_data: { user_id: 'nope' } }), TIERS),
     ).toBeNull();
@@ -152,6 +168,7 @@ describe('PaddleClient', () => {
     const url = await client.createCheckout({
       priceId: 'pri_m',
       userId: USER,
+      signature: 'sig',
       customerId: 'ctm_01',
     });
     expect(url).toBe('https://rolestash.com/pay/?_ptxn=txn_1');
@@ -159,7 +176,7 @@ describe('PaddleClient', () => {
       headers: { Authorization: 'Bearer key' },
       body: {
         items: [{ price_id: 'pri_m', quantity: 1 }],
-        custom_data: { user_id: USER },
+        custom_data: { user_id: USER, checkout_sig: 'sig' },
         customer_id: 'ctm_01',
       },
     });
@@ -182,7 +199,7 @@ describe('PaddleClient', () => {
     expect(f.calls[0]?.body).toEqual({ subscription_ids: ['sub_01'] });
     await expect(client.cancelNow('sub_01')).rejects.toMatchObject({ status: 404 });
     await expect(
-      client.createCheckout({ priceId: 'p', userId: USER, customerId: null }),
+      client.createCheckout({ priceId: 'p', userId: USER, signature: 's', customerId: null }),
     ).rejects.toBeInstanceOf(PaddleApiError);
   });
 });

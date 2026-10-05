@@ -18,6 +18,9 @@ All notable changes to this project are documented here. The format follows
   forwarded email is only read once its Rolestash address is confirmed
   active, and more of the email rules keep a steady speed however an email
   is written.
+- **Buying on rolestash.com now starts with signing in:** Subscribe on the
+  pricing page asks you to sign in (or create an account) first, and a
+  purchase only ever applies to the account that made it.
 
 ## [0.4.2] — 2026-10-05
 

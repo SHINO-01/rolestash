@@ -515,6 +515,14 @@ describe('rolestash.com static site', () => {
     }
   });
 
+  it('never opens checkout on /pricing/: buyers sign in on the board first (ADR-0027)', () => {
+    // A checkout opened in the browser can claim any account in custom_data,
+    // and the webhook no longer matches purchases by the email typed there.
+    const source = readFileSync(join(SITE, 'assets/pricing.js'), 'utf8');
+    expect(source).not.toMatch(/Checkout\.open|customData|customer:/);
+    expect(source).toContain('/board/?checkout=');
+  });
+
   it('reads Paddle settings from one config that refuses mismatched environments', async () => {
     const source = readFileSync(join(SITE, 'assets/paddle-config.js'), 'utf8');
     for (const script of ['pay.js', 'pricing.js'])
