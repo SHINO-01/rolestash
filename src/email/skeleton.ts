@@ -11,6 +11,13 @@ import { splitSentences } from './clean';
 /** Fewer template words than this can't identify a template. */
 export const MIN_SKELETON_WORDS = 8;
 const MAX_CHARS = 4000;
+/**
+ * A forwarded email's subject comes from its body and has no length limit, and
+ * the email-address pattern below is quadratic on a long run of word
+ * characters (CWE-1333), so the subject is capped too. Real subjects are far
+ * shorter.
+ */
+const MAX_SUBJECT_CHARS = 1000;
 
 /**
  * Words that start template sentences. A capitalised word is kept only when
@@ -41,7 +48,7 @@ function token(word: string, first: boolean): string | undefined {
 
 export function skeletonOf(subject: string, body: string): string | undefined {
   const text =
-    `${subject.replace(/^(?:(?:re|fw|fwd|aw)\s*:\s*)+/i, '')}\n${body.slice(0, MAX_CHARS)}`
+    `${subject.slice(0, MAX_SUBJECT_CHARS).replace(/^(?:(?:re|fw|fwd|aw)\s*:\s*)+/i, '')}\n${body.slice(0, MAX_CHARS)}`
       .replace(/\bhttps?:\/\/\S+/gi, ' <url> ')
       .replace(/[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g, ' <email> ');
   const out: string[] = [];

@@ -9,6 +9,14 @@ const rejection = (name: string, company: string, title: string, date: string) =
 });
 
 describe('template skeletons (ADR-0014 §6)', () => {
+  // A forwarded subject has no length limit and the email pattern is
+  // quadratic on long word runs (CWE-1333), so only its start is read.
+  it('reads a very long subject in bounded time', () => {
+    const start = performance.now();
+    skeletonOf('a'.repeat(2_000_000), 'Thank you for applying.');
+    expect(performance.now() - start).toBeLessThan(1000);
+  });
+
   it('is the same for one template sent to different people about different jobs', () => {
     const a = emailSkeleton(rejection('Sam', 'Northwind', 'Data Analyst', '2026-10-01T00:00:00Z'));
     const b = emailSkeleton(

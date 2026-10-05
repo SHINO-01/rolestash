@@ -54,6 +54,46 @@ describe('htmlToText', () => {
       { href: 'https://a.example/x', text: '' },
       { href: 'https://b.example/y', text: '' },
     ]);
+    expect(linksInText('https://a.example/x?!.,;: https://b.example/a.b.')).toEqual([
+      { href: 'https://a.example/x', text: '' },
+      { href: 'https://b.example/a.b', text: '' },
+    ]);
+  });
+
+  it('reads unclosed and odd HTML as before', () => {
+    expect(htmlToText('a<!-- x -->b<!-- never closed').text).toBe('ab<!-- never closed');
+    expect(htmlToText('<p>a</p><script>x</SCRIPT >b<style>never closed').text).toBe(
+      'a\nbnever closed',
+    );
+    expect(htmlToText('<a href="https://x.example/?q=>">go</a> on').links).toEqual([
+      { href: 'https://x.example/?q=>', text: 'go' },
+    ]);
+    expect(htmlToText('<p>New</p><div class="x>y gmail_quote">Old</div>').text).toBe('New');
+    expect(htmlToText('<b>x</b> <i "unclosed>y').text).toBe('x <i "unclosed>y');
+  });
+
+  // The HTML part comes from any sender before its inbox token is checked, so
+  // unclosed markup must cost linear time, not a rescan from every `<`
+  // (CWE-1333). The regexes these replaced took minutes on 2 MB of this.
+  it.each([
+    ['comments', '<!--'],
+    ['dropped elements', '<style>'],
+    ['tags', '<a '],
+    ['quoted attributes', '<div class="a'],
+    ['quote markers', '<blockquote '],
+  ])('reads HTML full of unclosed %s in linear time', (_, unit) => {
+    const html = unit.repeat(100_000);
+    const start = performance.now();
+    htmlToText(html);
+    htmlToText(html, true);
+    expect(performance.now() - start).toBeLessThan(1000);
+  });
+
+  it('trims trailing punctuation from a long link in linear time', () => {
+    const start = performance.now();
+    const links = linksInText(`http://${'.'.repeat(200_000)}x`);
+    expect(performance.now() - start).toBeLessThan(1000);
+    expect(links).toHaveLength(1);
   });
 });
 
