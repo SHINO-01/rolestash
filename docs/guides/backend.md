@@ -169,19 +169,29 @@ Otherwise it logs `subscription has no verified account` with the
 subscription and customer IDs and ignores the event; refund that purchase
 in Paddle.
 
+## Refunds and chargebacks
+
+The refund policy says a refund moves you to Free. When Paddle approves a
+full refund or chargeback (`adjustment.*` with `type: full`) of the payment
+for the subscription's **current** billing period, `paddle-webhook` cancels
+the subscription immediately; Paddle's `subscription.canceled` event then
+updates the entitlement as usual. Partial refunds, credits and refunds of an
+earlier period's payment keep the plan, and the last of these is logged as
+`refund is not for the current period; plan kept`.
+
 ## Edge Functions
 
-| Function          | Caller                  | Does                                                                                       |
-| ----------------- | ----------------------- | ------------------------------------------------------------------------------------------ |
-| `paddle-webhook`  | Paddle (signed, no JWT) | Verifies `Paddle-Signature`, applies `subscription.*` events                               |
-| `create-checkout` | Extension (user JWT)    | Creates a Paddle transaction with a signed `custom_data.user_id`; returns its checkout URL |
-| `billing-portal`  | Extension (user JWT)    | Sets the Paddle customer's name from the profile, then returns a one-time portal link      |
-| `change-plan`     | Extension (user JWT)    | Moves a live subscription between Pro and Advanced (prorated)                              |
-| `delete-account`  | Extension (user JWT)    | Cancels a live subscription immediately, then deletes the user                             |
-| `web-handoff`     | Extension (user JWT)    | Single-use sign-in token for the web board (admin `generate_link`; ADR-0017)               |
-| `launch-list`     | rolestash.com form      | Updates-list signup, confirm, unsubscribe and campaign sends (docs/guides/launch-list.md)  |
-| `welcome`         | Extension (user JWT)    | Sends the welcome email once per account (claims `welcome_sent_at`; ADR-0024)              |
-| `bug-report`      | Anyone (JWT optional)   | Stores a problem report, emails support; 5 an hour per IP (hashed); ADR-0024               |
+| Function          | Caller                  | Does                                                                                         |
+| ----------------- | ----------------------- | -------------------------------------------------------------------------------------------- |
+| `paddle-webhook`  | Paddle (signed, no JWT) | Verifies `Paddle-Signature`, applies `subscription.*` events; ends the plan on a full refund |
+| `create-checkout` | Extension (user JWT)    | Creates a Paddle transaction with a signed `custom_data.user_id`; returns its checkout URL   |
+| `billing-portal`  | Extension (user JWT)    | Sets the Paddle customer's name from the profile, then returns a one-time portal link        |
+| `change-plan`     | Extension (user JWT)    | Moves a live subscription between Pro and Advanced (prorated)                                |
+| `delete-account`  | Extension (user JWT)    | Cancels a live subscription immediately, then deletes the user                               |
+| `web-handoff`     | Extension (user JWT)    | Single-use sign-in token for the web board (admin `generate_link`; ADR-0017)                 |
+| `launch-list`     | rolestash.com form      | Updates-list signup, confirm, unsubscribe and campaign sends (docs/guides/launch-list.md)    |
+| `welcome`         | Extension (user JWT)    | Sends the welcome email once per account (claims `welcome_sent_at`; ADR-0024)                |
+| `bug-report`      | Anyone (JWT optional)   | Stores a problem report, emails support; 5 an hour per IP (hashed); ADR-0024                 |
 
 `welcome` and `bug-report` need `RESEND_API_KEY` (shared with the launch
 list); `ACCOUNT_FROM` and `SUPPORT_EMAIL` are optional overrides. Without
@@ -207,7 +217,9 @@ npx supabase functions deploy
 2. Default payment link: `https://rolestash.com/pay/`.
 3. Add a notification destination for
    `https://<ref>.supabase.co/functions/v1/paddle-webhook` with the
-   `subscription.*` events. Its secret is `PADDLE_WEBHOOK_SECRET`.
+   `subscription.*`, `adjustment.created` and `adjustment.updated` events
+   (`scripts/paddle-setup.ts --apply` adds any that are missing). Its secret
+   is `PADDLE_WEBHOOK_SECRET`.
 
 **Sandbox email caveat:** Paddle's sandbox delivers customer emails
 (receipts, confirmations) only to your seller account's email domain. Every
