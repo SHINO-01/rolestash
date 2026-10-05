@@ -76,6 +76,48 @@ test('offers Advanced to other plans', async ({ page, site, backend }) => {
   ).toBeVisible();
 });
 
+test('from /pricing/: signs in, then opens checkout for that account', async ({
+  page,
+  site,
+  backend,
+}) => {
+  await page.goto(`${site}/board/?checkout=pro-year`);
+  // The choice leaves the address bar, so a reload doesn't reopen checkout.
+  await expect(page).toHaveURL(`${site}/board/`);
+  await expect(page.getByRole('heading', { name: 'Sign in to get Pro' })).toBeVisible();
+  await page.getByLabel('Email', { exact: true }).fill('jo@example.com');
+  await page.getByRole('button', { name: 'Email me a sign-in code' }).click();
+  await page.getByLabel(/Code sent to/).fill(E2E_CODE);
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Get Pro' })).toBeVisible();
+  await expect(page.getByText('£48.00 / year for jo@example.com')).toBeVisible();
+  await page.getByRole('button', { name: 'Continue to checkout' }).click();
+  await page.waitForURL(/\/pay\/\?_ptxn=txn_e2e/);
+  const call = backend.requests.find((r) => r.path === '/functions/v1/create-checkout');
+  expect(call?.body).toEqual({ tier: 'pro', interval: 'year' });
+  expect(call?.headers.authorization).toBe('Bearer e2e-access');
+});
+
+test('from /pricing/ with a live plan: no second subscription', async ({ page, site, backend }) => {
+  backend.entitlement = {
+    status: 'active',
+    tier: 'pro',
+    trial_ends_at: null,
+    current_period_end: new Date(Date.now() + 20 * 86_400_000).toISOString(),
+    provider_customer_id: 'ctm_e2e',
+    provider_subscription_id: 'sub_e2e',
+  };
+  await page.goto(`${site}/board/?checkout=advanced-month`);
+  await signIn(page, site);
+  await page.getByRole('button', { name: 'Continue to checkout' }).click();
+  await expect(page.getByRole('heading', { name: 'You already have a plan' })).toBeVisible();
+  await page.getByRole('button', { name: 'Continue' }).click();
+  // The pending choice is cleared; Pro sees the usual Advanced offer.
+  await expect(
+    page.getByRole('heading', { name: 'The web board is part of Advanced' }),
+  ).toBeVisible();
+});
+
 test('Advanced: Today, the board, quick updates and quick add, synced back', async ({
   page,
   site,

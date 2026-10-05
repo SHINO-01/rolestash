@@ -10,6 +10,7 @@ import {
   type Deps,
 } from '../../../supabase/functions/_shared/handlers.ts';
 import { readEnv } from '../../../supabase/functions/_shared/env.ts';
+import { checkoutSignature } from '../../../supabase/functions/_shared/paddle.ts';
 import { fakeFetch, type FakeResponse, type RecordedCall } from '../helpers/fake-fetch';
 import { subscriptionEvent } from './fixtures';
 
@@ -96,7 +97,11 @@ describe('user endpoints', () => {
     const paddleCall = calls.find((c) => c.url.endsWith('/transactions'));
     expect(paddleCall?.body).toMatchObject({
       items: [{ price_id: 'pri_pro_year' }],
-      custom_data: { user_id: USER.id },
+      // Signed, so the webhook knows this checkout is for this signed-in account.
+      custom_data: {
+        user_id: USER.id,
+        checkout_sig: await checkoutSignature('service', USER.id),
+      },
       customer_id: 'ctm_new',
     });
     // The entitlement lookup uses the service role, scoped to this user.
@@ -410,9 +415,12 @@ describe('paddle-webhook', () => {
     });
   }
 
-  // The event's customer is the one already on the account its user_id names.
+  // The event's subscription and customer are already the account's own.
   const ownCustomer = {
-    [`GET ${SB}/rest/v1/entitlements`]: entitlementRoute({ provider_customer_id: 'ctm_01' }),
+    [`GET ${SB}/rest/v1/entitlements`]: entitlementRoute({
+      provider_customer_id: 'ctm_01',
+      provider_subscription_id: 'sub_01',
+    }),
   };
   const applyCall = (calls: RecordedCall[]) =>
     calls.find((c) => c.url.includes('apply_billing_event'));
@@ -439,7 +447,11 @@ describe('paddle-webhook', () => {
     expect(applyCall(calls)?.headers.apikey).toBe('service');
   });
 
-  describe('a user id the checkout claimed (buyers can set it)', () => {
+  describe('a new subscription (ADR-0027: buyers can set any custom_data)', () => {
+    const signed = async (userId = USER.id) =>
+      subscriptionEvent({
+        custom_data: { user_id: userId, checkout_sig: await checkoutSignature('service', userId) },
+      });
     const noCustomerYet = {
       [`GET ${SB}/rest/v1/entitlements`]: entitlementRoute({ provider_customer_id: null }),
     };
@@ -454,15 +466,16 @@ describe('paddle-webhook', () => {
         body: { data: { email } },
       },
     });
+    const apply = { [`POST ${SB}/rest/v1/rpc/apply_billing_event`]: { status: 200, body: true } };
 
-    it('applies to that account when the customer has its email', async () => {
+    it('applies a checkout create-checkout signed, for the customer with the account email', async () => {
       const { deps: d, calls } = deps({
         ...noCustomerYet,
         ...account(USER.email),
         ...customerWith('A@Example.com'),
-        [`POST ${SB}/rest/v1/rpc/apply_billing_event`]: { status: 200, body: true },
+        ...apply,
       });
-      const res = await handlePaddleWebhook(await signedRequest(subscriptionEvent()), d);
+      const res = await handlePaddleWebhook(await signedRequest(await signed()), d);
       expect(await res.json()).toEqual({ applied: true });
       expect(applyCall(calls)?.body).toMatchObject({
         p_user_id: USER.id,
@@ -470,13 +483,55 @@ describe('paddle-webhook', () => {
       });
     });
 
-    it("ignores it when the customer is someone else's", async () => {
+    it('applies a signed checkout for the customer already on the account', async () => {
+      const { deps: d, calls } = deps({
+        [`GET ${SB}/rest/v1/entitlements`]: entitlementRoute({
+          provider_customer_id: 'ctm_01',
+          provider_subscription_id: 'sub_old',
+        }),
+        ...apply,
+      });
+      const res = await handlePaddleWebhook(await signedRequest(await signed()), d);
+      expect(await res.json()).toEqual({ applied: true });
+      expect(applyCall(calls)?.body).toMatchObject({ p_subscription_id: 'sub_01' });
+    });
+
+    it('ignores an unsigned or forged claim, even with the account email or customer', async () => {
+      const forged = async (custom_data: unknown) => {
+        const { deps: d, calls } = deps({
+          [`GET ${SB}/rest/v1/entitlements`]: entitlementRoute({
+            provider_customer_id: 'ctm_01',
+            provider_subscription_id: 'sub_live',
+            status: 'active',
+          }),
+          ...account(USER.email),
+          ...customerWith(USER.email),
+          ...apply,
+        });
+        const res = await handlePaddleWebhook(
+          await signedRequest(subscriptionEvent({ custom_data })),
+          d,
+        );
+        expect(await res.json()).toEqual({ ignored: true });
+        expect(applyCall(calls)).toBeUndefined();
+      };
+      // Paddle.js on any page can name someone's account in custom_data.
+      await forged({ user_id: USER.id });
+      await forged({ user_id: USER.id, checkout_sig: 'f'.repeat(64) });
+      await forged({
+        user_id: USER.id,
+        checkout_sig: await checkoutSignature('service', '22222222-2222-4222-8222-222222222222'),
+      });
+      await forged({ user_id: USER.id, checkout_sig: await checkoutSignature('other', USER.id) });
+    });
+
+    it("ignores a signed claim when the customer is someone else's", async () => {
       const { deps: d, calls } = deps({
         [`GET ${SB}/rest/v1/entitlements`]: entitlementRoute({ provider_customer_id: 'ctm_mine' }),
         ...account(USER.email),
         ...customerWith('victim@example.com'),
       });
-      const res = await handlePaddleWebhook(await signedRequest(subscriptionEvent()), d);
+      const res = await handlePaddleWebhook(await signedRequest(await signed()), d);
       expect(res.status).toBe(200);
       expect(await res.json()).toEqual({ ignored: true });
       expect(applyCall(calls)).toBeUndefined();
@@ -485,12 +540,15 @@ describe('paddle-webhook', () => {
 
     it('ignores it for an unknown account, or an event without a customer', async () => {
       const unknown = deps({ ...noCustomerYet, ...account(null) });
-      const res = await handlePaddleWebhook(await signedRequest(subscriptionEvent()), unknown.deps);
+      const res = await handlePaddleWebhook(await signedRequest(await signed()), unknown.deps);
       expect(await res.json()).toEqual({ ignored: true });
       expect(applyCall(unknown.calls)).toBeUndefined();
 
       const noCustomer = deps({});
-      const bare = await signedRequest(subscriptionEvent({ customer_id: null }));
+      const bare = await signedRequest({
+        ...(await signed()),
+        data: { ...(await signed()).data, customer_id: null },
+      });
       expect(await (await handlePaddleWebhook(bare, noCustomer.deps)).json()).toEqual({
         ignored: true,
       });
@@ -503,89 +561,26 @@ describe('paddle-webhook', () => {
         ...account(USER.email),
         'GET https://sandbox-api.paddle.com/customers/ctm_01': { status: 503, body: {} },
       });
-      const res = await handlePaddleWebhook(await signedRequest(subscriptionEvent()), d);
+      const res = await handlePaddleWebhook(await signedRequest(await signed()), d);
       expect(res.status).toBe(500);
+
+      const down = deps({ [`GET ${SB}/rest/v1/entitlements`]: { status: 503, body: {} } });
+      expect(
+        (await handlePaddleWebhook(await signedRequest(await signed()), down.deps)).status,
+      ).toBe(500);
     });
   });
 
-  describe('a purchase made on the website (no user id)', () => {
-    const website = () => subscriptionEvent({ custom_data: null });
-    const apply = { [`POST ${SB}/rest/v1/rpc/apply_billing_event`]: { status: 200, body: true } };
-    const tag = {
-      'PATCH https://sandbox-api.paddle.com/subscriptions/sub_01': {
-        status: 200,
-        body: { data: {} },
-      },
-    };
-    const customer = {
-      'GET https://sandbox-api.paddle.com/customers/ctm_01': {
-        status: 200,
-        body: { data: { email: 'buyer@example.com' } },
-      },
-    };
-    const NEW_ID = '99999999-9999-4999-8999-999999999999';
-
-    it('goes to the account already billed as that customer', async () => {
-      const { deps: d, calls } = deps({
-        [`GET ${SB}/rest/v1/entitlements`]: { status: 200, body: [{ user_id: USER.id }] },
-        ...apply,
-        ...tag,
-      });
-      expect(await (await handlePaddleWebhook(await signedRequest(website()), d)).json()).toEqual({
-        applied: true,
-      });
-      expect(calls.find((c) => c.url.includes('apply_billing_event'))?.body).toMatchObject({
-        p_user_id: USER.id,
-      });
-      // Tagged, so later events carry the id.
-      expect(calls.find((c) => c.method === 'PATCH')?.body).toEqual({
-        custom_data: { user_id: USER.id },
-      });
-    });
-
-    it('else to the account with the checkout email', async () => {
-      const { deps: d, calls } = deps({
-        [`GET ${SB}/rest/v1/entitlements`]: { status: 200, body: [] },
-        ...customer,
-        [`POST ${SB}/rest/v1/rpc/user_id_for_email`]: { status: 200, body: USER.id },
-        ...apply,
-        ...tag,
-      });
-      await handlePaddleWebhook(await signedRequest(website()), d);
-      expect(calls.find((c) => c.url.endsWith('/user_id_for_email'))?.body).toEqual({
-        p_email: 'buyer@example.com',
-      });
-      expect(calls.some((c) => c.url.endsWith('/admin/users'))).toBe(false);
-      expect(calls.find((c) => c.url.includes('apply_billing_event'))?.body).toMatchObject({
-        p_user_id: USER.id,
-      });
-    });
-
-    it('else creates an account for that email, to sign in to later', async () => {
-      const { deps: d, calls } = deps({
-        [`GET ${SB}/rest/v1/entitlements`]: { status: 200, body: [] },
-        ...customer,
-        [`POST ${SB}/rest/v1/rpc/user_id_for_email`]: { status: 200, body: null },
-        [`POST ${SB}/auth/v1/admin/users`]: { status: 200, body: { id: NEW_ID } },
-        ...apply,
-        ...tag,
-      });
-      await handlePaddleWebhook(await signedRequest(website()), d);
-      const created = calls.find((c) => c.url.endsWith('/admin/users'));
-      expect(created?.body).toEqual({ email: 'buyer@example.com', email_confirm: true });
-      expect(created?.headers.Authorization).toBe('Bearer service');
-      expect(calls.find((c) => c.url.includes('apply_billing_event'))?.body).toMatchObject({
-        p_user_id: NEW_ID,
-        p_tier: 'pro',
-      });
-    });
-
-    it('asks Paddle to retry when the account lookup fails', async () => {
-      const { deps: d } = deps({
-        [`GET ${SB}/rest/v1/entitlements`]: { status: 503, body: {} },
-      });
-      expect((await handlePaddleWebhook(await signedRequest(website()), d)).status).toBe(500);
-    });
+  it('never matches a purchase without an account to one by its checkout email', async () => {
+    // A Paddle.js checkout with no custom_data, e.g. someone else's email typed in.
+    const { deps: d, calls } = deps({});
+    const res = await handlePaddleWebhook(
+      await signedRequest(subscriptionEvent({ custom_data: null })),
+      d,
+    );
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ignored: true });
+    expect(calls).toHaveLength(0);
   });
 
   it('rejects unsigned or forged requests without touching the database', async () => {

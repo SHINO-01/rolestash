@@ -11,10 +11,14 @@ export type EntitlementStatus =
   'trialing' | 'active' | 'past_due' | 'paused' | 'canceled' | 'expired';
 
 /**
- * A webhook's event before we know whose it is: purchases made on
- * rolestash.com/pricing/ carry no user id (the extension's checkouts do).
+ * A webhook's event before we know whose it is. `userId` and
+ * `checkoutSignature` are only what the checkout's custom_data says: anyone
+ * can open a Paddle.js checkout with any custom_data (ADR-0027).
  */
-export type IncomingBillingEvent = Omit<BillingEvent, 'userId'> & { userId: string | null };
+export type IncomingBillingEvent = Omit<BillingEvent, 'userId'> & {
+  userId: string | null;
+  checkoutSignature: string | null;
+};
 
 /** What apply_billing_event() needs (supabase/migrations). */
 export interface BillingEvent {
@@ -76,6 +80,33 @@ export async function verifyPaddleSignature(
   return signatures.some((sig) => timingSafeEqual(sig, expected));
 }
 
+/**
+ * What create-checkout puts in custom_data.checkout_sig: an HMAC of the
+ * account id under a server-only secret, so the webhook can tell a checkout
+ * we made for that signed-in account from one a browser made up (ADR-0027).
+ */
+export async function checkoutSignature(secret: string, userId: string): Promise<string> {
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  );
+  return toHex(
+    await crypto.subtle.sign('HMAC', key, encoder.encode(`rolestash checkout v1:${userId}`)),
+  );
+}
+
+export async function verifyCheckoutSignature(
+  secret: string,
+  userId: string,
+  signature: string | null,
+): Promise<boolean> {
+  if (!secret || !signature) return false;
+  return timingSafeEqual(signature.toLowerCase(), await checkoutSignature(secret, userId));
+}
+
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const STATUS_MAP: Record<string, EntitlementStatus | undefined> = {
@@ -93,7 +124,7 @@ interface PaddleSubscriptionEvent {
     id?: unknown;
     status?: unknown;
     customer_id?: unknown;
-    custom_data?: { user_id?: unknown } | null;
+    custom_data?: { user_id?: unknown; checkout_sig?: unknown } | null;
     current_billing_period?: { ends_at?: unknown } | null;
     billing_cycle?: { interval?: unknown; frequency?: unknown } | null;
     items?: { price?: { id?: unknown; custom_data?: { tier?: unknown } | null } | null }[] | null;
@@ -106,10 +137,9 @@ const str = (v: unknown): string | null => (typeof v === 'string' && v !== '' ? 
 
 /**
  * Maps a Paddle `subscription.*` webhook to a billing event. Returns null for
- * events we don't act on. `userId` is null when the checkout didn't carry one
- * (a purchase on the website); the webhook then finds the account by email.
+ * events we don't act on. `userId` is null when the checkout didn't carry one.
  * A `userId` is only what the checkout claimed (a buyer can set it), so the
- * webhook checks the customer belongs to that account before applying it.
+ * webhook checks the claim before applying it (ADR-0027).
  */
 export function toBillingEvent(
   payload: unknown,
@@ -135,8 +165,6 @@ export function toBillingEvent(
   const status =
     endsAt && (reported === 'active' || reported === 'past_due') ? 'canceled' : reported;
   if ((claimed && !userId) || !subscriptionId || !occurredAt || !status) return null;
-  // Without a user id we need the customer to find the account.
-  if (!userId && !str(data.customer_id)) return null;
 
   // The tier comes from the subscribed price: our price map first, then the
   // price's own custom_data. An unknown price is ignored rather than guessed.
@@ -161,6 +189,7 @@ export function toBillingEvent(
           : null;
   return {
     userId,
+    checkoutSignature: str(data.custom_data?.checkout_sig),
     occurredAt,
     status,
     // A canceled subscription has no current period; access ends when it was canceled.
@@ -237,6 +266,8 @@ export class PaddleClient {
   async createCheckout(input: {
     priceId: string;
     userId: string;
+    /** checkoutSignature() of userId, so the webhook trusts the claim. */
+    signature: string;
     customerId: string | null;
   }): Promise<string> {
     const data = await this.call<{ checkout?: { url?: string | null } | null }>(
@@ -244,7 +275,7 @@ export class PaddleClient {
       '/transactions',
       {
         items: [{ price_id: input.priceId, quantity: 1 }],
-        custom_data: { user_id: input.userId },
+        custom_data: { user_id: input.userId, checkout_sig: input.signature },
         ...(input.customerId ? { customer_id: input.customerId } : {}),
       },
     );
@@ -275,13 +306,6 @@ export class PaddleClient {
       `/customers/${encodeURIComponent(customerId)}`,
     );
     return typeof data.email === 'string' && data.email.includes('@') ? data.email : null;
-  }
-
-  /** Tags a subscription with its Rolestash account, so later events name it. */
-  async setSubscriptionUser(subscriptionId: string, userId: string): Promise<void> {
-    await this.call('PATCH', `/subscriptions/${encodeURIComponent(subscriptionId)}`, {
-      custom_data: { user_id: userId },
-    });
   }
 
   async createPortalSession(customerId: string, subscriptionId: string | null): Promise<string> {

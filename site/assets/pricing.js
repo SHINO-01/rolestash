@@ -1,12 +1,12 @@
 // rolestash.com/pricing/: prices in the visitor's currency from Paddle
 // (PricePreview detects the country from the visitor's IP; we never pass
-// one), a monthly/yearly switch, and Subscribe buttons that open Paddle's
-// one-page overlay checkout for exactly the price shown.
+// one), a monthly/yearly switch, and Subscribe buttons.
 //
-// Purchases here carry no Rolestash account: the billing webhook links them
-// to the account with the checkout email (creating it if needed), so buyers
-// sign in to the extension with that email. Edit the tiers below.
-import { checkoutTheme, initPaddle, PADDLE } from './paddle-config.js';
+// Subscribe never opens checkout here: it goes to the web board, which signs
+// the buyer in and opens a checkout the server made for that account
+// (ADR-0027). A checkout opened in the browser could name anyone's account.
+// Edit the tiers below.
+import { initPaddle, PADDLE } from './paddle-config.js';
 
 /** @typedef {'month' | 'quarter' | 'year'} Interval */
 /** @typedef {{ name: 'Free' | 'Pro' | 'Advanced', description: string, features: string[], priceId: Record<Interval, string> | null, badge?: string }} Tier */
@@ -96,7 +96,7 @@ function render() {
         );
         button.type = 'button';
         button.disabled = !totals.has(id);
-        button.addEventListener('click', () => subscribe(id));
+        button.addEventListener('click', () => subscribe(tier, interval));
         card.append(button);
       } else {
         const link = el('a', 'btn btn-ghost plan-cta', 'Start free');
@@ -111,16 +111,9 @@ function render() {
     button.setAttribute('aria-pressed', String(button.dataset.interval === interval));
 }
 
-function subscribe(priceId) {
-  window.Paddle.Checkout.open({
-    items: [{ priceId, quantity: 1 }],
-    settings: {
-      displayMode: 'overlay',
-      variant: 'one-page',
-      theme: checkoutTheme(),
-      successUrl: `${location.origin}/welcome/`,
-    },
-  });
+/** Sign in on the web board, then check out there (src/web/checkout-intent.ts). */
+function subscribe(tier, chosen) {
+  location.assign(`/board/?checkout=${tier.name.toLowerCase()}-${chosen}`);
 }
 
 for (const button of toggle)

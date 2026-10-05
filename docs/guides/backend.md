@@ -148,37 +148,40 @@ rotate it, see [email-updates.md](email-updates.md#one-time-setup).
 - `share_learning`, the choice made at sign-up. Only `set_email_sharing()`
   changes it, and `my_inbox()` copies it into a new inbox.
 
-## Website purchases (ADR-0023)
+## Website purchases (ADR-0027)
 
-Checkouts opened from rolestash.com/pricing/ carry no `user_id`. The
-`paddle-webhook` function matches them, in order:
+Subscribe on rolestash.com/pricing/ goes to the web board
+(`/board/?checkout=<tier>-<interval>`), which signs the buyer in and then
+calls `create-checkout`, like the extension. Purchases are never matched to
+an account by the email typed at checkout. `PADDLE_ENV` must be `sandbox`
+or `production`; anything else stops the functions.
 
-1. to the account already billed as that Paddle customer;
-2. else to the account with the checkout email (`user_id_for_email()`,
-   service role only);
-3. else to a new account it creates for that email.
+`create-checkout` puts `user_id` and `checkout_sig` (an HMAC of the user id
+under the service-role key) in `custom_data`. Anyone opening a Paddle.js
+checkout can set `custom_data`, so `paddle-webhook` applies an event only
+when:
 
-It then tags the subscription with the `user_id`. `PADDLE_ENV` must be
-`sandbox` or `production`; anything else stops the functions.
+1. the subscription and customer are already that account's, or
+2. `checkout_sig` is valid **and** the customer is already the account's or
+   has the account's email.
 
-A buyer can also set `custom_data.user_id` themselves (Paddle.js
-`customData`), so an event that carries one is applied only when its Paddle
-customer is already on that account or has the account's email; otherwise
-the webhook ignores it.
+Otherwise it logs `subscription has no verified account` with the
+subscription and customer IDs and ignores the event; refund that purchase
+in Paddle.
 
 ## Edge Functions
 
-| Function          | Caller                  | Does                                                                                      |
-| ----------------- | ----------------------- | ----------------------------------------------------------------------------------------- |
-| `paddle-webhook`  | Paddle (signed, no JWT) | Verifies `Paddle-Signature`, applies `subscription.*` events                              |
-| `create-checkout` | Extension (user JWT)    | Creates a Paddle transaction with `custom_data.user_id`; returns its checkout URL         |
-| `billing-portal`  | Extension (user JWT)    | Sets the Paddle customer's name from the profile, then returns a one-time portal link     |
-| `change-plan`     | Extension (user JWT)    | Moves a live subscription between Pro and Advanced (prorated)                             |
-| `delete-account`  | Extension (user JWT)    | Cancels a live subscription immediately, then deletes the user                            |
-| `web-handoff`     | Extension (user JWT)    | Single-use sign-in token for the web board (admin `generate_link`; ADR-0017)              |
-| `launch-list`     | rolestash.com form      | Updates-list signup, confirm, unsubscribe and campaign sends (docs/guides/launch-list.md) |
-| `welcome`         | Extension (user JWT)    | Sends the welcome email once per account (claims `welcome_sent_at`; ADR-0024)             |
-| `bug-report`      | Anyone (JWT optional)   | Stores a problem report, emails support; 5 an hour per IP (hashed); ADR-0024              |
+| Function          | Caller                  | Does                                                                                       |
+| ----------------- | ----------------------- | ------------------------------------------------------------------------------------------ |
+| `paddle-webhook`  | Paddle (signed, no JWT) | Verifies `Paddle-Signature`, applies `subscription.*` events                               |
+| `create-checkout` | Extension (user JWT)    | Creates a Paddle transaction with a signed `custom_data.user_id`; returns its checkout URL |
+| `billing-portal`  | Extension (user JWT)    | Sets the Paddle customer's name from the profile, then returns a one-time portal link      |
+| `change-plan`     | Extension (user JWT)    | Moves a live subscription between Pro and Advanced (prorated)                              |
+| `delete-account`  | Extension (user JWT)    | Cancels a live subscription immediately, then deletes the user                             |
+| `web-handoff`     | Extension (user JWT)    | Single-use sign-in token for the web board (admin `generate_link`; ADR-0017)               |
+| `launch-list`     | rolestash.com form      | Updates-list signup, confirm, unsubscribe and campaign sends (docs/guides/launch-list.md)  |
+| `welcome`         | Extension (user JWT)    | Sends the welcome email once per account (claims `welcome_sent_at`; ADR-0024)              |
+| `bug-report`      | Anyone (JWT optional)   | Stores a problem report, emails support; 5 an hour per IP (hashed); ADR-0024               |
 
 `welcome` and `bug-report` need `RESEND_API_KEY` (shared with the launch
 list); `ACCOUNT_FROM` and `SUPPORT_EMAIL` are optional overrides. Without

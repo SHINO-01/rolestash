@@ -1,10 +1,12 @@
 import {
+  checkoutSignature,
   PaddleApiError,
   PaddleClient,
   toBillingEvent,
   type IncomingBillingEvent,
   type BillingInterval,
   type PaidTier,
+  verifyCheckoutSignature,
   verifyPaddleSignature,
   type PaddleConfig,
 } from './paddle.ts';
@@ -140,6 +142,7 @@ export const handleCreateCheckout = userEndpoint(async ({ req, user, admin, padd
   const url = await paddle.createCheckout({
     priceId: env.paddle.prices[choice.tier][choice.interval],
     userId: user.id,
+    signature: await checkoutSignature(env.supabase.serviceRoleKey, user.id),
     customerId,
   });
   return json(200, { url });
@@ -397,46 +400,36 @@ export async function handlePrices(req: Request, deps: Deps): Promise<Response> 
 }
 
 /**
- * The account for a subscription that carries no user id: the one already
- * billed as this Paddle customer, else the one with the customer's email,
- * else a new account for that email. Then the subscription is tagged.
+ * The account a subscription event is for, or null to ignore it (ADR-0027).
+ * custom_data comes from whoever opened the checkout, so a user id counts only
+ * when the subscription is already that account's, or when create-checkout
+ * signed it for that account and the customer has the account's email (the
+ * customer create-checkout bound the checkout to). Purchases are never matched
+ * to an account by the email typed at checkout.
  */
-async function accountForCustomer(
+async function accountForEvent(
   admin: SupabaseAdmin,
   paddle: PaddleClient,
+  secret: string,
   event: IncomingBillingEvent,
 ): Promise<string | null> {
-  if (!event.customerId) return null;
-  let userId = await admin.userIdForCustomer(event.customerId);
-  if (!userId) {
-    const email = await paddle.customerEmail(event.customerId);
-    if (!email) return null;
-    userId = (await admin.userIdForEmail(email)) ?? (await admin.createUser(email));
-  }
-  await paddle.setSubscriptionUser(event.subscriptionId, userId);
-  return userId;
-}
-
-/**
- * Whether a subscription's Paddle customer belongs to the account its
- * custom_data.user_id names. Anyone can put any user_id in a checkout
- * (Paddle.js takes customData from the browser), so the claim counts only for
- * the customer already on that account, or one with the account's email:
- * create-checkout always binds checkout to one of those.
- */
-async function customerBelongsTo(
-  admin: SupabaseAdmin,
-  paddle: PaddleClient,
-  userId: string,
-  customerId: string | null,
-): Promise<boolean> {
-  if (!customerId) return false;
-  if ((await admin.entitlement(userId))?.provider_customer_id === customerId) return true;
+  const { userId, customerId } = event;
+  if (!userId || !customerId) return null;
+  const entitlement = await admin.entitlement(userId);
+  if (
+    entitlement?.provider_subscription_id === event.subscriptionId &&
+    entitlement.provider_customer_id === customerId
+  )
+    return userId;
+  if (!(await verifyCheckoutSignature(secret, userId, event.checkoutSignature))) return null;
+  if (entitlement?.provider_customer_id === customerId) return userId;
   const accountEmail = await admin.userEmail(userId);
-  if (!accountEmail) return false;
+  if (!accountEmail) return null;
   const customerEmail = await paddle.customerEmail(customerId);
   const normalise = (email: string) => email.trim().toLowerCase();
-  return customerEmail !== null && normalise(customerEmail) === normalise(accountEmail);
+  return customerEmail !== null && normalise(customerEmail) === normalise(accountEmail)
+    ? userId
+    : null;
 }
 
 /** POST /functions/v1/paddle-webhook (called by Paddle, signed; no user JWT). */
@@ -462,20 +455,15 @@ export async function handlePaddleWebhook(req: Request, deps: Deps): Promise<Res
   const admin = new SupabaseAdmin(deps.env.supabase, deps.fetch);
   const paddle = new PaddleClient(deps.env.paddle, deps.fetch);
   try {
-    let userId = incoming.userId;
-    if (userId && !(await customerBelongsTo(admin, paddle, userId, incoming.customerId))) {
-      // The checkout named an account this customer doesn't belong to: applying
-      // it would give that account someone else's customer, or overwrite theirs.
-      console.error('[rolestash] webhook: customer is not the claimed account', {
+    const userId = await accountForEvent(admin, paddle, deps.env.supabase.serviceRoleKey, incoming);
+    if (!userId) {
+      // Not from a checkout we made for a signed-in account: applying it could
+      // overwrite someone's subscription. A real buyer here is refunded by hand.
+      console.error('[rolestash] webhook: subscription has no verified account', {
         subscriptionId: incoming.subscriptionId,
+        customerId: incoming.customerId,
       });
       return json(200, { ignored: true });
-    }
-    if (!userId) {
-      // Bought on the website: find (or create) the account for this
-      // customer, then tag the subscription so later events carry the id.
-      userId = await accountForCustomer(admin, paddle, incoming);
-      if (!userId) return json(200, { ignored: true });
     }
     const applied = await admin.applyBillingEvent({ ...incoming, userId }, 'paddle');
     return json(200, { applied });

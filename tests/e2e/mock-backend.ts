@@ -158,7 +158,10 @@ function route(
     case '/rest/v1/entitlements':
       return [200, [state.entitlement]];
     case '/functions/v1/create-checkout':
-      return [200, { url: `${MOCK_BACKEND}/pay/?_ptxn=txn_e2e` }];
+      // Like the real function: one live subscription per account.
+      return state.entitlement.status === 'active' && state.entitlement.provider_subscription_id
+        ? [409, { error: 'already_subscribed' }]
+        : [200, { url: `${MOCK_BACKEND}/pay/?_ptxn=txn_e2e` }];
     case '/functions/v1/prices':
       return [
         200,
