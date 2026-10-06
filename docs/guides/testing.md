@@ -2,15 +2,16 @@
 
 ## Layers
 
-| Suite         | Tool                  | Location                         | Runs in CI                           |
-| ------------- | --------------------- | -------------------------------- | ------------------------------------ |
-| Unit          | Vitest + happy-dom    | `tests/unit/**`                  | yes                                  |
-| Site fixtures | Vitest (data-driven)  | `tests/fixtures/sites/**`        | yes                                  |
-| Docs drift    | Vitest                | `tests/unit/docs.test.ts`        | yes                                  |
-| End-to-end    | Playwright + Chromium | `tests/e2e/**` (project `e2e`)   | yes                                  |
-| Smoke         | Playwright + Chromium | `@smoke` tests (project `smoke`) | yes, here and in rolestash-extension |
-| Database      | pgTAP (Docker)        | `supabase/tests/database/**`     | yes (_Database_ job)                 |
-| Performance   | Playwright + Chromium | `tests/perf/**` (project `perf`) | no: run by hand                      |
+| Suite         | Tool                  | Location                           | Runs in CI                                                                                   |
+| ------------- | --------------------- | ---------------------------------- | -------------------------------------------------------------------------------------------- |
+| Unit          | Vitest + happy-dom    | `tests/unit/**`                    | yes                                                                                          |
+| Site fixtures | Vitest (data-driven)  | `tests/fixtures/sites/**`          | yes                                                                                          |
+| Docs drift    | Vitest                | `tests/unit/docs.test.ts`          | yes                                                                                          |
+| End-to-end    | Playwright + Chromium | `tests/e2e/**` (project `e2e`)     | yes                                                                                          |
+| Smoke         | Playwright + Chromium | `@smoke` tests (project `smoke`)   | yes, here and in rolestash-extension                                                         |
+| Database      | pgTAP (Docker)        | `supabase/tests/database/**`       | yes (_Database_ job)                                                                         |
+| Performance   | Playwright + Chromium | `tests/perf/**` (project `perf`)   | no: run by hand                                                                              |
+| Site clips    | Playwright + Chromium | `tests/clips/**` (project `clips`) | no: `npm run site:clips` records the homepage clips ([website.md](website.md#feature-clips)) |
 
 ## Unit tests
 

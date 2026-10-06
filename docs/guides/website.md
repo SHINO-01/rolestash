@@ -8,7 +8,7 @@ tested commit (docs/guides/ci-cd.md).
 
 | Path                                        | Page                                                                                |
 | ------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `site/index.html`                           | Landing page: promise, hero film, three benefits, proof, FAQ, one CTA               |
+| `site/index.html`                           | Landing page: promise, hero film, five feature clips, proof, FAQ, one CTA           |
 | `site/privacy/`                             | Privacy policy (also the store listing URL)                                         |
 | `site/terms/`                               | Terms of service (Paddle wording included)                                          |
 | `site/refunds/`                             | Refund policy                                                                       |
@@ -69,7 +69,7 @@ tested commit (docs/guides/ci-cd.md).
   signup. It posts to the `launch-list` Edge Function, the one form action
   the CSP allows. See [launch-list.md](launch-list.md).
 - **The homepage has one call to action, Add to Chrome.** Its sections are
-  the promise, three benefits, proof and the FAQ; plan details live on
+  the promise, five features, proof and the FAQ; plan details live on
   `/pricing/`. Product truth and voice are in `PRODUCT.md`.
 - **Proof is facts only.** No testimonials until real beta testers agree to
   be quoted; then add them inside the proof grid as
@@ -78,13 +78,12 @@ tested commit (docs/guides/ci-cd.md).
   size), from `@fontsource-variable/bricolage-grotesque`, copied to
   `site/assets/bricolage-latin.woff2` with its licence. Inter stays only for
   the OG image script.
-- **Motion is CSS only and explains the product** (the hero film aside). The hero settles in on
-  load; the save form "types" itself in and a card is dragged into
-  Interviewing as they scroll into view (scroll timelines, which every
-  Chrome visitor has); FAQ answers open with a height transition. Nothing
-  animates under `prefers-reduced-motion`, and the content is complete
-  without the animations. Prefer CSS: the one script exists because
-  remembering a theme across pages, and playing the film only while it's
+- **Motion explains the product.** The hero film and the five feature clips
+  are video; everything else is CSS. The hero settles in on load and FAQ
+  answers open with a height transition. Nothing animates or plays under
+  `prefers-reduced-motion` (the clips keep their posters), and the content is
+  complete without motion. Prefer CSS: the one script exists because
+  remembering a theme across pages, and playing videos only while they're
   visible, need one.
 - **The changelog page is generated.** Never edit `site/changelog/` by
   hand: write the entry in `CHANGELOG.md` and run `npm run site:changelog`
@@ -115,10 +114,9 @@ A built app, not a hand-written page (ADR-0017):
 `site/assets/site.css` holds everything, organised by section. Colours are
 custom properties on `:root`, redefined under `prefers-color-scheme: dark`;
 the privacy band and closing call to action use the always-dark `--band-*`
-tokens. The landing page is: hero (the film, with the framed board screenshot as fallback), features
-(bento grid), how it works, email updates (Pro), privacy, pricing
-(cards everywhere, plus a comparison table above 860 px; below that the cards
-list their features), FAQ and a closing call to action.
+tokens. The landing page is: hero (the film, with the framed board screenshot as fallback), five
+features with a clip each, the specifics (proof), FAQ and a closing call to
+action; plans and prices are on `/pricing/`.
 
 ## The hero film
 
@@ -168,6 +166,40 @@ it never plays. Each poster is preloaded only for its screen size. Its source is
 
 - **Copy in the film is the site's own** (fictional companies only), like the
   screenshots.
+
+## Feature clips
+
+The five features on the homepage (save, autofill, the board, email updates,
+the phone) each show a short clip of the **real product**: the E2E build of
+the extension and the web board, driven by Playwright against the mock
+backend, on fictional companies' pages (`tests/fixtures/clips/`). Because
+they're recorded from the product, they can be re-shot whenever the UI
+changes instead of going stale:
+
+```bash
+npm run site:clips
+```
+
+That builds the E2E extension and web board, records each flow
+(`tests/clips/clips.spec.ts`, Playwright project `clips`) with Chrome's
+screencast at 2× and a drawn cursor (a fingertip on the phone), and encodes
+`site/assets/feature-<name>-<version>.{webm,mp4}` plus a `-poster.webp`
+(`scripts/encode-site-clips.ts`).
+
+- **Silent, no player UI:** the encodes have no audio track (a site test
+  checks the files), and the `<video muted playsinline loop preload="none">`
+  has no controls, the same as the hero film. `theme.js` plays a clip while a
+  quarter of it is on screen and restarts it from the beginning when it comes
+  back into view.
+- **Posters:** the moment that sums each clip up (set per clip in the
+  encoder), shown before it plays and to anyone who prefers reduced motion.
+- **Budget (tested):** each encode under 1 MB (they're 120 to 400 KB), each
+  poster under 150 KB.
+- **New version on change:** bump `VERSION` in the encoder and the file names
+  in `site/index.html`, since assets are cached for a day. The encoder
+  deletes the old version's files.
+- Desktop clips are 16:10 (880×550 or 1000×625 CSS pixels, so the UI reads at
+  the size the page shows them); the phone clip is 390×844 in a phone frame.
 
 ## Board screenshots
 

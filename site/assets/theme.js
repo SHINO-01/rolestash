@@ -74,17 +74,22 @@
   }
 
   /**
-   * The hero film (no sound; a vertical cut on small screens) plays while a
-   * quarter of it is on screen, never with reduced motion (CSS shows the
-   * board pictures instead). The hidden cut never intersects, so it stays
-   * paused. Without this script the film shows its poster.
+   * The hero film (no sound; a vertical cut on small screens) and the feature
+   * clips play while a quarter of them is on screen, never with reduced
+   * motion (CSS shows the board pictures instead of the film; a clip keeps its
+   * poster). The hidden cut never intersects, so it stays paused. A clip
+   * starts from the beginning each time it comes back into view, since each
+   * one shows a feature from start to finish. Without this script, posters.
    */
   function film() {
-    for (const video of document.querySelectorAll('.film video')) {
+    for (const video of document.querySelectorAll('.film video, .clip-video')) {
       let visible = false;
       const update = () => {
         if (visible && !reduceMotion.matches) video.play().catch(() => undefined);
-        else video.pause();
+        else {
+          video.pause();
+          if (!visible && video.classList.contains('clip-video')) video.currentTime = 0;
+        }
       };
       reduceMotion.addEventListener('change', update);
       new IntersectionObserver(

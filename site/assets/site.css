@@ -879,13 +879,16 @@ kbd {
 
 .benefit {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
   gap: 40px clamp(40px, 6vw, 96px);
   align-items: center;
   padding: clamp(40px, 5vw, 64px) 0;
   border-top: 1px solid var(--line);
 }
 
+.benefit:nth-of-type(even) {
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+}
 .benefit:nth-of-type(even) .stage {
   order: -1;
 }
@@ -948,270 +951,34 @@ kbd {
   }
 }
 
-.artefact {
+/* The feature clips: real recordings of the product (tests/clips), silent,
+   played by theme.js while on screen and never with reduced motion, when the
+   poster (the clip's last frame) stands in. */
+.stage-clip {
+  padding: clamp(12px, 2vw, 22px);
+}
+.clip-video {
+  display: block;
   width: 100%;
-  max-width: 400px;
-  margin: 0;
-  padding: 16px;
+  height: auto;
   border: 1px solid var(--line);
-  border-radius: 18px;
-  background: var(--surface);
-  box-shadow: var(--shadow);
-  font-size: 14px;
-  line-height: 1.4;
-}
-
-.art-head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
-  font-weight: 600;
-}
-
-.art-mark {
-  width: 20px;
-  height: 20px;
-  border-radius: 6px;
-  background: var(--spruce)
-    radial-gradient(circle at 70% 30%, var(--amber) 0 3px, transparent 3.5px);
-}
-
-.capture-fields,
-.ledger-rows {
-  margin: 0;
-}
-
-.capture-fields div {
-  display: grid;
-  grid-template-columns: 76px 1fr;
-  gap: 12px;
-  align-items: center;
-  padding: 9px 10px;
-  border-top: 1px solid var(--line);
-}
-
-.capture-fields dt {
-  color: var(--muted);
-  font-size: 13px;
-}
-
-.capture-fields dd {
-  margin: 0;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.capture-fields .flagged dt {
-  color: var(--warn-ink);
-}
-
-.capture-fields .flagged {
-  border-top-color: transparent;
-  border-radius: 10px;
-  background: var(--warn-soft);
-}
-
-.check {
-  padding: 1px 8px;
-  border-radius: 6px;
-  background: var(--amber);
-  color: #2b1c02;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.art-foot {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  padding-top: 12px;
-  border-top: 1px solid var(--line);
-}
-
-.art-btn {
-  padding: 7px 14px;
-  border-radius: 9px;
-  background: var(--accent);
-  color: var(--accent-ink);
-  font-weight: 600;
-  font-size: 13px;
-}
-
-.art-btn-ghost {
-  background: transparent;
-  color: var(--ink);
-  box-shadow: inset 0 0 0 1px var(--line);
-}
-
-.art-close {
-  margin-left: auto;
-  color: var(--muted);
-  font-weight: 400;
-}
-
-.art-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding: 12px 0;
-}
-
-.art-chip {
-  padding: 3px 10px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  color: var(--muted);
-  font-size: 12px;
-}
-
-.art-chip.on {
-  border-color: var(--spruce);
-  background: var(--accent-soft);
-  color: var(--ink);
-  font-weight: 600;
-}
-
-.columns {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  padding: 10px;
-  max-width: 440px;
-}
-
-.mini-col {
-  display: grid;
-  align-content: start;
-  gap: 8px;
-  padding: 10px;
   border-radius: 14px;
-  background: var(--surface-2);
+  background: #fff;
+  box-shadow: var(--shadow);
 }
-
-.mini-head {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  margin: 0 2px 2px;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.mini-head b {
-  margin-left: auto;
-  color: var(--muted);
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
-}
-
-.dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
-
-.dot-applied {
-  background: #3b82c4;
-}
-
-.dot-interview {
-  background: var(--amber);
-}
-
-.mini-card {
-  display: grid;
-  gap: 2px;
-  padding: 10px 12px;
-  border-radius: 11px;
-  background: var(--surface);
-  box-shadow: var(--shadow-sm);
-}
-
-.mini-card strong {
-  font-weight: 600;
-}
-
-.mini-card span {
-  color: var(--muted);
-  font-size: 13px;
-}
-
-.mini-card.faded {
-  opacity: 0.55;
-}
-
-.due {
-  justify-self: start;
-  white-space: nowrap;
-  margin-top: 6px;
-  padding: 2px 8px;
-  border-radius: 6px;
-  background: var(--accent-soft);
-  color: var(--accent);
-  font: 600 12px/1.5 var(--font-text);
-}
-
-.due-warn {
-  background: var(--warn-soft);
-  color: var(--warn-ink);
-}
-
-.ledger {
-  padding: 18px 20px 10px;
-}
-
-.ledger .art-head {
-  padding-bottom: 12px;
-  border-bottom: 1px dashed var(--line-strong);
-}
-
-.ledger-rows div {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  padding: 9px 0;
-}
-
-.ledger-rows dt {
-  display: flex;
-  flex: 1;
-  align-items: baseline;
-  gap: 8px;
-  color: var(--muted);
-}
-
-.ledger-rows dt::after {
-  content: '';
-  flex: 1;
-  border-bottom: 1.5px dotted var(--line-strong);
-}
-
-.ledger-rows dd {
-  margin: 0;
-  font-weight: 600;
-  color: var(--accent);
+.stage-phone .clip-video {
+  width: min(100%, 268px);
+  border: 7px solid var(--ink);
+  border-radius: 34px;
 }
 
 @media (max-width: 860px) {
-  .benefit {
+  .benefit,
+  .benefit:nth-of-type(even) {
     grid-template-columns: minmax(0, 1fr);
   }
   .benefit:nth-of-type(even) .stage {
     order: 0;
-  }
-}
-
-@media (max-width: 640px) {
-  .capture-fields div {
-    grid-template-columns: 62px minmax(0, 1fr);
-    gap: 8px;
-  }
-  .columns {
-    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -1611,93 +1378,6 @@ kbd {
       opacity: 0;
       transform: translateY(-4px) scale(0.96);
     }
-  }
-}
-
-/* Explanations tied to scroll: the save form fills itself in, and a card is
-   dragged into Interviewing. Content is complete without them. */
-@media (prefers-reduced-motion: no-preference) {
-  @supports (animation-timeline: view()) {
-    .stage {
-      view-timeline-name: --stage;
-    }
-    .capture-fields dd {
-      animation: type-in linear both;
-      animation-timeline: --stage;
-    }
-    .capture-fields div:nth-child(1) dd {
-      animation-range: cover 14% cover 28%;
-    }
-    .capture-fields div:nth-child(2) dd {
-      animation-range: cover 21% cover 35%;
-    }
-    .capture-fields div:nth-child(3) dd {
-      animation-range: cover 28% cover 42%;
-    }
-    .capture-fields div:nth-child(4) dd {
-      animation-range: cover 35% cover 49%;
-    }
-    .capture-fields div:nth-child(5) dd {
-      animation-range: cover 42% cover 56%;
-    }
-    .capture-fields .flagged {
-      animation: flag linear both;
-      animation-timeline: --stage;
-      animation-range: cover 52% cover 64%;
-    }
-    .mover {
-      position: relative;
-      z-index: 1;
-      animation: drag var(--ease-in-out) both;
-      animation-timeline: --stage;
-      animation-range: cover 20% cover 60%;
-    }
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) and (max-width: 640px) {
-  @supports (animation-timeline: view()) {
-    .mover {
-      animation-name: drag-down;
-      animation-range: cover 30% cover 66%;
-    }
-  }
-}
-
-@keyframes type-in {
-  from {
-    clip-path: inset(0 100% 0 0);
-  }
-  to {
-    clip-path: inset(0);
-  }
-}
-
-@keyframes flag {
-  from {
-    background-color: transparent;
-  }
-}
-
-@keyframes drag {
-  from {
-    transform: translateX(calc(-100% - 30px)) translateY(56px) rotate(-3deg) scale(1.04);
-    box-shadow: var(--shadow-lg);
-  }
-  70% {
-    transform: translateX(0) translateY(-4px) rotate(1deg) scale(1.03);
-    box-shadow: var(--shadow-lg);
-  }
-}
-
-@keyframes drag-down {
-  from {
-    transform: translateY(-120%) rotate(-2deg) scale(1.03);
-    box-shadow: var(--shadow-lg);
-  }
-  70% {
-    transform: translateY(-4px) rotate(1deg) scale(1.02);
-    box-shadow: var(--shadow-lg);
   }
 }
 

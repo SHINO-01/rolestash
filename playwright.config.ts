@@ -7,6 +7,7 @@ import type { Options } from './tests/e2e/fixtures';
  *  - smoke: tests tagged @smoke, against the real production build that ships
  *           (`npm run test:smoke`, also run by the rolestash-extension release pipeline)
  *  - perf:  the opt-in board performance probe (`npm run perf:board`)
+ *  - clips: records the homepage feature clips (`npm run site:clips`)
  */
 export default defineConfig<Options>({
   testDir: 'tests/e2e',
@@ -22,5 +23,6 @@ export default defineConfig<Options>({
     { name: 'perf', testDir: 'tests/perf', use: { extensionDir: '.output/chrome-mv3' } },
     // The web board (ADR-0017) in a plain browser: `npm run build:web:e2e` first.
     { name: 'web', testDir: 'tests/web', use: { channel: 'chromium' } },
+    { name: 'clips', testDir: 'tests/clips', use: { extensionDir: '.output/chrome-mv3-e2e' } },
   ],
 });

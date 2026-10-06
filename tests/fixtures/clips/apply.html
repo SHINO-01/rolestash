@@ -1,0 +1,62 @@
+<!-- SYNTHETIC page for the homepage clips (scripts/encode-site-clips.ts): a fictional company. -->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Apply: Data Analyst · Kestrel Health careers</title>
+    <link rel="stylesheet" href="careers.css" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "JobPosting",
+        "title": "Data Analyst",
+        "hiringOrganization": { "@type": "Organization", "name": "Kestrel Health" },
+        "datePosted": "2026-10-02",
+        "employmentType": "FULL_TIME",
+        "jobLocationType": "HYBRID",
+        "jobLocation": {
+          "@type": "Place",
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "Parramatta",
+            "addressRegion": "NSW",
+            "addressCountry": "AU"
+          }
+        },
+        "description": "<p>Turn clinical and operational data into decisions.</p>"
+      }
+    </script>
+  </head>
+  <body>
+    <header class="top">
+      <span class="logo" style="background: linear-gradient(135deg, #0f8a6b, #46c29b)"></span>Kestrel
+      Health
+      <nav><span>Services</span><span>About</span><span>Careers</span></nav>
+    </header>
+    <main>
+      <p class="eyebrow" style="color: #0a6650">Apply · Parramatta NSW · Hybrid</p>
+      <h1>Data Analyst</h1>
+      <form autocomplete="off">
+        <label>First name<input name="first_name" id="first_name" /></label>
+        <label>Last name<input name="last_name" id="last_name" /></label>
+        <label>Email<input name="email" id="email" type="email" /></label>
+        <label>Phone<input name="phone" id="phone" type="tel" /></label>
+        <label>LinkedIn profile<input name="linkedin" id="linkedin" /></label>
+        <label>City<input name="city" id="city" /></label>
+        <label>Current job title<input name="current_title" id="current_title" /></label>
+        <label
+          >Will you now or in the future require visa sponsorship?
+          <select name="sponsorship" id="sponsorship">
+            <option value="">Select…</option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          </select>
+        </label>
+        <label class="wide"
+          >Why do you want to work at Kestrel Health?
+          <textarea name="why" id="why"></textarea>
+        </label>
+      </form>
+    </main>
+  </body>
+</html>

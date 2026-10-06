@@ -308,6 +308,35 @@ describe('rolestash.com static site', () => {
     expect(siteCsp).toContain("media-src 'self';");
   });
 
+  it('shows five features as short silent clips of the real product, with no player controls', () => {
+    const home = pages.find((p) => p.file === 'index.html')?.doc;
+    if (!home) throw new Error('index.html missing');
+    const clips = [...home.querySelectorAll('#features .benefit video.clip-video')];
+    expect(clips).toHaveLength(5);
+    expect(home.querySelectorAll('#features button')).toHaveLength(0);
+    for (const video of clips) {
+      for (const attr of ['muted', 'playsinline', 'loop'])
+        expect(video.hasAttribute(attr), attr).toBe(true);
+      expect(video.hasAttribute('controls')).toBe(false);
+      expect(video.hasAttribute('autoplay')).toBe(false); // theme.js plays it, never with reduced motion
+      // Nothing downloads until a clip is about to play.
+      expect(video.getAttribute('preload')).toBe('none');
+      expect(video.getAttribute('aria-label')?.length).toBeGreaterThan(40);
+      const sources = [...video.querySelectorAll('source')];
+      expect(sources.map((s) => s.getAttribute('type'))).toEqual(['video/webm', 'video/mp4']);
+      const poster = video.getAttribute('poster') ?? '';
+      expect(statSync(join(SITE, poster)).size).toBeLessThan(150_000);
+      for (const source of sources) {
+        const file = join(SITE, source.getAttribute('src') ?? '');
+        expect(statSync(file).size).toBeLessThan(1_000_000);
+        // No audio track at all, so no browser offers a sound button
+        // (MP4: an audio handler; WebM: an audio codec ID).
+        const bytes = readFileSync(file).toString('latin1');
+        expect(bytes).not.toMatch(/hdlr[\s\S]{8}soun|A_OPUS|A_VORBIS|A_AAC/);
+      }
+    }
+  });
+
   it('gives every image explicit dimensions so nothing shifts as it loads', () => {
     for (const { file, doc } of pages)
       for (const img of doc.querySelectorAll('img, picture > source')) {
