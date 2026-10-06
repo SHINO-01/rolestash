@@ -3,14 +3,14 @@
 Every permission must be justified here. Adding one requires review (and
 usually an ADR) because it changes the install prompt and store review.
 
-| Permission         | Why                                                                                                                | Install warning    |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------ | ------------------ |
-| `scripting`        | Inject the bundled extractor, or the autofill filler (ADR-0020), into the tab when the user asks                   | (with host access) |
-| `storage`          | Save jobs and settings locally                                                                                     | none               |
-| `unlimitedStorage` | Description snapshots can exceed the 10 MB default quota over time                                                 | none               |
-| `contextMenus`     | "Track this job" and "Fill this application" on the page; "Open board" on the toolbar icon                         | none               |
-| `alarms`           | Wakes the worker every 15 minutes to check follow-up reminders and the closing digest (ADR-0015)                   | none               |
-| `identity`         | **Accounts builds only** (ADR-0011): Google sign-in via `launchWebAuthFlow`. Absent from builds without a backend. | none               |
+| Permission         | Why                                                                                                                                                                       | Install warning    |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| `scripting`        | Inject the bundled extractor, or the autofill filler (ADR-0020), into the tab when the user asks                                                                          | (with host access) |
+| `storage`          | Save jobs and settings locally                                                                                                                                            | none               |
+| `unlimitedStorage` | Description snapshots can exceed the 10 MB default quota over time                                                                                                        | none               |
+| `contextMenus`     | "Track this job" and "Fill this application" on the page; "Open board" on the toolbar icon                                                                                | none               |
+| `alarms`           | Wakes the worker every 15 minutes to check follow-up reminders and the closing digest (ADR-0015)                                                                          | none               |
+| `identity`         | **Accounts builds only** (ADR-0011): Google sign-in, and connecting Gmail or Outlook read-only (ADR-0032), via `launchWebAuthFlow`. Absent from builds without a backend. | none               |
 
 Host permissions (ADR-0031):
 
@@ -18,6 +18,11 @@ Host permissions (ADR-0031):
 | ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
 | `host_permissions` `https://*/*`, `http://*/*` | The floating widget's button on every web page, and reading the posting when the user opens the panel. Also serves capture from a pasted link. The owner chose this over a job-site list (2026-10-06) | "Read and change all your data on all websites" |
 | Content script `launcher` on the same pages    | Draws the button and the panel's frame, and checks the address and the page's job data to label the button. Reads nothing else and sends nothing until the panel opens; never runs in subframes       | (same as above)                                 |
+
+Connecting a mailbox (ADR-0032) asks Google (`gmail.readonly`) or Microsoft
+(`Mail.Read`, `offline_access`) for read-only access in their own consent
+screens; the extension reaches their APIs under the host access above and
+adds no manifest permission.
 
 Not requested, on purpose:
 

@@ -254,11 +254,54 @@
           We use this information only to provide, secure and support Rolestash. We do not sell it,
           use it for advertising, build profiles, or use it to train AI models.
         </p>
+        <h2>Connected mailbox (Pro)</h2>
+        <p>
+          If you choose to connect Gmail or Outlook, Rolestash gets read-only access to your mailbox
+          (Gmail's <code>gmail.readonly</code> permission, or Microsoft's <code>Mail.Read</code>).
+          All reading happens in the extension on your computer.
+        </p>
+        <ul>
+          <li>
+            <strong>What it reads:</strong> for new messages in your inbox, the sender and subject,
+            to pick out emails about job applications (Gmail's own search narrows these first). Only
+            those emails are downloaded in full, and only to find what they mean for an application:
+            received, assessment, interview, rejection or offer. Plain rules, no AI.
+          </li>
+          <li>
+            <strong>What it keeps:</strong> the update it found (for example "interview, Thu 10am,
+            Zoom link"), on the job's card. Never the email. On this computer it also remembers
+            which messages it has already looked at, and your access token.
+          </li>
+          <li>
+            <strong>What is sent to us:</strong> nothing from your mailbox. Your emails, their
+            senders and subjects never reach Rolestash's servers. If you turn on sync, the job's
+            updated column and the update itself sync like any other change you make.
+          </li>
+          <li>
+            <strong>Who else:</strong> your computer talks directly to Google or Microsoft to read
+            the mailbox. No one else is involved.
+          </li>
+          <li>
+            <strong>Stopping:</strong> choose Disconnect in Account. Rolestash then deletes the
+            access token from your computer and asks Google to revoke it. You can also remove access
+            from your Google or Microsoft account settings at any time.
+          </li>
+        </ul>
+        <p>
+          Rolestash's use and transfer to any other app of information received from Google APIs
+          will adhere to the
+          <a href="https://developers.google.com/terms/api-services-user-data-policy"
+            >Google API Services User Data Policy</a
+          >, including the Limited Use requirements. We don't use mailbox data for advertising,
+          don't sell it, don't let people read it, and don't use it to train AI models.
+        </p>
 
         <h2>Automatic status updates (Pro)</h2>
         <p>
-          If you use automatic status updates, you get a private forwarding address and choose which
-          emails to forward to it. Rolestash never connects to your mailbox.
+          Automatic status updates work in one of two ways, and you choose: connect your Gmail or
+          Outlook mailbox (read-only, read on your computer; see the next section), or get a private
+          forwarding address and choose which emails to forward to it. With the forwarding address,
+          Rolestash never connects to your mailbox. This section is about the forwarding address.
         </p>
         <ul>
           <li>

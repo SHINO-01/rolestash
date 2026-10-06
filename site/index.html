@@ -147,7 +147,7 @@
               "Autofill for job application forms (never submits)",
               "Duplicate postings across sites merge into one card",
               "Export to CSV or JSON on every plan",
-              "No AI, no inbox access, no ads or analytics",
+              "No AI, no ads or analytics; an optional inbox connection is read on your computer",
               "Sync across computers and a phone web board on paid plans",
               "Automatic status updates from forwarded job emails (Pro)"
             ]
@@ -185,7 +185,7 @@
                 "name": "Do you read my inbox?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "No. On Pro you get a private address and set a filter in Gmail or Outlook to forward job emails to it. Rolestash reads each forwarded reply with plain rules, moves the card when it's sure (and suggests the move when it isn't), keeps the extracted update and discards the email. Every change can be undone."
+                  "text": "Only if you connect it. On Pro you can connect Gmail or Outlook read-only: Rolestash looks only at job emails, on your computer, and nothing from your inbox reaches our servers. Or forward job emails to a private address instead, and Rolestash never touches your inbox. Every change on your board can be undone."
                 }
               },
               {
@@ -226,7 +226,7 @@
             "@type": "VideoObject",
             "@id": "https://rolestash.com/#film",
             "name": "Rolestash in 21 seconds",
-            "description": "Save a job posting in one click, move it across the board when you hear back, and see what Rolestash knows about you: no inbox access, no AI, no data selling.",
+            "description": "Save a job posting in one click, move it across the board when you hear back, and see what Rolestash knows about you: no AI, no data selling, and your inbox read only on your computer if you connect it.",
             "thumbnailUrl": [
               "https://rolestash.com/assets/rolestash-film-poster.webp",
               "https://rolestash.com/assets/rolestash-film-vertical-poster.webp"
@@ -535,7 +535,7 @@
                 <dl class="ledger-rows">
                   <div>
                     <dt>Your inbox</dt>
-                    <dd>Never connected</dd>
+                    <dd>Read on your computer, if you connect it</dd>
                   </div>
                   <div>
                     <dt>AI services</dt>
@@ -589,10 +589,11 @@
               <a href="/privacy/">Privacy policy</a>
             </li>
             <li>
-              <h3>Never in your inbox</h3>
+              <h3>Your inbox stays on your computer</h3>
               <p>
-                Email updates only see the messages you choose to forward. Rolestash never connects
-                to your mailbox.
+                Connect Gmail or Outlook read-only and job emails are read in the extension, on your
+                computer, never on our servers. Or forward them instead, with no inbox access at
+                all.
               </p>
               <a href="/privacy/">Privacy policy</a>
             </li>
@@ -656,10 +657,11 @@
             <details>
               <summary>Do you read my inbox?</summary>
               <p>
-                No. On Pro you get a private address and set a filter in Gmail or Outlook to forward
-                job emails to it. Rolestash reads each forwarded reply with plain rules, moves the
-                card when it's sure (and suggests the move when it isn't), keeps the extracted
-                update and discards the email. Every change can be undone.
+                Only if you connect it. On Pro you can connect Gmail or Outlook read-only: Rolestash
+                looks only at job emails, on your computer, and nothing from your inbox reaches our
+                servers. It moves the card when it's sure (and suggests the move when it isn't),
+                keeps the update and never the email. Or forward job emails to a private address
+                instead, and Rolestash never touches your inbox. Every change can be undone.
               </p>
             </details>
             <details>

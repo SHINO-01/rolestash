@@ -1,6 +1,6 @@
 import { createServices, type Services } from '@/services/container';
 import { SupabaseClient } from '@/services/backend/supabase-client';
-import { backendConfig, ChromeWebAuthFlow } from './backend';
+import { backendConfig, ChromeWebAuthFlow, mailConfig } from './backend';
 import { ChromeKeyValueStore } from './chrome-storage';
 import { ScriptingAutofillRunner } from './autofill-runner';
 import { ScriptingExtractorRunner } from './extractor-runner';
@@ -19,6 +19,7 @@ export function getServices(): Services {
         ? {
             client: new SupabaseClient(config, (input, init) => fetch(input, init)),
             authFlow: new ChromeWebAuthFlow(),
+            mail: { config: mailConfig(), fetch: (input, init) => fetch(input, init) },
           }
         : undefined,
       { name: deviceName(), kind: 'computer' },

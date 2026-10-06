@@ -1,6 +1,6 @@
 # Rolestash
 
-> Rolestash is a private job application tracker for Chrome. It saves job postings from job boards and careers pages to a Kanban board in one click, fills application forms from the user's own details, and keeps the board up to date. No AI reads your applications, it never connects to your inbox, and it never sells data.
+> Rolestash is a private job application tracker for Chrome. It saves job postings from job boards and careers pages to a Kanban board in one click, fills application forms from the user's own details, and keeps the board up to date. No AI reads your applications, job emails are read on the user's computer (never on Rolestash's servers) if they connect Gmail or Outlook, and it never sells data.
 
 Rolestash is made by Lumetrix Technologies, a sole trader in New South Wales, Australia (ABN 41 649 439 228). Contact: support@rolestash.com.
 
@@ -8,7 +8,7 @@ Key facts:
 
 - Install: Chrome Web Store, https://chromewebstore.google.com/detail/rolestash/cncilbdakhabnocnjokbonggomndedgp
 - Works on 50+ job boards and applicant tracking systems (including SEEK, LinkedIn, Indeed, Workday, Greenhouse and Lever) and most other careers pages.
-- Plans: Free (up to 30 active jobs, no account needed, data stays in the browser); Pro, US$12 a month (unlimited jobs, automatic status updates from forwarded job emails, full autofill, insights, sync across 5 devices including a phone web board, 14-day free trial with no card). Prices are charged in the buyer's currency by Paddle, the merchant of record.
+- Plans: Free (up to 30 active jobs, no account needed, data stays in the browser); Pro, US$12 a month (unlimited jobs, automatic status updates from job emails (connect Gmail or Outlook read-only, read on the user's computer, or forward them), full autofill, insights, sync across 5 devices including a phone web board, 14-day free trial with no card). Prices are charged in the buyer's currency by Paddle, the merchant of record.
 - Free plan: works without an account; the board stays in the browser and nothing is sent to Rolestash.
 - Capture: a Rolestash button sits at the edge of every page and says "Save job" when a posting is open (or use the Rolestash icon / Alt+J); title, company, location, salary, closing date and description fill in, uncertain fields are flagged, and the same job found on two sites stays one card. It reads a page only when asked, and on job sites can mark the job applied and fill the application from the same panel.
 - Autofill fills application forms from the user's own details and never submits; it skips demographic questions.
@@ -19,7 +19,7 @@ Key facts:
 - [Home](https://rolestash.com/): what Rolestash does, the facts behind it, and common questions
 - [Pricing](https://rolestash.com/pricing/): plans and prices in your currency
 - [Supported job sites](https://rolestash.com/job-sites/): the 50 job boards, job search engines, government sites and applicant tracking systems it reads, by region
-- [Private by design](https://rolestash.com/private-job-tracker/): what Rolestash stores and where, why it never reads your inbox or uses AI, and questions to ask any job tracker
+- [Private by design](https://rolestash.com/private-job-tracker/): what Rolestash stores and where, how job emails are read on your computer, why it uses no AI, and questions to ask any job tracker
 - [Rolestash for Australia](https://rolestash.com/australia/): Australian job sites it reads (SEEK, Jora, APSjobs, Workforce Australia, PageUp, JobAdder and more) and where data is kept
 - [Rolestash vs Teal](https://rolestash.com/compare/teal/): price, free plan, AI, Google access and data location compared, with sources and the date checked
 - [Rolestash vs Huntr](https://rolestash.com/compare/huntr/): price, free plan, AI, what each extension declares it collects, with sources and the date checked

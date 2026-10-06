@@ -6,6 +6,13 @@ into the roadmap or changelog. Last reviewed 6 October 2026.
 
 ## Owner
 
+- [ ] **Connect Gmail / Outlook (ADR-0032):** set up Google (enable the Gmail
+      API, add the `gmail.readonly` scope and the two `chromiumapp.org`
+      redirect URIs, submit for verification) and Microsoft (an Entra app,
+      public client, `Mail.Read`; then the `WXT_MICROSOFT_CLIENT_ID`
+      repository variable; `WXT_GMAIL_CLIENT_ID` once Google approves), following
+      [email-updates.md](guides/email-updates.md#connected-mailbox-gmail-or-outlook-adr-0032).
+      Until Google verifies, only listed test users can connect Gmail.
 - [ ] **One paid plan (ADR-0029), live side.** The US$12 Pro prices exist in
       live Paddle (created 6 October). In this order:
   1. `npx supabase secrets set PADDLE_PRICE_PRO_MONTHLY=pri_01m46d6r756r2swxzfz1zsrwgt PADDLE_PRICE_PRO_QUARTERLY=pri_01m46d6rvpxtwwykg397j0rfam PADDLE_PRICE_PRO_YEARLY=pri_01m46d6scqqy0stz0hwcwsxm40`

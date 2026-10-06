@@ -21,6 +21,9 @@ import { WEB_HANDOFF_MESSAGE, type WebHandoffReply } from '@/services/web-handof
  *  - Right-click the toolbar icon → "Open board"
  *  - Every 15 minutes             → follow-up reminders, closing-soon digest (ADR-0015),
  *                                   email updates (ADR-0014) and sync (ADR-0016)
+ *  - Browser startup, then every 5 minutes with a connected mailbox
+ *                                 → read new job mail on this device and update the
+ *                                   board (ADR-0032), then sync
  *  - The web board asks to sign in → a single-use token for this account (ADR-0017)
  */
 
@@ -29,6 +32,8 @@ const MENU_OPEN_BOARD = 'rolestash.openBoard';
 const MENU_AUTOFILL = 'rolestash.autofill';
 const COMMAND_TRACK = 'track-current-tab';
 const ALARM_REMINDERS = 'rolestash.reminders';
+const ALARM_MAIL = 'rolestash.mail';
+const MAIL_PERIOD_MINUTES = 5;
 /** Where the web board may message from (also limited by externally_connectable). */
 const BOARD_ORIGINS = new Set(['https://rolestash.com', 'http://localhost']);
 const REMINDER_PERIOD_MINUTES = 15;
@@ -67,6 +72,20 @@ async function runReminders(): Promise<void> {
   ).run();
 }
 
+/** Idempotent: the connected-mailbox check, every few minutes (ADR-0032). */
+async function ensureMailAlarm(): Promise<void> {
+  if (!(await browser.alarms.get(ALARM_MAIL)))
+    await browser.alarms.create(ALARM_MAIL, { periodInMinutes: MAIL_PERIOD_MINUTES });
+}
+
+/** Only when a mailbox is connected: otherwise the 15-minute tick is enough. */
+async function checkMailbox(): Promise<void> {
+  const services = getServices();
+  await services.ready;
+  if (!(await services.mailbox?.state())) return;
+  await syncAndEmail();
+}
+
 async function syncAndEmail(): Promise<void> {
   const services = getServices();
   await services.ready;
@@ -77,12 +96,19 @@ async function syncAndEmail(): Promise<void> {
 export default defineBackground(() => {
   browser.runtime.onStartup.addListener(() => {
     void ensureReminderAlarm();
+    void ensureMailAlarm();
+    // The browser just opened: bring the board up to date with the mailbox straight away.
+    void checkMailbox();
   });
   browser.action.onClicked.addListener((tab) => {
     if (tab.id === undefined) return;
     void toggleWidget(tab.id).then((shown) => (shown ? undefined : openBoard()));
   });
   browser.alarms.onAlarm.addListener((alarm) => {
+    if (alarm.name === ALARM_MAIL) {
+      void checkMailbox();
+      return;
+    }
     if (alarm.name !== ALARM_REMINDERS) return;
     runReminders().catch((error: unknown) => console.error('[rolestash] reminders failed', error));
     // The same 15-minute tick applies email updates (ADR-0014) and then keeps
@@ -107,6 +133,7 @@ export default defineBackground(() => {
   browser.runtime.onInstalled.addListener(() => {
     void getServices().ready;
     void ensureReminderAlarm();
+    void ensureMailAlarm();
     void browser.contextMenus.removeAll().then(() => {
       browser.contextMenus.create({
         id: MENU_TRACK,

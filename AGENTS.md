@@ -7,7 +7,10 @@ before your first change; it is short on purpose. Details live in `docs/`.
 
 1. **No AI/LLM vendors, and only first-party network calls.** The extension may
    contact only the page the user is on, our Supabase project and the
-   merchant of record's hosted checkout/portal (opened as tabs), per ADR-0009.
+   merchant of record's hosted checkout/portal (opened as tabs), per ADR-0009,
+   plus, once the user connects a mailbox, Google's or Microsoft's sign-in and
+   mail APIs, read-only (ADR-0032). Mailbox content is processed on the device
+   and never sent to our servers.
    No analytics, no crash reporting, no remote config, no CDN assets, no remote
    fonts. Bundled npm libraries are fine. Optional on-device Chrome built-in AI
    is the only AI allowed. PRIVACY.md is updated in the same PR as any new

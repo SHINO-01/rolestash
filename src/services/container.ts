@@ -11,6 +11,7 @@ import type { SupabaseClient } from './backend/supabase-client';
 import { CaptureService } from './capture-service';
 import { ColumnService } from './column-service';
 import { EmailUpdateService } from './email-update-service';
+import { MailboxService, type MailConfig } from './mailbox-service';
 import { JobService } from './job-service';
 import { SyncService, type ThisDevice } from './sync-service';
 import type { AutofillRunner, ExtractorRunner, WebAuthFlow } from './ports';
@@ -37,6 +38,8 @@ export interface Services {
   sync?: SyncService;
   /** Email status updates (Pro; ADR-0014); present with `account`. */
   email?: EmailUpdateService;
+  /** A connected Gmail or Outlook mailbox (Pro; ADR-0032); present when the build can connect one. */
+  mailbox?: MailboxService;
   /** Resolves once storage migrations have run in this context. */
   ready: Promise<void>;
 }
@@ -49,6 +52,8 @@ export const systemContext: DomainContext = {
 export interface BackendDeps {
   client: SupabaseClient;
   authFlow: WebAuthFlow;
+  /** OAuth client IDs for connecting Gmail or Outlook (ADR-0032), and how to reach them. */
+  mail?: { config: MailConfig; fetch: typeof fetch };
 }
 
 export function createServices(
@@ -69,14 +74,30 @@ export function createServices(
     ? new SyncService(store, jobs, settings, account.remoteJobStore(), account, ctx, device)
     : undefined;
   const jobService = new JobService(jobs, settings, ctx, account);
+  const mailbox =
+    account &&
+    backend?.mail &&
+    (backend.mail.config.googleClientId || backend.mail.config.microsoftClientId)
+      ? new MailboxService(store, backend.authFlow, backend.mail.fetch, backend.mail.config, ctx)
+      : undefined;
   const email = account
-    ? new EmailUpdateService(store, jobs, settings, jobService, account.emailInbox(), account, ctx)
+    ? new EmailUpdateService(
+        store,
+        jobs,
+        settings,
+        jobService,
+        account.emailInbox(),
+        account,
+        ctx,
+        mailbox,
+      )
     : undefined;
   return {
     store,
     jobs,
     settings,
     runner,
+    ...(mailbox ? { mailbox } : {}),
     ...(account ? { account } : {}),
     ...(sync ? { sync } : {}),
     ...(email ? { email } : {}),

@@ -1,0 +1,14 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "overused-font",
+        "value": "inter",
+        "createdAt": "2026-10-06T07:50:19.033Z",
+        "reason": "Rolestash's existing brand body font (@fontsource-variable/inter in package.json, used by the extension UI); the promo tiles must match the product"
+      }
+    ]
+  }
+}

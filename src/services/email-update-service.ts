@@ -11,6 +11,7 @@ import type { DomainContext } from '@/domain/job-factory';
 import type { Plan } from '@/domain/plan';
 import { findStage } from '@/domain/stage';
 import {
+  analyzeEmail,
   EmailEventSchema,
   isPlatformDomain,
   matchEvent,
@@ -25,7 +26,16 @@ import { EMAIL_LOCK_KEY, EMAIL_STATE_KEY } from '@/storage/keys';
 import type { SettingsRepository } from '@/storage/settings-repository';
 import { BackendError, type InboxInfo, type KnowledgeVote } from './backend/supabase-client';
 import { DuplicateJobError, type JobService } from './job-service';
+import type { MailItem } from './mailbox-service';
 import type { EmailInbox } from './ports';
+
+/** A connected Gmail or Outlook mailbox (ADR-0032), read on this device. */
+export interface MailboxSource {
+  /** New likely job emails; `companies` are the employers on the board. Never throws. */
+  pull(companies: readonly string[]): Promise<MailItem[]>;
+  /** Marks pulled emails as handled. */
+  commit(ids: readonly string[]): Promise<void>;
+}
 
 /**
  * Email status updates on this device (Pro; ADR-0014). Pulls the
@@ -178,6 +188,8 @@ export class EmailUpdateService {
     private readonly inbox: EmailInbox,
     private readonly account: EmailUpdateAccount,
     private readonly ctx: DomainContext,
+    /** A connected mailbox, when this build can connect one (ADR-0032). */
+    private readonly mailbox?: MailboxSource,
   ) {}
 
   async state(): Promise<EmailUpdateState> {
@@ -242,6 +254,19 @@ export class EmailUpdateService {
         // Processed: remove from the server so other devices don't repeat them.
         await this.inbox.remove(rows.map((r) => r.id));
         if (rows.length < PAGE) break;
+      }
+      // Then the connected mailbox, read on this device: the same engine and the same steps.
+      if (this.mailbox) {
+        const companies = [
+          ...new Set((await this.jobs.list()).map((j) => j.company).filter(Boolean)),
+        ];
+        const mail = await this.mailbox.pull(companies);
+        for (const item of mail) {
+          const outcome = await this.process(item.id, analyzeEmail(item.input), state);
+          if (outcome) result[outcome]++;
+        }
+        await this.save(state);
+        await this.mailbox.commit(mail.map((m) => m.id));
       }
       state.lastRunAt = this.ctx.now().toISOString();
       delete state.problem;

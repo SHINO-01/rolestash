@@ -46,7 +46,15 @@ Full policy: https://rolestash.com/privacy/
 - **Sync (Pro):** a copy of your board and a name for each
   synced device, stored in our database in Sydney, Australia, so your devices
   stay in step. Deleting your account deletes it.
-- **Automatic status updates (Pro):** you get a private forwarding
+- **Connected mailbox (Pro, if you connect Gmail or Outlook):** read-only
+  access, read in the extension on your computer. It looks at the sender
+  and subject of new inbox mail to pick out job emails, downloads only
+  those, and keeps the update it finds on the job's card, never the email.
+  Nothing from your mailbox is sent to Rolestash's servers; the access token
+  stays on your computer, and Disconnect deletes it (and revokes Google's).
+  Rolestash's use of information from Google APIs adheres to the Google API
+  Services User Data Policy, including the Limited Use requirements.
+- **Automatic status updates by forwarding (Pro):** you get a private forwarding
   address and choose which emails to forward. Rolestash never connects to
   your mailbox. Each forwarded email is read in memory with plain rules; we
   keep only the extracted update (such as "interview on 3 Oct", the subject,

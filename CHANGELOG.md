@@ -6,6 +6,14 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **Connect Gmail or Outlook (Pro):** status updates now come straight from
+  your inbox, with no forwarding filter to set up. Rolestash reads only job
+  emails, read-only, in the extension on your computer; nothing from your
+  inbox reaches our servers. Your board catches up as soon as Chrome opens
+  and every few minutes after, and Disconnect removes the access.
+
 ## [0.4.5] — 2026-10-06
 
 ### Changed

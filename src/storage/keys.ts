@@ -49,3 +49,7 @@ export const RATING_PROMPT_KEY = 'prompts:rating';
 
 /** The autofill profile (ADR-0020): this device only, never synced or backed up. */
 export const PROFILE_KEY = 'profile';
+/** A connected Gmail or Outlook mailbox (ADR-0032): which one, and how far it has been read. */
+export const MAILBOX_STATE_KEY = 'mailbox:state';
+/** Its access tokens. Never synced, exported or sent anywhere but the provider. */
+export const MAILBOX_AUTH_KEY = 'mailbox:auth';

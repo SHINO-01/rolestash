@@ -30,4 +30,29 @@ export class ChromeWebAuthFlow implements WebAuthFlow {
     if (!result) throw new Error('Sign-in was cancelled');
     return result;
   }
+
+  async launchSilently(url: string): Promise<string | undefined> {
+    try {
+      return await browser.identity.launchWebAuthFlow({
+        url,
+        interactive: false,
+        // Google answers prompt=none with a redirect after its page loads.
+        abortOnLoadForNonInteractive: false,
+        timeoutMsForNonInteractive: 10_000,
+      });
+    } catch {
+      return undefined; // the provider wants the user
+    }
+  }
+}
+
+/** OAuth client IDs for connecting a mailbox (ADR-0032); each provider is off without its own. */
+export function mailConfig(): { googleClientId?: string; microsoftClientId?: string } {
+  // Its own switch, though usually the same client as sign-in: set once Google approves Gmail access.
+  const google = import.meta.env.WXT_GMAIL_CLIENT_ID;
+  const microsoft = import.meta.env.WXT_MICROSOFT_CLIENT_ID;
+  return {
+    ...(google ? { googleClientId: google } : {}),
+    ...(microsoft ? { microsoftClientId: microsoft } : {}),
+  };
 }

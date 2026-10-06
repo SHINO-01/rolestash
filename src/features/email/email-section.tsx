@@ -9,6 +9,8 @@ import { useServices } from '@/ui/hooks/services';
 import { relativeTime } from '@/ui/format';
 import { backendErrorMessage } from '@/features/account/plan-copy';
 import { EmailSetupGuide } from './email-setup';
+import { useMailboxState } from '@/ui/hooks/mailbox';
+import { MailboxConnect } from './mailbox-connect';
 
 const PROBLEM = {
   offline: 'Couldn’t reach Rolestash. Updates resume when you’re back online.',
@@ -18,13 +20,15 @@ const PROBLEM = {
 
 /** Automatic status updates from forwarded email (Pro; ADR-0014), in Account. */
 export function EmailSection({ plan, trial = false }: { plan: Plan; trial?: boolean }) {
-  const { email } = useServices();
+  const services = useServices();
+  const { email } = services;
   const state = useEmailState();
   const toast = useToast();
   const [address, setAddress] = useState<string>();
   const [busy, setBusy] = useState<'check' | 'rotate' | 'share' | null>(null);
   const [confirmRotate, setConfirmRotate] = useState(false);
   const [verification, setVerification] = useState<{ code?: string; url?: string }>();
+  const mailboxState = useMailboxState();
 
   const run = useCallback(
     async (key: 'check' | 'rotate' | 'share', task: () => Promise<void>) => {
@@ -69,9 +73,9 @@ export function EmailSection({ plan, trial = false }: { plan: Plan; trial?: bool
       <section className="border-line rounded-xl border p-4">
         <Header pitch />
         <p className="text-muted mt-2 text-sm">
-          With Pro, forward your job emails to a private address and your board updates itself:
-          applications received, assessments, interviews (with Join and map links), rejections and
-          offers. Plain rules, no AI.
+          With Pro, connect Gmail or Outlook (or forward your job emails) and your board updates
+          itself: applications received, assessments, interviews (with Join and map links),
+          rejections and offers. Plain rules, no AI.
         </p>
       </section>
     );
@@ -108,17 +112,9 @@ export function EmailSection({ plan, trial = false }: { plan: Plan; trial?: bool
     toast({ message: 'Address copied', tone: 'success' });
   };
 
-  return (
-    <section className="border-line rounded-xl border p-4">
-      <Header
-        status={
-          state?.lastRunAt
-            ? `Checked ${relativeTime(state.lastRunAt)}`
-            : address
-              ? undefined
-              : 'Loading…'
-        }
-      />
+  // The forwarding address: the way in that gives Rolestash no access to the inbox.
+  const forwarding = (
+    <>
       <p className="text-muted mt-2 text-sm">
         Forward job emails to this private address and your board updates itself. We keep only what
         we found (like “interview, Thu 10am, Zoom link”), never the email.
@@ -193,6 +189,36 @@ export function EmailSection({ plan, trial = false }: { plan: Plan; trial?: bool
           Mail to the current address stops arriving at once. Update your mail filter afterwards.
         </p>
       ) : null}
+    </>
+  );
+
+  return (
+    <section className="border-line rounded-xl border p-4">
+      <Header
+        status={
+          state?.lastRunAt
+            ? `Checked ${relativeTime(state.lastRunAt)}`
+            : address
+              ? undefined
+              : 'Loading…'
+        }
+      />
+      <MailboxConnect />
+      {mailboxState ? (
+        <details className="border-line mt-3 rounded-lg border px-3 py-2 text-sm">
+          <summary className="cursor-pointer font-medium">Forwarding address (optional)</summary>
+          {forwarding}
+        </details>
+      ) : (
+        <>
+          {mailboxState === null && services.mailbox ? (
+            <p className="text-muted mt-4 text-[13px] font-medium">
+              Or forward job emails instead, with no access to your inbox:
+            </p>
+          ) : null}
+          {forwarding}
+        </>
+      )}
       {trial ? (
         // Trial accounts don't vote (only subscribers' votes count), so nothing is shared.
         <p className="text-muted mt-4 text-[13px]">

@@ -304,3 +304,52 @@ insert into private.email_knowledge_blocked (kind, key) values ('domain', 'examp
    - every fixture's expected intent and action.
 
 Prefer a narrow trap or a template reader over loosening a threshold.
+
+## Connected mailbox: Gmail or Outlook (ADR-0032)
+
+The extension reads a connected mailbox itself, read-only, and runs the same
+engine on the device; nothing from the mailbox reaches our servers. Code:
+`src/email/mailbox.ts` (pure converters and the first look),
+`src/services/mail/` (sign-in and API calls), `src/services/mailbox-service.ts`
+(cursor, tokens) and `EmailUpdateService.run` (which applies the results).
+It checks at browser startup, every 5 minutes (`rolestash.mail` alarm) and
+when a board opens.
+
+### Google (owner, Google Cloud console, the project with the sign-in client)
+
+1. **APIs & Services → Library:** enable the **Gmail API**.
+2. **OAuth consent screen → Data access:** add
+   `https://www.googleapis.com/auth/gmail.readonly`.
+3. **Credentials → the web client (the one in `WXT_GOOGLE_CLIENT_ID`) → Authorized
+   redirect URIs:** add
+   `https://cncilbdakhabnocnjokbonggomndedgp.chromiumapp.org/` (store build)
+   and `https://bdajnmkjahhphadpdbbkibljcheonejp.chromiumapp.org/`
+   (development, staging and E2E builds).
+4. **Verification** (restricted scope): submit the app with the privacy
+   policy (it has the Limited Use statement), a short video of connecting
+   Gmail and an update arriving, and the explanation that mail is processed
+   only in the extension on the user's device and never sent to our servers
+   (Google's assessment rules treat on-device processing differently from
+   server storage). Until Google approves, add testers under **Audience →
+   Test users** (100 at most); they see an "unverified app" warning.
+5. **Switch it on:** set the rolestash-extension repository variable
+   `WXT_GMAIL_CLIENT_ID` to that client ID (and `.env.staging` here to try it
+   on staging). "Connect Gmail" is hidden until then.
+
+### Microsoft (owner, entra.microsoft.com)
+
+1. **App registrations → New registration:** name "Rolestash"; supported
+   accounts "Accounts in any organizational directory and personal Microsoft
+   accounts".
+2. **Authentication → Add a platform → Mobile and desktop applications:**
+   custom redirect URIs
+   `https://cncilbdakhabnocnjokbonggomndedgp.chromiumapp.org/` and
+   `https://bdajnmkjahhphadpdbbkibljcheonejp.chromiumapp.org/`. Set
+   **Allow public client flows** to Yes. No client secret.
+3. **API permissions → Microsoft Graph → Delegated:** `Mail.Read`,
+   `User.Read`, `offline_access`, `openid`.
+4. **Branding & properties:** publisher verification (needs a Microsoft
+   Partner Network ID), so the consent screen shows a verified publisher.
+5. Copy the **Application (client) ID** into the rolestash-extension
+   repository variable `WXT_MICROSOFT_CLIENT_ID`, and into `.env.staging`
+   here for staging builds.

@@ -80,4 +80,9 @@ export interface WebAuthFlow {
   redirectUrl(): string;
   /** Opens `url` for the user and resolves with the final redirect URL. */
   launch(url: string): Promise<string>;
+  /**
+   * The same without any window, for renewing a session the provider still
+   * remembers (`prompt=none`). Undefined when it needs the user.
+   */
+  launchSilently?(url: string): Promise<string | undefined>;
 }
