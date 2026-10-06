@@ -98,6 +98,16 @@ describe('planOf', () => {
       reason: 'subscribed',
       complimentary: true,
     });
+    // A dated grant (ADR-0035) shows when it ends.
+    expect(planOf(ent({ ...comp, currentPeriodEnd: days(30) }), NOW)).toEqual({
+      plan: 'pro',
+      reason: 'subscribed',
+      complimentary: true,
+      endsAt: days(30),
+    });
+    // Past its end it gets the usual renewal leeway (the daily job restores the
+    // real plan meanwhile), then Free.
+    expect(planOf(ent({ ...comp, currentPeriodEnd: days(-30) }), NOW).plan).toBe('free');
     // Ending a grant (status no longer active) behaves like any other plan.
     expect(
       planOf(ent({ ...comp, status: 'expired', currentPeriodEnd: '9999-12-31T00:00:00.000Z' }), NOW)

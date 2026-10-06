@@ -260,22 +260,41 @@ names or ids. Only the publishable key plus the ops Worker's secret can call
 it; its SHA-256 lives in `private.ops_stats_secret`. Rotation:
 [operations.md](operations.md).
 
-### Complimentary access (ADR-0025)
+### Complimentary access (ADR-0025, ADR-0035)
 
-To give an account a paid plan with no subscription (the owner's, a tester's),
-set its entitlement by hand with the service role (Supabase SQL editor or the
-connector). Billing events never change a row with `complimentary` set.
+Give, end and list complimentary Pro with `scripts/grants.ts`. It runs the
+database's own functions through the management API (`SUPABASE_ACCESS_TOKEN`
+from `secrets.env`; no service-role key), and every change is a dry run until
+`--apply`:
 
-```sql
-update public.entitlements
-   set status = 'active', tier = 'advanced', trial_ends_at = null,
-       current_period_end = '9999-12-31T00:00:00Z', complimentary = 'owner'
- where user_id = (select id from auth.users where email = '<their email>');
+```bash
+set -a; . ./secrets.env; set +a
+npx tsx scripts/grants.ts list                 # active grants (--all: revoked too)
+npx tsx scripts/grants.ts grant dana@example.com --reason tester --until 2027-01-31 --note "Beta" --apply
+npx tsx scripts/grants.ts revoke dana@example.com --note "Beta over" --apply
 ```
 
-The account must exist first (sign in once). To remove a grant, set
-`complimentary = null` and `status = 'expired'`. List them with
-`select user_id, tier, complimentary from public.entitlements where complimentary is not null;`.
+- **Reasons:** `owner`, `team`, `tester`, `partner`, `support`, `referral`.
+  `--until` is a Sydney date (the grant ends at the end of that day); without
+  it the grant is indefinite. A new grant replaces the account's current one.
+- **No account yet?** The grant waits under a keyed hash of the canonical email
+  (the trial-claims HMAC; `+tags`, Gmail dots and googlemail.com all match) and
+  applies when that mailbox first signs in. The list shows it as
+  `da…@example.com`.
+- **What a grant does:** the entitlement takes the ADR-0025 shape
+  (`status = 'active'`, `tier = 'advanced'`, `complimentary = <reason>`,
+  `current_period_end` = the end, or 9999-12-31). The account's own state is
+  saved in `private.billing_shadow` first, and Paddle events that arrive
+  during the grant update the shadow instead of being dropped. Revoking, or
+  the end date (the `grants-expiry` cron job, daily at 03:23 UTC), restores
+  the shadow: the real subscription, the trial, or Free. Data is never
+  touched.
+- **The log:** `private.grants`, one row per grant, revoked in place, never
+  deleted (`user_id` becomes null if the account is deleted). The extension
+  shows a dated grant's end in Account; a revoke reaches it at its next
+  entitlement check.
+- `--local` runs against the local stack (`supabase start`) through the
+  `supabase_db_rolestash` container.
 
 ### Going live with Paddle
 

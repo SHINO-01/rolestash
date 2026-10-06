@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- **Complimentary Pro with an end date** now shows that date in Account.
+
 ## [0.5.0] — 2026-10-07
 
 ### Changed

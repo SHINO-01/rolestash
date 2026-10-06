@@ -45,6 +45,10 @@ Full policy: https://rolestash.com/privacy/
   Google), your plan and subscription status from Paddle, our merchant of
   record, and a display name and small profile photo if you add them. We
   never see card details.
+- **Complimentary Pro (only if we give it to you, for example as a tester):**
+  why and until when. If we set it up before you have an account, we keep a
+  keyed hash of your email and its first two letters and domain (such as
+  "da…@example.com") until you sign in or the grant ends.
 - **Sync (Pro):** a copy of your board and a name for each
   synced device, stored in our database in Sydney, Australia, so your devices
   stay in step. Deleting your account deletes it.

@@ -150,7 +150,14 @@ export function planOf(entitlement: Entitlement | undefined, now: Date): PlanSta
     case 'active':
     case 'past_due':
       if (entitlement.complimentary && status === 'active' && before(now, currentPeriodEnd)) {
-        state = { plan: tier, reason: 'subscribed', complimentary: true };
+        // A dated grant (ADR-0035) shows its end; an indefinite one ends in 9999.
+        const dated = currentPeriodEnd !== undefined && !currentPeriodEnd.startsWith('9999-');
+        state = {
+          plan: tier,
+          reason: 'subscribed',
+          complimentary: true,
+          ...(dated ? { endsAt: currentPeriodEnd } : {}),
+        };
         break;
       }
       state = before(now, currentPeriodEnd, RENEWAL_LEEWAY_DAYS)

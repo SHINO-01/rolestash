@@ -69,8 +69,15 @@ into the roadmap or changelog. Last reviewed 6 October 2026 (night).
   - check Cloudflare's **Block AI bots / AI Crawl Control** is off for
     rolestash.com, if you want AI assistants to cite the site
     ([website.md](guides/website.md#search)).
-- [ ] **Meheraj's complimentary access:** ask them to sign in to Rolestash
-      once with meherajrafid@gmail.com, then tell us.
+- [ ] **Grants go live (ADR-0035):** apply the new migration
+      (`npx supabase db push`; it adds `private.grants`, restores plans when a
+      grant ends, and schedules the daily `grants-expiry` job). Then
+      `npx tsx scripts/grants.ts list` should show your own grant, copied into
+      the log ([backend.md](guides/backend.md#complimentary-access-adr-0025-adr-0035)).
+- [ ] **Meheraj's complimentary access:** no need to wait for them to sign in
+      any more. After the migration:
+      `npx tsx scripts/grants.ts grant meherajrafid@gmail.com --reason team --apply`;
+      it applies when they first sign in.
 - [ ] **Go public** when the beta is clean: Distribution → Visibility →
       Public ([launch.md](guides/launch.md#7-going-public)).
 
@@ -81,14 +88,12 @@ into the roadmap or changelog. Last reviewed 6 October 2026 (night).
       sign-in (authenticator app), security-change emails and "Sign out
       everywhere". No password is required. Owner to accept or adjust
       ([ADR-0036](adr/0036-passwords-and-account-security.md)).
-- [ ] **Grants, referrals and discount codes (ADR-0035, accepted; after ADR-0034):**
-      revocable complimentary Pro (indefinite or dated), "give 50%, get a
-      month" referrals, and scripted Paddle discount codes with promo links.
-      Build order and estimates in [ADR-0035](adr/0035-grants-referrals-discounts.md).
-- [ ] **Four board lanes (ADR-0034, accepted):** Saved, Applied,
-      Interviewing, Offer on the board; Rejected set from the drawer, no lane;
-      Screening and Withdrawn retired. The audit and step-by-step plan are in
-      [ADR-0034](adr/0034-four-board-lanes.md); the owner's three answers are recorded there. Ready to build.
+- [ ] **Discount codes, then referrals (ADR-0035, parts 2 and 3):**
+      grants (part 1) are built (`scripts/grants.ts`, migration
+      `20261021120000_grants.sql`). Next: `scripts/paddle-discounts.ts` and
+      `/pricing/?code=` (about 2 hours), then "give 50%, get a month"
+      referrals (1–2 days). Live Paddle steps need the owner's approval
+      ([ADR-0035](adr/0035-grants-referrals-discounts.md)).
 - [x] **New launch film:** done 7 October: a 45-second film of all ten
       features (Free, then "That's not all.", then Pro) is the hero, silent,
       landscape and vertical; the music cuts for social are in the brag output
@@ -96,8 +101,6 @@ into the roadmap or changelog. Last reviewed 6 October 2026 (night).
 
 - [ ] **When 0.4.7 is approved:** set "Current version" on `/known-issues/`
       to 0.4.7 and the date.
-- [ ] **After Meheraj signs in:** grant complimentary Advanced with reason
-      `team` ([backend.md](guides/backend.md#complimentary-access-adr-0025)).
 - [ ] **By 4 January 2027:** re-check the facts on `/compare/teal/` and
       `/compare/huntr/` and update their "Facts checked" date
       ([website.md](guides/website.md#search)).
