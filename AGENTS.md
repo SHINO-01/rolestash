@@ -17,9 +17,11 @@ before your first change; it is short on purpose. Details live in `docs/`.
    behind a port. A lapsed subscription drops back to the free tier and never
    blocks viewing, editing, exporting or deleting your own data.
 3. **Least privilege.** Adding a permission requires a justification in
-   `docs/reference/permissions.md` and usually an ADR. Never add `<all_urls>`
-   host permissions to production builds (the `e2e` build mode is the only
-   exception).
+   `docs/reference/permissions.md` and usually an ADR. The one broad grant is
+   the floating widget's access to every web page (ADR-0031, the owner's
+   decision): its content script draws only the button and reads nothing
+   until the user opens the panel. Never widen what it does on a page without
+   an ADR, and never add other broad host access.
 4. **Never render posting HTML.** Descriptions are stored and shown as plain
    text (ADR-0005).
 

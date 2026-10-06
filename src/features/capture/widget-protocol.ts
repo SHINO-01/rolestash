@@ -1,5 +1,3 @@
-import { isJobSite } from '@/extraction/adapters/job-sites';
-
 /**
  * Messages between the floating widget's parts (ADR-0030):
  *
@@ -18,16 +16,18 @@ export type WidgetFrameMessage =
   | { source: typeof WIDGET_FRAME_SOURCE; type: 'resize'; height: number }
   | { source: typeof WIDGET_FRAME_SOURCE; type: 'close' };
 
-/** Pages where the launcher appears by itself: the job sites (and local pages in E2E builds). */
+/**
+ * Pages where the button appears by itself: every web page (ADR-0031),
+ * except Rolestash's own site, which has its own way in.
+ */
 export function showsLauncher(href: string): boolean {
-  if (import.meta.env.MODE === 'e2e') {
-    try {
-      if (['localhost', '127.0.0.1'].includes(new URL(href).hostname)) return true;
-    } catch {
-      return false;
-    }
+  try {
+    const url = new URL(href);
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') return false;
+    return url.hostname !== 'rolestash.com' && !url.hostname.endsWith('.rolestash.com');
+  } catch {
+    return false;
   }
-  return isJobSite(href);
 }
 
 /** Sites where the widget's launcher is hidden ("Hide on this site"), by hostname. */

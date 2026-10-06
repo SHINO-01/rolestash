@@ -91,4 +91,4 @@ Set `PLAYWRIGHT_CHROMIUM_PATH` to use a system Chromium instead of Playwright's 
 Not covered by E2E: clicking the real toolbar icon (Playwright can't click the
 toolbar). The E2E tests send the same message the click sends
 (`rolestash:widget-toggle`), and open the widget from its button on fixture
-pages, which the `e2e` build treats as job sites.
+pages.

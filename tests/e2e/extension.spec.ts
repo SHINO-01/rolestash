@@ -390,6 +390,48 @@ test.describe('the floating widget (ADR-0030)', () => {
     await expect(widget.getByRole('status')).toHaveText('On your board · Applied');
   });
 
+  test('is a logo on other pages, says "Save job" on a job, and can be dragged to either edge', async ({
+    context,
+    worker,
+    fixtureServer,
+  }) => {
+    const page = await context.newPage();
+    await page.setViewportSize({ width: 1280, height: 800 });
+    // Not a job posting: only the logo.
+    await page.goto(fixtureServer.url('forms/generic/careers-page.html'));
+    const button = page.getByRole('button', { name: 'Open Rolestash' });
+    await expect(button).toBeVisible();
+    await expect(button.getByText('Save job')).toBeHidden();
+    const start = await button.boundingBox();
+    expect(start?.width).toBe(48);
+    expect((start?.x ?? 0) + (start?.width ?? 0)).toBeGreaterThan(1200); // right edge by default
+
+    // Press: it sinks in. Drag to the left half and let go: it snaps to the left edge.
+    await page.mouse.move((start?.x ?? 0) + 24, (start?.y ?? 0) + 24);
+    await page.mouse.down();
+    await expect(button).toHaveClass(/pressed/);
+    await page.mouse.move(300, 250, { steps: 8 });
+    await expect(button).toHaveClass(/dragging/);
+    await page.mouse.up();
+    await expect(button).not.toHaveClass(/pressed/);
+    await expect.poll(async () => (await button.boundingBox())?.x).toBe(12);
+    // A drag isn't a click: the panel stays shut.
+    await expect(page.locator('iframe[title="Rolestash"]')).toHaveCount(0);
+    expect(
+      await worker.evaluate(
+        async () => (await chrome.storage.local.get('widget:position'))['widget:position'],
+      ),
+    ).toMatchObject({ side: 'left' });
+
+    // Remembered on the next page, where a job is open: "Save job", and the panel opens on the left.
+    await page.goto(fixtureServer.url('sites/greenhouse/board.html'));
+    await expect(button.getByText('Save job')).toBeVisible();
+    await expect.poll(async () => (await button.boundingBox())?.x).toBe(12);
+    await button.click();
+    const panel = await page.locator('iframe[title="Rolestash"]').boundingBox();
+    expect(panel?.x).toBeLessThan(100);
+  });
+
   test('the toolbar icon toggles it, and it can be hidden on a site', async ({
     context,
     worker,

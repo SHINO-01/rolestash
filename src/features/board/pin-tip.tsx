@@ -7,9 +7,8 @@ import { useServices } from '@/ui/hooks/services';
 const DISMISSED_KEY = 'tips:pinDismissed';
 
 /**
- * "Pin Rolestash" until the icon is on the toolbar: one click opens the
- * widget on any careers page, not just the job sites where it appears by
- * itself (ADR-0030). Hidden once pinned or dismissed.
+ * "Pin Rolestash" until the icon is on the toolbar: the board and the
+ * widget, one click away (ADR-0030). Hidden once pinned or dismissed.
  */
 export function PinTip() {
   const { store } = useServices();

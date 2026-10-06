@@ -19,8 +19,9 @@ board you drag through _Saved → Applied → Screening → Interviewing → Off
   Accounts, sync and email updates are optional paid features on our own
   backend (Supabase, payments by Paddle). No analytics, no remote code, no AI
   vendors.
-- **Minimal permissions.** The extension can read a page only after you click it
-  (`activeTab`). No "read all your data on all websites" warning.
+- **A button on every page, reading nothing until you open it.** The floating
+  widget's button sits at the edge of any page (ADR-0031). It checks only
+  whether a job is open, and reads the page only when you open the panel.
 
 ## Using it
 

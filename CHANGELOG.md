@@ -6,6 +6,17 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- **The Rolestash button is on every page,** not only on job sites, so
+  company careers pages and every applicant tracking system get it too. It
+  shows just the logo until a job posting is open, then says "Save job".
+  Chrome asks once to allow Rolestash on all sites; the button reads
+  nothing from a page until you open the panel.
+- **Put the button where you like:** drag it to any height on the left or
+  right edge (it snaps into place and remembers), or move it with the
+  arrow keys. The panel opens on the same side.
+
 ## [0.4.4] — 2026-10-06
 
 ### Changed

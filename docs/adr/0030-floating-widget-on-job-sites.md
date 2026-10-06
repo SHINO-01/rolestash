@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-10-06
-- Supersedes ADR-0021 (side panel). Amends ADR-0004 (activeTab only).
+- Supersedes ADR-0021 (side panel). Amends ADR-0004 (activeTab only). Amended by ADR-0031 (the button on every page).
 
 ## Context
 

@@ -201,7 +201,7 @@ export function AddJobDialog({
       open={open}
       onClose={close}
       title="Add a job"
-      description="On a job site, the Rolestash button at the edge of the page saves the job for you."
+      description="On any job posting, the Save job button at the edge of the page fills this in for you."
       footer={
         <>
           <Button variant="ghost" onClick={close}>

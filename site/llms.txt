@@ -10,7 +10,7 @@ Key facts:
 - Works on 50+ job boards and applicant tracking systems (including SEEK, LinkedIn, Indeed, Workday, Greenhouse and Lever) and most other careers pages.
 - Plans: Free (up to 30 active jobs, no account needed, data stays in the browser); Pro, US$12 a month (unlimited jobs, automatic status updates from forwarded job emails, full autofill, insights, sync across 5 devices including a phone web board, 14-day free trial with no card). Prices are charged in the buyer's currency by Paddle, the merchant of record.
 - Free plan: works without an account; the board stays in the browser and nothing is sent to Rolestash.
-- Capture: click the Rolestash button at the edge of a job site's page (or the Rolestash icon / Alt+J on any other careers page); title, company, location, salary, closing date and description fill in, uncertain fields are flagged, and the same job found on two sites stays one card. It reads a page only when asked, and on job sites can mark the job applied and fill the application from the same panel.
+- Capture: a Rolestash button sits at the edge of every page and says "Save job" when a posting is open (or use the Rolestash icon / Alt+J); title, company, location, salary, closing date and description fill in, uncertain fields are flagged, and the same job found on two sites stays one card. It reads a page only when asked, and on job sites can mark the job applied and fill the application from the same panel.
 - Autofill fills application forms from the user's own details and never submits; it skips demographic questions.
 - Privacy: capture and email updates run on plain rules, not AI; nothing is sent to AI services; no ads or analytics; export to CSV or JSON on every plan. Synced data is stored in Sydney, Australia.
 
