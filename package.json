@@ -38,7 +38,8 @@
     "perf:board": "npm run build && playwright test --project=perf --reporter=list",
     "release": "node scripts/changelog.ts release",
     "test:db": "supabase db start && supabase db reset --local && supabase test db && supabase db lint --local --level warning --fail-on warning",
-    "db:stop": "supabase stop"
+    "db:stop": "supabase stop",
+    "store:promo": "npm run build && tsx scripts/store-promo-tiles.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
