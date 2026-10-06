@@ -62,6 +62,10 @@ into the roadmap or changelog. Last reviewed 6 October 2026 (night).
 
 ## Ours
 
+- [ ] **Four board lanes (ADR-0034, proposed):** Saved, Applied,
+      Interviewing, Offer on the board; Rejected set from the drawer, no lane;
+      Screening and Withdrawn retired. The audit and step-by-step plan are in
+      [ADR-0034](adr/0034-four-board-lanes.md); three owner questions first.
 - [x] **New launch film:** done 7 October: a 45-second film of all ten
       features (Free, then "That's not all.", then Pro) is the hero, silent,
       landscape and vertical; the music cuts for social are in the brag output
