@@ -2,6 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-10-06
+- **Live:** 2026-10-06 (Supabase secrets, functions and migration `20261020120000`)
 - Supersedes the plan split in ADR-0013 (its 2026-10-02 redistribution).
 
 ## Context

@@ -2,41 +2,37 @@
 
 Everything still open, in one place, with who does it. Details live in the
 linked guides; tick items here when they're done and move finished work
-into the roadmap or changelog. Last reviewed 6 October 2026.
+into the roadmap or changelog. Last reviewed 6 October 2026 (evening).
 
 ## Owner
 
-- [ ] **Connect Gmail / Outlook (ADR-0032):** set up Google (enable the Gmail
-      API, add the `gmail.readonly` scope and the two `chromiumapp.org`
-      redirect URIs, submit for verification) and Microsoft (an Entra app,
-      public client, `Mail.Read`; then the `WXT_MICROSOFT_CLIENT_ID`
-      repository variable; `WXT_GMAIL_CLIENT_ID` once Google approves), following
-      [email-updates.md](guides/email-updates.md#connected-mailbox-gmail-or-outlook-adr-0032).
-      Until Google verifies, only listed test users can connect Gmail.
-- [ ] **One paid plan (ADR-0029), live side.** The US$12 Pro prices exist in
-      live Paddle (created 6 October). In this order:
-  1. `npx supabase secrets set PADDLE_PRICE_PRO_MONTHLY=pri_01m46d6r756r2swxzfz1zsrwgt PADDLE_PRICE_PRO_QUARTERLY=pri_01m46d6rvpxtwwykg397j0rfam PADDLE_PRICE_PRO_YEARLY=pri_01m46d6scqqy0stz0hwcwsxm40`
-  2. `npx supabase functions deploy --project-ref fhclnxqumcdsqxyunelp --no-verify-jwt`
-  3. `npx supabase db push` (moves stored `pro` tiers to the full plan)
-  4. `npx tsx scripts/paddle-migrate-legacy.ts production` (dry run). Anyone
-     listed bought at the old price; email them 30 days' notice (the terms
-     promise it), then run it with `--apply`.
-- [ ] **Ship v0.4.4** (one Pro plan, the floating widget; ADR-0029, ADR-0030),
-      after the steps above:
-  1. In rolestash-extension, merge the `release-0.4.4-widget` PR (policy:
-     job-site host permissions and the widget's content script; listing;
-     screenshots). Its Integration check passes once the source tag v0.4.4
-     exists.
-  2. Run _Release_ there. The upload asks for new permissions, so expect a
-     longer Web Store review.
-  3. Copy `store/listing.md` into the dashboard by hand (description,
-     permission justifications, screenshot 4 is now the widget).
-  4. After it's live: existing users see Chrome's "new permissions"
-     prompt once and approve it to keep Rolestash on.
-- [ ] **Chrome Web Store:** v0.4.3 (security fixes) is published, 5
-      October. Check the **Privacy** tab still has the data disclosures from
-      the release repo's `store/listing.md` ("Collected")
-      ([launch.md](guides/launch.md#v041-in-review-to-do)).
+- [ ] **v0.4.7 is in Chrome Web Store review** (submitted 6 October; 0.4.3
+      stays live until then). After approval, check the dashboard's
+      **Privacy** tab and listing match the release repo's
+      `store/listing.md` ([launch.md](guides/launch.md#v047-in-review-to-do)).
+- [ ] **Gmail (ADR-0032):** Google Cloud is done (Gmail API, the
+      `gmail.readonly` scope, both redirect URIs, checked working on 6
+      October). Waiting on Google's restricted-scope verification; until then
+      only listed test users can connect. After approval, set the
+      rolestash-extension repository variable `WXT_GMAIL_CLIENT_ID` =
+      `681262997873-d085gg7n42vd4b5tl8q68ri8jm8i0vhe.apps.googleusercontent.com`
+      and release. The homepage FAQ already says users can connect Gmail or
+      Outlook; if verification drags on, ask us to soften it.
+- [ ] **Outlook (ADR-0032):** register the Microsoft Entra app (public
+      client, `Mail.Read`), then set `WXT_MICROSOFT_CLIENT_ID` in
+      rolestash-extension
+      ([email-updates.md](guides/email-updates.md#connected-mailbox-gmail-or-outlook-adr-0032)).
+- [x] **One paid plan (ADR-0029), live side:** done 6 October. The
+      `PADDLE_PRICE_PRO_*` secrets hold the US$12 prices, every function was
+      redeployed with `--no-verify-jwt`, migration `20261020120000` is
+      applied, and the `paddle-setup.ts` dry run says production is in place.
+      No legacy subscribers (the only paid entitlement is the owner's
+      complimentary one; the owner's test purchase was refunded), so
+      `paddle-migrate-legacy.ts` has nothing to move
+      ([backend.md](guides/backend.md#paddle-live-state)).
+- [ ] **Paddle tidy-up (optional):** archive the old US$7 Pro prices and the
+      Advanced product in live Paddle, since nobody pays them (ADR-0029 says
+      to once nobody is). Ask us to do it, or do it in the dashboard.
 - [ ] **Beta:** send the unlisted store link to 10–20 testers; ask for honest
       Chrome Web Store reviews, and whether they're happy to be quoted on
       the homepage ([launch.md](guides/launch.md#6-beta-owner-with-us)).
@@ -73,10 +69,8 @@ into the roadmap or changelog. Last reviewed 6 October 2026.
       application, move to Applied) and one Pro plan at US$12, fictional
       companies only ([website.md](guides/website.md)).
 
-- [ ] **0.4.1 is approved:** move the three fixed issues off
-      `/known-issues/`, set "Current version" to 0.4.1 and the date
-      ([launch.md](guides/launch.md#v041-in-review-to-do)). When 0.4.2 is
-      approved, set it to 0.4.2.
+- [ ] **When 0.4.7 is approved:** set "Current version" on `/known-issues/`
+      to 0.4.7 and the date.
 - [ ] **After Meheraj signs in:** grant complimentary Advanced with reason
       `team` ([backend.md](guides/backend.md#complimentary-access-adr-0025)).
 - [ ] **By 4 January 2027:** re-check the facts on `/compare/teal/` and

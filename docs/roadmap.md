@@ -113,7 +113,8 @@ Runbook: [guides/launch.md](guides/launch.md).
 2. **Chrome Web Store:**
    - ~~one-time setup and an unlisted first upload~~ done (item
      `cncilbdakhabnocnjokbonggomndedgp`; v0.4.0 approved and published,
-     unlisted, on 2026-10-04; v0.4.1 in review);
+     unlisted, on 2026-10-04; v0.4.3 live since 2026-10-05; v0.4.7 in
+     review since 2026-10-06);
    - ~~add that ID to `ROLESTASH_EXTENSION_IDS` in
      `src/services/web-handoff.ts` **and** to `site/assets/auth-google.js`
      (a test keeps the two lists equal)~~ done;
@@ -138,11 +139,19 @@ Runbook: [guides/launch.md](guides/launch.md).
      [guides/website.md](guides/website.md)). Real quotes only, with
      permission.
 
+6. ~~**One paid plan and the floating widget**~~ done (v0.4.4 to v0.4.7,
+   2026-10-06): Pro at US$12 with everything (ADR-0029, live in Paddle and
+   Supabase the same day), the floating widget instead of the popup and side
+   panel (ADR-0030), job sites by default and all sites by choice
+   (ADR-0033), and Gmail or Outlook read on the device (ADR-0032; switched
+   on per provider once its OAuth client is approved).
+
 ## Next
 
 - ~~**Launch video**~~ done (2026-10-04): a silent 21-second film in the
   rolestash.com hero, landscape on wide screens and vertical on phones
-  ([guides/website.md](guides/website.md)).
+  ([guides/website.md](guides/website.md)). It still shows the popup and two
+  paid plans; a re-cut is in [todo.md](todo.md).
 - **Operations dashboard** at `operations.rolestash.com` for us: Cloudflare,
   Paddle (refunds, disputes, discounts), Resend, Search Console and ad
   accounts in one place, behind owner-only sign-in. Design note:

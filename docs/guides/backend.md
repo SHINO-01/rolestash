@@ -213,7 +213,9 @@ npx supabase functions deploy --project-ref fhclnxqumcdsqxyunelp --no-verify-jwt
 
 **Paddle dashboard:**
 
-1. Create the product with two prices: US$7/month and US$59/year.
+1. The catalog comes from `scripts/paddle-setup.ts`, not by hand: one
+   product, Rolestash Pro, with US$12 a month, US$30 a quarter and US$99 a
+   year, plus local prices (ADR-0029). A dry run reports anything missing.
 2. Default payment link: `https://rolestash.com/pay/`.
 3. Add a notification destination for
    `https://<ref>.supabase.co/functions/v1/paddle-webhook` with the
@@ -232,6 +234,23 @@ email.
 
 Paddle went live on 2026-10-02: the server and `paddle-config.js` use the
 production account. The sandbox catalog is kept, matching, for reference.
+
+### Paddle live state
+
+Checked 6 October 2026, after ADR-0029:
+
+| Piece              | Value                                                                                                                   |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| Live prices        | month `pri_01m46d6r756r2swxzfz1zsrwgt`, quarter `pri_01m46d6rvpxtwwykg397j0rfam`, year `pri_01m46d6scqqy0stz0hwcwsxm40` |
+| Supabase secrets   | `PADDLE_PRICE_PRO_*` set to those IDs; `PADDLE_LEGACY_PRICES` unset (the old prices are tagged in Paddle)               |
+| Functions          | all redeployed with `--no-verify-jwt` from the one-plan code                                                            |
+| Database           | migration `20261020120000_one_paid_plan` applied; no `pro` rows left                                                    |
+| Paddle catalog     | `paddle-setup.ts production` dry run: everything in place                                                               |
+| Legacy subscribers | none; the only paid entitlement is the owner's complimentary one                                                        |
+
+To check it again: `npx supabase secrets list` (the values are SHA-256
+digests; compare with `printf %s pri_… | sha256sum`), `npx supabase
+migration list`, and the `paddle-setup.ts` dry run.
 
 ### Operations stats (ADR-0026)
 
@@ -261,7 +280,8 @@ The account must exist first (sign in once). To remove a grant, set
 ### Going live with Paddle
 
 `scripts/paddle-setup.ts` creates or checks the whole catalog idempotently:
-products, six prices with local overrides, and the webhook destination. The
+the Pro product, its three prices with local overrides, and the webhook
+destination. The
 sandbox was set up the same way, and a dry run changes nothing.
 
 1. **Owner, in the live Paddle dashboard:**

@@ -53,8 +53,11 @@ release here (`npm run release -- patch`) so _Release_ builds again.
    URL) and send it to us.
 
 Approved: v0.4.0 was published, unlisted, on 4 October 2026 (after two
-rejections for naming job sites in the description). v0.4.1 went to review
-the same day; v0.4.0 stays installable while it's reviewed.
+rejections for naming job sites in the description). v0.4.3 (security
+fixes) is the live version since 5 October. 0.4.4 to 0.4.6 were cancelled or
+superseded; v0.4.7 (one Pro plan, the floating widget, job-site host
+permissions) was submitted on 6 October and is in review. 0.4.3 stays
+installable while it's reviewed.
 
 ## 3. Wire the store ID in (ours, after the owner sends the ID)
 
@@ -122,25 +125,23 @@ client in `.env.staging`:
 - then **Verify branding**. The domain must be verified in Search Console
   for the same Google account.
 
-## v0.4.1 in review (to do)
+## v0.4.7 in review (to do)
 
 All open items across the launch, search and operations work are also in
 [todo.md](../todo.md).
 
-Submitted 2026-10-04 (release run 37192004589). Until it's approved:
+Submitted 2026-10-06 from the release repo (release PR #14). It asks for new
+permissions (the job-site list and the widget's content script, ADR-0033),
+so the review can take longer, and existing users approve one Chrome prompt
+when it updates.
 
-- [ ] **Owner:** paste the data disclosures from the release repo's
-      `store/listing.md` ("Collected" section) into the dashboard's
-      **Privacy** tab. Reviewers compare them with what 0.4.1 does; they
-      now include account names and problem reports.
-- [ ] **Owner:** start the beta (step 6) on the unlisted link; testers move
-      to 0.4.1 automatically once it's approved.
+When Google approves 0.4.7:
 
-When Google approves 0.4.1:
-
-- [ ] **Ours:** on rolestash.com/known-issues/, move the three issues fixed
-      in 0.4.1 out of _Open_ (the changelog records the fixes), and set
-      "Current version" to 0.4.1 and "Last updated" to that day.
+- [ ] **Owner:** check the dashboard's **Privacy** tab and listing still
+      match the release repo's `store/listing.md` (permission
+      justifications, "Collected" disclosures, the widget screenshot).
+- [ ] **Ours:** set "Current version" on rolestash.com/known-issues/ to
+      0.4.7 and "Last updated" to that day.
 
 ## 6. Beta (owner, with us)
 
