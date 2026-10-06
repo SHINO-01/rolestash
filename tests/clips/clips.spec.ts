@@ -463,7 +463,7 @@ test.describe('on the board', () => {
         font: '15px/1.35 system-ui, sans-serif',
         boxShadow: '0 12px 32px rgb(16 35 31 / 18%)',
         transform: 'translateY(-130%)',
-        transition: 'transform 420ms cubic-bezier(.2,.9,.3,1.2)',
+        transition: 'transform 480ms cubic-bezier(0.22, 1, 0.36, 1)',
       });
       el.id = '__clip-mail';
       document.documentElement.append(el);
