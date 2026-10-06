@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.4.7] — 2026-10-06
+
 ### Changed
 
 - **The Rolestash button is on job sites by default,** and on every site
