@@ -204,7 +204,7 @@ const BOARD: Seed[] = [
     id: 'wc',
     title: 'UX Researcher',
     company: 'Wattle & Co',
-    stageId: 'screening',
+    stageId: 'interviewing',
     location: 'Sydney NSW',
     workplaceType: 'hybrid',
     priority: 0,
@@ -395,7 +395,7 @@ test.describe('on the board', () => {
     await seedBoard(worker, BOARD);
     const page = await openBoard(context, extensionId);
     const card = page.getByRole('button', { name: /Platform Engineer/ });
-    const target = page.getByRole('region', { name: 'Screening column' });
+    const target = page.getByRole('region', { name: 'Interviewing column' });
 
     const rec = await Recorder.start(page, 'board', { x: 700, y: 520 });
     await rec.hold(900);

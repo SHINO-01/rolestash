@@ -1,6 +1,7 @@
 import { Check, Plus, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { Job } from '@/domain/job';
+import { findStage } from '@/domain/stage';
 import type { UnsortedUpdate } from '@/services/email-update-service';
 import { JobLimitError } from '@/services/job-service';
 import { limitMessage } from '@/features/account/plan-copy';
@@ -9,7 +10,7 @@ import { Select } from '@/ui/components/field';
 import { Dialog } from '@/ui/components/overlay';
 import { useToast } from '@/ui/components/toast';
 import { useEmailState } from '@/ui/hooks/email';
-import { useJobs, useLiveJobs, useServices } from '@/ui/hooks/services';
+import { useJobs, useLiveJobs, useServices, useSettings } from '@/ui/hooks/services';
 import { relativeTime } from '@/ui/format';
 import { INTENT_LABEL } from './email-copy';
 
@@ -46,6 +47,7 @@ function UnsortedItem({ item, jobs }: { item: UnsortedUpdate; jobs: Job[] }) {
   const { email } = useServices();
   const live = useLiveJobs();
   const toast = useToast();
+  const { stages } = useSettings();
   const options = useMemo(() => {
     const onBoard = jobs.filter((j) => !j.archivedAt);
     const likely = item.candidates
@@ -69,7 +71,15 @@ function UnsortedItem({ item, jobs }: { item: UnsortedUpdate; jobs: Job[] }) {
         const job =
           kind === 'assign' ? await email.assign(item.id, jobId) : await email.addJob(item.id);
         live.applyLocal([job]);
-        toast({ message: `Filed under ${job.title}`, tone: 'success' });
+        // A rejection puts the job in a column with no lane (ADR-0034): say where it is.
+        const stage = findStage(stages, job.stageId);
+        toast({
+          message:
+            stage?.kind === 'lost'
+              ? `Filed under ${job.title}, in ${stage.name}. Find it in History.`
+              : `Filed under ${job.title}`,
+          tone: 'success',
+        });
       }
     } catch (error) {
       toast({

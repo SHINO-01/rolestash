@@ -1,7 +1,7 @@
 import clsx from 'clsx';
 import { Search } from 'lucide-react';
 import { useState } from 'react';
-import { visibleStages } from '@/domain/stage';
+import { laneStages } from '@/domain/stage';
 import { useJobs, useSettings } from '@/ui/hooks/services';
 import { matchesQuery } from '@/ui/format';
 import { STAGE_STYLE } from '@/ui/stage-style';
@@ -23,7 +23,7 @@ export function BoardView({
   const { jobs } = useJobs();
   const settings = useSettings();
   const [query, setQuery] = useState('');
-  const stages = visibleStages(settings.stages);
+  const stages = laneStages(settings.stages);
   const live = jobs.filter((j) => !j.archivedAt);
   const current = stages.find((s) => s.id === stage) ?? stages[0];
   const searching = query.trim() !== '';

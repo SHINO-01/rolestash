@@ -15,7 +15,7 @@ import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { useMemo, useState } from 'react';
 import type { Job } from '@/domain/job';
 import type { Settings } from '@/domain/settings';
-import { visibleStages } from '@/domain/stage';
+import { laneStages } from '@/domain/stage';
 import { useToast } from '@/ui/components/toast';
 import { useLiveJobs, useServices } from '@/ui/hooks/services';
 import { BoardColumn } from './board-column';
@@ -51,7 +51,7 @@ export function Kanban({
   const toast = useToast();
 
   const allColumns = useMemo(
-    () => groupIntoColumns(visibleStages(settings.stages), visibleJobs, settings.defaultStageId),
+    () => groupIntoColumns(settings.stages, visibleJobs, settings.defaultStageId),
     [settings, visibleJobs],
   );
   // Long columns show their first cards; the rest wait behind "Show more".
@@ -167,7 +167,7 @@ export function Kanban({
       onDragCancel={reset}
     >
       <div className="flex h-full scrollbar-thin items-start gap-3 overflow-x-auto px-6 pb-6">
-        {visibleStages(settings.stages).map((stage) => (
+        {laneStages(settings.stages).map((stage) => (
           <BoardColumn
             key={stage.id}
             stage={stage}

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { visibleStages } from '@/domain/stage';
+import { laneStages } from '@/domain/stage';
 import { DuplicateJobError, JobLimitError } from '@/services/job-service';
 import { limitMessage } from '@/features/account/plan-copy';
 import { Button } from '@/ui/components/button';
@@ -109,7 +109,7 @@ export function QuickAdd({
               onChange={(e) => setForm((f) => ({ ...f, stageId: e.target.value }))}
               className="h-11 text-[15px]"
             >
-              {visibleStages(settings.stages).map((s) => (
+              {laneStages(settings.stages).map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.name}
                 </option>

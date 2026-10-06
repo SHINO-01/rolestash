@@ -20,7 +20,7 @@ import {
   type WorkplaceType,
 } from '@/domain/job';
 import { visibleActivity } from '@/domain/history';
-import type { Stage } from '@/domain/stage';
+import { stageName, type Stage } from '@/domain/stage';
 import { JobLimitError } from '@/services/job-service';
 import { limitMessage } from '@/features/account/plan-copy';
 import { InterviewPanel } from '@/features/email/interview';
@@ -651,7 +651,7 @@ function Timeline({
   onUndoEmail: (activityId: string) => void;
 }) {
   const [all, setAll] = useState(false);
-  const name = (id: string | undefined) => stages.find((s) => s.id === id)?.name ?? id ?? '—';
+  const name = (id: string | undefined) => stageName(stages, id);
   const { items, hidden } = visibleActivity(activity, historyFrom);
   const shown = all ? items : items.slice(0, TIMELINE_PREVIEW);
   return (

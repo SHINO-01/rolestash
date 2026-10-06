@@ -36,9 +36,16 @@ from them. This page explains intent; the code defines shape.
 
 ## Stage (`domain/stage.ts`)
 
-`{ id, name, color, kind: active|won|lost, marksApplied }`. Defaults: Saved,
-Applied, Screening, Interviewing, Offer (won), Rejected (lost), Withdrawn
-(lost). Stages are data in settings so column customisation needs no migration.
+`{ id, name, color, kind: active|won|lost, marksApplied, archived? }`. Defaults:
+Saved, Applied, Interviewing, Offer (won), Rejected (lost). A `lost` column has
+no lane on the board; jobs reach it from the job drawer, bulk "Move to" or the
+web board's job sheet, and it lists them in History (ADR-0034). Stages are data
+in settings so column customisation needs no migration.
+
+Screening and Withdrawn were default columns until 0.5.0. Storage migration v2
+moved their jobs to Interviewing and Rejected (a withdrawn job gets a
+"Withdrawn → Rejected" history entry), and `domain/retired-stages.ts` maps the
+old ids on every read and write too, because devices on 0.4.7 still sync them.
 
 ## Settings (`domain/settings.ts`)
 

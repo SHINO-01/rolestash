@@ -116,9 +116,10 @@ export function restoreStage(settings: Settings, id: StageId): ColumnResult {
   );
 }
 
-/** Where new captures land: any visible column. */
+/** Where new captures land: any column with a lane on the board (not a `lost` one). */
 export function setDefaultStage(settings: Settings, id: StageId): ColumnResult {
   const stage = settings.stages.find((s) => s.id === id);
-  if (!stage || stage.archived) return fail('Pick a column that is on the board.');
+  if (!stage || stage.archived || stage.kind === 'lost')
+    return fail('Pick a column that is on the board.');
   return ok({ ...settings, defaultStageId: id });
 }

@@ -1,3 +1,4 @@
+import type { Job } from '@/domain/job';
 import { DEFAULT_SETTINGS } from '@/domain/settings';
 import { BackupError, createBackup, parseBackup, restoreBackup } from '@/storage/backup';
 import { JobRepository } from '@/storage/job-repository';
@@ -10,6 +11,7 @@ import {
 } from '@/storage/migrations';
 import { SettingsRepository } from '@/storage/settings-repository';
 import { makeJob } from '../helpers/factories';
+import { LEGACY_SETTINGS } from '../helpers/legacy-stages';
 
 function setup(initial: Record<string, unknown> = {}) {
   const store = new MemoryKeyValueStore(initial);
@@ -115,6 +117,45 @@ describe('migrations', () => {
     expect(calls).toEqual([2, 3]);
   });
 
+  it('v2 retires Screening and Withdrawn, moving their jobs so they sync (ADR-0034)', async () => {
+    const screened = makeJob({ id: 's', stageId: 'screening' });
+    const withdrawn = makeJob({ id: 'w', stageId: 'withdrawn' });
+    const applied = makeJob({ id: 'a', stageId: 'applied' });
+    const { store } = setup({
+      meta: { schemaVersion: 1 },
+      settings: { ...LEGACY_SETTINGS, theme: 'dark' },
+      'job:s': screened,
+      'job:w': withdrawn,
+      'job:a': applied,
+    });
+    expect(await migrate(store)).toEqual({ from: 1, to: 2 });
+    const data = await store.get(null);
+    expect(data.settings).toEqual({ ...DEFAULT_SETTINGS, theme: 'dark' });
+    const s = data['job:s'] as Job;
+    const w = data['job:w'] as Job;
+    expect(s.stageId).toBe('interviewing');
+    expect(w.stageId).toBe('rejected');
+    expect(w.activity.at(-1)).toMatchObject({ fromStageId: 'withdrawn', toStageId: 'rejected' });
+    // Moved jobs are newer, so sync sends them; untouched ones are left alone.
+    expect(s.updatedAt > screened.updatedAt).toBe(true);
+    expect(data['job:a']).toEqual(applied);
+  });
+
+  it('reads and writes retired columns as their new ones, whatever is stored', async () => {
+    const { store, jobs, settings } = setup({
+      settings: LEGACY_SETTINGS,
+      'job:s': makeJob({ id: 's', stageId: 'screening' }),
+    });
+    expect((await settings.get()).stages.map((x) => x.id)).not.toContain('screening');
+    expect((await jobs.get('s'))?.stageId).toBe('interviewing');
+    expect((await jobs.list())[0]?.stageId).toBe('interviewing');
+    await jobs.save(makeJob({ id: 'w', stageId: 'withdrawn' }));
+    await settings.replace(LEGACY_SETTINGS);
+    const data = await store.get(null);
+    expect((data['job:w'] as Job).stageId).toBe('rejected');
+    expect(data.settings).toEqual(DEFAULT_SETTINGS);
+  });
+
   it('refuses to run on data from a newer build', async () => {
     const { store } = setup({ meta: { schemaVersion: 999 } });
     await expect(migrate(store)).rejects.toBeInstanceOf(SchemaTooNewError);
@@ -165,6 +206,28 @@ describe('backup', () => {
     expect(byId.same?.title).toBe('Local newer');
     expect(byId.older?.title).toBe('Backup newer');
     expect(byId.new?.stageId).toBe(DEFAULT_SETTINGS.defaultStageId);
+  });
+
+  it('imports backups from 0.4.7 and earlier onto the four lanes (ADR-0034)', async () => {
+    const old = {
+      format: 'rolestash-backup',
+      schemaVersion: 1,
+      exportedAt: '2026-09-28T00:00:00.000Z',
+      settings: LEGACY_SETTINGS,
+      jobs: [
+        makeJob({ id: 's', stageId: 'screening' }),
+        makeJob({ id: 'w', stageId: 'withdrawn' }),
+      ],
+    };
+    const backup = parseBackup(JSON.stringify(old));
+    expect(backup.settings).toEqual(DEFAULT_SETTINGS);
+    expect(backup.jobs.map((j) => j.stageId)).toEqual(['interviewing', 'rejected']);
+    const target = setup();
+    await restoreBackup(backup, 'merge', target.jobs, target.settings);
+    expect((await target.jobs.list()).map((j) => j.stageId).sort()).toEqual([
+      'interviewing',
+      'rejected',
+    ]);
   });
 
   it('still imports backups exported under the old Jobtrail name', () => {

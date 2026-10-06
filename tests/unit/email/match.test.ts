@@ -238,7 +238,8 @@ describe('targetStage', () => {
     ['received', 'saved', 'applied'],
     ['received', 'applied', undefined],
     ['received', 'interviewing', undefined],
-    ['assessment', 'applied', 'screening'],
+    ['assessment', 'saved', 'applied'],
+    ['assessment', 'applied', undefined],
     ['assessment', 'interviewing', undefined],
     ['interview', 'applied', 'interviewing'],
     ['interview', 'interviewing', undefined],
@@ -246,7 +247,7 @@ describe('targetStage', () => {
     ['offer', 'offer', undefined],
     ['rejected', 'interviewing', 'rejected'],
     ['rejected', 'rejected', undefined],
-    ['rejected', 'withdrawn', undefined],
+    ['rejected', 'offer', undefined],
   ] as const)('%s from %s → %s', (intent, from, to) => {
     expect(targetStage(intent, at(from), stages)).toBe(to);
   });

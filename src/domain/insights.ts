@@ -1,5 +1,5 @@
 import { isManualUrl, type Job } from './job';
-import type { Stage } from './stage';
+import { retiredStageAlias, type Stage } from './stage';
 
 /**
  * Insights (Pro): how your search is going, worked out on this device
@@ -23,12 +23,15 @@ function moves(job: Job) {
   );
 }
 
-/** Every column a job has been in. */
+/**
+ * Every column a job has been in. Retired columns count as the ones that
+ * replaced them (Screening as Interviewing; ADR-0034).
+ */
 export function stagesReached(job: Job): Set<string> {
   const reached = new Set<string>([job.stageId]);
   for (const a of job.activity) {
     if (a.type === 'email_update' && a.undone) continue;
-    if (a.toStageId) reached.add(a.toStageId);
+    if (a.toStageId) reached.add(retiredStageAlias(a.toStageId) ?? a.toStageId);
   }
   return reached;
 }
@@ -78,7 +81,7 @@ export interface FunnelStep {
 }
 
 /**
- * The applied columns in board order (Applied, Screening, Interviewing…)
+ * The applied columns in board order (Applied, Interviewing…)
  * then the "won" ones (Offer). Moves can skip columns, so a job counts for
  * every step up to the furthest one it reached.
  */
@@ -249,9 +252,9 @@ const WAITING = 'outcome:waiting';
 /**
  * Every application as a path: Applications, then each later column it
  * reached in board order (so custom columns such as "Online assessment" or
- * "Accepted" appear), then how it ended: the lost column it's in (Rejected,
- * Withdrawn…), no reply after NO_REPLY_DAYS, or still waiting. Jobs still
- * moving through the board stop at the furthest column they reached.
+ * "Accepted" appear), then how it ended: the lost column it's in (Rejected),
+ * no reply after NO_REPLY_DAYS, or still waiting. Jobs still moving through
+ * the board stop at the furthest column they reached.
  */
 export function journey(jobs: readonly Job[], stages: readonly Stage[], now: Date): Journey {
   const live = stages.filter((s) => !s.archived);

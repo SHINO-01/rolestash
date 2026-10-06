@@ -15,6 +15,7 @@ import { SYNC_LOCK_KEY } from '@/storage/keys';
 import { migrate } from '@/storage/migrations';
 import { SettingsRepository } from '@/storage/settings-repository';
 import { makeJob, testContext } from '../helpers/factories';
+import { LEGACY_SETTINGS } from '../helpers/legacy-stages';
 
 /** Mirrors the SQL in supabase/migrations/…_sync.sql (ADR-0016). */
 class FakeServer {
@@ -197,6 +198,47 @@ describe('SyncService', () => {
     expect(theirs.stages[0]?.name).toBe('Wishlist');
     expect(theirs.theme).toBe('system');
     expect(server.rows.get(SETTINGS_ROW)?.data).not.toHaveProperty('theme');
+  });
+
+  it("doesn't let a 0.4.7 device bring Screening or Withdrawn back (ADR-0034)", async () => {
+    const server = new FakeServer();
+    const a = await device(server, 'a', { start: '2026-10-01T05:00:00.000Z' });
+    await a.sync.enable();
+    // What a device still on 0.4.7 pushes: the seven columns, and a job in Screening.
+    const old = makeJob({ id: 'old', stageId: 'screening', updatedAt: '2026-09-30T00:00:00.000Z' });
+    server.rows.set(SETTINGS_ROW, {
+      id: SETTINGS_ROW,
+      data: { stages: LEGACY_SETTINGS.stages, defaultStageId: 'screening' },
+      deleted: false,
+      updatedAt: '2026-09-30T00:00:00.000Z',
+      revision: ++server.revision,
+    });
+    server.rows.set('old', {
+      id: 'old',
+      data: old,
+      deleted: false,
+      updatedAt: old.updatedAt,
+      revision: ++server.revision,
+    });
+    await a.sync.sync();
+    const mine = await a.settings.get();
+    expect(mine.stages.map((s) => s.id)).toEqual([
+      'saved',
+      'applied',
+      'interviewing',
+      'offer',
+      'rejected',
+    ]);
+    expect(mine.defaultStageId).toBe('interviewing');
+    expect((await a.jobs.get('old'))?.stageId).toBe('interviewing');
+    // The cleaned versions go back up, so the old device sees them too.
+    const row = server.rows.get('old')?.data as Job;
+    expect(row.stageId).toBe('interviewing');
+    expect(row.updatedAt > old.updatedAt).toBe(true);
+    const settingsRow = server.rows.get(SETTINGS_ROW)?.data as { stages: { id: string }[] };
+    expect(settingsRow.stages.map((s) => s.id)).not.toContain('screening');
+    // And it settles: nothing more to send.
+    expect((await a.sync.sync()).pushed).toBe(0);
   });
 
   it('skips invalid or mismatched rows from the server', async () => {

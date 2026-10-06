@@ -1,7 +1,7 @@
 import clsx from 'clsx';
 import { useState, type SyntheticEvent } from 'react';
 import { WORKPLACE_TYPES, type WorkplaceType } from '@/domain/job';
-import { visibleStages, type Stage } from '@/domain/stage';
+import { laneStages, type Stage } from '@/domain/stage';
 import type { Draft } from './capture-draft';
 import type { ExtractionResult, FieldKey } from '@/extraction';
 import { Button } from '@/ui/components/button';
@@ -114,7 +114,7 @@ export function CaptureForm({
       <div className="flex flex-col gap-1.5">
         <span className="text-muted text-xs font-medium">Column</span>
         <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Column">
-          {visibleStages(stages).map((s) => (
+          {laneStages(stages).map((s) => (
             <button
               key={s.id}
               type="button"

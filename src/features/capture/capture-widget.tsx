@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Job } from '@/domain/job';
-import { findStage, visibleStages, type Stage, type StageId } from '@/domain/stage';
+import { findStage, laneStages, type Stage, type StageId } from '@/domain/stage';
 import { formatSalary, type ExtractionResult } from '@/extraction';
 import { getWidgetTab, openBoard, type ActiveTab } from '@/platform/tabs';
 import { DuplicateJobError, JobLimitError } from '@/services/job-service';
@@ -247,8 +247,8 @@ export function CaptureWidget() {
           >
             <p>
               <strong>Your free plan is full.</strong> You have {limited.check.active} of{' '}
-              {limited.check.limit} active jobs. Move finished ones to Rejected or Withdrawn, or
-              upgrade to Pro for unlimited jobs.
+              {limited.check.limit} active jobs. Move finished ones to Rejected, or upgrade to Pro
+              for unlimited jobs.
             </p>
             <Button size="sm" variant="primary" onClick={() => void openBoard({ account: true })}>
               See Pro
@@ -495,7 +495,7 @@ function StagePicker({
 }) {
   return (
     <div role="radiogroup" aria-label={label} className="flex flex-wrap gap-1.5">
-      {visibleStages(stages).map((stage) => {
+      {laneStages(stages).map((stage) => {
         const on = stage.id === value;
         return (
           <button

@@ -18,7 +18,7 @@ const TABS: { id: HistoryTab; label: string; empty: string }[] = [
   {
     id: 'finished',
     label: 'Finished',
-    empty: 'Jobs you move to Offer, Rejected or Withdrawn show up here.',
+    empty: 'Jobs you move to Offer or Rejected show up here.',
   },
   {
     id: 'archived',
@@ -71,7 +71,7 @@ export function HistoryDialog({
       open={open}
       onClose={onClose}
       title="History"
-      description="Finished and archived jobs. Archived, rejected and withdrawn jobs don't count toward your plan's active jobs."
+      description="Finished and archived jobs. Archived and rejected jobs don't count toward your plan's active jobs."
       className="w-[min(640px,calc(100vw-2rem))]"
     >
       <div

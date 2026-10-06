@@ -98,16 +98,16 @@ const JOBS: Seed[] = [
     tags: ['go'],
     priority: 3,
     days: 21,
-    path: ['screening', 'interviewing'],
+    path: ['interviewing'],
   },
   {
     title: 'Platform Engineer',
     company: 'Coral Cloud',
-    stageId: 'screening',
+    stageId: 'interviewing',
     location: 'Remote, Australia',
     priority: 2,
     days: 14,
-    path: ['screening'],
+    path: ['interviewing'],
   },
   {
     title: 'Software Engineer',
@@ -117,7 +117,7 @@ const JOBS: Seed[] = [
     salary: [140_000, 160_000],
     priority: 3,
     days: 40,
-    path: ['screening', 'interviewing', 'offer'],
+    path: ['interviewing', 'offer'],
   },
   {
     title: 'Web Developer',
@@ -135,7 +135,7 @@ const JOBS: Seed[] = [
     location: 'Canberra ACT',
     priority: 0,
     days: 33,
-    path: ['screening', 'rejected'],
+    path: ['interviewing', 'rejected'],
   },
   {
     title: 'Mobile Developer',

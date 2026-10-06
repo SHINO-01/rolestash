@@ -85,12 +85,8 @@ const jobs: Job[] = [
 
 describe('insights', () => {
   it('knows every column a job has been in, ignoring undone email moves', () => {
-    expect([...stagesReached(jobs[0]!)].sort()).toEqual([
-      'applied',
-      'interviewing',
-      'rejected',
-      'screening',
-    ]);
+    // The retired Screening column counts as Interviewing (ADR-0034).
+    expect([...stagesReached(jobs[0]!)].sort()).toEqual(['applied', 'interviewing', 'rejected']);
     expect(stagesReached(jobs[2]!).has('interviewing')).toBe(true);
   });
 
@@ -106,8 +102,7 @@ describe('insights', () => {
   it('shows how far applications get, counting skipped columns', () => {
     expect(funnel(jobs, DEFAULT_STAGES).map((s) => [s.stageId, s.count])).toEqual([
       ['applied', 4],
-      ['screening', 2], // a, and c (skipped to Interviewing, then Offer)
-      ['interviewing', 2],
+      ['interviewing', 2], // a, and c (skipped to Interviewing, then Offer)
       ['offer', 1],
     ]);
     expect(funnel(jobs, DEFAULT_STAGES)[0]?.rate).toBe(1);
@@ -212,28 +207,26 @@ describe('journey', () => {
     expect(j.applications).toBe(5);
     expect(flows(j)).toEqual({
       'applications>outcome:rejected': 1,
-      'applications>screening': 1,
-      'screening>interviewing': 1,
+      'applications>interviewing': 2,
       'interviewing>offer': 1,
-      'applications>interviewing': 1,
       'interviewing>outcome:rejected': 1,
       'applications>outcome:no-reply': 1,
       'applications>outcome:waiting': 1,
     });
     const node = (id: string) => j.nodes.find((n) => n.id === id);
     expect(node('applications')).toMatchObject({ value: 5, column: 0, kind: 'start' });
-    expect(node('screening')).toMatchObject({ value: 1, column: 1 });
-    // Fed by Screening (column 1), so it sits in column 2.
-    expect(node('interviewing')).toMatchObject({ value: 2, column: 2 });
-    expect(node('offer')).toMatchObject({ value: 1, column: 3, kind: 'won' });
+    // Job 2 went through the retired Screening column, which counts as Interviewing.
+    expect(node('screening')).toBeUndefined();
+    expect(node('interviewing')).toMatchObject({ value: 2, column: 1 });
+    expect(node('offer')).toMatchObject({ value: 1, column: 2, kind: 'won' });
     // One node for every way it ended, all in the last column.
     expect(node('outcome:rejected')).toMatchObject({
       value: 2,
-      column: 4,
+      column: 3,
       kind: 'ended',
       label: 'Rejected',
     });
-    expect(node('outcome:no-reply')).toMatchObject({ label: 'No reply', kind: 'ended', column: 4 });
+    expect(node('outcome:no-reply')).toMatchObject({ label: 'No reply', kind: 'ended', column: 3 });
     expect(node('outcome:waiting')).toMatchObject({ label: 'Waiting to hear', kind: 'waiting' });
   });
 

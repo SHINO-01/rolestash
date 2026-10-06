@@ -5,7 +5,7 @@ import { expect, test } from '../e2e/fixtures';
 
 const N = Number(process.env.PERF_N ?? 1000);
 const CPU = Number(process.env.PERF_CPU ?? 4);
-const STAGES = ['saved', 'applied', 'screening', 'interviewing', 'offer', 'rejected'];
+const STAGES = ['saved', 'applied', 'interviewing', 'offer', 'rejected'];
 
 test.setTimeout(300_000);
 

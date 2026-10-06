@@ -2,7 +2,7 @@ import { Link2 } from 'lucide-react';
 import { useEffect, useMemo, useState, type SyntheticEvent } from 'react';
 import type { Job } from '@/domain/job';
 import type { Settings } from '@/domain/settings';
-import { visibleStages } from '@/domain/stage';
+import { laneStages } from '@/domain/stage';
 import type { ExtractionResult } from '@/extraction';
 import { ChromePageLoader, requestSiteAccess } from '@/platform/page-loader';
 import { DuplicateJobError, JobLimitError } from '@/services/job-service';
@@ -283,7 +283,7 @@ export function AddJobDialog({
         <Field label="Column" className="col-span-2">
           {(id) => (
             <Select id={id} value={form.stageId} onChange={set('stageId')}>
-              {visibleStages(settings.stages).map((s) => (
+              {laneStages(settings.stages).map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.name}
                 </option>

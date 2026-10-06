@@ -1,4 +1,5 @@
 import { JobSchema, type Job, type JobId } from '@/domain/job';
+import { normalizeJob } from '@/domain/retired-stages';
 import type { KeyValueStore } from './key-value-store';
 import { isJobKey, jobKey, SYNC_DELETIONS_KEY } from './keys';
 
@@ -8,7 +9,8 @@ const MAX_DELETIONS = 1000;
 /**
  * Persistence for Job aggregates. Validates on write (so invariants hold at the
  * boundary) and tolerates bad records on read (so one corrupt entry never
- * takes the whole board down).
+ * takes the whole board down). Jobs on retired columns are mapped to their
+ * new ones (ADR-0034) both ways, so old ids never reach the board.
  */
 export class JobRepository {
   constructor(private readonly store: KeyValueStore) {}
@@ -19,7 +21,7 @@ export class JobRepository {
     for (const [key, value] of Object.entries(all)) {
       if (!isJobKey(key)) continue;
       const parsed = JobSchema.safeParse(value);
-      if (parsed.success) jobs.push(parsed.data);
+      if (parsed.success) jobs.push(normalizeJob(parsed.data));
       else console.warn(`[rolestash] Skipping invalid record ${key}`, parsed.error.issues);
     }
     return jobs;
@@ -29,7 +31,7 @@ export class JobRepository {
     const key = jobKey(id);
     const result = await this.store.get([key]);
     const parsed = JobSchema.safeParse(result[key]);
-    return parsed.success ? parsed.data : undefined;
+    return parsed.success ? normalizeJob(parsed.data) : undefined;
   }
 
   async save(job: Job): Promise<Job> {
@@ -40,7 +42,7 @@ export class JobRepository {
 
   /** Writes all jobs in a single storage call (atomic from chrome.storage's view). */
   async saveMany(jobs: readonly Job[]): Promise<Job[]> {
-    const valid = jobs.map((job) => JobSchema.parse(job));
+    const valid = jobs.map((job) => normalizeJob(JobSchema.parse(job)));
     await this.store.set(Object.fromEntries(valid.map((job) => [jobKey(job.id), job])));
     return valid;
   }

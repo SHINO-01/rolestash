@@ -321,8 +321,7 @@ function SignedIn({ account, state }: { account: AccountService; state: AccountS
         {/* Only a limited plan needs counting. */}
         {Number.isFinite(limit) ? (
           <p className="text-muted mt-1 text-sm">
-            {String(active)} of {String(limit)} active jobs used. Rejected and withdrawn jobs don't
-            count.
+            {String(active)} of {String(limit)} active jobs used. Rejected jobs don't count.
           </p>
         ) : null}
       </section>

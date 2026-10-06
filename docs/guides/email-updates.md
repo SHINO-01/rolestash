@@ -125,7 +125,11 @@ Matching runs in the extension, where the jobs are. Signals, strongest first:
   Otherwise the result is `ambiguous` or `none`, which goes to "Unsorted".
 
 `targetStage(intent, job, stages)` picks the column. It never moves a card
-backwards, and it works with custom columns by kind and name.
+backwards, and it works with custom columns by kind and name. Since 0.5.0
+(ADR-0034) there's no default column for an assessment (a test or a
+screening call): the update is noted on the card and the job stays put. A
+user's own column named for screens, assessments or tests still gets the
+job.
 
 ## Receiving mail: the Email Worker
 

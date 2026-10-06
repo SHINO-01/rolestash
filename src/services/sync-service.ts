@@ -1,6 +1,7 @@
 import { JobSchema, type Job } from '@/domain/job';
 import type { DomainContext } from '@/domain/job-factory';
 import type { Plan } from '@/domain/plan';
+import { normalizeJob } from '@/domain/retired-stages';
 import { SettingsSchema, type Settings } from '@/domain/settings';
 import type { JobRepository } from '@/storage/job-repository';
 import type { KeyValueStore } from '@/storage/key-value-store';
@@ -190,8 +191,15 @@ export class SyncService {
         const parsed = JobSchema.safeParse(row.data);
         if (!parsed.success || parsed.data.id !== row.id) continue; // never trust shape blindly
         if (!mine || parsed.data.updatedAt > mine.updatedAt) {
-          toSave.push(parsed.data);
-          state.seen[row.id] = parsed.data.updatedAt;
+          const job = normalizeJob(parsed.data);
+          if (job === parsed.data) {
+            toSave.push(job);
+            state.seen[row.id] = job.updatedAt;
+          } else {
+            // A 0.4.7 device put it on a retired column (ADR-0034): keep it
+            // on the new one, and send that back so every device agrees.
+            toSave.push({ ...job, updatedAt: this.newerThan(job.updatedAt) });
+          }
         } else if (parsed.data.updatedAt === mine.updatedAt) {
           state.seen[row.id] = mine.updatedAt;
         }
@@ -217,6 +225,8 @@ export class SyncService {
       ),
     });
     if (!merged.success) return false;
+    // replace() drops retired columns (ADR-0034). The snapshot keeps what came
+    // in, so if that had them, push() sends the cleaned columns back.
     await this.settings.replace(merged.data);
     state.settingsSnapshot = JSON.stringify(syncedSettings(merged.data));
     state.settingsAt = row.updatedAt;
@@ -269,6 +279,12 @@ export class SyncService {
       Object.keys(deletions).filter((id) => ids.has(id) || sent.has(id)),
     );
     return changes.length;
+  }
+
+  /** Now, or just after `at` if the clock is behind it. */
+  private newerThan(at: string): string {
+    const now = this.ctx.now().toISOString();
+    return now > at ? now : new Date(Date.parse(at) + 1).toISOString();
   }
 
   /** A storage lease, so the board and the worker don't sync at the same time. */

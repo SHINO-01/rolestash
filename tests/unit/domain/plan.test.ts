@@ -133,7 +133,7 @@ describe('free-plan job limit', () => {
       makeJob({ stageId: 'saved' }),
       makeJob({ stageId: 'offer' }),
       makeJob({ stageId: 'rejected' }),
-      makeJob({ stageId: 'withdrawn' }),
+      makeJob({ stageId: 'rejected' }),
       makeJob({ stageId: 'deleted-custom-stage' }),
     ];
     expect(countActiveJobs(jobs, DEFAULT_STAGES)).toBe(3);

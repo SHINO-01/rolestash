@@ -42,9 +42,9 @@ describe('ColumnService', () => {
 
   it('explains why an archive is refused, and archives and restores otherwise', async () => {
     const { service, jobs, settings } = await setup('pro');
-    await jobs.save(makeJob({ id: 'a', stageId: 'screening' }));
-    await expect(service.archive('screening')).rejects.toThrow(ColumnError);
-    await expect(service.archive('screening')).rejects.toThrow(/Move or archive the 1 job/);
+    await jobs.save(makeJob({ id: 'a', stageId: 'applied' }));
+    await expect(service.archive('applied')).rejects.toThrow(ColumnError);
+    await expect(service.archive('applied')).rejects.toThrow(/Move or archive the 1 job/);
     await service.archive('interviewing');
     expect((await settings.get()).stages.find((s) => s.id === 'interviewing')?.archived).toBe(true);
     await service.restore('interviewing');

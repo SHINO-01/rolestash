@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { JobSchema, type Job } from '@/domain/job';
+import { normalizeJob, normalizeStages } from '@/domain/retired-stages';
 import { SettingsSchema } from '@/domain/settings';
 import type { JobRepository } from './job-repository';
 import { CURRENT_SCHEMA_VERSION } from './migrations';
@@ -63,6 +64,19 @@ function upgradeBackup(raw: Record<string, unknown>): Record<string, unknown> {
   return raw;
 }
 
+/**
+ * Migration v2 for a parsed backup (ADR-0034): Screening and Withdrawn are
+ * retired. Runs on every backup, whatever its version, because a 0.5.0 board
+ * can sync with 0.4.7 devices that still use the old ids.
+ */
+function upgradeParsedBackup(backup: Backup): Backup {
+  return {
+    ...backup,
+    settings: normalizeStages(backup.settings),
+    jobs: backup.jobs.map(normalizeJob),
+  };
+}
+
 export function parseBackup(text: string): Backup {
   let raw: unknown;
   try {
@@ -86,7 +100,7 @@ export function parseBackup(text: string): Backup {
       parsed.error.issues.slice(0, 5).map((i) => `${i.path.join('.')}: ${i.message}`),
     );
   }
-  return parsed.data;
+  return upgradeParsedBackup(parsed.data);
 }
 
 export async function restoreBackup(

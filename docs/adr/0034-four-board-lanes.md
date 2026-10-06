@@ -1,6 +1,6 @@
 # ADR-0034: Four board lanes; Rejected tracked off the board; Screening and Withdrawn retired
 
-- **Status:** Accepted (owner, 2026-10-07), with the recommended answers below. Not built yet.
+- **Status:** Accepted (owner, 2026-10-07), with the recommended answers below. Built 2026-10-07 (code, tests, docs); ships in 0.5.0 with re-shot clips and screenshots.
 - Amends the default columns in `src/domain/stage.ts` and custom columns
   (`src/domain/columns.ts`). Touches ADR-0014 (email intents → columns) and
   Insights.

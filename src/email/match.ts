@@ -319,14 +319,16 @@ export function targetStage(
       return currentStage.marksApplied
         ? undefined
         : forward(stageFor(stages, 'applied', (s) => s.kind === 'active' && s.marksApplied));
-    case 'assessment':
-      return forward(
-        stageFor(
-          stages,
-          'screening',
-          (s) => s.kind === 'active' && /screen|assess|test/i.test(s.name),
-        ),
-      );
+    case 'assessment': {
+      // No default column for tests or screening calls (ADR-0034): the update
+      // is kept on the card and moves Saved to Applied, as "received" does.
+      // A user's own column for them ("Online assessment") still gets the job.
+      const own = live.find((s) => s.kind === 'active' && /screen|assess|test/i.test(s.name));
+      if (own) return forward(own);
+      return currentStage.marksApplied
+        ? undefined
+        : forward(stageFor(stages, 'applied', (s) => s.kind === 'active' && s.marksApplied));
+    }
     case 'interview':
       return forward(
         stageFor(stages, 'interviewing', (s) => s.kind === 'active' && /interview/i.test(s.name)),

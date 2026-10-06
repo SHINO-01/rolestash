@@ -2,7 +2,7 @@ import { BellRing, CalendarClock, History } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { Job } from '@/domain/job';
 import { closesIn, closingSoon, daysUntilClose } from '@/domain/reminders';
-import { visibleStages } from '@/domain/stage';
+import { laneStages } from '@/domain/stage';
 import { useJobs, useSettings } from '@/ui/hooks/services';
 import { relativeTime } from '@/ui/format';
 import { STAGE_STYLE } from '@/ui/stage-style';
@@ -33,7 +33,7 @@ export function TodayView({
     .sort((a, b) => (a.followUpAt ?? '').localeCompare(b.followUpAt ?? ''));
   const closing = closingSoon(live, stages, now);
   const recent = [...live].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, RECENT);
-  const counts = visibleStages(stages)
+  const counts = laneStages(stages)
     .map((s) => ({ stage: s, count: live.filter((j) => j.stageId === s.id).length }))
     .filter((c) => c.count > 0);
 

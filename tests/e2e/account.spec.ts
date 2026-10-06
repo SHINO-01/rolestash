@@ -342,13 +342,13 @@ test.describe('accounts', () => {
     await dialog.getByPlaceholder('e.g. Take-home task').fill('Take-home');
     await dialog.getByRole('button', { name: 'Add column' }).click();
     await expect(dialog.getByLabel('Name of Take-home')).toBeVisible();
-    await dialog.getByRole('button', { name: 'Archive Withdrawn' }).click();
+    await dialog.getByRole('button', { name: 'Archive Offer' }).click();
     await expect(dialog.getByText('Archived columns')).toBeVisible();
     await dialog.getByRole('button', { name: 'Close' }).click();
 
     await expect(page.getByRole('region', { name: 'Wishlist column' })).toBeVisible();
     await expect(page.getByRole('region', { name: 'Take-home column' })).toBeVisible();
-    await expect(page.getByRole('region', { name: 'Withdrawn column' })).toBeHidden();
+    await expect(page.getByRole('region', { name: 'Offer column' })).toBeHidden();
   });
 
   test('captures a job from a pasted link on Pro', async ({
@@ -585,7 +585,9 @@ test.describe('accounts', () => {
         ticket: QUOKKA_TICKET,
       });
     await unsorted.getByRole('button', { name: 'Close' }).click();
-    await expect(page.getByRole('button', { name: 'Product Designer application' })).toBeVisible();
+    // A rejection files the new job under Rejected, which has no lane (ADR-0034).
+    await expect(page.getByText(/in Rejected\. Find it in History\./)).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Product Designer application' })).toBeHidden();
 
     await page.goto(`chrome-extension://${extensionId}/board.html#account`);
     await expect(page.getByLabel('Your forwarding address')).toHaveText(E2E_INBOX);

@@ -28,6 +28,16 @@ describe('board columns', () => {
     expect(findColumn(cols, 'missing')).toBeUndefined();
   });
 
+  it('gives lost columns no lane (ADR-0034)', () => {
+    const jobs = [
+      makeJob({ id: 'r', stageId: 'rejected' }),
+      makeJob({ id: 'i', stageId: 'interviewing' }),
+    ];
+    const cols = groupIntoColumns(DEFAULT_STAGES, jobs, 'saved');
+    expect(Object.keys(cols)).toEqual(['saved', 'applied', 'interviewing', 'offer']);
+    expect(Object.values(cols).flat()).toEqual(['i']);
+  });
+
   it('maps a drop in a filtered column to the right index among all jobs', () => {
     // Full column: a b c d (b and c hidden by a search filter).
     const all = ['a', 'b', 'c', 'd'].map((id, i) => makeJob({ id, rank: i + 1 }));

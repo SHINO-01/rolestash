@@ -41,12 +41,12 @@ describe('custom columns', () => {
       'saved',
     ]);
     expect(ids(settingsOf(moveStage(base, 'saved', -1)))).toEqual(ids(base));
-    const hidden = settingsOf(archiveStage(base, 'screening', []));
-    // Skips the archived Screening column.
-    expect(ids(settingsOf(moveStage(hidden, 'interviewing', -1))).slice(1, 4)).toEqual([
+    const hidden = settingsOf(archiveStage(base, 'applied', []));
+    // Skips the archived Applied column.
+    expect(ids(settingsOf(moveStage(hidden, 'interviewing', -1))).slice(0, 3)).toEqual([
       'interviewing',
-      'screening',
       'applied',
+      'saved',
     ]);
   });
 
@@ -87,14 +87,16 @@ describe('custom columns', () => {
   it('archives only empty, non-default columns, and keeps one on the board', () => {
     const jobs = [
       makeJob({ stageId: 'applied' }),
-      makeJob({ stageId: 'screening', archivedAt: '2026-09-01T00:00:00.000Z' }),
+      makeJob({ stageId: 'interviewing', archivedAt: '2026-09-01T00:00:00.000Z' }),
     ];
     expect(reason(archiveStage(base, 'applied', jobs))).toMatch(/Move or archive the 1 job/);
     expect(reason(archiveStage(base, 'saved', []))).toMatch(/Choose another column for new jobs/);
-    const archived = settingsOf(archiveStage(base, 'screening', jobs)); // only an archived job there
-    expect(visibleStages(archived.stages).map((s) => s.id)).not.toContain('screening');
+    const archived = settingsOf(archiveStage(base, 'interviewing', jobs)); // only an archived job there
+    expect(visibleStages(archived.stages).map((s) => s.id)).not.toContain('interviewing');
     expect(
-      settingsOf(restoreStage(archived, 'screening')).stages.find((s) => s.id === 'screening'),
+      settingsOf(restoreStage(archived, 'interviewing')).stages.find(
+        (s) => s.id === 'interviewing',
+      ),
     ).not.toHaveProperty('archived');
 
     let only = base;

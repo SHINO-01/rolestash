@@ -85,7 +85,7 @@ const JOBS: Seed[] = [
   {
     title: 'UX Researcher',
     company: 'Wattle & Co',
-    stageId: 'screening',
+    stageId: 'interviewing',
     location: 'Sydney NSW',
     workplaceType: 'hybrid',
     priority: 0,

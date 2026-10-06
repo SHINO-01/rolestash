@@ -1,6 +1,8 @@
-import { DEFAULT_SETTINGS } from '@/domain/settings';
+import { JobSchema } from '@/domain/job';
+import { normalizeJob, normalizeStages } from '@/domain/retired-stages';
+import { DEFAULT_SETTINGS, SettingsSchema } from '@/domain/settings';
 import type { KeyValueStore } from './key-value-store';
-import { META_KEY, SETTINGS_KEY } from './keys';
+import { isJobKey, META_KEY, SETTINGS_KEY } from './keys';
 
 /**
  * Ordered, forward-only storage migrations.
@@ -26,6 +28,30 @@ export const MIGRATIONS: readonly Migration[] = [
       if (existing[SETTINGS_KEY] === undefined) {
         await store.set({ [SETTINGS_KEY]: DEFAULT_SETTINGS });
       }
+    },
+  },
+  {
+    version: 2,
+    description: 'Four board lanes (ADR-0034): retire Screening and Withdrawn',
+    up: async (store) => {
+      const all = await store.get(null);
+      const writes: Record<string, unknown> = {};
+      const settings = SettingsSchema.safeParse(all[SETTINGS_KEY]);
+      if (settings.success) {
+        const next = normalizeStages(settings.data);
+        if (next !== settings.data) writes[SETTINGS_KEY] = next;
+      }
+      // Moved jobs get a new updatedAt so sync sends them on (to 0.4.7 devices too).
+      const now = new Date().toISOString();
+      for (const [key, value] of Object.entries(all)) {
+        if (!isJobKey(key)) continue;
+        const job = JobSchema.safeParse(value);
+        if (!job.success) continue;
+        const next = normalizeJob(job.data);
+        if (next !== job.data)
+          writes[key] = { ...next, updatedAt: now > next.updatedAt ? now : next.updatedAt };
+      }
+      if (Object.keys(writes).length > 0) await store.set(writes);
     },
   },
 ];

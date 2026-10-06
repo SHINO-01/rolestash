@@ -56,6 +56,17 @@ Rules:
 5. **Test it** in `tests/unit/storage/storage.test.ts`: seed the old shape,
    migrate, assert the new shape.
 
+Versions:
+
+- **v1**: seed default settings.
+- **v2** (0.5.0, ADR-0034): Screening and Withdrawn retired. Their jobs move
+  to Interviewing and Rejected with a new `updatedAt`, so sync sends them on;
+  a withdrawn job gets a "Withdrawn → Rejected" timeline entry dated when it
+  was withdrawn. Because 0.4.7 devices keep syncing the old ids, the same
+  mapping (`domain/retired-stages.ts`) runs on every read and write in
+  `JobRepository` and `SettingsRepository`, on sync pull (which sends the
+  cleaned job back), and on backup import, whatever the backup's version.
+
 Optional fields added without a migration:
 
 - `archivedAt`: History, with the `archived` and `unarchived` activity types.

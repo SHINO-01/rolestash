@@ -32,7 +32,7 @@ const jobs = [
   makeJob({ id: 'open', stageId: 'applied', createdAt: daysAgo(90) }),
   finished('offer-new', 'offer', 3),
   finished('rejected-old', 'rejected', 45),
-  finished('withdrawn-new', 'withdrawn', 29),
+  finished('rejected-new', 'rejected', 29),
   makeJob({ id: 'arch-new', archivedAt: daysAgo(2) }),
   makeJob({ id: 'arch-old', archivedAt: daysAgo(60) }),
 ];
@@ -59,7 +59,7 @@ describe('history window', () => {
 describe('boardView', () => {
   it('hides archived jobs, and finished jobs beyond the window on Free', () => {
     const view = boardView(jobs, DEFAULT_STAGES, free);
-    expect(view.board.map((j) => j.id)).toEqual(['open', 'offer-new', 'withdrawn-new']);
+    expect(view.board.map((j) => j.id)).toEqual(['open', 'offer-new', 'rejected-new']);
     expect(view.hidden).toBe(1);
   });
 
@@ -69,7 +69,7 @@ describe('boardView', () => {
       'open',
       'offer-new',
       'rejected-old',
-      'withdrawn-new',
+      'rejected-new',
     ]);
     expect(view.hidden).toBe(0);
   });
@@ -83,7 +83,7 @@ describe('historyView', () => {
     });
     expect(historyView(jobs, DEFAULT_STAGES, 'finished').jobs.map((j) => j.id)).toEqual([
       'offer-new',
-      'withdrawn-new',
+      'rejected-new',
       'rejected-old',
     ]);
   });

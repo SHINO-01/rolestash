@@ -16,7 +16,7 @@ import { STAGE_STYLE } from '@/ui/stage-style';
 const KIND_LABEL: Record<StageKind, string> = {
   active: 'In progress',
   won: 'Finished: success',
-  lost: 'Finished: unsuccessful',
+  lost: 'Unsuccessful, off the board',
 };
 
 /**
@@ -204,7 +204,7 @@ function ColumnRow({
       <IconButton
         label={isDefault ? `New jobs go to ${stage.name}` : `Send new jobs to ${stage.name}`}
         size="sm"
-        disabled={disabled || isDefault}
+        disabled={disabled || isDefault || stage.kind === 'lost'}
         aria-pressed={isDefault}
         onClick={onDefault}
       >

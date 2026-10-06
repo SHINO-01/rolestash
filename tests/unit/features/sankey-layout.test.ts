@@ -28,7 +28,7 @@ const jobs = [
       id: `s${String(i)}`,
       stageId: 'interviewing',
       appliedAt: ago(30),
-      activity: [move('applied', 'screening', 25), move('screening', 'interviewing', 20)],
+      activity: [move('applied', 'interviewing', 20)],
     }),
   ),
   makeJob({ id: 'w', stageId: 'applied', appliedAt: ago(2) }),
@@ -49,7 +49,7 @@ describe('journey layout', () => {
   });
 
   it('puts columns left to right, with outcomes last', () => {
-    const xs = ['applications', 'screening', 'interviewing'].map((id) => node(id)?.x ?? -1);
+    const xs = ['applications', 'interviewing'].map((id) => node(id)?.x ?? -1);
     expect(xs).toEqual([...xs].sort((a, b) => a - b));
     expect(node('outcome:rejected')?.x).toBeGreaterThan(node('interviewing')?.x ?? Infinity);
   });
@@ -57,8 +57,8 @@ describe('journey layout', () => {
   it('stacks the bands leaving a node without gaps or overlaps', () => {
     const leaving = layout.links.filter((l) => l.source === 'applications');
     const tops = leaving.map((l) => Number(/^M[\d.]+,([\d.]+)/.exec(l.path)?.[1]));
-    // Screening sits above the outcomes, so its band leaves first.
-    expect(leaving[0]?.target).toBe('screening');
+    // Interviewing sits above the outcomes, so its band leaves first.
+    expect(leaving[0]?.target).toBe('interviewing');
     expect(tops).toEqual([...tops].sort((a, b) => a - b));
     expect(new Set(tops).size).toBe(tops.length);
   });

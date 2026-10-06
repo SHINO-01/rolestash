@@ -6,6 +6,16 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- **Four lanes on the board:** Saved, Applied, Interviewing and Offer.
+  Rejected no longer takes a lane: set it from a job's column menu (or
+  "Move to" for several jobs), and find rejected jobs in History. Jobs in
+  Screening move to Interviewing, and jobs in Withdrawn move to Rejected
+  with a note in their history that you withdrew.
+- **Email updates about a test or a screening call** are noted on the card
+  and leave it in its column.
+
 ## [0.4.7] — 2026-10-06
 
 ### Changed
