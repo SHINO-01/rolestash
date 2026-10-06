@@ -120,22 +120,34 @@ action; plans and prices are on `/pricing/`.
 
 ## The hero film
 
-The homepage hero plays a 21-second product film (no voice) in place of the
-board screenshot: the landscape cut (1920×1080) above 640 px, and a vertical
-cut (1080×1920, `brag-output/brag-vertical.mp4`, project
-`brag-output/composition-vertical/`) on phones and small screens. Each cut
-is its own `<video>`; CSS shows one, and the hidden one never intersects, so
-it never plays. Each poster is preloaded only for its screen size. Its source is the Hyperframes project made with
-`/brag` in `brag-output/` (gitignored; plan, brief and composition live there).
+The homepage hero plays a 45-second launch film (no voice): a buried inbox
+becomes one board, then the five Free features, "That's not all.", and the
+five Pro features. The landscape cut (1920×1080) shows above 640 px and a
+vertical cut (1080×1920) on phones and small screens. Each cut is its own
+`<video>`; CSS shows one, and the hidden one never intersects, so it never
+plays. Each poster (the closing frame with the call to action) is preloaded
+only for its screen size.
 
-| File                                              | What                                             |
-| ------------------------------------------------- | ------------------------------------------------ |
-| `site/assets/rolestash-film.webm`                 | VP9, 1920×1080, no audio, about 2.3 MB           |
-| `site/assets/rolestash-film.mp4`                  | H.264, 1600×900, no audio, about 2.2 MB          |
-| `site/assets/rolestash-film-poster.webp`          | The closing frame (CTA), 1600 wide, ~50 KB       |
-| `site/assets/rolestash-film-vertical.webm`        | Vertical cut, VP9, 1080×1920, no audio, ~2.2 MB  |
-| `site/assets/rolestash-film-vertical.mp4`         | Vertical cut, H.264, 900×1600, no audio, ~2.3 MB |
-| `site/assets/rolestash-film-vertical-poster.webp` | Vertical closing frame, 900 wide, ~52 KB         |
+Its source is the HyperFrames project made with `/brag` in
+`brag-output-2026-10-06-232216/` (gitignored): `brag-plan.md`,
+`composition-brief.md`, the scenes in `composition/compositions/`, and
+`work/build.mjs`, which writes both `composition/` (landscape) and
+`composition-vertical/` from one scene table (portrait overrides apply in
+the vertical copy). Every cut lands on the beat grid of "Young Black & Rich
+(Rock Remix)" (129 BPM, the drop at 4.21 s), so the silent hero and the
+social cuts share one timeline. The renders there:
+
+- `brag.mp4`, `brag-vertical.mp4`: with the music, for social posts;
+- `brag-silent.mp4`, `brag-vertical-silent.mp4`: the hero's source.
+
+| File                                                | What                                             |
+| --------------------------------------------------- | ------------------------------------------------ |
+| `site/assets/rolestash-film-2.webm`                 | VP9, 1920×1080, no audio, about 3.6 MB           |
+| `site/assets/rolestash-film-2.mp4`                  | H.264, 1600×900, no audio, about 3.2 MB          |
+| `site/assets/rolestash-film-2-poster.webp`          | The closing frame (CTA), 1600 wide, ~40 KB       |
+| `site/assets/rolestash-film-2-vertical.webm`        | Vertical cut, VP9, 1080×1920, no audio, ~3.4 MB  |
+| `site/assets/rolestash-film-2-vertical.mp4`         | Vertical cut, H.264, 900×1600, no audio, ~3.4 MB |
+| `site/assets/rolestash-film-2-vertical-poster.webp` | Vertical closing frame, 900 wide, ~40 KB         |
 
 - **Player:** always silent (owner's choice, 2026-10-04): the encodes carry
   no audio track, and the `<video muted playsinline loop preload="metadata">`
@@ -149,18 +161,23 @@ it never plays. Each poster is preloaded only for its screen size. Its source is
   2026-10-04: LCP about 1.6 s on desktop and 1.7 s on a phone (vertical
   poster), CLS 0.
 - **Budget (tested):** each encode under 4 MB, the poster under 150 KB.
-- **Re-encoding** from a new `brag-output/brag.mp4`:
+- **Re-encoding** from a new render (paths relative to the brag output folder;
+  the 45-second film needs `-crf 38`/`-crf 28` to stay under the 4 MB budget,
+  and the vertical WebM `-crf 40`):
 
   ```bash
-  ffmpeg -i brag-output/brag.mp4 -c:v libvpx-vp9 -crf 34 -b:v 0 -row-mt 1 -cpu-used 2 -an site/assets/rolestash-film.webm
-  ffmpeg -i brag-output/brag.mp4 -vf scale=1600:-2 -c:v libx264 -preset veryslow -crf 24 -pix_fmt yuv420p -an -movflags +faststart site/assets/rolestash-film.mp4
-  ffmpeg -i brag-output/brag.jpg -vf scale=1600:-2 -c:v libwebp -quality 78 site/assets/rolestash-film-poster.webp
+  ffmpeg -i brag-silent.mp4 -c:v libvpx-vp9 -crf 38 -b:v 0 -row-mt 1 -cpu-used 2 -an site/assets/rolestash-film-2.webm
+  ffmpeg -i brag-silent.mp4 -vf scale=1600:-2 -c:v libx264 -preset veryslow -crf 28 -pix_fmt yuv420p -an -movflags +faststart site/assets/rolestash-film-2.mp4
+  ffmpeg -i brag.jpg -vf scale=1600:-2 -c:v libwebp -quality 78 site/assets/rolestash-film-2-poster.webp
   ```
 
-  The vertical cut is encoded the same way from `brag-output/brag-vertical.mp4`
-  (MP4 at `scale=900:-2`). Hyperframes pads a 1080-wide render to a multiple
+  The vertical cut is encoded the same way from `brag-vertical-silent.mp4`
+  (MP4 at `scale=900:-2`). HyperFrames pads a 1080-wide render to a multiple
   of 16, which leaves an 8 px black strip on the right: crop it first with
-  `-vf "crop=1072:1920:0:0,scale=1080:1920"` on the rendered file.
+  `-vf "crop=1072:1920:0:0,scale=1080:1920"` on the rendered file (done for
+  the current cut).
+  Render on this machine with `--workers 3`: the default worker count ran
+  out of memory on the vertical render.
 
   Use new file names when the film changes: assets are cached for a day.
 

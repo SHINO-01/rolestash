@@ -62,14 +62,10 @@ into the roadmap or changelog. Last reviewed 6 October 2026 (night).
 
 ## Ours
 
-- [ ] **New launch film** (on hold until the owner says go): the hero film
-      (`site/assets/rolestash-film*`, landscape and vertical, plus posters)
-      still shows the old popup-style "Save this job" card, and its ledger
-      says "Your inbox: Never connected", which changes once mailbox
-      connection ships. Re-cut the save scene with the floating widget (the
-      button, the panel, Save job, then Applied), fictional companies only
-      ([website.md](guides/website.md#the-hero-film)). The film shows no
-      prices.
+- [x] **New launch film:** done 7 October: a 45-second film of all ten
+      features (Free, then "That's not all.", then Pro) is the hero, silent,
+      landscape and vertical; the music cuts for social are in the brag output
+      folder ([website.md](guides/website.md#the-hero-film)).
 
 - [ ] **When 0.4.7 is approved:** set "Current version" on `/known-issues/`
       to 0.4.7 and the date.

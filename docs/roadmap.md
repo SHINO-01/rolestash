@@ -152,8 +152,8 @@ Runbook: [guides/launch.md](guides/launch.md).
 
 - ~~**Launch video**~~ done (2026-10-04): a silent 21-second film in the
   rolestash.com hero, landscape on wide screens and vertical on phones
-  ([guides/website.md](guides/website.md)). It still shows the old popup-style
-  save card; a re-cut is in [todo.md](todo.md).
+  ([guides/website.md](guides/website.md)). Re-cut on 2026-10-07 as a 45-second
+  film of all ten features, with a music version for social posts.
 - ~~**Feature clips**~~ done (2026-10-06): the homepage's five features each
   show a short silent clip recorded from the real product, re-shot with
   `npm run site:clips` ([guides/website.md](guides/website.md#feature-clips)).
