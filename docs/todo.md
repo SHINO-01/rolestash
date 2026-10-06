@@ -62,6 +62,17 @@ into the roadmap or changelog. Last reviewed 6 October 2026 (night).
 
 ## Ours
 
+- [ ] **60-second promo videos with audio** (landscape 1920×1080 and
+      vertical 1080×1920, for social): extend the music cuts from 44.5 s to
+      60 s in the brag project (`brag-output-2026-10-06-232216/`,
+      `work/build.mjs` scene table). The rock remix stays loud from its drop
+      at 47.5 s to about 136 s, so a 60 s cut from 43.3 s ends well inside it;
+      re-time every scene on its beat grid, give each feature more hold time,
+      and land the outro on a strong cue. Build it after ADR-0034, so the
+      board, widget and Insights scenes show the four lanes. Render with
+      `--workers 3`, crop the vertical cut's 8 px strip, bake the poster as
+      frame 0. The silent 45 s hero film on the site stays as it is unless the
+      owner asks ([website.md](guides/website.md#the-hero-film)).
 - [ ] **Grants, referrals and discount codes (ADR-0035, accepted; after ADR-0034):**
       revocable complimentary Pro (indefinite or dated), "give 50%, get a
       month" referrals, and scripted Paddle discount codes with promo links.
