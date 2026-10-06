@@ -1,6 +1,6 @@
 # ADR-0034: Four board lanes; Rejected tracked off the board; Screening and Withdrawn retired
 
-- **Status:** Proposed (owner request, 2026-10-07). Plan recorded; not built.
+- **Status:** Accepted (owner, 2026-10-07), with the recommended answers below. Not built yet.
 - Amends the default columns in `src/domain/stage.ts` and custom columns
   (`src/domain/columns.ts`). Touches ADR-0014 (email intents → columns) and
   Insights.
@@ -20,7 +20,7 @@ last writer wins). Almost everything reads stages through that list, so the
 change is mostly new defaults, one migration, and "lost columns have no
 lane".
 
-## Decision (proposed)
+## Decision
 
 1. **Defaults:** Saved (active), Applied (active, marks applied),
    Interviewing (active, marks applied), Offer (won), Rejected (lost,
@@ -91,13 +91,13 @@ lane".
 9. Release as a minor version (0.5.0): it migrates stored data. The store
    listing screenshots change in the same release PR.
 
-## Open questions for the owner
+## Owner decisions (2026-10-07)
 
-1. Screening jobs → Interviewing (recommended) or Applied?
-2. Withdrawn jobs → Rejected with a history note (recommended), or archive
-   them?
-3. Should the widget's chips offer Rejected? (Recommended: no, as asked; set
-   it from the drawer.)
+1. Screening jobs move to **Interviewing**.
+2. Withdrawn jobs move to **Rejected**, with a history entry recording that
+   they were withdrawn.
+3. The widget's chips **don't** offer Rejected; it's set from the job drawer
+   (and bulk "Move to", the web board's job sheet).
 
 ## Consequences
 
