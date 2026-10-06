@@ -12,6 +12,10 @@ import { mkdirSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { chromium, type Page } from '@playwright/test';
+import {
+  DEFAULT_LAUNCHER_POSITION,
+  placeLauncher,
+} from '../src/features/capture/launcher-position';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const EXTENSION = join(ROOT, '.output/chrome-mv3');
@@ -330,9 +334,10 @@ async function main() {
       route.fulfill({ contentType: 'text/html', body: CAREERS_PAGE }),
     );
     await page.goto(CAREERS_URL);
-    // The launcher sits in a closed shadow root at the right edge (launcher.content.ts).
+    // The button sits in a closed shadow root, where launcher-position.ts puts it.
     await page.waitForTimeout(800);
-    await page.mouse.click(VIEWPORT.width - 22, VIEWPORT.height - 112 - 22);
+    const button = placeLauncher(DEFAULT_LAUNCHER_POSITION, VIEWPORT, { width: 48, height: 48 });
+    await page.mouse.click(button.left + 24, button.top + 24);
     await page.waitForTimeout(1500);
     const widget = page.frames().find((f) => f.url().endsWith('/widget.html'));
     await widget?.getByText('Save job').waitFor();

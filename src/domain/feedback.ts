@@ -70,7 +70,7 @@ export function answerRating(
 
 export const BUG_REPORT_MAX = 5000;
 
-export type ReportPlace = 'board' | 'popup' | 'side panel' | 'web board';
+export type ReportPlace = 'board' | 'widget' | 'web board';
 
 /** Everything a report may carry besides the message; shown to the person first. */
 export interface ReportContext {

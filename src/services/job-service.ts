@@ -34,11 +34,11 @@ import type { SettingsRepository } from '@/storage/settings-repository';
 
 /**
  * Application service: every use case that changes jobs goes through here so
- * the popup, board and background worker share one implementation.
+ * the widget, board and background worker share one implementation.
  */
 
 export interface CaptureOptions {
-  /** User edits made in the popup before saving. */
+  /** User edits made in the widget before saving. */
   overrides?: Partial<Posting>;
   stageId?: StageId;
   priority?: Job['priority'];

@@ -1,6 +1,6 @@
 # Email status updates: the engine
 
-Advanced users forward job emails to a personal address, and the board
+Pro users connect Gmail or Outlook (read on the device, ADR-0032) or forward job emails to a personal address, and the board
 updates itself (ADR-0014). This guide covers the **engine** in `src/email/`:
 how one email becomes an `EmailEvent`, how an event is matched to a job, and
 how to fix a miss. It also covers the server side (the
@@ -142,7 +142,7 @@ backwards, and it works with custom columns by kind and name.
    network error or 5xx.
 
 The database decides the rest: unknown or rotated address, account not on
-Advanced, rate limit (30 an hour, 200 a day per address), duplicate
+Pro, rate limit (30 an hour, 200 a day per address), duplicate
 Message-ID. Mail is never bounced, and only the outcome is logged.
 
 Tests: `tests/unit/email-worker/` uses real MIME and a fake `fetch`. A
@@ -260,7 +260,7 @@ One user's confirmation teaches every user, with nothing personal shared:
 
   Mail platforms and recruiting systems never get domain votes; the server
   checks this too (`private.is_platform_domain`, kept in step with
-  `isPlatformDomain` by a unit test). Only paying Advanced accounts vote; on
+  `isPlatformDomain` by a unit test). Only paying Pro accounts vote; on
   the free trial the extension sends nothing and the server answers
   `plan_required`. Votes are best effort: a failure never blocks the user.
 

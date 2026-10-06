@@ -9,7 +9,7 @@ export interface KeyValueStore {
   get(keys: string[] | null): Promise<Record<string, unknown>>;
   set(items: Record<string, unknown>): Promise<void>;
   remove(keys: string[]): Promise<void>;
-  /** Fires for writes from *any* extension context (popup, board, background). */
+  /** Fires for writes from *any* extension context (widget, board, background). */
   subscribe(listener: (changes: StorageChanges) => void): () => void;
 }
 

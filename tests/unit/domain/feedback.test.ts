@@ -58,7 +58,7 @@ describe('bug report details', () => {
       version: '0.4.1',
       browser: 'Chrome on macOS',
       plan: 'pro',
-      where: 'popup' as const,
+      where: 'widget' as const,
     };
     expect(describeContext(base).map(([k]) => k)).toEqual([
       'Rolestash version',

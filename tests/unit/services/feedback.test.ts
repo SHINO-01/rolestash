@@ -39,12 +39,12 @@ describe('FeedbackService', () => {
 
   it('sends a report with only the listed details, without an account', async () => {
     const { feedback, calls } = setup();
-    const context = await feedback.reportContext('popup', 'https://jobs.example/1');
+    const context = await feedback.reportContext('widget', 'https://jobs.example/1');
     expect(context).toEqual({
       version: '0.4.1',
       browser: 'Chrome on Linux',
       plan: 'free',
-      where: 'popup',
+      where: 'widget',
       page: 'https://jobs.example/1',
     });
     expect(

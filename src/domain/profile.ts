@@ -14,7 +14,6 @@ export const SavedAnswerSchema = z.object({
   question: z.string().trim().min(3).max(300),
   answer: z.string().trim().min(1).max(5000),
 });
-export type SavedAnswer = z.infer<typeof SavedAnswerSchema>;
 
 export const ProfileSchema = z.object({
   firstName: text(100),

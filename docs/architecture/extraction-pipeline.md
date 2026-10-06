@@ -77,5 +77,5 @@ that render the posting in a same-origin iframe (iCIMS). Cross-origin iframes
 
 Structured data covers most postings exactly, adapters cover the big sites
 that don't publish it, and the rest is flagged "Best guess" for the user to
-check in the popup. That is predictable, debuggable (provenance), fast and
+check in the widget. That is predictable, debuggable (provenance), fast and
 private. See ADR-0003.

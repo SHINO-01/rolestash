@@ -6,7 +6,7 @@ import {
   type WorkplaceType,
 } from '@/domain/job';
 
-/** Presentation helpers shared by popup and board. */
+/** Presentation helpers shared by the widget and the board. */
 
 export const WORKPLACE_LABEL: Record<WorkplaceType, string> = {
   onsite: 'On-site',

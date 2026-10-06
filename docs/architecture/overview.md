@@ -66,11 +66,12 @@ Services depend on two interfaces:
 context builds one (`platform/services.ts`), runs migrations once
 (`services.ready`), and React reads it through `ServicesProvider`.
 
-## Data flow: capturing a job from the popup
+## Data flow: capturing a job from the widget
 
 ```
-User clicks toolbar icon
-  └─► popup: getActiveTab()                         (activeTab grants access now)
+User clicks the widget's button (launcher.content.ts, job sites or all sites)
+  or the toolbar icon (background → toggleWidget; activeTab grants access now)
+  └─► widget.html in an iframe on the page: getWidgetTab() (its own tab)
        └─► CaptureService.capture(tabId)
             └─► ScriptingExtractorRunner.run(tabId) — executeScript(files: extractor.js, allFrames)
                  └─► [in page] extractJob(document, url) → ExtractionResult (per frame)
@@ -96,7 +97,7 @@ stage (`resolveDropIndex` — the board may be filtered), calls
 ## Live updates across contexts
 
 `JobRepository.subscribe` listens to `chrome.storage.onChanged`, which fires in
-every extension context. A job saved from the popup or background therefore
+every extension context. A job saved from the widget or background therefore
 appears on an open board immediately, with no messaging layer.
 
 ## Directory map
@@ -118,6 +119,6 @@ src/
   ui/              styles.css (tokens), components/, hooks/, format.ts, app-root.tsx
   features/
     board/         board-page, kanban, board-column, job-card, job-drawer, dialogs, stats
-    capture/       capture-popup, capture-form, capture-draft, debug-panel
-  entrypoints/     background.ts, extractor.ts, popup/, board/
+    capture/       capture-widget, capture-form, capture-draft, debug-panel, widget-*
+  entrypoints/     background.ts, extractor.ts, launcher.content.ts, widget/, board/
 ```

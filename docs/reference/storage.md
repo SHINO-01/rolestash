@@ -26,7 +26,7 @@ Access only through `JobRepository` / `SettingsRepository`
 - **Writes** are validated with zod; an invalid job throws before touching storage.
 - **Reads** skip (and log) invalid records so one bad entry can't break the board.
 - **Change events**: `repository.subscribe()` fires for writes from any
-  extension context (popup, board, worker).
+  extension context (widget, board, worker).
 
 ## Migrations
 

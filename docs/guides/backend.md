@@ -111,7 +111,7 @@ last-writer-wins, lapsed plans and account deletion
 
 Migration `…_email_updates.sql` adds two tables:
 
-- `email_inboxes`: one forwarding address per Advanced user. It isn't
+- `email_inboxes`: one forwarding address per Pro user. It isn't
   readable by clients.
 - `email_events`: extracted events only, never email bodies. Owners can
   select and delete through RLS. Events are deleted after 90 days, by
@@ -119,8 +119,8 @@ Migration `…_email_updates.sql` adds two tables:
 
 | RPC                                              | Who                         | What                                                 |
 | ------------------------------------------------ | --------------------------- | ---------------------------------------------------- |
-| `my_inbox()`                                     | signed in, Advanced         | the address, created on first call                   |
-| `rotate_inbox()`                                 | signed in, Advanced         | a new address; mail to the old one is dropped        |
+| `my_inbox()`                                     | signed in, Pro              | the address, created on first call                   |
+| `rotate_inbox()`                                 | signed in, Pro              | a new address; mail to the old one is dropped        |
 | `ingest_email_event(p_secret, p_token, p_event)` | the Email Worker (anon key) | stores one event: secret, plan and rate-limit checks |
 
 Privileged bodies live in `private`, behind SECURITY INVOKER wrappers, like
@@ -129,7 +129,7 @@ sync. `private.plan_tier_of(user)` is `plan_tier()` for any user.
 Shared learning (ADR-0019) adds:
 
 - `vote_email_knowledge(p_votes)` and `set_email_sharing(p_on)` for
-  Advanced users;
+  Pro users (stored tier `advanced`, ADR-0029);
 - `private.email_knowledge_votes`, with HMAC voters keyed by
   `private.email_knowledge_key`, which is generated in the database;
 - `private.knowledge_lookup()`, which `ingest_email_event` uses on

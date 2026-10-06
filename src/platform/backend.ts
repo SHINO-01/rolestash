@@ -18,7 +18,7 @@ export function backendConfig(): BackendConfig | undefined {
 
 /**
  * OAuth through chrome.identity. Must run from an extension *tab* (the
- * board): a popup closes when the sign-in window takes focus.
+ * board): a page that closes on blur would lose the sign-in window.
  */
 export class ChromeWebAuthFlow implements WebAuthFlow {
   redirectUrl(): string {

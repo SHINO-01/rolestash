@@ -28,7 +28,7 @@ export function ReportDialog({
   where: ReportContext['where'];
   /** The account's email, prefilled for replies. */
   email?: string;
-  /** The current page's address (popup only), offered as an opt-in. */
+  /** The current page's address (widget only), offered as an opt-in. */
   page?: string;
 }) {
   const [message, setMessage] = useState('');

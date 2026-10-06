@@ -133,7 +133,7 @@ export function BoardPage() {
   );
   const openJob = openJobId ? jobs.find((j) => j.id === openJobId) : undefined;
 
-  // Deep links (#job=<id>) from the popup and the "View on board" button.
+  // Deep links (#job=<id>) from the widget and the "View on board" button.
   useEffect(() => {
     const onHash = () => {
       setOpenJobId(readJobFromHash());

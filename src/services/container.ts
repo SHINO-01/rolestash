@@ -17,7 +17,7 @@ import { SyncService, type ThisDevice } from './sync-service';
 import type { AutofillRunner, ExtractorRunner, WebAuthFlow } from './ports';
 
 /**
- * Composition root. Each extension context (background, popup, board) builds
+ * Composition root. Each extension context (background, widget, board) builds
  * one container; tests build theirs with in-memory fakes.
  */
 export interface Services {

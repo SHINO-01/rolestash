@@ -146,7 +146,7 @@ When Google approves 0.4.1:
 
 Send the unlisted link to 10–20 testers. Ask them to capture a few jobs,
 try autofill on a real form, export a backup, and (for some) sign in and
-start the Advanced trial. Collect issues at support@rolestash.com. Ship
+start the Pro trial. Collect issues at support@rolestash.com. Ship
 fixes as patch releases.
 
 ## 7. Going public

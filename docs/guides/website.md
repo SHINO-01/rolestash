@@ -116,7 +116,7 @@ A built app, not a hand-written page (ADR-0017):
 custom properties on `:root`, redefined under `prefers-color-scheme: dark`;
 the privacy band and closing call to action use the always-dark `--band-*`
 tokens. The landing page is: hero (the film, with the framed board screenshot as fallback), features
-(bento grid), how it works, email updates (Advanced), privacy, pricing
+(bento grid), how it works, email updates (Pro), privacy, pricing
 (cards everywhere, plus a comparison table above 860 px; below that the cards
 list their features), FAQ and a closing call to action.
 

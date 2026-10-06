@@ -11,6 +11,10 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { chromium } from '@playwright/test';
+import {
+  DEFAULT_LAUNCHER_POSITION,
+  placeLauncher,
+} from '../src/features/capture/launcher-position';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const EXTENSION = join(ROOT, '.output/chrome-mv3');
@@ -67,8 +71,13 @@ async function main() {
     );
     await page.goto(JOB_URL);
     await page.waitForTimeout(2000);
-    // The button sits at the right edge by default (launcher-position.ts), in a closed shadow root.
-    await page.mouse.click(1280 - 12 - 30, Math.round(0.72 * 800) + 24);
+    // The button sits in a closed shadow root, where launcher-position.ts puts it.
+    const button = placeLauncher(
+      DEFAULT_LAUNCHER_POSITION,
+      { width: 1280, height: 800 },
+      { width: 48, height: 48 },
+    );
+    await page.mouse.click(button.left + 24, button.top + 24);
     await page.waitForTimeout(1500);
     const widget = page.frames().find((f) => f.url().endsWith('/widget.html'));
     if (!widget) throw new Error('The widget did not open');

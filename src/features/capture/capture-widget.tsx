@@ -326,7 +326,7 @@ export function CaptureWidget() {
         open={reporting}
         onClose={() => setReporting(false)}
         feedback={services.feedback}
-        where="popup"
+        where="widget"
         {...(accountState?.email ? { email: accountState.email } : {})}
         {...(tab?.url?.startsWith('http') ? { page: tab.url } : {})}
       />

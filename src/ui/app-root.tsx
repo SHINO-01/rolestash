@@ -10,7 +10,7 @@ function ThemeBoundary({ children }: { children: ReactNode }) {
   return children;
 }
 
-/** Shared bootstrap for every extension page (popup, board, future options page). */
+/** Shared bootstrap for every extension page (widget, board). */
 export function mountApp(services: Services, app: ReactNode): void {
   const container = document.getElementById('root');
   if (!container) throw new Error('#root not found');

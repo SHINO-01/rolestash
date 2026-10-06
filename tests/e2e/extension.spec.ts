@@ -374,6 +374,18 @@ test.describe('the floating widget (ADR-0030)', () => {
 
     await widget.getByRole('button', { name: 'Save job' }).click();
     await expect(widget.getByRole('status')).toHaveText('Saved · Saved');
+    // The panel grows to fit the saved view, upwards from the bottom of the window:
+    // wait until it has settled, or the click lands where the chip used to be.
+    const frame = page.locator('iframe[title="Rolestash"]');
+    let last = -1;
+    await expect
+      .poll(async () => {
+        const top = (await frame.boundingBox())?.y ?? -1;
+        const settled = top === last;
+        last = top;
+        return settled;
+      })
+      .toBe(true);
     await widget.getByRole('radio', { name: 'Applied' }).click();
     await expect(widget.getByRole('status')).toHaveText('On your board · Applied');
     const stored = await worker.evaluate(async () =>
