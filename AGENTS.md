@@ -49,12 +49,16 @@ entrypoints ─► features ─► ui
 
 ## Workflow
 
-- Work on `dev` (or a branch → PR into `dev`). **Never push to `main`**: CI
-  fast-forwards it after the checks pass (docs/guides/ci-cd.md).
-- Releasing = `npm run release -- <patch|minor|major>` on `dev`, then push.
+- Commit and push straight to `dev`: no feature branches or PRs in this
+  repository. **Never push to `main`**: CI fast-forwards it after the checks
+  pass (docs/guides/ci-cd.md). The release repo (rolestash-extension) is the
+  one that takes PRs into its `main`.
+- Releasing = `npm run release -- <patch|minor|major>` on `dev`, then push
+  (docs/guides/releasing.md).
 - `npm run verify` must pass before you finish (format, lint with zero
   warnings, typecheck, unit tests, build). Run `npm run test:e2e` when you touch
-  entrypoints, platform code or the board's drag-and-drop.
+  entrypoints, platform code, the widget or the board's drag-and-drop, and
+  `npm run test:db` (Docker) when you change the database.
 - Every behaviour change ships with a test. Extraction changes ship with a
   fixture (`tests/fixtures/sites/<adapter>/<case>.html` + `.expected.json`).
 - Changed the email rules? Add a fixture to `tests/fixtures/emails/` for the
@@ -65,6 +69,9 @@ entrypoints ─► features ─► ui
   (`src/storage/migrations.ts`) **and** a backup upgrade step, plus tests. See
   `docs/reference/storage.md`.
 - Significant decision? Add an ADR in `docs/adr/` (copy `0000-template.md`).
+- Changed what a homepage feature clip shows (the widget, autofill, the
+  board, email updates, the web board)? Re-shoot them with `npm run site:clips`
+  and bump the clip version (docs/guides/website.md#feature-clips).
 - Update `CHANGELOG.md` under _Unreleased_, then run `npm run site:changelog`
   (rolestash.com/changelog/ is rendered from it; a test fails if it's stale).
 - Conventional Commits (`feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`).
@@ -80,6 +87,9 @@ entrypoints ─► features ─► ui
 | Accounts, billing, database | `docs/guides/backend.md`               |
 | Understand the moving parts | `docs/architecture/overview.md`        |
 | Operations dashboard        | `docs/guides/operations.md`            |
+| The website, rolestash.com  | `docs/guides/website.md`               |
+| Email updates, mailboxes    | `docs/guides/email-updates.md`         |
+| Releasing                   | `docs/guides/releasing.md`             |
 | What's still open           | `docs/todo.md`                         |
 
 ## Gotchas
@@ -90,3 +100,15 @@ entrypoints ─► features ─► ui
   `ExtractionResult` must stay structured-clone-safe plain data (a test checks).
 - MV3 service workers die when idle: keep `background.ts` stateless.
 - Adapter ids are stored on every job — never rename a released id.
+- The paid plan is Pro, but the database stores it as tier `advanced`
+  (ADR-0029). Gate features with `allows(plan, feature)`, which means "is paid"; never add a
+  second paid tier in code.
+- WXT entrypoint names must be unique (the `widget/` page and
+  `launcher.content.ts`); run `npx wxt prepare` after adding one so
+  `browser.runtime.getURL` types update.
+- E2E builds hold `<all_urls>` and treat `localhost` and `127.0.0.1` as job
+  sites, with the widget's shadow root open so Playwright can click it;
+  production's is closed. The panel grows upwards from the bottom, so wait
+  for it to settle before clicking inside it.
+- The repos are public: security findings stay in the git-ignored private
+  list until fixed, never in commits, issues or PRs.

@@ -27,7 +27,8 @@ feature on the pricing page is built. The site already advertises them all.
   - Sign-in with an email code, or with Google through rolestash.com.
   - A 30-day Pro trial (a 14-day Advanced trial since 2026-10-02).
   - Per-plan limits of 15, 45 and 95 (15, 60 and unlimited since the
-    2026-10-02 revision of ADR-0013).
+    2026-10-02 revision of ADR-0013). Since ADR-0029 (2026-10-06): Free with
+    30 active jobs, and one paid plan, Pro, with everything and a 14-day trial.
   - Paddle: checkout bound to the account email, billing portal, plan
     changes, signed webhooks and local prices.
   - Account deletion.
@@ -61,12 +62,13 @@ feature on the pricing page is built. The site already advertises them all.
   fixtures with scrubbed real snapshots, starting with LinkedIn, SEEK,
   Indeed, Greenhouse, Lever and Workday.
 
-## Phase 1c: Advanced features
+## Phase 1c: Advanced features (all Pro since ADR-0029)
 
 - ~~**Sync across devices**~~ done (ADR-0016; Account → _Sync this browser_):
   - Supabase `jobs` and `settings` tables, with RLS for paid plans;
   - a device registry enforcing `SYNC_DEVICE_LIMITS`: Pro up to 3 computers,
-    Advanced up to 5 devices including the web board;
+    Advanced up to 5 devices including the web board (Pro, 5 devices, since
+    ADR-0029);
   - a `SyncService` behind a `RemoteJobStore` port;
   - last writer wins per job, tombstones for deletes, compressed
     descriptions.
@@ -98,7 +100,7 @@ feature on the pricing page is built. The site already advertises them all.
   and typical wait, applications unanswered after 21 days, and results by
   source.
 - ~~**Side panel**~~ done (ADR-0021: one-click access, Today and board docked
-  beside the page) and ~~**bulk actions**~~ done (select mode or Ctrl/⌘-click;
+  beside the page; replaced by the floating widget in v0.4.4, ADR-0030) and ~~**bulk actions**~~ done (select mode or Ctrl/⌘-click;
   move, tag, archive, delete with undo).
 
 Open to-dos for the owner and for us, in one list: [todo.md](todo.md).
@@ -150,8 +152,11 @@ Runbook: [guides/launch.md](guides/launch.md).
 
 - ~~**Launch video**~~ done (2026-10-04): a silent 21-second film in the
   rolestash.com hero, landscape on wide screens and vertical on phones
-  ([guides/website.md](guides/website.md)). It still shows the popup and two
-  paid plans; a re-cut is in [todo.md](todo.md).
+  ([guides/website.md](guides/website.md)). It still shows the old popup-style
+  save card; a re-cut is in [todo.md](todo.md).
+- ~~**Feature clips**~~ done (2026-10-06): the homepage's five features each
+  show a short silent clip recorded from the real product, re-shot with
+  `npm run site:clips` ([guides/website.md](guides/website.md#feature-clips)).
 - **Operations dashboard** at `operations.rolestash.com` for us: Cloudflare,
   Paddle (refunds, disputes, discounts), Resend, Search Console and ad
   accounts in one place, behind owner-only sign-in. Design note:
@@ -180,7 +185,7 @@ Runbook: [guides/launch.md](guides/launch.md).
 
 ## Tech debt / quality
 
-- Component tests for the drawer and popup form (React Testing Library).
+- Component tests for the drawer and the widget panel (React Testing Library).
 - Visual regression screenshots in CI.
 - ~~Performance check with 1,000+ jobs~~ done: columns show 50 cards at a
   time, and `npm run perf:board` measures it (guides/testing.md). Full

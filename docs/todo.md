@@ -2,7 +2,7 @@
 
 Everything still open, in one place, with who does it. Details live in the
 linked guides; tick items here when they're done and move finished work
-into the roadmap or changelog. Last reviewed 6 October 2026 (evening).
+into the roadmap or changelog. Last reviewed 6 October 2026 (night).
 
 ## Owner
 
@@ -62,11 +62,14 @@ into the roadmap or changelog. Last reviewed 6 October 2026 (evening).
 
 ## Ours
 
-- [ ] **New launch film:** the homepage film (`site/assets/rolestash-film*`,
-      landscape and vertical, plus posters) still shows the old popup and
-      two paid plans. Re-cut it with the floating widget (save, fill the
-      application, move to Applied) and one Pro plan at US$12, fictional
-      companies only ([website.md](guides/website.md)).
+- [ ] **New launch film** (on hold until the owner says go): the hero film
+      (`site/assets/rolestash-film*`, landscape and vertical, plus posters)
+      still shows the old popup-style "Save this job" card, and its ledger
+      says "Your inbox: Never connected", which changes once mailbox
+      connection ships. Re-cut the save scene with the floating widget (the
+      button, the panel, Save job, then Applied), fictional companies only
+      ([website.md](guides/website.md#the-hero-film)). The film shows no
+      prices.
 
 - [ ] **When 0.4.7 is approved:** set "Current version" on `/known-issues/`
       to 0.4.7 and the date.

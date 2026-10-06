@@ -11,6 +11,9 @@
  *   email:*       Email updates state and lease (EmailUpdateService); never backed up
  *   profile       Autofill profile (ADR-0020); this device only: never synced or backed up
  *   prompts:*     Store-rating prompt state (ADR-0024); this device only, never backed up
+ *   mailbox:*     A connected Gmail or Outlook mailbox and its tokens (ADR-0032); never backed up
+ *   widget:*      The widget's position, all-sites choice and hidden sites (ADR-0030, ADR-0033)
+ *   tips:*        Dismissed one-time tips
  */
 export const META_KEY = 'meta';
 export const SETTINGS_KEY = 'settings';

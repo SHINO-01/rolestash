@@ -258,7 +258,7 @@ below.
   unique description (70–160), a canonical URL with a trailing slash,
   matching `og:`/`twitter:` tags with the share card, and JSON-LD.
 - **JSON-LD:** the homepage describes the organisation, the website, the
-  extension with its three plans (`SoftwareApplication` offers in USD) and
+  extension with its plans, Free and Pro (`SoftwareApplication` offers in USD), and
   the FAQ, copied word for word from the visible questions (a test checks).
   Other pages carry a breadcrumb. JSON-LD is data, so the CSP doesn't apply
   to it. Never add ratings or reviews until real ones exist.

@@ -6,16 +6,16 @@ form is read and filled, how to support a new form, and what's verified.
 
 ## The parts
 
-| Part                                | What it does                                                        |
-| ----------------------------------- | ------------------------------------------------------------------- |
-| `src/domain/profile.ts`             | `ProfileSchema`: every field optional, plus up to 30 saved answers  |
-| `src/storage/profile-repository.ts` | The `profile` key: this device only, not synced, not backed up      |
-| `src/autofill/fields.ts`            | Reads a form: controls, labels, which profile field each one is     |
-| `src/autofill/fill.ts`              | Fills empty fields and reports what's left                          |
-| `src/entrypoints/autofill.ts`       | The injected script; defines `__rolestashAutofill(profile)`         |
-| `src/platform/autofill-runner.ts`   | Injects it on the `activeTab` grant, then calls it with the profile |
-| `src/services/autofill-service.ts`  | Plan gate (Pro and up), profile, merges the per-frame reports       |
-| `src/features/autofill/`            | The profile dialog and the widget's **Fill this application** bar   |
+| Part                                | What it does                                                            |
+| ----------------------------------- | ----------------------------------------------------------------------- |
+| `src/domain/profile.ts`             | `ProfileSchema`: every field optional, plus up to 30 saved answers      |
+| `src/storage/profile-repository.ts` | The `profile` key: this device only, not synced, not backed up          |
+| `src/autofill/fields.ts`            | Reads a form: controls, labels, which profile field each one is         |
+| `src/autofill/fill.ts`              | Fills empty fields and reports what's left                              |
+| `src/entrypoints/autofill.ts`       | The injected script; defines `__rolestashAutofill(profile)`             |
+| `src/platform/autofill-runner.ts`   | Injects it on the `activeTab` grant, then calls it with the profile     |
+| `src/services/autofill-service.ts`  | Plan gate (full autofill on Pro), profile, merges the per-frame reports |
+| `src/features/autofill/`            | The profile dialog and the widget's **Fill this application** bar       |
 
 The right-click menu item **Fill this application with Rolestash** runs the
 same thing. The badge then shows how many fields were filled.

@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-10-06
-- Supersedes ADR-0021 (side panel). Amends ADR-0004 (activeTab only). Amended by ADR-0031 (the button on every page).
+- Supersedes ADR-0021 (side panel). Amends ADR-0004 (activeTab only). Amended by ADR-0031 (the button on every page), which ADR-0033 superseded: job sites by default, all sites by choice.
 
 ## Context
 

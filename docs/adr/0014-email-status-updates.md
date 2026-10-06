@@ -1,6 +1,6 @@
 # ADR-0014: Automatic status updates from job emails, with a personal forwarding address and rules (no AI vendors)
 
-- **Status:** Accepted (design; the build is in the roadmap's Advanced phase)
+- **Status:** Accepted; built in Phase 1c (Pro since ADR-0029). Extended by ADR-0018 (the Email Worker), ADR-0019 and ADR-0028 (shared learning) and ADR-0032 (connect Gmail or Outlook, read on the device)
 - **Date:** 2026-10-01
 
 ## Context

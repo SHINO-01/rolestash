@@ -104,21 +104,42 @@ appears on an open board immediately, with no messaging layer.
 
 ```
 src/
-  domain/          job.ts (schemas), stage.ts, settings.ts, rank.ts, job-factory.ts
+  domain/          job.ts (schemas), stage.ts, columns.ts, settings.ts, plan.ts, rank.ts, job-factory.ts,
+                   history.ts, reminders.ts, interview.ts, calendar.ts, insights.ts, profile.ts,
+                   account-profile.ts, feedback.ts
   extraction/
     extract.ts     the pipeline
     merge.ts       per-field confidence merge
+    job-view.ts    is a job posting open? (labels the widget's button "Save job")
     strategies/    json-ld.ts, microdata.ts, adapter.ts, meta.ts, shared.ts
-    normalize/     text.ts, salary.ts, dates.ts, classifiers.ts, url.ts
-    adapters/      types.ts, helpers.ts, registry.ts, sites/*.ts (50)
-  email/           analyze.ts (entry), intent.ts, ats.ts, links.ts, ics.ts, time.ts, clean.ts, html.ts, match.ts, skeleton.ts
+    normalize/     text.ts, salary.ts, dates.ts, classifiers.ts, url.ts,
+                   description-facts.ts (location, salary, workplace from the text; linear-time)
+    adapters/      types.ts, helpers.ts, registry.ts, job-sites.ts (the widget's sites), sites/*.ts (50)
+  email/           analyze.ts (entry), intent.ts, ats.ts, links.ts, ics.ts, time.ts, clean.ts, html.ts,
+                   match.ts, skeleton.ts, mailbox.ts (picking job emails from a connected mailbox)
   autofill/        fields.ts (reading a form), fill.ts (filling it)
-  storage/         key-value-store.ts, job-repository.ts, settings-repository.ts, migrations.ts, backup.ts
-  services/        job-service.ts, capture-service.ts, ports.ts, container.ts
-  platform/        chrome-storage.ts, extractor-runner.ts, tabs.ts, badge.ts, services.ts
+  storage/         key-value-store.ts, keys.ts, job-repository.ts, settings-repository.ts,
+                   profile-repository.ts, migrations.ts, backup.ts, csv-export.ts
+  services/        job-service.ts, capture-service.ts, link-capture-service.ts, column-service.ts,
+                   reminder-service.ts, autofill-service.ts, account-service.ts, sync-service.ts,
+                   email-update-service.ts, mailbox-service.ts, feedback-service.ts, web-handoff.ts,
+                   ports.ts, container.ts
+    backend/       supabase-client.ts, google.ts
+    mail/          gmail.ts, outlook.ts (read-only mail APIs, on the device; ADR-0032)
+  platform/        chrome-storage.ts, extractor-runner.ts, autofill-runner.ts, page-loader.ts, tabs.ts,
+                   badge.ts, notifications.ts, widget.ts, all-sites.ts (ADR-0033), backend.ts, services.ts
   ui/              styles.css (tokens), components/, hooks/, format.ts, app-root.tsx
   features/
-    board/         board-page, kanban, board-column, job-card, job-drawer, dialogs, stats
-    capture/       capture-widget, capture-form, capture-draft, debug-panel, widget-*
-  entrypoints/     background.ts, extractor.ts, launcher.content.ts, widget/, board/
+    board/         board-page, kanban, board-column, job-card, job-drawer, job-records, dialogs, bulk-bar
+    capture/       capture-widget, capture-form, capture-draft, debug-panel, launcher-position, widget-*
+    account/       account dialog, plan banner, sync and profile sections
+    autofill/      autofill-bar (the widget's "Fill this application"), profile-dialog
+    email/         email setup, connect a mailbox, interview, suggestions, unsorted updates
+    insights/      insights dialog and charts
+    feedback/      greeting, rating prompt, problem reports
+  entrypoints/     background.ts, extractor.ts, autofill.ts, launcher.content.ts, widget/, board/
+web/               the phone-first web board (rolestash.com/board/; ADR-0017)
+supabase/          migrations, pgTAP tests, Edge Functions (_shared/ holds the logic)
+infra/             email-worker/ (ADR-0018), ops-worker/ (ADR-0026), the site Worker's config
+site/              rolestash.com
 ```
