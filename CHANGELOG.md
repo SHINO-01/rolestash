@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.4.6] — 2026-10-06
+
 ### Added
 
 - **Connect Gmail or Outlook (Pro):** status updates now come straight from
