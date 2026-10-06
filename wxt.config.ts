@@ -1,5 +1,6 @@
 import tailwindcss from '@tailwindcss/vite';
 import { loadEnv } from 'vite';
+import { JOB_SITE_MATCHES } from './src/extraction/adapters/job-sites';
 import { defineConfig } from 'wxt';
 
 /**
@@ -22,6 +23,14 @@ export default defineConfig({
   vite: () => ({
     plugins: [tailwindcss()],
   }),
+  hooks: {
+    // E2E fixture pages are served locally; let the widget appear there too.
+    'build:manifestGenerated': (wxt, manifest) => {
+      if (wxt.config.mode !== 'e2e') return;
+      for (const script of manifest.content_scripts ?? [])
+        script.matches = [...(script.matches ?? []), 'http://localhost/*', 'http://127.0.0.1/*'];
+    },
+  },
   manifest: ({ mode }) => {
     // Accounts are on only when the build has backend settings (ADR-0011).
     const env = loadEnv(mode, process.cwd(), 'WXT_');
@@ -34,7 +43,10 @@ export default defineConfig({
         'Save any job posting to a Kanban board in one click. Local-first and no AI; accounts and sync are optional.',
       minimum_chrome_version: '116',
       permissions: [
-        // Inject the extractor or the autofill filler into a tab when the user asks.
+        // Elsewhere, the toolbar icon opens the widget on the tab it was clicked on.
+        'activeTab',
+        // Inject the extractor, autofill filler or widget into a tab when the user asks, and
+        // register the widget for all sites when they turn that on.
         'scripting',
         // Local persistence; unlimitedStorage lifts the 10 MB quota for description snapshots.
         'storage',
@@ -62,10 +74,13 @@ export default defineConfig({
         : {}),
       // Asked for only when someone turns reminders on, so there's no install warning (ADR-0015).
       optional_permissions: ['notifications'],
-      // The floating widget's button on every web page (ADR-0031): "Read and change all
-      // your data on all websites" at install. The script reads nothing until the panel
-      // opens. The same access serves capture from a pasted link.
-      host_permissions: mode === 'e2e' ? ['<all_urls>'] : ['https://*/*', 'http://*/*'],
+      // The floating widget's button on the supported job sites (ADR-0033): "Read and
+      // change your data on" those sites at install. The script reads nothing until the
+      // panel opens.
+      host_permissions: mode === 'e2e' ? ['<all_urls>'] : [...JOB_SITE_MATCHES],
+      // Every other site is the user's choice ("Show the button on all sites"), asked for
+      // in that click; the same access serves capture from a pasted link, per site.
+      optional_host_permissions: ['https://*/*', 'http://*/*'],
       // The widget's panel is this page in an iframe on the job page. The icon is its
       // button's image. Any page may load them; they hold no data of their own.
       web_accessible_resources: [

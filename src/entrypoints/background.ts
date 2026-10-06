@@ -2,6 +2,7 @@ import { browser } from 'wxt/browser';
 import { flashBadge } from '@/platform/badge';
 import { ChromeNotifier } from '@/platform/notifications';
 import { getServices } from '@/platform/services';
+import { syncAllSites } from '@/platform/all-sites';
 import { toggleWidget } from '@/platform/widget';
 import { openBoard } from '@/platform/tabs';
 import { AutofillBlockedError } from '@/services/autofill-service';
@@ -97,6 +98,7 @@ export default defineBackground(() => {
   browser.runtime.onStartup.addListener(() => {
     void ensureReminderAlarm();
     void ensureMailAlarm();
+    void syncAllSites().catch(() => undefined);
     // The browser just opened: bring the board up to date with the mailbox straight away.
     void checkMailbox();
   });
@@ -118,7 +120,12 @@ export default defineBackground(() => {
   });
   // The notifications API exists only once the optional permission is granted.
   listenForNotificationClicks();
-  browser.permissions.onAdded.addListener(() => listenForNotificationClicks());
+  browser.permissions.onAdded.addListener(() => {
+    listenForNotificationClicks();
+    void syncAllSites().catch(() => undefined);
+  });
+  // Taken back in chrome://extensions too: the button leaves other sites at once.
+  browser.permissions.onRemoved.addListener(() => void syncAllSites().catch(() => undefined));
 
   browser.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
     if (
@@ -134,6 +141,7 @@ export default defineBackground(() => {
     void getServices().ready;
     void ensureReminderAlarm();
     void ensureMailAlarm();
+    void syncAllSites().catch(() => undefined);
     void browser.contextMenus.removeAll().then(() => {
       browser.contextMenus.create({
         id: MENU_TRACK,

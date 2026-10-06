@@ -12,8 +12,10 @@ Full policy: https://rolestash.com/privacy/
 - **The page you choose:** the content of a tab, only when you open the
   Rolestash widget (its button on the page, or the Rolestash icon), use its
   right-click menu item or press its keyboard shortcut on that tab.
-- **Web pages:** Rolestash has access to the web pages you visit so its
-  button can sit at the edge of any page. On each page it checks only
+- **Web pages:** Rolestash has access to the job sites it supports (SEEK,
+  LinkedIn, Indeed, Workday and others), and to every other site only if you
+  turn on "Show the button on all sites", so its button can sit at the edge
+  of the page. On each page it checks only
   whether a job posting is open (the address, and the page's job data), so
   the button can say "Save job". Nothing is read beyond that, stored or sent
   anywhere until you open the panel. Rolestash does not track or record the

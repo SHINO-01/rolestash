@@ -3,6 +3,7 @@ import {
   Bug,
   Check,
   EyeOff,
+  Globe,
   LayoutGrid,
   MapPin,
   MoreHorizontal,
@@ -27,7 +28,8 @@ import { draftFromResult, emptyDraft, postingFromDraft, type Draft } from './cap
 import { CaptureForm } from './capture-form';
 import { DebugPanel } from './debug-panel';
 import { closeWidget, reportHeight } from './widget-frame';
-import { showsLauncher, WIDGET_HIDDEN_SITES_KEY } from './widget-protocol';
+import { showsLauncher, WIDGET_ALL_SITES_KEY, WIDGET_HIDDEN_SITES_KEY } from './widget-protocol';
+import { setAllSites } from '@/platform/all-sites';
 import { AutofillBar } from '@/features/autofill/autofill-bar';
 import { ReportDialog } from '@/features/feedback/report-dialog';
 import { useAccount } from '@/ui/hooks/account';
@@ -61,6 +63,12 @@ export function CaptureWidget() {
   const [reporting, setReporting] = useState(false);
   const { state: accountState } = useAccount();
   const root = useRef<HTMLDivElement>(null);
+  const [allSites, setAllSitesOn] = useState(false);
+  useEffect(() => {
+    void services.store
+      .get([WIDGET_ALL_SITES_KEY])
+      .then((stored) => setAllSitesOn(stored[WIDGET_ALL_SITES_KEY] === true));
+  }, [services.store]);
   const started = useRef(false);
 
   useEffect(() => (root.current ? reportHeight(root.current) : undefined), []);
@@ -178,9 +186,19 @@ export function CaptureWidget() {
       icon: <Bug className="size-4" />,
       onSelect: () => setReporting(true),
     },
-    ...(host && tab?.url && showsLauncher(tab.url)
+    'separator',
+    {
+      label: 'Show the button on all sites',
+      icon: <Globe className="size-4" />,
+      checked: allSites,
+      // Chrome asks the user (ADR-0033); if it can't from here, the board can.
+      onSelect: () =>
+        void setAllSites(!allSites)
+          .then(setAllSitesOn)
+          .catch(() => openBoard()),
+    },
+    ...(host && tab?.url && showsLauncher(tab.url, allSites)
       ? [
-          'separator' as const,
           {
             label: `Hide the button on ${host}`,
             icon: <EyeOff className="size-4" />,

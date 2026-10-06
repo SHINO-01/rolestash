@@ -6,6 +6,13 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- **The Rolestash button is on job sites by default,** and on every site
+  only if you turn on "Show the button on all sites" (board or widget
+  menu). Chrome asks for less when you install or update, and the toolbar
+  icon still opens Rolestash on any page.
+
 ## [0.4.6] — 2026-10-06
 
 ### Added

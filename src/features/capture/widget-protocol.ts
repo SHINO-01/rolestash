@@ -1,3 +1,5 @@
+import { isJobSite } from '@/extraction/adapters/job-sites';
+
 /**
  * Messages between the floating widget's parts (ADR-0030):
  *
@@ -16,18 +18,26 @@ export type WidgetFrameMessage =
   | { source: typeof WIDGET_FRAME_SOURCE; type: 'resize'; height: number }
   | { source: typeof WIDGET_FRAME_SOURCE; type: 'close' };
 
+/** Whether the user turned on "Show the button on all sites" (ADR-0033); kept by the background. */
+export const WIDGET_ALL_SITES_KEY = 'widget:allSites';
+
 /**
- * Pages where the button appears by itself: every web page (ADR-0031),
- * except Rolestash's own site, which has its own way in.
+ * Pages where the button appears by itself (ADR-0033): the supported job
+ * sites, and every web page once the user turns on all sites. Never on
+ * Rolestash's own site, which has its own way in.
  */
-export function showsLauncher(href: string): boolean {
+export function showsLauncher(href: string, allSites: boolean): boolean {
+  let url: URL;
   try {
-    const url = new URL(href);
-    if (url.protocol !== 'https:' && url.protocol !== 'http:') return false;
-    return url.hostname !== 'rolestash.com' && !url.hostname.endsWith('.rolestash.com');
+    url = new URL(href);
   } catch {
     return false;
   }
+  if (url.protocol !== 'https:' && url.protocol !== 'http:') return false;
+  if (url.hostname === 'rolestash.com' || url.hostname.endsWith('.rolestash.com')) return false;
+  if (import.meta.env.MODE === 'e2e' && ['localhost', '127.0.0.1'].includes(url.hostname))
+    return true;
+  return allSites || isJobSite(href);
 }
 
 /** Sites where the widget's launcher is hidden ("Hide on this site"), by hostname. */

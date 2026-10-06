@@ -1,6 +1,6 @@
 # ADR-0031: Show the widget's button on every web page
 
-- **Status:** Accepted
+- **Status:** Superseded by ADR-0033 (job sites by default, all sites by choice)
 - **Date:** 2026-10-06
 - Amends ADR-0030 (the button was limited to a list of job sites) and
   AGENTS.md rule 3.

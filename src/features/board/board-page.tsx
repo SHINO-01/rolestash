@@ -2,6 +2,7 @@ import {
   BarChart3,
   Bug,
   Download,
+  Globe,
   BellRing,
   CalendarDays,
   Columns3,
@@ -28,6 +29,8 @@ import type { Theme } from '@/domain/settings';
 import { createBackup } from '@/storage/backup';
 import { jobsToCsv } from '@/storage/csv-export';
 import { requestNotifications } from '@/platform/notifications';
+import { setAllSites } from '@/platform/all-sites';
+import { WIDGET_ALL_SITES_KEY } from '@/features/capture/widget-protocol';
 import { PinTip } from './pin-tip';
 import { Greeting } from '@/features/feedback/greeting';
 import { RatingPrompt } from '@/features/feedback/rating-prompt';
@@ -252,6 +255,24 @@ export function BoardPage() {
 
   const setTheme = (theme: Theme) => void services.settings.update({ theme });
 
+  // The widget's button on every site, not just job sites (ADR-0033). Chrome asks first.
+  const [allSites, setAllSitesOn] = useState(false);
+  useEffect(() => {
+    void services.store
+      .get([WIDGET_ALL_SITES_KEY])
+      .then((stored) => setAllSitesOn(stored[WIDGET_ALL_SITES_KEY] === true));
+  }, [services.store]);
+  async function toggleAllSites() {
+    const on = await setAllSites(!allSites);
+    setAllSitesOn(on);
+    toast({
+      message: on
+        ? 'The Rolestash button now shows on every site'
+        : 'The Rolestash button now shows on job sites only',
+      tone: 'success',
+    });
+  }
+
   async function toggleClosingAlerts() {
     const on = settings.closingAlerts === false;
     if (on) await requestNotifications();
@@ -396,6 +417,13 @@ export function BoardPage() {
                   },
                 ]
               : []),
+            'separator',
+            {
+              label: 'Show the button on all sites',
+              icon: <Globe className="size-4" />,
+              checked: allSites,
+              onSelect: () => void toggleAllSites(),
+            },
             'separator',
             { heading: 'Theme' },
             {

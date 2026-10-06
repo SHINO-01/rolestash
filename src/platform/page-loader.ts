@@ -59,12 +59,21 @@ function waitForLoad(tabId: number): Promise<void> {
 
 const originPattern = (url: string) => `${new URL(url).origin}/*`;
 
-/** Asks for access to one site. Must run inside a click in an extension page. */
-export function requestSiteAccess(url: string): Promise<boolean> {
-  return browser.permissions.request({ origins: [originPattern(url)] });
-}
-
-/** Gives the access back once the capture is done (least privilege). */
-export async function releaseSiteAccess(url: string): Promise<void> {
-  await browser.permissions.remove({ origins: [originPattern(url)] }).catch(() => false);
+/**
+ * Access to one site for this capture, asked for inside the click. `release`
+ * gives it back afterwards, but only if this asked for it: a job site, or
+ * "all sites" the user turned on (ADR-0033), keeps its access.
+ */
+export async function requestSiteAccess(
+  url: string,
+): Promise<{ granted: boolean; release: () => Promise<void> }> {
+  const origins = [originPattern(url)];
+  const had = await browser.permissions.contains({ origins });
+  const granted = had || (await browser.permissions.request({ origins }));
+  return {
+    granted,
+    release: async () => {
+      if (!had && granted) await browser.permissions.remove({ origins }).catch(() => false);
+    },
+  };
 }

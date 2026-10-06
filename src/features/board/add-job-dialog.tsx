@@ -4,7 +4,7 @@ import type { Job } from '@/domain/job';
 import type { Settings } from '@/domain/settings';
 import { visibleStages } from '@/domain/stage';
 import type { ExtractionResult } from '@/extraction';
-import { ChromePageLoader, releaseSiteAccess, requestSiteAccess } from '@/platform/page-loader';
+import { ChromePageLoader, requestSiteAccess } from '@/platform/page-loader';
 import { DuplicateJobError, JobLimitError } from '@/services/job-service';
 import { domParser, LinkCaptureService, normaliseLink } from '@/services/link-capture-service';
 import { Button } from '@/ui/components/button';
@@ -88,8 +88,8 @@ export function AddJobDialog({
       return;
     }
     // Asked inside this click: access to this one site only, given back afterwards.
-    const granted = await requestSiteAccess(url.href);
-    if (!granted) {
+    const access = await requestSiteAccess(url.href);
+    if (!access.granted) {
       setError(`Rolestash needs your OK to read ${url.hostname} to fill this in.`);
       return;
     }
@@ -108,7 +108,7 @@ export function AddJobDialog({
       setFound(result);
     } finally {
       setFetching(false);
-      await releaseSiteAccess(url.href);
+      await access.release();
     }
   }
 

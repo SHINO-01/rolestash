@@ -1,4 +1,5 @@
 import { browser } from 'wxt/browser';
+import { JOB_SITE_MATCHES } from '@/extraction/adapters/job-sites';
 import { looksLikeJobView } from '@/extraction/job-view';
 import {
   dropPosition,
@@ -10,14 +11,15 @@ import {
 import {
   isWidgetFrameMessage,
   showsLauncher,
+  WIDGET_ALL_SITES_KEY,
   WIDGET_HIDDEN_SITES_KEY,
   WIDGET_TOGGLE,
 } from '@/features/capture/widget-protocol';
 
 /**
- * The floating widget on the page (ADR-0030, ADR-0031). On every web page
- * it shows a small button: the Rolestash logo, which says "Save job" while
- * a job is open. It can be dragged to any height on the left or right edge,
+ * The floating widget on the page (ADR-0030, ADR-0033). On the supported job
+ * sites, and on every page once the user turns on all sites, it shows a small
+ * button: the Rolestash logo, which says "Save job" while a job is open. It can be dragged to any height on the left or right edge,
  * remembers where, and can be hidden per site. The toolbar icon opens the
  * panel too (and injects this script into tabs opened before an update).
  *
@@ -27,13 +29,15 @@ import {
  * height and when to close, and both are checked to come from it.
  */
 export default defineContentScript({
-  // Every web page (ADR-0031). It reads nothing until the panel opens.
-  matches: ['https://*/*', 'http://*/*'],
+  // The supported job sites (ADR-0033). Every other page only once the user turns on
+  // all sites (platform/all-sites.ts registers this same script). Reads nothing until
+  // the panel opens.
+  matches: [...JOB_SITE_MATCHES],
   runAt: 'document_idle',
   main(ctx) {
     const scope = window as Window & { __rolestashWidget?: { toggle: () => void } };
     if (scope.__rolestashWidget) return;
-    const widget = createWidget(showsLauncher(location.href));
+    const widget = createWidget();
     scope.__rolestashWidget = widget;
     const onMessage = (message: unknown) => {
       if ((message as { type?: unknown } | null)?.type === WIDGET_TOGGLE) widget.toggle();
@@ -89,7 +93,7 @@ const STYLE = `
 /** Pointer travel (px) that turns a press into a drag rather than a click. */
 const DRAG_THRESHOLD = 4;
 
-function createWidget(onWebPage: boolean) {
+function createWidget() {
   const host = document.createElement('rolestash-widget');
   // Closed, so the page's scripts can't reach in; open only in E2E builds, for Playwright.
   const root = host.attachShadow({ mode: import.meta.env.MODE === 'e2e' ? 'open' : 'closed' });
@@ -103,6 +107,8 @@ function createWidget(onWebPage: boolean) {
   let frame: HTMLIFrameElement | undefined;
   let watchUrl: number | undefined;
   let hidden = false;
+  /** A page where the button appears by itself; all sites is read from storage below. */
+  let onWebPage = showsLauncher(location.href, false);
   /** Opened here from the toolbar: keep the button on this page afterwards. */
   let openedHere = false;
   let position: LauncherPosition = readPosition(undefined);
@@ -248,14 +254,20 @@ function createWidget(onWebPage: boolean) {
     showOrHideLauncher();
   };
   void browser.storage.local
-    .get([WIDGET_HIDDEN_SITES_KEY, LAUNCHER_POSITION_KEY])
+    .get([WIDGET_HIDDEN_SITES_KEY, LAUNCHER_POSITION_KEY, WIDGET_ALL_SITES_KEY])
     .then((stored) => {
       position = readPosition(stored[LAUNCHER_POSITION_KEY]);
+      onWebPage = showsLauncher(location.href, stored[WIDGET_ALL_SITES_KEY] === true);
       readHidden(stored[WIDGET_HIDDEN_SITES_KEY]);
       place();
     });
   const onStorage = (changes: Record<string, { newValue?: unknown }>, area: string) => {
     if (area !== 'local') return;
+    const allSites = changes[WIDGET_ALL_SITES_KEY];
+    if (allSites) {
+      onWebPage = showsLauncher(location.href, allSites.newValue === true);
+      showOrHideLauncher();
+    }
     const hiddenChange = changes[WIDGET_HIDDEN_SITES_KEY];
     if (hiddenChange) readHidden(hiddenChange.newValue);
     // Moved in another tab: follow it.

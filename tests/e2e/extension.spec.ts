@@ -462,4 +462,31 @@ test.describe('the floating widget (ADR-0030)', () => {
     await toggle();
     await expect(widget.getByLabel('Job title')).toBeVisible();
   });
+
+  test('with all-sites access, the button is registered for every other page too (ADR-0033)', async ({
+    worker,
+  }) => {
+    // E2E builds hold all-sites access, as if the user had turned it on.
+    await expect
+      .poll(() =>
+        worker.evaluate(async () => ({
+          scripts: (await chrome.scripting.getRegisteredContentScripts()).map((s) => ({
+            id: s.id,
+            matches: [...(s.matches ?? [])].sort(),
+            excluded: (s.excludeMatches ?? []).length,
+          })),
+          flag: (await chrome.storage.local.get('widget:allSites'))['widget:allSites'],
+        })),
+      )
+      .toEqual({
+        scripts: [
+          {
+            id: 'rolestash-launcher-all-sites',
+            matches: ['http://*/*', 'https://*/*'],
+            excluded: 100,
+          },
+        ],
+        flag: true,
+      });
+  });
 });
