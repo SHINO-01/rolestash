@@ -273,6 +273,76 @@ test.describe('board @smoke', () => {
     expect(job.activity.map((a) => a.type)).toEqual(['archived', 'unarchived']);
   });
 
+  test('upgrades a 0.4.7 board to the four lanes (ADR-0034)', async ({
+    context,
+    worker,
+    extensionId,
+  }) => {
+    // What 0.4.7 stores: schema v1, the seven columns, jobs in Screening and Withdrawn.
+    await worker.evaluate(async () => {
+      const col = (
+        id: string,
+        name: string,
+        color: string,
+        kind: string,
+        marksApplied: boolean,
+      ) => ({
+        id,
+        name,
+        color,
+        kind,
+        marksApplied,
+      });
+      await chrome.storage.local.set({
+        meta: { schemaVersion: 1 },
+        settings: {
+          stages: [
+            col('saved', 'Saved', 'slate', 'active', false),
+            col('applied', 'Applied', 'sky', 'active', true),
+            col('screening', 'Screening', 'violet', 'active', true),
+            col('interviewing', 'Interviewing', 'amber', 'active', true),
+            col('offer', 'Offer', 'emerald', 'won', true),
+            col('rejected', 'Rejected', 'rose', 'lost', false),
+            col('withdrawn', 'Withdrawn', 'zinc', 'lost', false),
+          ],
+          defaultStageId: 'saved',
+          theme: 'system',
+        },
+      });
+    });
+    await seed(worker, [
+      { id: 's', title: 'Platform Engineer', company: 'Northwind Labs', stageId: 'screening' },
+      { id: 'w', title: 'Data Analyst', company: 'Kestrel Health', stageId: 'withdrawn' },
+    ]);
+    const page = await context.newPage();
+    await page.goto(`chrome-extension://${extensionId}/board.html`);
+    await expect(
+      page.getByRole('region', { name: 'Interviewing column' }).getByText('Platform Engineer'),
+    ).toBeVisible();
+    await expect(page.getByRole('region', { name: /column$/ })).toHaveCount(4);
+    await expect(page.getByText('Data Analyst')).toBeHidden();
+
+    await page.getByRole('button', { name: 'History' }).click();
+    const history = page.getByRole('dialog', { name: 'History' });
+    await expect(history.getByText('Data Analyst')).toBeVisible();
+
+    const stored = await worker.evaluate(async () => {
+      const data = await chrome.storage.local.get(['meta', 'settings', 'job:w']);
+      return {
+        meta: data.meta as { schemaVersion: number },
+        stages: (data.settings as { stages: { id: string }[] }).stages.map((x) => x.id),
+        job: data['job:w'] as Job,
+      };
+    });
+    expect(stored.meta.schemaVersion).toBe(2);
+    expect(stored.stages).toEqual(['saved', 'applied', 'interviewing', 'offer', 'rejected']);
+    expect(stored.job.stageId).toBe('rejected');
+    expect(stored.job.activity.at(-1)).toMatchObject({
+      fromStageId: 'withdrawn',
+      toStageId: 'rejected',
+    });
+  });
+
   test('exports the board to CSV', async ({ context, worker, extensionId }) => {
     await seed(worker, [
       { id: 'a', title: 'Platform Engineer', company: 'Northwind Labs', tags: ['go'] },

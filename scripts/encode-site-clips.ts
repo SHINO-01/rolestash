@@ -16,7 +16,7 @@ import { join, resolve } from 'node:path';
 const ROOT = resolve(import.meta.dirname, '..');
 const FRAMES = join(ROOT, '.output/clips');
 const OUT = join(ROOT, 'site/assets');
-const VERSION = 2;
+const VERSION = 3;
 
 /**
  * Output width per clip (desktop clips are 16:10, the phone clip 390:844),
