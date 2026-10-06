@@ -17,7 +17,7 @@ const TIERS = [
     name: 'Free',
     description: 'No account needed',
     features: [
-      'One-click capture from 50+ job sites',
+      'One-click capture from 50 job sites',
       'Kanban board with notes, tags and priorities',
       'Up to 30 active jobs (rejected ones don’t count)',
       'Autofill your name, contact details and links',
