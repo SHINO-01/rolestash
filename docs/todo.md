@@ -10,6 +10,12 @@ into the roadmap or changelog. Last reviewed 6 October 2026 (night).
       stays live until then). After approval, check the dashboard's
       **Privacy** tab and listing match the release repo's
       `store/listing.md` ([launch.md](guides/launch.md#v047-in-review-to-do)).
+- [ ] **v0.5.0, four board lanes (ADR-0034):** released here on 7 October;
+      the release repo's PR (SHINO-01/rolestash-extension#16) has the new
+      screenshots and one changed listing line. Wait for 0.4.7's approval,
+      then merge, run **Release**, approve the submission, and in the
+      dashboard upload the five screenshots and paste the changed Free line
+      from `store/listing.md`.
 - [ ] **Gmail (ADR-0032):** Google Cloud is done (Gmail API, the
       `gmail.readonly` scope, both redirect URIs, checked working on 6
       October). Waiting on Google's restricted-scope verification; until then
@@ -62,6 +68,9 @@ into the roadmap or changelog. Last reviewed 6 October 2026 (night).
 
 ## Ours
 
+- [ ] **Hero film: re-render the widget and Insights scenes** for the four
+      lanes (they still show Screening chips and a Screening node). Do it in
+      the same pass as the promo videos below, which rebuild the same scenes.
 - [ ] **60-second promo videos with audio** (landscape 1920×1080 and
       vertical 1080×1920, for social): extend the music cuts from 44.5 s to
       60 s in the brag project (`brag-output-2026-10-06-232216/`,
