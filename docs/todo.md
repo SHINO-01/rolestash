@@ -73,6 +73,11 @@ into the roadmap or changelog. Last reviewed 6 October 2026 (night).
       `--workers 3`, crop the vertical cut's 8 px strip, bake the poster as
       frame 0. The silent 45 s hero film on the site stays as it is unless the
       owner asks ([website.md](guides/website.md#the-hero-film)).
+- [ ] **Account security (ADR-0036, proposed):** optional password with a
+      strength check and a reset page (`/auth/reset/`), optional two-step
+      sign-in (authenticator app), security-change emails and "Sign out
+      everywhere". No password is required. Owner to accept or adjust
+      ([ADR-0036](adr/0036-passwords-and-account-security.md)).
 - [ ] **Grants, referrals and discount codes (ADR-0035, accepted; after ADR-0034):**
       revocable complimentary Pro (indefinite or dated), "give 50%, get a
       month" referrals, and scripted Paddle discount codes with promo links.
