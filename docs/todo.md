@@ -38,6 +38,14 @@ into the roadmap or changelog. Last reviewed 6 October 2026 (night).
       ([backend.md](guides/backend.md#paddle-live-state)).
 - [x] **Paddle tidy-up:** done 6 October. The old Pro prices and the
       Advanced product are archived; only the three US$12 prices are active.
+- [ ] **60-second promo videos are ready** (7 October) for social posts, with
+      the rock remix: `promo-60.mp4` (1920×1080) and `promo-60-vertical.mp4`
+      (1080×1920) in `brag-output-2026-10-06-232216/`, the CTA frame baked in
+      as frame 0 and `promo-60.jpg` / `promo-60-vertical.jpg` as covers.
+      The music is "Young Black & Rich (Rock Remix)": make sure you have the
+      rights to post it, or swap in the platform's own audio (the silent
+      copies are there for that). A caption is in `share-copy.txt`. The 45 s cuts (`brag.mp4`, `brag-vertical.mp4`) were
+      re-rendered with the four lanes too.
 - [ ] **Beta:** send the unlisted store link to 10–20 testers; ask for honest
       Chrome Web Store reviews, and whether they're happy to be quoted on
       the homepage ([launch.md](guides/launch.md#6-beta-owner-with-us)).
@@ -68,20 +76,6 @@ into the roadmap or changelog. Last reviewed 6 October 2026 (night).
 
 ## Ours
 
-- [ ] **Hero film: re-render the widget and Insights scenes** for the four
-      lanes (they still show Screening chips and a Screening node). Do it in
-      the same pass as the promo videos below, which rebuild the same scenes.
-- [ ] **60-second promo videos with audio** (landscape 1920×1080 and
-      vertical 1080×1920, for social): extend the music cuts from 44.5 s to
-      60 s in the brag project (`brag-output-2026-10-06-232216/`,
-      `work/build.mjs` scene table). The rock remix stays loud from its drop
-      at 47.5 s to about 136 s, so a 60 s cut from 43.3 s ends well inside it;
-      re-time every scene on its beat grid, give each feature more hold time,
-      and land the outro on a strong cue. Build it after ADR-0034, so the
-      board, widget and Insights scenes show the four lanes. Render with
-      `--workers 3`, crop the vertical cut's 8 px strip, bake the poster as
-      frame 0. The silent 45 s hero film on the site stays as it is unless the
-      owner asks ([website.md](guides/website.md#the-hero-film)).
 - [ ] **Account security (ADR-0036, proposed):** optional password with a
       strength check and a reset page (`/auth/reset/`), optional two-step
       sign-in (authenticator app), security-change emails and "Sign out

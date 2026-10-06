@@ -138,16 +138,36 @@ the vertical copy). Every cut lands on the beat grid of "Young Black & Rich
 social cuts share one timeline. The renders there:
 
 - `brag.mp4`, `brag-vertical.mp4`: with the music, for social posts;
-- `brag-silent.mp4`, `brag-vertical-silent.mp4`: the hero's source.
+- `brag-silent.mp4`, `brag-vertical-silent.mp4`: the hero's source;
+- `promo-60.mp4`, `promo-60-vertical.mp4` (and `-silent` copies): a
+  60-second social cut of the same scenes, built with
+  `node work/build.mjs --promo` into `composition-promo/` and
+  `composition-promo-vertical/`. Every boundary sits on a detected beat
+  (`composition/assets/music/cues/rock-remix.music-cues.json`, film time =
+  track time − 43.3 s): each feature gets 9 beats (about 4.1 s) instead of
+  about 6, "That's not all." lands on the strong beat at 28.46 s, and the CTA
+  press on the one at 57.79 s. The build patches each scene's length
+  (`const D`), the background's beat list and dark act, and the outro's
+  press.
+
+Render with `work/render-all.sh` (all four cuts, one at a time, 3 workers),
+then `work/finish.sh <render> <name> [vertical]`, which crops the vertical
+strip, saves the closing frame as `<name>.jpg`, bakes it in as frame 0 (so
+players and social thumbnails show the CTA), and writes the `-silent` copy.
+
+Version 3 (7 October 2026) shows the four board lanes (ADR-0034): the
+widget's chips are Saved, Applied, Interviewing and Offer, and the Insights
+chart goes Applications → Interviewing → Offer, Rejected, Waiting to hear,
+plus No reply.
 
 | File                                                | What                                             |
 | --------------------------------------------------- | ------------------------------------------------ |
-| `site/assets/rolestash-film-2.webm`                 | VP9, 1920×1080, no audio, about 3.6 MB           |
-| `site/assets/rolestash-film-2.mp4`                  | H.264, 1600×900, no audio, about 3.2 MB          |
-| `site/assets/rolestash-film-2-poster.webp`          | The closing frame (CTA), 1600 wide, ~40 KB       |
-| `site/assets/rolestash-film-2-vertical.webm`        | Vertical cut, VP9, 1080×1920, no audio, ~3.4 MB  |
-| `site/assets/rolestash-film-2-vertical.mp4`         | Vertical cut, H.264, 900×1600, no audio, ~3.4 MB |
-| `site/assets/rolestash-film-2-vertical-poster.webp` | Vertical closing frame, 900 wide, ~40 KB         |
+| `site/assets/rolestash-film-3.webm`                 | VP9, 1920×1080, no audio, about 3.6 MB           |
+| `site/assets/rolestash-film-3.mp4`                  | H.264, 1600×900, no audio, about 3.2 MB          |
+| `site/assets/rolestash-film-3-poster.webp`          | The closing frame (CTA), 1600 wide, ~40 KB       |
+| `site/assets/rolestash-film-3-vertical.webm`        | Vertical cut, VP9, 1080×1920, no audio, ~3.4 MB  |
+| `site/assets/rolestash-film-3-vertical.mp4`         | Vertical cut, H.264, 900×1600, no audio, ~3.4 MB |
+| `site/assets/rolestash-film-3-vertical-poster.webp` | Vertical closing frame, 900 wide, ~40 KB         |
 
 - **Player:** always silent (owner's choice, 2026-10-04): the encodes carry
   no audio track, and the `<video muted playsinline loop preload="metadata">`
@@ -166,16 +186,15 @@ social cuts share one timeline. The renders there:
   and the vertical WebM `-crf 40`):
 
   ```bash
-  ffmpeg -i brag-silent.mp4 -c:v libvpx-vp9 -crf 38 -b:v 0 -row-mt 1 -cpu-used 2 -an site/assets/rolestash-film-2.webm
-  ffmpeg -i brag-silent.mp4 -vf scale=1600:-2 -c:v libx264 -preset veryslow -crf 28 -pix_fmt yuv420p -an -movflags +faststart site/assets/rolestash-film-2.mp4
-  ffmpeg -i brag.jpg -vf scale=1600:-2 -c:v libwebp -quality 78 site/assets/rolestash-film-2-poster.webp
+  ffmpeg -i brag-silent.mp4 -c:v libvpx-vp9 -crf 38 -b:v 0 -row-mt 1 -cpu-used 2 -an site/assets/rolestash-film-3.webm
+  ffmpeg -i brag-silent.mp4 -vf scale=1600:-2 -c:v libx264 -preset veryslow -crf 28 -pix_fmt yuv420p -an -movflags +faststart site/assets/rolestash-film-3.mp4
+  ffmpeg -i brag.jpg -vf scale=1600:-2 -c:v libwebp -quality 78 site/assets/rolestash-film-3-poster.webp
   ```
 
   The vertical cut is encoded the same way from `brag-vertical-silent.mp4`
   (MP4 at `scale=900:-2`). HyperFrames pads a 1080-wide render to a multiple
-  of 16, which leaves an 8 px black strip on the right: crop it first with
-  `-vf "crop=1072:1920:0:0,scale=1080:1920"` on the rendered file (done for
-  the current cut).
+  of 16, which leaves an 8 px black strip on the right; `work/finish.sh`
+  crops it (`crop=1072:1920:0:0,scale=1080:1920`).
   Render on this machine with `--workers 3`: the default worker count ran
   out of memory on the vertical render.
 
