@@ -42,8 +42,10 @@ price points. The owner decided on one paid plan.
   this?" prompts.
 - `entitlements.tier = 'advanced'` means Pro. Code comments say so where it
   matters (`src/domain/plan.ts`, `supabase/functions/_shared/paddle.ts`).
-- The Advanced product and the US$7 Pro prices stay active in Paddle for any
-  subscriber still on them; archive them once nobody is.
+- The Advanced product and the older Pro prices were archived in live Paddle
+  on 2026-10-06, once nobody paid them. Archived prices keep their
+  `custom_data.tier`, so the webhook still recognises any subscription left on
+  one.
 - Pro buyers who wanted only the on-device features pay more; Advanced
   buyers pay less.
 

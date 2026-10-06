@@ -239,14 +239,14 @@ production account. The sandbox catalog is kept, matching, for reference.
 
 Checked 6 October 2026, after ADR-0029:
 
-| Piece              | Value                                                                                                                   |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------- |
-| Live prices        | month `pri_01m46d6r756r2swxzfz1zsrwgt`, quarter `pri_01m46d6rvpxtwwykg397j0rfam`, year `pri_01m46d6scqqy0stz0hwcwsxm40` |
-| Supabase secrets   | `PADDLE_PRICE_PRO_*` set to those IDs; `PADDLE_LEGACY_PRICES` unset (the old prices are tagged in Paddle)               |
-| Functions          | all redeployed with `--no-verify-jwt` from the one-plan code                                                            |
-| Database           | migration `20261020120000_one_paid_plan` applied; no `pro` rows left                                                    |
-| Paddle catalog     | `paddle-setup.ts production` dry run: everything in place                                                               |
-| Legacy subscribers | none; the only paid entitlement is the owner's complimentary one                                                        |
+| Piece              | Value                                                                                                                                                                                                   |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Live prices        | month `pri_01m46d6r756r2swxzfz1zsrwgt`, quarter `pri_01m46d6rvpxtwwykg397j0rfam`, year `pri_01m46d6scqqy0stz0hwcwsxm40`                                                                                 |
+| Supabase secrets   | `PADDLE_PRICE_PRO_*` set to those IDs; `PADDLE_LEGACY_PRICES` unset (the old prices are tagged in Paddle)                                                                                               |
+| Functions          | all redeployed with `--no-verify-jwt` from the one-plan code                                                                                                                                            |
+| Database           | migration `20261020120000_one_paid_plan` applied; no `pro` rows left                                                                                                                                    |
+| Paddle catalog     | only Rolestash Pro and its three US$12 prices are active; the US$7/18/59 Pro prices and the Advanced product were archived on 6 October. `paddle-setup.ts production` (dry run and `--check`): in place |
+| Legacy subscribers | none to move (`paddle-migrate-legacy.ts` dry run: 0). The owner's refunded test subscription on the old US$7 price ends on 2 November; their account is complimentary                                   |
 
 To check it again: `npx supabase secrets list` (the values are SHA-256
 digests; compare with `printf %s pri_… | sha256sum`), `npx supabase

@@ -30,9 +30,8 @@ into the roadmap or changelog. Last reviewed 6 October 2026 (evening).
       complimentary one; the owner's test purchase was refunded), so
       `paddle-migrate-legacy.ts` has nothing to move
       ([backend.md](guides/backend.md#paddle-live-state)).
-- [ ] **Paddle tidy-up (optional):** archive the old US$7 Pro prices and the
-      Advanced product in live Paddle, since nobody pays them (ADR-0029 says
-      to once nobody is). Ask us to do it, or do it in the dashboard.
+- [x] **Paddle tidy-up:** done 6 October. The old Pro prices and the
+      Advanced product are archived; only the three US$12 prices are active.
 - [ ] **Beta:** send the unlisted store link to 10–20 testers; ask for honest
       Chrome Web Store reviews, and whether they're happy to be quoted on
       the homepage ([launch.md](guides/launch.md#6-beta-owner-with-us)).
