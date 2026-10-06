@@ -1,6 +1,6 @@
 # ADR-0035: Complimentary grants you can revoke, a referral programme, and discount codes
 
-- **Status:** Proposed (owner request, 2026-10-07). Not built.
+- **Status:** Accepted (owner, 2026-10-07), as written. Not built yet; queued after ADR-0034.
 - Builds on ADR-0025 (complimentary access as data), ADR-0026 (operations
   dashboard; actions need their own decision: this is it for these three),
   ADR-0027 (sign in before website checkout) and ADR-0029 (one Pro plan;

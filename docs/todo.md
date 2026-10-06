@@ -62,7 +62,7 @@ into the roadmap or changelog. Last reviewed 6 October 2026 (night).
 
 ## Ours
 
-- [ ] **Grants, referrals and discount codes (ADR-0035, proposed):**
+- [ ] **Grants, referrals and discount codes (ADR-0035, accepted; after ADR-0034):**
       revocable complimentary Pro (indefinite or dated), "give 50%, get a
       month" referrals, and scripted Paddle discount codes with promo links.
       Build order and estimates in [ADR-0035](adr/0035-grants-referrals-discounts.md).
