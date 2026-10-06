@@ -279,6 +279,12 @@ test.describe('board @smoke', () => {
     extensionId,
   }) => {
     // What 0.4.7 stores: schema v1, the seven columns, jobs in Screening and Withdrawn.
+    // Jobs first, then schema and columns in one write: a migration that starts
+    // after that write always sees the jobs.
+    await seed(worker, [
+      { id: 's', title: 'Platform Engineer', company: 'Northwind Labs', stageId: 'screening' },
+      { id: 'w', title: 'Data Analyst', company: 'Kestrel Health', stageId: 'withdrawn' },
+    ]);
     await worker.evaluate(async () => {
       const col = (
         id: string,
@@ -310,10 +316,6 @@ test.describe('board @smoke', () => {
         },
       });
     });
-    await seed(worker, [
-      { id: 's', title: 'Platform Engineer', company: 'Northwind Labs', stageId: 'screening' },
-      { id: 'w', title: 'Data Analyst', company: 'Kestrel Health', stageId: 'withdrawn' },
-    ]);
     const page = await context.newPage();
     await page.goto(`chrome-extension://${extensionId}/board.html`);
     await expect(
