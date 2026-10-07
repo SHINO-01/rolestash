@@ -28,6 +28,8 @@ All notable changes to this project are documented here. The format follows
 - **Your board on your phone:** Account → Sync shows a QR code for the web
   board. Scan it, sign in with the same email, and add it to your home
   screen.
+- **Report a problem on the web board:** Account on the web board now has
+  _Report a problem_, so you can tell us about an issue from your phone too.
 
 ### Changed
 

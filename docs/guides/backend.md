@@ -250,7 +250,7 @@ Checked 6 October 2026, after ADR-0029:
 | Functions          | all redeployed with `--no-verify-jwt` from the one-plan code                                                                                                                                            |
 | Database           | migration `20261020120000_one_paid_plan` applied; no `pro` rows left                                                                                                                                    |
 | Paddle catalog     | only Rolestash Pro and its three US$12 prices are active; the US$7/18/59 Pro prices and the Advanced product were archived on 6 October. `paddle-setup.ts production` (dry run and `--check`): in place |
-| Legacy subscribers | none to move (`paddle-migrate-legacy.ts` dry run: 0). The owner's refunded test subscription on the old US$7 price ends on 2 November; their account is complimentary                                   |
+| Legacy subscribers | none to move (the one-time move script's dry run found 0; script removed 7 October). The owner's refunded test subscription on the old US$7 price ends on 2 November; their account is complimentary    |
 
 To check it again: `npx supabase secrets list` (the values are SHA-256
 digests; compare with `printf %s pri_… | sha256sum`), `npx supabase

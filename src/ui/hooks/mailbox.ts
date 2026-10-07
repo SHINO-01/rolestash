@@ -3,8 +3,10 @@ import type { MailboxState } from '@/services/mailbox-service';
 import { MAILBOX_STATE_KEY } from '@/storage/keys';
 import { useServices } from './services';
 
-/** The connected mailbox, live from storage. */
-/** `null`: none connected; `undefined`: not known yet (or this build can't connect one). */
+/**
+ * The connected mailbox, live from storage. `null`: none connected;
+ * `undefined`: not known yet (or this build can't connect one).
+ */
 export function useMailboxState(): MailboxState | undefined | null {
   const { mailbox, store } = useServices();
   const [state, setState] = useState<MailboxState | null>();

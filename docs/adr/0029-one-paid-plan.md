@@ -32,7 +32,8 @@ price points. The owner decided on one paid plan.
   `change-plan` accept `tier: 'pro' | 'advanced'` (older extensions) and sell
   the current Pro price; `prices` repeats Pro under `advanced` for them.
 - **Existing subscribers** move to the US$12 price for their interval with
-  `scripts/paddle-migrate-legacy.ts` (no charge now; from the next renewal),
+  `scripts/paddle-migrate-legacy.ts` (no charge now; from the next renewal;
+  it found nobody to move and was removed on 7 October 2026),
   after the 30 days' emailed notice the terms promise. Until then they keep
   their price and get everything. On 2026-10-06 there were none to move.
 

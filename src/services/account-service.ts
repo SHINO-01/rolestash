@@ -435,8 +435,10 @@ export class AccountService implements PlanProvider {
     await this.refreshEntitlement().catch(() => undefined);
   }
 
-  /** Checkout for a new subscription (Free, trial or lapsed accounts). */
-  /** A checkout for this account; `promo` carries a discount or referral code (ADR-0035). */
+  /**
+   * Checkout for a new subscription (Free, trial or lapsed accounts);
+   * `promo` carries a discount or referral code (ADR-0035).
+   */
   async checkoutUrl(
     tier: PaidPlan,
     interval: BillingInterval,
@@ -542,8 +544,7 @@ export class AccountService implements PlanProvider {
     };
   }
 
-  /** A valid access token, refreshing it first when close to expiry. */
-  /** A fresh access token for first-party calls made on the account's behalf. */
+  /** A valid access token for first-party calls, refreshed first when close to expiry. */
   token(): Promise<string> {
     return this.accessToken();
   }

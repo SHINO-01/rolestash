@@ -1,10 +1,12 @@
-import { LogOut } from 'lucide-react';
+import { Bug, LogOut } from 'lucide-react';
+import { useState } from 'react';
 import { planChip, planSummary } from '@/features/account/plan-copy';
 import { ProfileSection } from '@/features/account/profile-section';
 import { ReferralSection } from '@/features/account/referral-section';
 import { SecuritySection } from '@/features/account/security-section';
 import { SyncSection } from '@/features/account/sync-section';
 import { EmailSection } from '@/features/email/email-section';
+import { ReportDialog } from '@/features/feedback/report-dialog';
 import { Button } from '@/ui/components/button';
 import { Chip } from '@/ui/components/chip';
 import { UserAvatar } from '@/ui/components/user-avatar';
@@ -14,10 +16,11 @@ import { DEFAULT_SETTINGS } from '@/domain/settings';
 import { EMAIL_STATE_KEY, SYNC_DELETIONS_KEY, SYNC_STATE_KEY } from '@/storage/keys';
 import { blockExtensionSignIn } from './sign-in';
 
-/** Account on the web board: plan, synced devices, sign out (ADR-0017). */
+/** Account on the web board: plan, synced devices, report a problem, sign out (ADR-0017). */
 export function AccountView() {
   const { account, state } = useAccount();
   const services = useServices();
+  const [reporting, setReporting] = useState(false);
   if (!account || !state) return null;
 
   // The web board's data is only a synced copy: signing out frees this
@@ -63,6 +66,16 @@ export function AccountView() {
       <EmailSection plan={state.plan.plan} trial={state.plan.reason === 'trial'} />
       <ReferralSection account={account} />
       <SecuritySection account={account} state={state} beforeSignOutEverywhere={clearBrowser} />
+      <Button variant="ghost" icon={<Bug className="size-4" />} onClick={() => setReporting(true)}>
+        Report a problem
+      </Button>
+      <ReportDialog
+        open={reporting}
+        onClose={() => setReporting(false)}
+        feedback={services.feedback}
+        where="web board"
+        {...(state.email ? { email: state.email } : {})}
+      />
       <Button variant="ghost" icon={<LogOut className="size-4" />} onClick={() => void signOut()}>
         Sign out and clear this browser
       </Button>

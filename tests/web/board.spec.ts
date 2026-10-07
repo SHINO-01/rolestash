@@ -174,6 +174,26 @@ test('Account shows the referral link once the programme is on (ADR-0035)', asyn
   );
 });
 
+test('Account has "Report a problem", sent from the web board (ADR-0024)', async ({
+  page,
+  site,
+  backend,
+}) => {
+  await signIn(page, site);
+  await page.getByRole('button', { name: 'Account' }).click();
+  await page.getByRole('button', { name: 'Report a problem' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Report a problem' });
+  await expect(dialog.getByLabel('Email for our reply (optional)')).toHaveValue('jo@example.com');
+  await dialog.getByLabel('What happened?').fill('Today is empty on my phone.');
+  await dialog.getByRole('button', { name: 'Send report' }).click();
+  await expect(page.getByText('Report #1 is with a real person.', { exact: false })).toBeVisible();
+  expect(backend.bugReports[0]).toMatchObject({
+    message: 'Today is empty on my phone.',
+    contactEmail: 'jo@example.com',
+    context: { where: 'web board' },
+  });
+});
+
 test('Pro: Today, the board, quick updates and quick add, synced back', async ({
   page,
   site,

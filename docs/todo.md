@@ -29,7 +29,8 @@ into the roadmap or changelog. Last reviewed 7 October 2026.
       applied, and the `paddle-setup.ts` dry run says production is in place.
       No legacy subscribers (the only paid entitlement is the owner's
       complimentary one; the owner's test purchase was refunded), so
-      `paddle-migrate-legacy.ts` has nothing to move
+      there was nothing to move (the one-time move script was removed on
+      7 October)
       ([backend.md](guides/backend.md#paddle-live-state)).
 - [x] **Paddle tidy-up:** done 6 October. The old Pro prices and the
       Advanced product are archived; only the three US$12 prices are active.

@@ -534,7 +534,6 @@ export class SupabaseClient {
     return url;
   }
 
-  /** Moves a live subscription to another plan/interval (prorated by Paddle). */
   /**
    * Plan prices in the caller's own currency, from Paddle (via our prices
    * function, which passes the caller's IP to Paddle and stores nothing).
@@ -582,6 +581,7 @@ export class SupabaseClient {
     return parsed.data.preview;
   }
 
+  /** Moves a live subscription to another plan/interval (prorated by Paddle). */
   async changePlan(accessToken: string, body: { tier: PaidPlan; interval: BillingInterval }) {
     const { status, data } = await this.request('/functions/v1/change-plan', {
       body,
@@ -825,7 +825,6 @@ export class SupabaseClient {
   }
 }
 
-/** URL-safe base64 without padding. */
 /** An authenticator app on the account (ADR-0036). */
 export interface Factor {
   id: string;
@@ -868,6 +867,7 @@ function errorCode(data: unknown): unknown {
   return (data as { error_code?: unknown } | null)?.error_code;
 }
 
+/** URL-safe base64 without padding. */
 export function base64Url(bytes: Uint8Array): string {
   let binary = '';
   for (const b of bytes) binary += String.fromCharCode(b);
