@@ -278,6 +278,19 @@ test.describe('board @smoke', () => {
     worker,
     extensionId,
   }) => {
+    // The fresh install's own first migration must finish first, or it would
+    // stamp schema v2 over the 0.4.7 data seeded below.
+    await expect
+      .poll(() =>
+        worker.evaluate(
+          async () =>
+            (
+              (await chrome.storage.local.get('meta')).meta as
+                { schemaVersion?: number } | undefined
+            )?.schemaVersion,
+        ),
+      )
+      .toBe(2);
     // What 0.4.7 stores: schema v1, the seven columns, jobs in Screening and Withdrawn.
     // Jobs first, then schema and columns in one write: a migration that starts
     // after that write always sees the jobs.
