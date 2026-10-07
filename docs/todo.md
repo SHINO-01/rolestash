@@ -126,7 +126,7 @@ git-ignored `CLAUDE-SECURITY-20261005-025920/OPEN-SECURITY-ISSUES.md` on the
 owner's machine (from the scan of `supabase/` and `infra/`, 5 October 2026).
 Don't put exploit details in commits, issues or PRs until they're fixed.
 
-- [ ] **Scan the rest** once 0.6.0 is packaged (owner, 7 October): only `supabase/` and `infra/` were scanned. Next,
+- [ ] **Scan the rest** on Friday 9 October 2026, after 4 pm Sydney (owner's slot; 0.6.0 is packaged): only `supabase/` and `infra/` were scanned. Next,
       scan the extension (`src/`, about 220 files) and `site/assets`
       (locally, with Claude Security). Everything from the first scan is
       fixed and shipped in v0.4.3.
