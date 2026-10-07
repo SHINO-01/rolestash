@@ -273,7 +273,7 @@ test.describe('board @smoke', () => {
     expect(job.activity.map((a) => a.type)).toEqual(['archived', 'unarchived']);
   });
 
-  test('upgrades a 0.4.7 board to the four lanes (ADR-0034)', async ({
+  test('upgrades a 0.4.7 board to the current lanes (ADR-0034)', async ({
     context,
     worker,
     extensionId,
@@ -334,8 +334,11 @@ test.describe('board @smoke', () => {
     await expect(
       page.getByRole('region', { name: 'Interviewing column' }).getByText('Platform Engineer'),
     ).toBeVisible();
-    await expect(page.getByRole('region', { name: /column$/ })).toHaveCount(4);
-    await expect(page.getByText('Data Analyst')).toBeHidden();
+    await expect(page.getByRole('region', { name: /column$/ })).toHaveCount(5);
+    // The withdrawn job is now in Rejected, the fifth lane.
+    await expect(
+      page.getByRole('region', { name: 'Rejected column' }).getByText('Data Analyst'),
+    ).toBeVisible();
 
     await page.getByRole('button', { name: 'History' }).click();
     const history = page.getByRole('dialog', { name: 'History' });

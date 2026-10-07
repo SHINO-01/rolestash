@@ -45,8 +45,16 @@ export function visibleStages(stages: readonly Stage[]): Stage[] {
   return stages.filter((s) => !s.archived);
 }
 
-/** The columns that get a lane on the board: visible, and not `lost` (ADR-0034). */
+/** The columns that get a lane on the board: every visible one, Rejected included. */
 export function laneStages(stages: readonly Stage[]): Stage[] {
+  return visibleStages(stages);
+}
+
+/**
+ * Where a new job can start (the widget's chips, the capture form, Add job):
+ * the lanes without the `lost` ones; nobody saves a job straight into Rejected.
+ */
+export function captureStages(stages: readonly Stage[]): Stage[] {
   return stages.filter((s) => !s.archived && s.kind !== 'lost');
 }
 

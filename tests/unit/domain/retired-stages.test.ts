@@ -3,6 +3,7 @@ import { normalizeJob, normalizeStages } from '@/domain/retired-stages';
 import { DEFAULT_SETTINGS } from '@/domain/settings';
 import {
   DEFAULT_STAGES,
+  captureStages,
   laneStages,
   retiredStageAlias,
   stageName,
@@ -14,9 +15,21 @@ import { LEGACY_SETTINGS, LEGACY_STAGES } from '../helpers/legacy-stages';
 const ids = (stages: readonly { id: string }[]) => stages.map((s) => s.id);
 
 describe('four board lanes (ADR-0034)', () => {
-  it('has four lanes and Rejected off the board by default', () => {
+  it('has five lanes, Rejected last, and new jobs never start in Rejected', () => {
     expect(ids(DEFAULT_STAGES)).toEqual(['saved', 'applied', 'interviewing', 'offer', 'rejected']);
-    expect(ids(laneStages(DEFAULT_STAGES))).toEqual(['saved', 'applied', 'interviewing', 'offer']);
+    expect(ids(laneStages(DEFAULT_STAGES))).toEqual([
+      'saved',
+      'applied',
+      'interviewing',
+      'offer',
+      'rejected',
+    ]);
+    expect(ids(captureStages(DEFAULT_STAGES))).toEqual([
+      'saved',
+      'applied',
+      'interviewing',
+      'offer',
+    ]);
     expect(ids(visibleStages(DEFAULT_STAGES))).toContain('rejected');
   });
 

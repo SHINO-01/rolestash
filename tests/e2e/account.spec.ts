@@ -585,9 +585,8 @@ test.describe('accounts', () => {
         ticket: QUOKKA_TICKET,
       });
     await unsorted.getByRole('button', { name: 'Close' }).click();
-    // A rejection files the new job under Rejected, which has no lane (ADR-0034).
-    await expect(page.getByText(/in Rejected\. Find it in History\./)).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Product Designer application' })).toBeHidden();
+    // A rejection files the new job under Rejected, in its own lane.
+    await expect(page.getByText(/, in Rejected\./)).toBeVisible();
 
     await page.goto(`chrome-extension://${extensionId}/board.html#account`);
     await expect(page.getByLabel('Your forwarding address')).toHaveText(E2E_INBOX);

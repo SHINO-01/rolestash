@@ -36,7 +36,8 @@ export function BoardColumn({
     <section
       aria-label={`${stage.name} column`}
       className={clsx(
-        'flex max-h-full w-[288px] shrink-0 flex-col rounded-2xl transition-colors',
+        // 288px when there's room; five lanes shrink to fit a 1280px window before it scrolls.
+        'flex max-h-full w-[288px] min-w-[232px] shrink flex-col rounded-2xl transition-colors',
         isOver ? 'bg-accent-soft/60' : 'bg-surface-2/70',
       )}
     >

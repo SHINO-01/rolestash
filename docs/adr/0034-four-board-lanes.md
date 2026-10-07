@@ -1,6 +1,12 @@
 # ADR-0034: Four board lanes; Rejected tracked off the board; Screening and Withdrawn retired
 
 - **Status:** Accepted (owner, 2026-10-07), with the recommended answers below. Built 2026-10-07 (code, tests, docs); ships in 0.5.0 with re-shot clips and screenshots.
+- **Amended 2026-10-08 (owner):** Rejected gets its lane back, so the board has
+  five lanes. Decision 2 ("a `lost` column never gets a lane") no longer
+  holds: `laneStages()` returns every visible column, and the new
+  `captureStages()` (visible, not `lost`) keeps Rejected out of the places a
+  new job starts. Everything else here stands: Screening and Withdrawn stay
+  retired, migration v2 and the read-side normalisation are unchanged.
 - Amends the default columns in `src/domain/stage.ts` and custom columns
   (`src/domain/columns.ts`). Touches ADR-0014 (email intents → columns) and
   Insights.

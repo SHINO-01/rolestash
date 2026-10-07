@@ -16,7 +16,7 @@ import { STAGE_STYLE } from '@/ui/stage-style';
 const KIND_LABEL: Record<StageKind, string> = {
   active: 'In progress',
   won: 'Finished: success',
-  lost: 'Unsuccessful, off the board',
+  lost: 'Finished: unsuccessful',
 };
 
 /**

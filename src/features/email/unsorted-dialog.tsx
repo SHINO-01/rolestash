@@ -71,12 +71,12 @@ function UnsortedItem({ item, jobs }: { item: UnsortedUpdate; jobs: Job[] }) {
         const job =
           kind === 'assign' ? await email.assign(item.id, jobId) : await email.addJob(item.id);
         live.applyLocal([job]);
-        // A rejection puts the job in a column with no lane (ADR-0034): say where it is.
+        // A rejection files the job in Rejected: say which lane it's in.
         const stage = findStage(stages, job.stageId);
         toast({
           message:
             stage?.kind === 'lost'
-              ? `Filed under ${job.title}, in ${stage.name}. Find it in History.`
+              ? `Filed under ${job.title}, in ${stage.name}.`
               : `Filed under ${job.title}`,
           tone: 'success',
         });

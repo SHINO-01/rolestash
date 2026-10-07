@@ -185,7 +185,8 @@ export function Kanban({
       </div>
       <DragOverlay dropAnimation={{ duration: 180, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' }}>
         {activeJob ? (
-          <div className="w-[272px]">
+          // DragOverlay takes the dragged card's own size, whatever its lane's width.
+          <div className="w-full">
             <JobCard job={activeJob} lifted />
           </div>
         ) : null}

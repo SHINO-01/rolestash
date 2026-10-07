@@ -37,10 +37,12 @@ from them. This page explains intent; the code defines shape.
 ## Stage (`domain/stage.ts`)
 
 `{ id, name, color, kind: active|won|lost, marksApplied, archived? }`. Defaults:
-Saved, Applied, Interviewing, Offer (won), Rejected (lost). A `lost` column has
-no lane on the board; jobs reach it from the job drawer, bulk "Move to" or the
-web board's job sheet, and it lists them in History (ADR-0034). Stages are data
-in settings so column customisation needs no migration.
+Saved, Applied, Interviewing, Offer (won), Rejected (lost). Every visible
+column has a lane on the board, Rejected included (`laneStages()`); new jobs
+can't start in a `lost` column (`captureStages()`: the widget's chips, the
+capture form, Add job, the default column). History lists finished jobs too
+(ADR-0034, amended 8 October 2026). Stages are data in settings so column
+customisation needs no migration.
 
 Screening and Withdrawn were default columns until 0.5.0. Storage migration v2
 moved their jobs to Interviewing and Rejected (a withdrawn job gets a

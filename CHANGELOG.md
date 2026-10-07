@@ -6,6 +6,13 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- **Rejected is a lane again:** the board has five lanes, Saved, Applied,
+  Interviewing, Offer and Rejected, so turned-down applications stay in view.
+  Rejected jobs still don't count toward the Free plan's 30 active jobs, and
+  new jobs still start in one of the first four.
+
 ## [0.6.0] — 2026-10-07
 
 ### Added

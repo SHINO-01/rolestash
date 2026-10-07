@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Job } from '@/domain/job';
-import { findStage, laneStages, type Stage, type StageId } from '@/domain/stage';
+import { findStage, captureStages, type Stage, type StageId } from '@/domain/stage';
 import { formatSalary, type ExtractionResult } from '@/extraction';
 import { getWidgetTab, openBoard, type ActiveTab } from '@/platform/tabs';
 import { DuplicateJobError, JobLimitError } from '@/services/job-service';
@@ -495,7 +495,7 @@ function StagePicker({
 }) {
   return (
     <div role="radiogroup" aria-label={label} className="flex flex-wrap gap-1.5">
-      {laneStages(stages).map((stage) => {
+      {captureStages(stages).map((stage) => {
         const on = stage.id === value;
         return (
           <button

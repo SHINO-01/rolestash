@@ -4,11 +4,7 @@ import { laneStages, type Stage, type StageId } from '@/domain/stage';
 /** Column id → ordered job ids. The unit of state for drag-and-drop. */
 export type Columns = Record<StageId, string[]>;
 
-/**
- * Lanes for the board: one per visible, non-`lost` column (ADR-0034). Jobs in
- * a `lost` column (Rejected) have no lane; they're reached from History and
- * the job drawer.
- */
+/** Lanes for the board: one per visible column, Rejected included (owner, 8 October 2026). */
 export function groupIntoColumns(
   stages: readonly Stage[],
   jobs: readonly Job[],
@@ -17,12 +13,10 @@ export function groupIntoColumns(
   const columns: Columns = Object.fromEntries(
     laneStages(stages).map((s) => [s.id, [] as string[]]),
   );
-  const lost = new Set(stages.filter((s) => s.kind === 'lost').map((s) => s.id));
   const sorted = [...jobs].sort(
     (a, b) => a.rank - b.rank || a.createdAt.localeCompare(b.createdAt),
   );
   for (const job of sorted) {
-    if (lost.has(job.stageId)) continue;
     // Jobs in a stage that no longer exists stay visible in the default column.
     (columns[job.stageId] ?? columns[defaultStageId] ?? Object.values(columns)[0])?.push(job.id);
   }

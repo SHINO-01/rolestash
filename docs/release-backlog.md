@@ -33,8 +33,20 @@ _Last updated 7 October 2026._
 
 ## Next, in order
 
-Nothing queued. Add the next release here when something user-facing lands
-under _Unreleased_ in `CHANGELOG.md`.
+### 1. 0.6.1: Rejected is a lane again
+
+- **State:** on `dev` under _Unreleased_ in `CHANGELOG.md` (8 October 2026);
+  not tagged. The web board already shows the fifth lane: it deploys with the
+  site.
+- **Contains:** five lanes (Saved, Applied, Interviewing, Offer, Rejected);
+  lanes narrow down to 232px so all five fit a 1280px window; new jobs still
+  can't start in Rejected (ADR-0034, amended).
+- **Ship it, after 0.6.0 is approved:** `npm run release -- patch` on `dev`
+  (Sydney's date), push, then the release-repo PR with new screenshots:
+  `npm run store:screenshots` and copy `.output/store-screenshots/*.png`
+  into the release repo's `store/screenshots/` (the board shot now shows
+  five lanes). Upload them in the dashboard after the submission. The
+  homepage clips and films still show four lanes; re-shoot when convenient.
 
 ## Adding to the backlog
 
