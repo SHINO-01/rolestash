@@ -1,5 +1,5 @@
 import { opsAdmin } from './admin';
-import { moveRenewal } from './paddle-admin';
+import { moveRenewal, paddleConfigured } from './paddle-admin';
 import type { Deps, Env } from './panels';
 
 /**
@@ -31,7 +31,7 @@ export async function runReferralJob(env: Env, deps: Deps, actor: string): Promi
     paddleFallback: 0,
     failed: 0,
   };
-  if (!env.PADDLE_API_KEY) return summary; // they wait, and show on the Referrals page
+  if (!paddleConfigured(env)) return summary; // they wait, and show on the Referrals page
   const due = await opsAdmin<{ id: number; subscription_id: string | null }[]>(
     env,
     deps,

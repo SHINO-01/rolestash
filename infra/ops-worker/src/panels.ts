@@ -5,7 +5,7 @@
  * the rest of the page still renders. Errors never include secrets.
  */
 
-import { paddleError } from './paddle-admin';
+import { paddleError, paddleKey } from './paddle-admin';
 
 export interface Env {
   ACCESS_TEAM_DOMAIN?: string;
@@ -119,7 +119,7 @@ export class PanelError extends Error {
 
 export async function paddlePanel(env: Env, deps: Deps): Promise<Panel> {
   const title = 'Revenue (Paddle)';
-  const key = env.PADDLE_API_KEY;
+  const key = paddleKey(env);
   if (!key) return notConfigured(title, 'PADDLE_API_KEY (read-only)');
   const base = 'https://api.paddle.com';
   const auth = { headers: { Authorization: `Bearer ${key}` } };

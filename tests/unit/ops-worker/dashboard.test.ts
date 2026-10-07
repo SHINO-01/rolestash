@@ -3,7 +3,11 @@ import { handle } from '../../../infra/ops-worker/src/app';
 import { signForm, verifyForm } from '../../../infra/ops-worker/src/forms';
 import { html } from '../../../infra/ops-worker/src/html';
 import { runReferralJob } from '../../../infra/ops-worker/src/jobs';
-import { plusOneMonth, sydneyEndOfDay } from '../../../infra/ops-worker/src/paddle-admin';
+import {
+  paddleKey,
+  plusOneMonth,
+  sydneyEndOfDay,
+} from '../../../infra/ops-worker/src/paddle-admin';
 import type { Env } from '../../../infra/ops-worker/src/panels';
 
 /**
@@ -322,6 +326,12 @@ describe('pages', () => {
     expect(discounts).toContain('4 / 200');
     expect(discounts).toContain('Ended or archived (1)');
     expect(discounts).not.toContain('dsc_01bbbbbbbbbb'); // the referral discount lives on Referrals
+  });
+
+  it('sends the Paddle key without what a paste can add (spaces, quotes, Bearer)', () => {
+    for (const raw of ['pdl_live_apikey_x\n', ' "pdl_live_apikey_x" ', 'Bearer pdl_live_apikey_x'])
+      expect(paddleKey({ ...ENV, PADDLE_API_KEY: raw })).toBe('pdl_live_apikey_x');
+    expect(paddleKey({ ...ENV, PADDLE_API_KEY: '  ' })).toBe('');
   });
 
   it("says why Paddle refused the key, in Paddle's own words", async () => {

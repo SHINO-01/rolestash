@@ -62,7 +62,20 @@ export interface Discount {
 const base = (env: Env) =>
   env.PADDLE_ENV === 'sandbox' ? 'https://sandbox-api.paddle.com' : 'https://api.paddle.com';
 
-export const paddleConfigured = (env: Env): boolean => Boolean(env.PADDLE_API_KEY);
+/**
+ * The Paddle key as stored, cleaned of what a paste can add: spaces and line
+ * breaks, quotes, or a "Bearer " prefix. Paddle answers
+ * authentication_malformed to any of them.
+ */
+export function paddleKey(env: Env): string {
+  return (env.PADDLE_API_KEY ?? '')
+    .trim()
+    .replace(/^["']|["']$/g, '')
+    .replace(/^Bearer\s+/i, '')
+    .trim();
+}
+
+export const paddleConfigured = (env: Env): boolean => Boolean(paddleKey(env));
 
 async function call<T>(
   env: Env,
@@ -71,10 +84,11 @@ async function call<T>(
   path: string,
   body?: unknown,
 ): Promise<T> {
-  if (!env.PADDLE_API_KEY) throw new PaddleAdminError('Paddle changes need PADDLE_API_KEY.');
+  const key = paddleKey(env);
+  if (!key) throw new PaddleAdminError('Paddle changes need PADDLE_API_KEY.');
   const response = await deps.fetch(`${base(env)}${path}`, {
     method,
-    headers: { Authorization: `Bearer ${env.PADDLE_API_KEY}`, 'Content-Type': 'application/json' },
+    headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     signal: AbortSignal.timeout(8_000),
   });
