@@ -3,6 +3,7 @@ import {
   type EmailLayout,
   type EmailParts,
 } from '../../../supabase/functions/_shared/email-layout';
+import { cleanKey } from './keys';
 import type { Deps, Env } from './panels';
 
 /**
@@ -151,7 +152,7 @@ export class SendError extends Error {
   override name = 'SendError';
 }
 
-export const senderConfigured = (env: Env): boolean => Boolean(env.RESEND_SEND_KEY);
+export const senderConfigured = (env: Env): boolean => Boolean(cleanKey(env.RESEND_SEND_KEY));
 
 /** The opt-out link for a contact token (handled by the launch-list function). */
 export const optOutUrl = (env: Env, token: string): string =>
@@ -168,7 +169,8 @@ export async function sendEmails(
   messages: Message[],
   key: string,
 ): Promise<number> {
-  if (!env.RESEND_SEND_KEY) throw new SendError('Sending needs RESEND_SEND_KEY.');
+  const sendKey = cleanKey(env.RESEND_SEND_KEY);
+  if (!sendKey) throw new SendError('Sending needs RESEND_SEND_KEY.');
   let sent = 0;
   for (let i = 0; i < messages.length; i += 100) {
     const chunk = messages.slice(i, i + 100).map((m) => ({
@@ -190,17 +192,25 @@ export async function sendEmails(
     const response = await deps.fetch('https://api.resend.com/emails/batch', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${env.RESEND_SEND_KEY}`,
+        Authorization: `Bearer ${sendKey}`,
         'Content-Type': 'application/json',
         'Idempotency-Key': `${key}-${String(i / 100)}`.slice(0, 256),
       },
       body: JSON.stringify(chunk),
       signal: AbortSignal.timeout(15_000),
     });
-    if (!response.ok)
+    if (!response.ok) {
+      // Resend's own words ("missing_api_key: Missing API key in the
+      // authorization header.") say what to fix; they never echo the key.
+      const err = (await response.json().catch(() => ({}))) as {
+        name?: unknown;
+        message?: unknown;
+      };
+      const why = [err.name, err.message].filter((v) => typeof v === 'string' && v).join(': ');
       throw new SendError(
-        `Resend refused the emails (HTTP ${String(response.status)})${sent ? ` after ${String(sent)} were sent` : ''}.`,
+        `Resend refused the emails (HTTP ${String(response.status)}${why ? `, ${why.slice(0, 160)}` : ''})${sent ? ` after ${String(sent)} were sent` : ''}.`,
       );
+    }
     sent += chunk.length;
   }
   return sent;

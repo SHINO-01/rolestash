@@ -5,6 +5,7 @@
  * the rest of the page still renders. Errors never include secrets.
  */
 
+import { cleanKey } from './keys';
 import { paddleError, paddleKey } from './paddle-admin';
 
 export interface Env {
@@ -314,8 +315,9 @@ export async function githubPanel(env: Env, deps: Deps): Promise<Panel> {
 
 export async function resendPanel(env: Env, deps: Deps): Promise<Panel> {
   const title = 'Email (Resend)';
-  if (!env.RESEND_API_KEY) return notConfigured(title, 'RESEND_API_KEY');
-  const auth = { headers: { Authorization: `Bearer ${env.RESEND_API_KEY}` } };
+  const readKey = cleanKey(env.RESEND_API_KEY);
+  if (!readKey) return notConfigured(title, 'RESEND_API_KEY');
+  const auth = { headers: { Authorization: `Bearer ${readKey}` } };
   const [domains, emails] = await Promise.all([
     getJson(deps, 'https://api.resend.com/domains', auth),
     getJson(deps, 'https://api.resend.com/emails?limit=100', auth),

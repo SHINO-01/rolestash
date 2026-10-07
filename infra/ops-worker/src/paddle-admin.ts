@@ -1,3 +1,4 @@
+import { cleanKey } from './keys';
 import type { Deps, Env } from './panels';
 
 /**
@@ -62,18 +63,8 @@ export interface Discount {
 const base = (env: Env) =>
   env.PADDLE_ENV === 'sandbox' ? 'https://sandbox-api.paddle.com' : 'https://api.paddle.com';
 
-/**
- * The Paddle key as stored, cleaned of what a paste can add: spaces and line
- * breaks, quotes, or a "Bearer " prefix. Paddle answers
- * authentication_malformed to any of them.
- */
-export function paddleKey(env: Env): string {
-  return (env.PADDLE_API_KEY ?? '')
-    .trim()
-    .replace(/^["']|["']$/g, '')
-    .replace(/^Bearer\s+/i, '')
-    .trim();
-}
+/** The Paddle key as stored, without what a paste can add (keys.ts). */
+export const paddleKey = (env: Env): string => cleanKey(env.PADDLE_API_KEY);
 
 export const paddleConfigured = (env: Env): boolean => Boolean(paddleKey(env));
 

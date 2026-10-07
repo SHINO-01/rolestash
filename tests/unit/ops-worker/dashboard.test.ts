@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { handle } from '../../../infra/ops-worker/src/app';
+import { sendEmails } from '../../../infra/ops-worker/src/emails';
 import { signForm, verifyForm } from '../../../infra/ops-worker/src/forms';
 import { html } from '../../../infra/ops-worker/src/html';
 import { runReferralJob } from '../../../infra/ops-worker/src/jobs';
@@ -739,6 +740,43 @@ describe('customer emails (ADR-0038)', () => {
     calls
       .filter((c) => c.url === 'https://api.resend.com/emails/batch')
       .flatMap((c) => c.body as Mail[]);
+
+  it("sends with the key as pasted, cleaned, and names Resend's reason when it refuses", async () => {
+    const seen: string[] = [];
+    const answer = (status: number, body: unknown) =>
+      ((_input: RequestInfo | URL, init: RequestInit = {}) => {
+        seen.push(new Headers(init.headers).get('Authorization') ?? '');
+        return Promise.resolve(new Response(JSON.stringify(body), { status }));
+      }) as typeof fetch;
+    const message = {
+      to: 'dana@example.com',
+      email: { subject: 'Hi', html: '<p>Hi</p>', text: 'Hi' },
+    } as Parameters<typeof sendEmails>[2][number];
+    for (const raw of ['"re_send"', 'Bearer re_send', ' re_send\n'])
+      await sendEmails(
+        { ...ENV, RESEND_SEND_KEY: raw },
+        { fetch: answer(200, { data: [] }), now: NOW },
+        [message],
+        'k',
+      );
+    expect(seen).toEqual(['Bearer re_send', 'Bearer re_send', 'Bearer re_send']);
+    await expect(
+      sendEmails(
+        { ...ENV, RESEND_SEND_KEY: 're_send' },
+        {
+          fetch: answer(401, {
+            name: 'missing_api_key',
+            message: 'Missing API key in the authorization header.',
+          }),
+          now: NOW,
+        },
+        [message],
+        'k',
+      ),
+    ).rejects.toThrow(
+      'Resend refused the emails (HTTP 401, missing_api_key: Missing API key in the authorization header.).',
+    );
+  });
 
   it('emails someone who was given Pro, without an opt-out (a service message)', async () => {
     const { fetch, calls } = backend({
