@@ -18,6 +18,11 @@ All notable changes to this project are documented here. The format follows
   characters and not easy to guess (checked on your device). Codes and
   Google keep working. "Forgot password?" emails a link to choose a new one,
   which signs out every device.
+- **Two-step sign-in:** turn it on in Account → Security with any
+  authenticator app (Google or Microsoft Authenticator, 1Password, Authy).
+  Every sign-in then also asks for the app's code, so someone who gets into
+  your email still can't get in. Add a backup app in case you lose your
+  phone.
 - **Sign out everywhere:** Account → Security ends your sessions on every
   device at once.
 - **Your board on your phone:** Account → Sync shows a QR code for the web

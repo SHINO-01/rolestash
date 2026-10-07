@@ -4,6 +4,7 @@ import type { AccountService, AccountState } from '@/services/account-service';
 import { Button } from '@/ui/components/button';
 import { useToast } from '@/ui/components/toast';
 import { NewPasswordForm } from './new-password-form';
+import { TwoStepPanel } from './two-step-panel';
 import { backendErrorMessage } from './plan-copy';
 
 /**
@@ -76,6 +77,10 @@ export function SecuritySection({
           </Button>
         </>
       )}
+
+      <div className="border-line mt-4 border-t pt-1">
+        <TwoStepPanel account={account} on={state.twoStep} />
+      </div>
 
       <div className="border-line mt-4 border-t pt-3">
         {confirming ? (

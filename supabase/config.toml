@@ -250,6 +250,16 @@ content_path = "./supabase/templates/sign-in-code.html"
 subject = "Reset your Rolestash password"
 content_path = "./supabase/templates/reset-password.html"
 
+[auth.email.notification.mfa_factor_enrolled]
+enabled = true
+subject = "Two-step sign-in is on for your Rolestash account"
+content_path = "./supabase/templates/two-step-on.html"
+
+[auth.email.notification.mfa_factor_unenrolled]
+enabled = true
+subject = "An authenticator app was removed from your Rolestash account"
+content_path = "./supabase/templates/two-step-removed.html"
+
 [auth.email.notification.password_changed]
 enabled = true
 subject = "Your Rolestash password was changed"
@@ -315,10 +325,10 @@ auth_token = "env(SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN)"
 # Control how many MFA factors can be enrolled at once per user.
 max_enrolled_factors = 10
 
-# Control MFA via App Authenticator (TOTP)
+# Control MFA via App Authenticator (TOTP): optional two-step sign-in (ADR-0036).
 [auth.mfa.totp]
-enroll_enabled = false
-verify_enabled = false
+enroll_enabled = true
+verify_enabled = true
 
 # Configure MFA via Phone Messaging
 [auth.mfa.phone]

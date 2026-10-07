@@ -563,6 +563,39 @@ describe('actions', () => {
   });
 });
 
+describe('account help (ADR-0036)', () => {
+  it('turns off two-step sign-in for someone who lost their phone, after a typed confirmation', async () => {
+    const { fetch, calls } = backend({
+      'admin accounts.two_step': adminAnswer({ has_account: true, authenticators: 1 }),
+      'admin accounts.two_step_off': adminAnswer({ outcome: 'removed', removed: 1 }),
+    });
+    const preview = await post(
+      { ...(await firstStep('account.two_step_off')), email: 'Kim@Example.com' },
+      { fetch },
+    );
+    const page = await preview.text();
+    expect(page).toContain('signs them out on');
+    expect(page).toContain('Type <b>kim@example.com</b> to confirm');
+    const done = await post({ ...confirmFields(page), _typed: 'kim@example.com' }, { fetch });
+    expect(done.status).toBe(303);
+    expect(
+      calls.find((c) => (c.body as { p_action?: string }).p_action === 'accounts.two_step_off')
+        ?.body,
+    ).toMatchObject({ p_args: { email: 'kim@example.com' } });
+  });
+
+  it("refuses when there's nothing to turn off", async () => {
+    const { fetch } = backend({
+      'admin accounts.two_step': adminAnswer({ has_account: true, authenticators: 0 }),
+    });
+    const res = await post(
+      { ...(await firstStep('account.two_step_off')), email: 'lee@example.com' },
+      { fetch },
+    );
+    expect(await res.text()).toContain('have two-step sign-in on');
+  });
+});
+
 describe('customer emails (ADR-0038)', () => {
   const SEND_ENV: Env = { ...ENV, RESEND_SEND_KEY: 're_send' };
   const RESEND = 'POST https://api.resend.com/emails/batch';

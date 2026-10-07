@@ -35,6 +35,7 @@ import { ReferralSection } from './referral-section';
 import { SyncSection } from './sync-section';
 import { PasswordSignIn } from './password-sign-in';
 import { SecuritySection } from './security-section';
+import { SecondStep } from './second-step';
 
 const SITE = 'https://rolestash.com';
 
@@ -53,15 +54,25 @@ export function AccountDialog({
     <Dialog
       open={open}
       onClose={onClose}
-      title={state?.signedIn ? 'Your account' : `Start your ${String(TRIAL_DAYS)}-day free trial`}
+      title={
+        state?.signedIn
+          ? 'Your account'
+          : state?.needsSecondStep
+            ? 'Two-step sign-in'
+            : `Start your ${String(TRIAL_DAYS)}-day free trial`
+      }
       description={
         state?.signedIn
           ? state.email
-          : `${String(TRIAL_DAYS)} days of Pro: unlimited jobs, email updates, autofill, insights, sync and more. No card needed.`
+          : state?.needsSecondStep
+            ? 'One more step to sign in.'
+            : `${String(TRIAL_DAYS)} days of Pro: unlimited jobs, email updates, autofill, insights, sync and more. No card needed.`
       }
     >
       {state?.signedIn ? (
         <SignedIn account={account} state={state} />
+      ) : state?.needsSecondStep ? (
+        <SecondStep account={account} />
       ) : (
         <SignIn account={account} />
       )}

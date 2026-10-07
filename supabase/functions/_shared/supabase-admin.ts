@@ -50,6 +50,17 @@ export type CheckoutCode =
       discount_id?: string | null;
     };
 
+/** The assurance level claim of an access token Supabase Auth has just accepted. */
+export function assuranceLevel(accessToken: string): string | null {
+  try {
+    const part = (accessToken.split('.')[1] ?? '').replace(/-/g, '+').replace(/_/g, '/');
+    const aal = (JSON.parse(atob(part)) as { aal?: unknown }).aal;
+    return typeof aal === 'string' ? aal : null;
+  } catch {
+    return null;
+  }
+}
+
 export class SupabaseAdmin {
   constructor(
     private readonly config: SupabaseAdminConfig,
@@ -64,16 +75,25 @@ export class SupabaseAdmin {
     };
   }
 
-  /** Resolves a user's access token to the user, or null if it's invalid or expired. */
+  /**
+   * Resolves a user's access token to the user, or null if it's invalid or
+   * expired, or if the account has two-step sign-in on and this session
+   * hasn't done the second step (ADR-0036).
+   */
   async userFromToken(accessToken: string): Promise<AuthUser | null> {
     const response = await this.fetchFn(`${this.config.url}/auth/v1/user`, {
       headers: { apikey: this.config.anonKey, Authorization: `Bearer ${accessToken}` },
     });
     if (!response.ok) return null;
-    const user = (await response.json()) as { id?: unknown; email?: unknown };
-    return typeof user.id === 'string'
-      ? { id: user.id, email: typeof user.email === 'string' ? user.email : null }
-      : null;
+    const user = (await response.json()) as {
+      id?: unknown;
+      email?: unknown;
+      factors?: { status?: unknown }[] | null;
+    };
+    if (typeof user.id !== 'string') return null;
+    const twoStep = (user.factors ?? []).some((f) => f.status === 'verified');
+    if (twoStep && assuranceLevel(accessToken) !== 'aal2') return null;
+    return { id: user.id, email: typeof user.email === 'string' ? user.email : null };
   }
 
   /** The account's name and welcome-email state, or null with no profile row. */

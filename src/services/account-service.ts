@@ -12,6 +12,7 @@ import { AccountProfileSchema, firstNameFrom, type AccountProfile } from '@/doma
 import {
   ACCOUNT_ENTITLEMENT_KEY,
   ACCOUNT_PROFILE_KEY,
+  ACCOUNT_SECOND_STEP_KEY,
   ACCOUNT_SESSION_KEY,
   ACCOUNT_SHARING_OPT_OUT_KEY,
   ACCOUNT_PRICES_KEY,
@@ -24,6 +25,7 @@ import {
   SessionSchema,
   type LocalPrices,
   type PlanChangePreview,
+  type Factor,
   type Referral,
   type Session,
   type SupabaseClient,
@@ -61,6 +63,10 @@ export interface AccountState {
   needsName: boolean;
   /** The account has a password (ADR-0036). */
   hasPassword: boolean;
+  /** The account has two-step sign-in on (an authenticator app; ADR-0036). */
+  twoStep: boolean;
+  /** Signed in, but waiting for the authenticator code (not signed in until then). */
+  needsSecondStep: boolean;
 }
 
 /** Where a password reset link lands: the web board, which asks for the new password. */
@@ -117,6 +123,12 @@ export class AccountService implements PlanProvider {
         : {}),
       needsName: session !== undefined && !name && skipped !== session.user.id,
       hasPassword: session?.user.hasPassword === true,
+      twoStep: session?.user.twoStep === true,
+      needsSecondStep:
+        !session &&
+        SessionSchema.safeParse(
+          (await this.store.get([ACCOUNT_SECOND_STEP_KEY]))[ACCOUNT_SECOND_STEP_KEY],
+        ).success,
     };
   }
 
@@ -133,6 +145,7 @@ export class AccountService implements PlanProvider {
     return this.store.subscribe((changes) => {
       if (
         ACCOUNT_SESSION_KEY in changes ||
+        ACCOUNT_SECOND_STEP_KEY in changes ||
         ACCOUNT_ENTITLEMENT_KEY in changes ||
         ACCOUNT_PROFILE_KEY in changes
       )
@@ -192,6 +205,72 @@ export class AccountService implements PlanProvider {
     await this.client.signOutEverywhere(recoveryToken).catch(() => undefined);
   }
 
+  private async waitingSession(): Promise<Session> {
+    const pending = SessionSchema.safeParse(
+      (await this.store.get([ACCOUNT_SECOND_STEP_KEY]))[ACCOUNT_SECOND_STEP_KEY],
+    );
+    if (!pending.success) throw new BackendError('session_expired');
+    return pending.data;
+  }
+
+  /** Finishes a sign-in with the 6-digit code from the authenticator app. */
+  async verifySecondStep(code: string): Promise<void> {
+    const pending = await this.waitingSession();
+    const factor = (await this.client.factors(pending.accessToken)).find((f) => f.verified);
+    if (!factor) throw new BackendError('server');
+    await this.signedIn(
+      await this.client.verifyTotp(pending.accessToken, factor.id, code.replace(/\s/g, '')),
+    );
+  }
+
+  /** Gives up a sign-in waiting for its code. */
+  async cancelSecondStep(): Promise<void> {
+    const pending = await this.waitingSession().catch(() => undefined);
+    await this.store.remove([ACCOUNT_SECOND_STEP_KEY]);
+    if (pending) await this.client.signOut(pending.accessToken);
+  }
+
+  /** The account's authenticator apps, verified ones only. */
+  async authenticators(): Promise<Factor[]> {
+    return (await this.client.factors(await this.accessToken())).filter((f) => f.verified);
+  }
+
+  /**
+   * Starts adding an authenticator app: clears any half-added one, then
+   * returns the otpauth:// link for the QR code and the secret to type in.
+   */
+  async startAuthenticator(): Promise<{ id: string; uri: string; secret: string }> {
+    const token = await this.accessToken();
+    const factors = await this.client.factors(token);
+    for (const f of factors.filter((x) => !x.verified)) await this.client.removeFactor(token, f.id);
+    const taken = new Set(factors.filter((f) => f.verified).map((f) => f.name));
+    let name = 'Authenticator app';
+    for (let n = 2; taken.has(name); n++) name = `Authenticator app ${String(n)}`;
+    return this.client.enrollTotp(token, name);
+  }
+
+  /** Confirms a new authenticator app with its first code; two-step sign-in is on from now. */
+  async confirmAuthenticator(factorId: string, code: string): Promise<void> {
+    const session = await this.client.verifyTotp(
+      await this.accessToken(),
+      factorId,
+      code.replace(/\s/g, ''),
+    );
+    await this.store.set({ [ACCOUNT_SESSION_KEY]: session });
+  }
+
+  /** Removes an authenticator app; removing the last turns two-step sign-in off. */
+  async removeAuthenticator(factorId: string): Promise<void> {
+    const token = await this.accessToken();
+    await this.client.removeFactor(token, factorId);
+    const left = (await this.client.factors(token)).some((f) => f.verified);
+    const { session } = await this.load();
+    if (session)
+      await this.store.set({
+        [ACCOUNT_SESSION_KEY]: { ...session, user: { ...session.user, twoStep: left } },
+      });
+  }
+
   /** Signs this account out on every device, this one included (ADR-0036). */
   async signOutEverywhere(): Promise<void> {
     await this.client.signOutEverywhere(await this.accessToken());
@@ -230,6 +309,13 @@ export class AccountService implements PlanProvider {
   }
 
   private async signedIn(session: Session): Promise<void> {
+    // Two-step sign-in (ADR-0036): until the authenticator code is entered,
+    // the session waits on its own and nothing uses it.
+    if (session.user.twoStep && session.aal !== 'aal2') {
+      await this.store.set({ [ACCOUNT_SECOND_STEP_KEY]: session });
+      return;
+    }
+    await this.store.remove([ACCOUNT_SECOND_STEP_KEY]);
     await this.store.set({ [ACCOUNT_SESSION_KEY]: session });
     await this.refreshEntitlement();
     await this.refreshProfile().catch(() => undefined);
@@ -422,6 +508,7 @@ export class AccountService implements PlanProvider {
   private async clear(): Promise<void> {
     await this.store.remove([
       ACCOUNT_SESSION_KEY,
+      ACCOUNT_SECOND_STEP_KEY,
       ACCOUNT_ENTITLEMENT_KEY,
       ACCOUNT_PROFILE_KEY,
       ACCOUNT_SHARING_OPT_OUT_KEY,

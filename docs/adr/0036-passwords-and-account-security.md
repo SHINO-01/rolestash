@@ -1,7 +1,6 @@
 # ADR-0036: Account security: no required password; optional password with reset, and optional two-step sign-in
 
-- **Status:** Accepted (owner, 2026-10-07). Steps 1 and 2 built for 0.6.0;
-  two-step sign-in (step 3) next.
+- **Status:** Accepted (owner, 2026-10-07). Built for 0.6.0.
 
 ## As built (steps 1 and 2)
 
@@ -20,10 +19,27 @@
 - **Security-change emails** are Supabase's own notifications ("Password
   changed"), with our template (`supabase/templates/password-changed.html`),
   instead of a function of ours.
-- **Two-step sign-in (next)** must also be enforced by the database: once an
-  account has a verified authenticator, row-level security has to refuse
-  sessions without the second step (`aal2`), or the app check alone could be
-  skipped by calling the API directly.
+
+## As built (step 3: two-step sign-in)
+
+- **Supabase Auth's TOTP factors**, free on every plan: any authenticator
+  app works. The QR code is drawn on the device from the `otpauth://` link
+  (`ui/components/qr-code.tsx`); the key can be typed instead.
+- **A sign-in waits** (`account:second-step`) until the code is entered, and
+  nothing uses that session: no plan checks, sync or email updates.
+- **The database enforces it,** not just the app: `public.require_two_step`
+  runs before every API request (`pgrst.db_pre_request` on the
+  `authenticator` role). Once an account has a verified authenticator, a
+  session without the second step (`aal1`) gets 403 `two_step_required` for
+  every table and function. Edge Functions refuse such sessions too
+  (`SupabaseAdmin.userFromToken`). Tested end to end against a local
+  Supabase.
+- **No recovery codes:** Supabase Auth has none. Instead: a backup
+  authenticator (up to 10), and support. The owner checks it's them, then
+  Grants → "Account help: lost authenticator" removes their authenticators
+  and ends their sessions (`ops_admin('accounts.two_step_off')`, logged).
+- **Security notices** for adding and removing an authenticator are
+  Supabase's notifications, with our templates.
 
 - Builds on ADR-0011 (accounts: email code via Supabase Auth) and ADR-0012
   (Google sign-in). The free plan still needs no account.

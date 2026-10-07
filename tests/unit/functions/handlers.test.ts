@@ -71,6 +71,20 @@ describe('user endpoints', () => {
     expect((await handleBillingPortal(noAuth, d)).status).toBe(401);
   });
 
+  it('refuses a session without the second step once two-step sign-in is on (ADR-0036)', async () => {
+    const jwt = (aal: string) => `h.${btoa(JSON.stringify({ aal }))}.s`;
+    const { deps: d } = deps({
+      [`GET ${SB}/auth/v1/user`]: () => ({
+        status: 200,
+        body: { ...USER, factors: [{ status: 'verified', factor_type: 'totp' }] },
+      }),
+      [`GET ${SB}/rest/v1/entitlements`]: entitlementRoute(null),
+    });
+    expect((await handleDeleteAccount(post({}, jwt('aal1')), d)).status).toBe(401);
+    // With the second step it goes on to the endpoint's own checks.
+    expect((await handleBillingPortal(post({}, jwt('aal2')), d)).status).toBe(404);
+  });
+
   it('create-checkout returns a Paddle checkout URL for the chosen interval', async () => {
     const { deps: d, calls } = deps({
       [`GET ${SB}/rest/v1/entitlements`]: entitlementRoute({ status: 'trialing' }),

@@ -285,6 +285,52 @@ export const ACTIONS: Record<string, Action> = {
     },
   },
 
+  'account.two_step_off': {
+    page: '/grants',
+    title: 'Turn off two-step sign-in',
+    typed: (a) => a.email ?? '',
+    parse(form) {
+      const email = field(form, 'email').toLowerCase();
+      return EMAIL.test(email) ? { email } : 'Enter an email address.';
+    },
+    async preview(ctx, a) {
+      const p = await opsAdmin<{ has_account: boolean; authenticators: number }>(
+        ctx.env,
+        ctx.deps,
+        ctx.actor,
+        'accounts.two_step',
+        { email: a.email },
+      );
+      if (!p.has_account) throw new ActionError(`${a.email ?? ''} has no account.`);
+      if (!p.authenticators)
+        throw new ActionError(`${a.email ?? ''} doesn't have two-step sign-in on.`);
+      return {
+        lines: [
+          html`Removes <b>${p.authenticators}</b> authenticator
+            app${p.authenticators === 1 ? '' : 's'} from <b>${a.email}</b> and signs them out on
+            every device. They sign in again with an emailed code, and can turn two-step sign-in
+            back on in Account.`,
+          html`Only do this after checking it's them: they emailed from this address, and can answer
+          something only they'd know (their plan, roughly when they signed up).`,
+        ],
+        button: 'Turn off',
+        danger: true,
+      };
+    },
+    async apply(ctx, a) {
+      const r = await opsAdmin<{ outcome: string }>(
+        ctx.env,
+        ctx.deps,
+        ctx.actor,
+        'accounts.two_step_off',
+        a,
+      );
+      return r.outcome === 'removed'
+        ? `Two-step sign-in is off for ${a.email ?? ''}; they're signed out everywhere.`
+        : `${a.email ?? ''} had no authenticator.`;
+    },
+  },
+
   'code.create': {
     page: '/discounts',
     title: 'Create a discount code',

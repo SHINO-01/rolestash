@@ -23,6 +23,8 @@ export const jobKey = (id: string): string => `${JOB_KEY_PREFIX}${id}`;
 export const isJobKey = (key: string): boolean => key.startsWith(JOB_KEY_PREFIX);
 
 export const ACCOUNT_SESSION_KEY = 'account:session';
+/** A sign-in waiting for its authenticator code (ADR-0036); never used for calls. */
+export const ACCOUNT_SECOND_STEP_KEY = 'account:second-step';
 export const ACCOUNT_ENTITLEMENT_KEY = 'account:entitlement';
 /** Display name and picture, cached for showing offline (ADR-0022). */
 export const ACCOUNT_PROFILE_KEY = 'account:profile';

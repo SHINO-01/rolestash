@@ -80,6 +80,15 @@ into the roadmap or changelog. Last reviewed 7 October 2026.
       and paste `supabase/templates/sign-in-code.html` into Supabase →
       Authentication → Emails → _Magic Link_ and _Confirm signup_
       ([operations.md](guides/operations.md#customer-emails-adr-0038)).
+- [ ] **Two-step sign-in (ADR-0036)** before 0.6.0 ships: apply migration
+      `20261024120000_two_step` (it makes the API refuse sessions without the
+      second step once an account has an authenticator), redeploy every Edge
+      Function (`npx supabase functions deploy --no-verify-jwt`; they refuse
+      such sessions too), check Authentication → Multi-Factor has
+      **Authenticator app (TOTP)** enabled, and paste
+      `supabase/templates/two-step-on.html` / `two-step-removed.html` into
+      the _MFA factor enrolled_ / _unenrolled_ security notices (subjects in
+      `supabase/config.toml`).
 - [ ] **Passwords (ADR-0036), Supabase settings** before 0.6.0 ships:
       Authentication → Sign In / Providers → Email: minimum password length
       **12**, and leave "Secure password change" off; URL Configuration →
@@ -96,11 +105,6 @@ into the roadmap or changelog. Last reviewed 7 October 2026.
 
 ## Ours
 
-- [ ] **Account security (ADR-0036):** passwords, reset and "Sign out
-      everywhere" are built for 0.6.0. Next: two-step sign-in (authenticator
-      app), with database rules so a session without the second step can't
-      read the account's data
-      ([ADR-0036](adr/0036-passwords-and-account-security.md)).
 - [ ] **When 0.4.7 is approved:** set "Current version" on `/known-issues/`
       to 0.4.7 and the date.
 - [ ] **By 4 January 2027:** re-check the facts on `/compare/teal/` and

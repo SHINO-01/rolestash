@@ -22,6 +22,7 @@ import { TodayView } from './today-view';
 import { PasswordReset } from './password-reset';
 import { takeRecovery } from './recovery';
 import { PasswordSignIn } from '@/features/account/password-sign-in';
+import { SecondStep } from '@/features/account/second-step';
 import { webConfig } from './config';
 import {
   clearCheckoutIntent,
@@ -72,6 +73,13 @@ export function WebBoard() {
       <Centered>
         <Spinner /> Loading…
       </Centered>
+    );
+  if (state.needsSecondStep)
+    return (
+      <Shell>
+        <h1 className="text-xl font-semibold">Two-step sign-in</h1>
+        <SecondStep account={account} after={allowExtensionSignIn} />
+      </Shell>
     );
   if (!state.signedIn) return <WebSignIn account={account} intent={intent} />;
   if (intent)

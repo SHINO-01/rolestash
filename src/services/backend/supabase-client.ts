@@ -47,7 +47,11 @@ export const SessionSchema = z.object({
     name: z.string().optional(),
     /** The account has a password (ADR-0036; our own user_metadata flag). */
     hasPassword: z.boolean().optional(),
+    /** The account has a verified authenticator app (two-step sign-in, ADR-0036). */
+    twoStep: z.boolean().optional(),
   }),
+  /** 'aal2' once the authenticator code was entered for this session. */
+  aal: z.enum(['aal1', 'aal2']).optional(),
 });
 export type Session = z.infer<typeof SessionSchema>;
 
@@ -81,6 +85,8 @@ export type BackendErrorCode =
   | 'weak_password'
   | 'same_password'
   | 'reauthentication_needed'
+  /** Two-step sign-in: a wrong or expired authenticator code. */
+  | 'invalid_totp'
   | 'server';
 
 /** The signed-in account's referral link and counts (ADR-0035); `enabled` false when the programme is off. */
@@ -121,6 +127,7 @@ const TokenResponse = z.object({
         has_password: z.boolean().nullish(),
       })
       .nullish(),
+    factors: z.array(z.object({ status: z.string() }).loose()).nullish(),
   }),
 });
 
@@ -264,7 +271,9 @@ export class SupabaseClient {
         ...(t.user.email ? { email: t.user.email } : {}),
         ...(name ? { name: name.slice(0, 100) } : {}),
         ...(t.user.user_metadata?.has_password ? { hasPassword: true } : {}),
+        ...((t.user.factors ?? []).some((f) => f.status === 'verified') ? { twoStep: true } : {}),
       },
+      ...(aalOf(t.access_token) ? { aal: aalOf(t.access_token) } : {}),
     };
   }
 
@@ -363,6 +372,76 @@ export class SupabaseClient {
       method: 'POST',
       token: accessToken,
     });
+    if (status === 401) throw new BackendError('session_expired', status);
+    if (status >= 300) this.fail(status, data);
+  }
+
+  /** The account's authenticator apps (two-step sign-in, ADR-0036). */
+  async factors(accessToken: string): Promise<Factor[]> {
+    const { status, data } = await this.request('/auth/v1/user', { token: accessToken });
+    if (status === 401) throw new BackendError('session_expired', status);
+    if (status >= 300) this.fail(status, data);
+    const parsed = FactorList.safeParse((data as { factors?: unknown } | null)?.factors ?? []);
+    if (!parsed.success) throw new BackendError('server');
+    return parsed.data
+      .filter((f) => f.factor_type === 'totp')
+      .map((f) => ({
+        id: f.id,
+        verified: f.status === 'verified',
+        name: f.friendly_name ?? 'Authenticator app',
+        createdAt: f.created_at ?? '',
+      }));
+  }
+
+  /** Starts adding an authenticator app: the otpauth:// link (for the QR code) and its secret. */
+  async enrollTotp(
+    accessToken: string,
+    name: string,
+  ): Promise<{ id: string; uri: string; secret: string }> {
+    const { status, data } = await this.request('/auth/v1/factors', {
+      body: { factor_type: 'totp', friendly_name: name, issuer: 'Rolestash' },
+      token: accessToken,
+    });
+    if (status === 401) throw new BackendError('session_expired', status);
+    const parsed = EnrollResult.safeParse(data);
+    if (status >= 300 || !parsed.success) this.fail(status, data);
+    return { id: parsed.data.id, uri: parsed.data.totp.uri, secret: parsed.data.totp.secret };
+  }
+
+  /**
+   * Proves an authenticator code: a challenge, then the code. Returns the
+   * new, two-step (aal2) session.
+   */
+  async verifyTotp(accessToken: string, factorId: string, code: string): Promise<Session> {
+    const id = encodeURIComponent(factorId);
+    const challenge = await this.request(`/auth/v1/factors/${id}/challenge`, {
+      body: {},
+      token: accessToken,
+    });
+    if (challenge.status === 401) throw new BackendError('session_expired', challenge.status);
+    const challengeId = (challenge.data as { id?: unknown } | null)?.id;
+    if (challenge.status >= 300 || typeof challengeId !== 'string')
+      this.fail(challenge.status, challenge.data);
+    const { status, data } = await this.request(`/auth/v1/factors/${id}/verify`, {
+      body: { challenge_id: challengeId, code },
+      token: accessToken,
+    });
+    if (status === 401) throw new BackendError('session_expired', status);
+    if (status === 422 || status === 400) {
+      const code = errorCode(data);
+      if (code === 'mfa_verification_failed' || code === 'mfa_challenge_expired' || !code)
+        throw new BackendError('invalid_totp', status);
+    }
+    if (status >= 300) this.fail(status, data);
+    return this.toSession(data);
+  }
+
+  /** Removes an authenticator app (needs a two-step session once one is verified). */
+  async removeFactor(accessToken: string, factorId: string): Promise<void> {
+    const { status, data } = await this.request(
+      `/auth/v1/factors/${encodeURIComponent(factorId)}`,
+      { method: 'DELETE', token: accessToken },
+    );
     if (status === 401) throw new BackendError('session_expired', status);
     if (status >= 300) this.fail(status, data);
   }
@@ -747,6 +826,43 @@ export class SupabaseClient {
 }
 
 /** URL-safe base64 without padding. */
+/** An authenticator app on the account (ADR-0036). */
+export interface Factor {
+  id: string;
+  /** False while it's being added (the first code not entered yet). */
+  verified: boolean;
+  name: string;
+  createdAt: string;
+}
+
+const FactorList = z.array(
+  z
+    .object({
+      id: z.string(),
+      status: z.string(),
+      factor_type: z.string(),
+      friendly_name: z.string().nullish(),
+      created_at: z.string().nullish(),
+    })
+    .loose(),
+);
+
+const EnrollResult = z.object({
+  id: z.string(),
+  totp: z.object({ uri: z.string(), secret: z.string() }),
+});
+
+/** The assurance level in a Supabase access token ('aal2' after the second step). */
+function aalOf(accessToken: string): 'aal1' | 'aal2' | undefined {
+  try {
+    const part = (accessToken.split('.')[1] ?? '').replace(/-/g, '+').replace(/_/g, '/');
+    const aal = (JSON.parse(atob(part)) as { aal?: unknown }).aal;
+    return aal === 'aal1' || aal === 'aal2' ? aal : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 /** Supabase Auth's machine-readable error code, if any. */
 function errorCode(data: unknown): unknown {
   return (data as { error_code?: unknown } | null)?.error_code;

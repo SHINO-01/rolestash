@@ -13,6 +13,8 @@ import {
   passwordChangedEmail,
   passwordResetEmail,
   signInCodeEmail,
+  twoStepOnEmail,
+  twoStepRemovedEmail,
 } from '../supabase/functions/_shared/account-emails.ts';
 
 const ROOT = resolve(import.meta.dirname, '..');
@@ -22,6 +24,8 @@ export const TEMPLATES = {
   'sign-in-code.html': signInCodeEmail,
   'reset-password.html': passwordResetEmail,
   'password-changed.html': passwordChangedEmail,
+  'two-step-on.html': twoStepOnEmail,
+  'two-step-removed.html': twoStepRemovedEmail,
 };
 
 if (process.argv[1] === fileURLToPath(import.meta.url))

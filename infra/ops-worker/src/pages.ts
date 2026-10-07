@@ -200,12 +200,13 @@ interface GrantRow {
 export async function grantsPage(ctx: PageContext, showAll: boolean): Promise<Rendered> {
   if (!adminConfigured(ctx.env))
     return { title: 'Grants', body: html`${pageHead('Grants')}${ADMIN_SETUP}` };
-  const [list, giveToken, revokeToken] = await Promise.all([
+  const [list, giveToken, revokeToken, twoStepToken] = await Promise.all([
     attempt(() =>
       opsAdmin<GrantRow[]>(ctx.env, ctx.deps, ctx.email, 'grants.list', { all: showAll }),
     ),
     ctx.token('grant.give'),
     ctx.token('grant.revoke'),
+    ctx.token('account.two_step_off'),
   ]);
   const rows = 'ok' in list ? list.ok : [];
   const active = rows.filter((g) => g.state !== 'revoked').length;
@@ -315,6 +316,26 @@ export async function grantsPage(ctx: PageContext, showAll: boolean): Promise<Re
               </div>`
             : html`<p class="faint">No grants${showAll ? '' : ' active'}.</p>`
         }
+      </section>
+      <section class="card">
+        <h2>Account help: lost authenticator</h2>
+        <p class="muted">
+          Someone with two-step sign-in lost their phone? Check it's them first, then turn it off:
+          they sign in with an emailed code and can turn it on again.
+        </p>
+        ${actionForm(
+          'account.two_step_off',
+          twoStepToken,
+          html`<div class="actions">
+            <input
+              name="email"
+              type="email"
+              required
+              autocomplete="off"
+              placeholder="name@example.com"
+            /><button class="btn">Preview</button>
+          </div>`,
+        )}
       </section>
     </div>`;
   return { title: 'Grants', body, counts: { grants: active } };

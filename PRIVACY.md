@@ -44,6 +44,9 @@ Full policy: https://rolestash.com/privacy/
 - **Password (only if you add one):** stored by Supabase Auth as a salted
   hash (bcrypt); we never see or store the password itself. It's checked for
   strength on your device before it's sent.
+- **Two-step sign-in (only if you turn it on):** Supabase Auth keeps the
+  authenticator app's secret key, so it can check your codes. We never see
+  your codes.
 - **Account:** your email address (and Google account ID if you sign in with
   Google), your plan and subscription status from Paddle, our merchant of
   record, and a display name and small profile photo if you add them. We

@@ -98,6 +98,38 @@ export function passwordChangedEmail(): Email {
   });
 }
 
+/** Supabase Auth's notice when an authenticator app is added (ADR-0036). */
+export function twoStepOnEmail(): Email {
+  return renderEmail({
+    subject: 'Two-step sign-in is on for your Rolestash account',
+    preheader: 'An authenticator app was added. If this was you, there’s nothing to do.',
+    eyebrow: 'Security',
+    title: 'Two-step sign-in is on',
+    paragraphs: [
+      'An authenticator app was just added to your Rolestash account ({{ .Email }}). From now on, signing in also asks for its code.',
+      'Wasn’t you? Reply to this email straight away and we’ll secure your account.',
+    ],
+    button: { label: 'Open Rolestash', url: 'https://rolestash.com/board/' },
+    why: 'You’re getting this because the security settings of your Rolestash account changed. We send it for every change, for your safety.',
+  });
+}
+
+/** Supabase Auth's notice when an authenticator app is removed (ADR-0036). */
+export function twoStepRemovedEmail(): Email {
+  return renderEmail({
+    subject: 'An authenticator app was removed from your Rolestash account',
+    preheader: 'If this was you, there’s nothing to do.',
+    eyebrow: 'Security',
+    title: 'An authenticator app was removed',
+    paragraphs: [
+      'An authenticator app was just removed from your Rolestash account ({{ .Email }}). If it was the last one, signing in no longer asks for its code.',
+      'Wasn’t you? Use “Forgot password?” or sign in with an emailed code, turn two-step sign-in back on in Account → Security, and reply to this email so we can help.',
+    ],
+    button: { label: 'Open Rolestash', url: 'https://rolestash.com/board/' },
+    why: 'You’re getting this because the security settings of your Rolestash account changed. We send it for every change, for your safety.',
+  });
+}
+
 export interface BugReport {
   id: number;
   message: string;

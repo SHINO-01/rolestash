@@ -84,6 +84,8 @@ describe('AccountService sign-in', () => {
       profile: {},
       needsName: false,
       hasPassword: false,
+      twoStep: false,
+      needsSecondStep: false,
     });
     expect(await account.onTrial()).toBe(false);
   });
@@ -279,6 +281,92 @@ describe('AccountService passwords (ADR-0036)', () => {
     await account.signOutEverywhere();
     expect(calls.find((c) => c.url.includes('/logout'))?.url).toContain('scope=global');
     expect((await account.state()).signedIn).toBe(false);
+  });
+});
+
+describe('AccountService two-step sign-in (ADR-0036)', () => {
+  const jwt = (aal: string) => `h.${btoa(JSON.stringify({ aal }))}.s`;
+  const session = (aal: string, twoStep: boolean): FakeResponse => ({
+    status: 200,
+    body: {
+      access_token: jwt(aal),
+      refresh_token: `r-${aal}`,
+      expires_in: 3600,
+      user: { ...USER, factors: twoStep ? [{ status: 'verified', id: 'f1' }] : [] },
+    },
+  });
+  const factors = (status: string) => ({
+    status: 200,
+    body: {
+      ...USER,
+      factors: [{ id: 'f1', status, factor_type: 'totp', friendly_name: 'Authenticator app' }],
+    },
+  });
+
+  it('holds a sign-in until the authenticator code, and never uses it before', async () => {
+    const { account, calls, store } = setup({
+      [`POST ${SB}/auth/v1/token`]: session('aal1', true),
+      [`GET ${SB}/auth/v1/user`]: factors('verified'),
+      [`POST ${SB}/auth/v1/factors/f1/challenge`]: { status: 200, body: { id: 'c1' } },
+      [`POST ${SB}/auth/v1/factors/f1/verify`]: (c) =>
+        (c.body as { code: string }).code === '123456'
+          ? session('aal2', true)
+          : { status: 422, body: { error_code: 'mfa_verification_failed' } },
+    });
+    await account.signInWithPassword('jo@example.com', 'copper lantern violin');
+    expect(await account.state()).toMatchObject({ signedIn: false, needsSecondStep: true });
+    expect(calls.some((c) => c.url.includes('/rest/v1/'))).toBe(false);
+    expect((await store.get(['account:session']))['account:session']).toBeUndefined();
+
+    await expect(account.verifySecondStep('000000')).rejects.toMatchObject({
+      code: 'invalid_totp',
+    });
+    await account.verifySecondStep('123 456');
+    expect(await account.state()).toMatchObject({
+      signedIn: true,
+      needsSecondStep: false,
+      twoStep: true,
+    });
+    expect(calls.findLast((c) => c.url.includes('/verify'))?.body).toEqual({
+      challenge_id: 'c1',
+      code: '123456',
+    });
+  });
+
+  it('cancels a waiting sign-in', async () => {
+    const { account } = setup({
+      [`POST ${SB}/auth/v1/token`]: session('aal1', true),
+      [`POST ${SB}/auth/v1/logout`]: { status: 204, body: null },
+    });
+    await account.signInWithPassword('jo@example.com', 'copper lantern violin');
+    await account.cancelSecondStep();
+    expect(await account.state()).toMatchObject({ signedIn: false, needsSecondStep: false });
+  });
+
+  it('adds an authenticator: clears a half-added one, then confirms with a code', async () => {
+    const { account, calls } = setup({
+      [`GET ${SB}/auth/v1/user`]: factors('unverified'),
+      [`DELETE ${SB}/auth/v1/factors/f1`]: { status: 200, body: { id: 'f1' } },
+      [`POST ${SB}/auth/v1/factors`]: {
+        status: 200,
+        body: {
+          id: 'f2',
+          totp: { uri: 'otpauth://totp/Rolestash:jo', secret: 'ABC', qr_code: '' },
+        },
+      },
+      [`POST ${SB}/auth/v1/factors/f2/challenge`]: { status: 200, body: { id: 'c2' } },
+      [`POST ${SB}/auth/v1/factors/f2/verify`]: session('aal2', true),
+    });
+    await account.verifyEmailCode('jo@example.com', '123456');
+    const started = await account.startAuthenticator();
+    expect(started).toEqual({ id: 'f2', uri: 'otpauth://totp/Rolestash:jo', secret: 'ABC' });
+    expect(calls.some((c) => c.method === 'DELETE')).toBe(true);
+    expect(calls.find((c) => c.url.endsWith('/factors'))?.body).toMatchObject({
+      factor_type: 'totp',
+      issuer: 'Rolestash',
+    });
+    await account.confirmAuthenticator('f2', '654321');
+    expect(await account.state()).toMatchObject({ signedIn: true, twoStep: true });
   });
 });
 

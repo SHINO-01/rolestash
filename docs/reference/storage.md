@@ -9,6 +9,7 @@ All data lives in `chrome.storage.local` (with `unlimitedStorage`). A backup
 | `settings`                | `Settings`                                                                                                                   |
 | `job:<id>`                | `Job` (one key per job)                                                                                                      |
 | `account:session`         | Supabase session (accounts builds only; not backed up)                                                                       |
+| `account:second-step`     | A sign-in waiting for its authenticator code (ADR-0036); never used for calls, removed on success or cancel                  |
 | `account:entitlement`     | Cached entitlement + `checkedAt` (accounts builds only)                                                                      |
 | `reminders`               | Reminders already sent (ADR-0015); not backed up                                                                             |
 | `sync:state`              | Sync cursor, device id and what was last synced (ADR-0016); not backed up                                                    |
