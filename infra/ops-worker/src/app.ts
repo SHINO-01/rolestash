@@ -28,7 +28,11 @@ const HEADERS: Record<string, string> = {
   'Content-Security-Policy':
     "default-src 'none'; style-src 'self'; img-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'",
   'Cache-Control': 'no-store',
-  'Referrer-Policy': 'no-referrer',
+  // Not no-referrer: under it, browsers send `Origin: null` with the
+  // dashboard's own form posts, and handleAction's origin check refuses
+  // every action. same-origin still sends nothing to other sites (and the
+  // dashboard's outside links are rel="noreferrer" too).
+  'Referrer-Policy': 'same-origin',
   'X-Content-Type-Options': 'nosniff',
   'X-Robots-Tag': 'noindex, nofollow',
   'Cross-Origin-Opener-Policy': 'same-origin',

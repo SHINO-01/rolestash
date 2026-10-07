@@ -373,6 +373,17 @@ describe('pages', () => {
 });
 
 describe('actions', () => {
+  it("serves pages under a referrer policy that keeps its own forms' Origin header", async () => {
+    // Under no-referrer, browsers post the dashboard's forms with `Origin: null`
+    // and the origin check below refuses every action (seen live, 7 Oct 2026).
+    const { fetch } = backend({});
+    const res = await get('/reports', { fetch });
+    expect(res.headers.get('Referrer-Policy')).toBe('same-origin');
+    expect(
+      (await post(await firstStep('report.status'), { fetch }, { Origin: 'null' })).status,
+    ).toBe(403);
+  });
+
   it('refuses posts from other origins, without a valid token, or for unknown actions', async () => {
     const { fetch, calls } = backend({});
     expect(
