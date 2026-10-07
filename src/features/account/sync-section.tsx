@@ -4,11 +4,14 @@ import { SYNC_DEVICE_LIMITS, type Plan } from '@/domain/plan';
 import type { RemoteDevice } from '@/services/backend/supabase-client';
 import type { SyncProblem } from '@/services/sync-service';
 import { Button, IconButton } from '@/ui/components/button';
+import { QrCode } from '@/ui/components/qr-code';
 import { useToast } from '@/ui/components/toast';
 import { useServices } from '@/ui/hooks/services';
 import { useSyncState } from '@/ui/hooks/sync';
 import { relativeTime } from '@/ui/format';
 import { backendErrorMessage } from './plan-copy';
+
+const WEB_BOARD_URL = 'https://rolestash.com/board/';
 
 const PROBLEM: Record<SyncProblem, string> = {
   not_allowed:
@@ -162,18 +165,29 @@ export function SyncSection({ plan }: { plan: Plan }) {
       )}
 
       {plan === 'pro' && !location.pathname.startsWith('/board') ? (
-        <p className="text-muted mt-3 text-sm">
-          On your phone, open{' '}
-          <a
-            className="text-accent font-medium"
-            href="https://rolestash.com/board/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            rolestash.com/board
-          </a>{' '}
-          and sign in with this email. It counts as one of your devices.
-        </p>
+        <div className="bg-surface-2 mt-3 flex items-center gap-3 rounded-lg p-3">
+          <QrCode
+            text={WEB_BOARD_URL}
+            label="QR code for rolestash.com/board"
+            className="size-24 shrink-0 rounded"
+          />
+          <div className="text-sm">
+            <p className="font-medium">Your board on your phone</p>
+            <p className="text-muted mt-1">
+              Scan this, or open{' '}
+              <a
+                className="text-accent font-medium"
+                href={WEB_BOARD_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                rolestash.com/board
+              </a>
+              , and sign in with this email. Add it to your home screen to open it like an app. It
+              counts as one of your devices.
+            </p>
+          </div>
+        </div>
       ) : null}
 
       {devices && (state?.enabled || full) ? (

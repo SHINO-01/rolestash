@@ -13,6 +13,9 @@ All notable changes to this project are documented here. The format follows
   you get a free month for each one who stays past 14 days.
 - **Discount codes:** add a code on the pricing page, or follow a promo link,
   and it's applied at checkout.
+- **Your board on your phone:** Account → Sync shows a QR code for the web
+  board. Scan it, sign in with the same email, and add it to your home
+  screen.
 
 ### Changed
 
