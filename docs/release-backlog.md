@@ -12,11 +12,11 @@ here, except where a release depends on them.
 
 _Last updated 7 October 2026._
 
-## In review
+## Live
 
-| Version | Submitted  | What                                                           | When approved                                                                                                                                                 |
-| ------- | ---------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0.4.7   | 6 Oct 2026 | Button on job sites by default, all sites by choice (ADR-0033) | Check the dashboard's Privacy tab matches `store/listing.md`; set `/known-issues/` current version to 0.4.7; then ship 0.5.0 below. 0.4.3 is live until then. |
+**0.4.7** (button on job sites by default, all sites by choice, ADR-0033):
+submitted 6 October 2026, approved and published 7 October 2026. Nothing is
+in review, so 0.5.0 below can go in.
 
 ## Next, in order
 
@@ -27,7 +27,7 @@ _Last updated 7 October 2026._
   open with Integration passing (screenshots and one listing line).
 - **Contains:** Saved, Applied, Interviewing, Offer lanes; Rejected off the
   board; Screening and Withdrawn retired (storage migration v2).
-- **Ship it:** after 0.4.7 is approved, merge #16, run **Release**, approve
+- **Ship it:** 0.4.7 is approved; merge #16, run **Release**, approve
   the submission; in the dashboard upload the five screenshots and paste the
   changed Free line from `store/listing.md`.
 

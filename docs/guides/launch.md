@@ -54,10 +54,10 @@ release here (`npm run release -- patch`) so _Release_ builds again.
 
 Approved: v0.4.0 was published, unlisted, on 4 October 2026 (after two
 rejections for naming job sites in the description). v0.4.3 (security
-fixes) is the live version since 5 October. 0.4.4 to 0.4.6 were cancelled or
+fixes) was live from 5 October. 0.4.4 to 0.4.6 were cancelled or
 superseded; v0.4.7 (one Pro plan, the floating widget, job-site host
-permissions) was submitted on 6 October and is in review. 0.4.3 stays
-installable while it's reviewed.
+permissions) was submitted on 6 October and approved and published on 7
+October.
 
 ## 3. Wire the store ID in (ours, after the owner sends the ID)
 
@@ -125,23 +125,23 @@ client in `.env.staging`:
 - then **Verify branding**. The domain must be verified in Search Console
   for the same Google account.
 
-## v0.4.7 in review (to do)
+## v0.4.7 approved
 
 All open items across the launch, search and operations work are also in
 [todo.md](../todo.md).
 
 Submitted 2026-10-06 from the release repo (release PR #14). It asks for new
 permissions (the job-site list and the widget's content script, ADR-0033),
-so the review can take longer, and existing users approve one Chrome prompt
-when it updates.
+so existing users approve one Chrome prompt when it updates. Approved and
+published on 2026-10-07.
 
-When Google approves 0.4.7:
+After approval:
 
 - [ ] **Owner:** check the dashboard's **Privacy** tab and listing still
       match the release repo's `store/listing.md` (permission
       justifications, "Collected" disclosures, the widget screenshot).
-- [ ] **Ours:** set "Current version" on rolestash.com/known-issues/ to
-      0.4.7 and "Last updated" to that day.
+- [x] **Ours:** set "Current version" on rolestash.com/known-issues/ to
+      0.4.7 and "Last updated" to that day (7 October).
 
 ## 6. Beta (owner, with us)
 

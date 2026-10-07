@@ -115,8 +115,8 @@ Runbook: [guides/launch.md](guides/launch.md).
 2. **Chrome Web Store:**
    - ~~one-time setup and an unlisted first upload~~ done (item
      `cncilbdakhabnocnjokbonggomndedgp`; v0.4.0 approved and published,
-     unlisted, on 2026-10-04; v0.4.3 live since 2026-10-05; v0.4.7 in
-     review since 2026-10-06);
+     unlisted, on 2026-10-04; v0.4.3 live since 2026-10-05; v0.4.7 live since
+     2026-10-07);
    - ~~add that ID to `ROLESTASH_EXTENSION_IDS` in
      `src/services/web-handoff.ts` **and** to `site/assets/auth-google.js`
      (a test keeps the two lists equal)~~ done;
