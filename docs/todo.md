@@ -14,6 +14,16 @@ into the roadmap or changelog. Last reviewed 7 October 2026.
 - [ ] **When 0.6.0 is live, submit 0.6.1:** approve the waiting Release
       run's Chrome Web Store step, then upload the new screenshots and the
       board line ([release-backlog.md](release-backlog.md)).
+- [ ] **After 0.6.1 is live: make `rolestash` private** (owner, 8 October;
+      `rolestash-extension` stays public: its store approval gate and
+      environment secrets need a public repo on the current GitHub plan).
+      Order: (1) ours: rewrite the Terms "Open source" section and the site
+      changelog's repo link; (2) owner: a fine-grained read-only token for
+      `rolestash`, saved as a secret in `rolestash-extension`; ours: use it
+      for the submodule checkout and tag lookup in its workflows; (3) owner:
+      Settings → General → Change visibility; (4) ours: check one CI push and
+      one release-repo Integration run. CodeQL stops (paid for private
+      repos); Actions has 2,000 free minutes a month.
 - [ ] **Problem reports:** check the dashboard's _Problem reports_ page
       now and then (new ones also show under _Needs attention_ and are
       emailed to support).
