@@ -144,6 +144,13 @@ describe('the dashboard request handler', () => {
     expect(response.headers.get('X-Robots-Tag')).toContain('noindex');
   });
 
+  it('offers a fresh sign-in when the Access sign-in is over an hour old', async () => {
+    const token = await sign(pair.privateKey, good({ iat: SECONDS - 2 * 60 * 60 }));
+    const response = await handle(req(token), env, { fetch: certs, now: NOW });
+    expect(response.status).toBe(403);
+    expect(await response.text()).toContain('href="/cdn-cgi/access/logout"');
+  });
+
   it('renders the page, escaped, with every panel "not set up" when no tokens exist', async () => {
     const token = await sign(pair.privateKey, good());
     const response = await handle(req(token), env, { fetch: certs, now: NOW });

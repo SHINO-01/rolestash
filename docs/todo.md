@@ -2,7 +2,7 @@
 
 Everything still open, in one place, with who does it. Details live in the
 linked guides; tick items here when they're done and move finished work
-into the roadmap or changelog. Last reviewed 6 October 2026 (night).
+into the roadmap or changelog. Last reviewed 7 October 2026.
 
 ## Owner
 
@@ -44,7 +44,10 @@ into the roadmap or changelog. Last reviewed 6 October 2026 (night).
 - [ ] **Beta:** send the unlisted store link to 10–20 testers; ask for honest
       Chrome Web Store reviews, and whether they're happy to be quoted on
       the homepage ([launch.md](guides/launch.md#6-beta-owner-with-us)).
-- [ ] **Operations dashboard sign-in:** in Zero Trust, set the application's
+- [ ] **Operations dashboard sign-in:** the dashboard said "Not allowed."
+      on 7 October because Access kept a sign-in older than the Worker's
+      one-hour limit. It now offers "Sign out" and a fresh code instead. In
+      Zero Trust, set the application's
       login method to One-time PIN only (Instant Auth off), its session
       duration to 1 hour, and the global session timeout to 1 hour
       ([operations.md](guides/operations.md#sign-in-policy-an-emailed-code-at-most-an-hour)).
@@ -72,18 +75,15 @@ into the roadmap or changelog. Last reviewed 6 October 2026 (night).
 - [ ] **Store releases:** one at a time, in the order of
       [release-backlog.md](release-backlog.md) (0.4.7 in review → 0.5.0 →
       0.6.0).
-- [ ] **Meheraj's complimentary access:** no need to wait for them to sign in
-      any more: Grants → Give Pro →
-      meherajrafid@gmail.com, reason `team`; it applies when they first sign in.
 - [ ] **Go public** when the beta is clean: Distribution → Visibility →
       Public ([launch.md](guides/launch.md#7-going-public)).
 
 ## Ours
 
-- [ ] **Account security (ADR-0036, proposed):** optional password with a
-      strength check and a reset page (`/auth/reset/`), optional two-step
-      sign-in (authenticator app), security-change emails and "Sign out
-      everywhere". No password is required. Owner to accept or adjust
+- [ ] **Account security (ADR-0036, accepted 7 October):** being built for
+      0.6.0: optional password with a strength check and a reset page
+      (`/auth/reset/`), optional two-step sign-in (authenticator app),
+      security-change emails and "Sign out everywhere"
       ([ADR-0036](adr/0036-passwords-and-account-security.md)).
 - [ ] **When 0.4.7 is approved:** set "Current version" on `/known-issues/`
       to 0.4.7 and the date.
@@ -100,7 +100,7 @@ git-ignored `CLAUDE-SECURITY-20261005-025920/OPEN-SECURITY-ISSUES.md` on the
 owner's machine (from the scan of `supabase/` and `infra/`, 5 October 2026).
 Don't put exploit details in commits, issues or PRs until they're fixed.
 
-- [ ] **Scan the rest:** only `supabase/` and `infra/` were scanned. Next,
+- [ ] **Scan the rest** once 0.6.0 is packaged (owner, 7 October): only `supabase/` and `infra/` were scanned. Next,
       scan the extension (`src/`, about 220 files) and `site/assets`
       (locally, with Claude Security). Everything from the first scan is
       fixed and shipped in v0.4.3.

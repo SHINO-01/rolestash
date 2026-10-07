@@ -138,6 +138,9 @@ key: keep 2-Step Verification on that Google account.
   dashboard:** a Worker route is catching the hostname. Check Workers &
   Pages → `rolestash-v001` → Domains for any **Route** (such as
   `*.rolestash.com/*`) and delete it; see [website.md](website.md#deployment).
+- **"Your sign-in is more than an hour old":** Access's own session outlived
+  the Worker's hour (set the session durations above to 1 hour). Follow
+  **Sign out**, then open the dashboard again for a new code.
 - **"Not allowed." (403):** the Worker refused the Access token. Run
   `npx wrangler tail rolestash-ops` and reload; the log says why
   (`not_allowed`: email not in `OWNER_EMAILS`; `login_too_old`: sign in

@@ -50,6 +50,12 @@ function respond(body: string, status = 200): Response {
 
 const plain = (text: string, status: number) => new Response(text, { status, headers: HEADERS });
 
+const SIGN_IN_AGAIN =
+  '<!doctype html><html lang="en"><meta charset="utf-8"><title>Sign in again</title>' +
+  '<p>Your sign-in is more than an hour old.</p>' +
+  '<p><a href="/cdn-cgi/access/logout">Sign out</a>, then open ' +
+  '<a href="/">the dashboard</a> again for a new code.</p></html>';
+
 async function renderPage(id: PageId, ctx: PageContext, url: URL): Promise<Rendered> {
   switch (id) {
     case 'overview':
@@ -242,6 +248,10 @@ export async function handle(request: Request, env: Env, deps: Deps): Promise<Re
   );
   if (!access.ok) {
     console.log(`ops: refused (${access.reason})`);
+    // Access keeps its own session cookie, which can outlive the Worker's
+    // one-hour limit; signing out of Access is the only way to a fresh code.
+    if (access.reason === 'login_too_old' || access.reason === 'expired')
+      return respond(SIGN_IN_AGAIN, 403);
     return plain('Not allowed.', 403);
   }
   const url = new URL(request.url);
