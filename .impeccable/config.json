@@ -8,69 +8,6 @@
         "value": "inter",
         "createdAt": "2026-10-06T07:50:19.033Z",
         "reason": "Rolestash's existing brand body font (@fontsource-variable/inter in package.json, used by the extension UI); the promo tiles must match the product"
-      },
-      {
-        "rule": "low-contrast",
-        "value": "*",
-        "files": ["brag-output-2026-10-06-232216/composition/compositions/s8-more.html"],
-        "createdAt": "2026-10-06T12:38:20.174Z",
-        "reason": "Claude: light text sits on the dark-act background drawn by bg.html (a separate sub-composition); hyperframes check audits the rendered contrast"
-      },
-      {
-        "rule": "clipped-overflow-container",
-        "value": "*",
-        "files": ["brag-output-2026-10-06-232216/composition/compositions/s14-outro.html"],
-        "createdAt": "2026-10-06T12:42:03.908Z",
-        "reason": "Claude: intentional clips in a video frame: the CTA's light sweep is clipped to the button, and the scene root clips to the canvas; nothing interactive escapes"
-      },
-      {
-        "rule": "radial-spotlight-glow",
-        "value": "*",
-        "files": ["brag-output-2026-10-06-232216/composition/compositions/bg.html"],
-        "createdAt": "2026-10-06T13:16:28.044Z",
-        "reason": "user confirmed 2026-10-07: the film's background is the brand's pastel light, matching rolestash.com's own background and the earlier launch film"
-      },
-      {
-        "rule": "cramped-padding",
-        "value": "*",
-        "files": ["brag-output-2026-10-06-232216/composition/compositions/s1-hook.html"],
-        "createdAt": "2026-10-06T13:16:28.066Z",
-        "reason": "user confirmed 2026-10-07: small pills and chips recreate the product's real UI at its proportions in a finished, rendered film"
-      },
-      {
-        "rule": "cramped-padding",
-        "value": "*",
-        "files": ["brag-output-2026-10-06-232216/composition/compositions/s3-widget.html"],
-        "createdAt": "2026-10-06T13:16:28.086Z",
-        "reason": "user confirmed 2026-10-07: small pills and chips recreate the product's real UI at its proportions in a finished, rendered film"
-      },
-      {
-        "rule": "cramped-padding",
-        "value": "*",
-        "files": ["brag-output-2026-10-06-232216/composition/compositions/s4-board.html"],
-        "createdAt": "2026-10-06T13:16:28.106Z",
-        "reason": "user confirmed 2026-10-07: small pills and chips recreate the product's real UI at its proportions in a finished, rendered film"
-      },
-      {
-        "rule": "cramped-padding",
-        "value": "*",
-        "files": ["brag-output-2026-10-06-232216/composition/compositions/s5-csv.html"],
-        "createdAt": "2026-10-06T13:16:28.125Z",
-        "reason": "user confirmed 2026-10-07: small pills and chips recreate the product's real UI at its proportions in a finished, rendered film"
-      },
-      {
-        "rule": "cramped-padding",
-        "value": "*",
-        "files": ["brag-output-2026-10-06-232216/composition/compositions/s7-privacy.html"],
-        "createdAt": "2026-10-06T13:16:28.148Z",
-        "reason": "user confirmed 2026-10-07: small pills and chips recreate the product's real UI at its proportions in a finished, rendered film"
-      },
-      {
-        "rule": "cramped-padding",
-        "value": "*",
-        "files": ["brag-output-2026-10-06-232216/composition/compositions/s9-email.html"],
-        "createdAt": "2026-10-06T13:16:28.169Z",
-        "reason": "user confirmed 2026-10-07: small pills and chips recreate the product's real UI at its proportions in a finished, rendered film"
       }
     ]
   }

@@ -45,11 +45,11 @@ into the roadmap or changelog. Last reviewed 7 October 2026.
 - [ ] **60-second promo videos are ready** (7 October) for social posts, with
       the rock remix: `promo-60.mp4` (1920×1080) and `promo-60-vertical.mp4`
       (1080×1920) in `brag-output-2026-10-06-232216/`, the CTA frame baked in
-      as frame 0 and `promo-60.jpg` / `promo-60-vertical.jpg` as covers.
+      as frame 0, plus `-silent` copies of both and `rock-remix.mp3`.
       The music is "Young Black & Rich (Rock Remix)": make sure you have the
       rights to post it, or swap in the platform's own audio (the silent
-      copies are there for that). A caption is in `share-copy.txt`. The 45 s cuts (`brag.mp4`, `brag-vertical.mp4`) were
-      re-rendered with the four lanes too.
+      copies are there for that). Posting copy and the weekly plan are in
+      the owner's private "Rolestash free marketing playbook" doc.
 - [ ] **Beta:** send the unlisted store link to 10–20 testers; ask for honest
       Chrome Web Store reviews, and whether they're happy to be quoted on
       the homepage ([launch.md](guides/launch.md#6-beta-owner-with-us)).

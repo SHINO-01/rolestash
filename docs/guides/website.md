@@ -128,32 +128,23 @@ vertical cut (1080×1920) on phones and small screens. Each cut is its own
 plays. Each poster (the closing frame with the call to action) is preloaded
 only for its screen size.
 
-Its source is the HyperFrames project made with `/brag` in
-`brag-output-2026-10-06-232216/` (gitignored): `brag-plan.md`,
-`composition-brief.md`, the scenes in `composition/compositions/`, and
-`work/build.mjs`, which writes both `composition/` (landscape) and
-`composition-vertical/` from one scene table (portrait overrides apply in
-the vertical copy). Every cut lands on the beat grid of "Young Black & Rich
-(Rock Remix)" (129 BPM, the drop at 4.21 s), so the silent hero and the
-social cuts share one timeline. The renders there:
+Its source was the HyperFrames project made with `/brag` in
+`brag-output-2026-10-06-232216/` (gitignored). On 7 October 2026 the owner
+kept only the finished social cuts there and moved the rest (the scenes,
+`work/build.mjs`, the render and finish scripts, the hero's own renders) to
+the system trash. What's left:
 
-- `brag.mp4`, `brag-vertical.mp4`: with the music, for social posts;
-- `brag-silent.mp4`, `brag-vertical-silent.mp4`: the hero's source;
-- `promo-60.mp4`, `promo-60-vertical.mp4` (and `-silent` copies): a
-  60-second social cut of the same scenes, built with
-  `node work/build.mjs --promo` into `composition-promo/` and
-  `composition-promo-vertical/`. Every boundary sits on a detected beat
-  (`composition/assets/music/cues/rock-remix.music-cues.json`, film time =
-  track time − 43.3 s): each feature gets 9 beats (about 4.1 s) instead of
-  about 6, "That's not all." lands on the strong beat at 28.46 s, and the CTA
-  press on the one at 57.79 s. The build patches each scene's length
-  (`const D`), the background's beat list and dark act, and the outro's
-  press.
+- `promo-60.mp4`, `promo-60-vertical.mp4`: the 60-second social cut with the
+  music ("Young Black & Rich (Rock Remix)"), the CTA frame baked in as frame 0. Every scene's action is beat-locked, and a 3D camera frames each
+  feature (promo build only);
+- `promo-60-silent.mp4`, `promo-60-vertical-silent.mp4`: the same, without
+  audio, for posting with a platform's own music;
+- `rock-remix.mp3`: the soundtrack.
 
-Render with `work/render-all.sh` (all four cuts, one at a time, 3 workers),
-then `work/finish.sh <render> <name> [vertical]`, which crops the vertical
-strip, saves the closing frame as `<name>.jpg`, bakes it in as frame 0 (so
-players and social thumbnails show the CTA), and writes the `-silent` copy.
+The shipped hero encodes below are now the only copies of the 45-second
+film. To change it, restore the project from the trash while it's there, or
+rebuild it with `/brag` from the brief in this section and the scene list
+above.
 
 Version 3 (7 October 2026) shows the four board lanes (ADR-0034): the
 widget's chips are Saved, Applied, Interviewing and Offer, and the Insights
@@ -181,7 +172,7 @@ plus No reply.
   2026-10-04: LCP about 1.6 s on desktop and 1.7 s on a phone (vertical
   poster), CLS 0.
 - **Budget (tested):** each encode under 4 MB, the poster under 150 KB.
-- **Re-encoding** from a new render (paths relative to the brag output folder;
+- **Re-encoding** from a new render (paths relative to the render's folder;
   the 45-second film needs `-crf 38`/`-crf 28` to stay under the 4 MB budget,
   and the vertical WebM `-crf 40`):
 
@@ -193,8 +184,8 @@ plus No reply.
 
   The vertical cut is encoded the same way from `brag-vertical-silent.mp4`
   (MP4 at `scale=900:-2`). HyperFrames pads a 1080-wide render to a multiple
-  of 16, which leaves an 8 px black strip on the right; `work/finish.sh`
-  crops it (`crop=1072:1920:0:0,scale=1080:1920`).
+  of 16, which leaves an 8 px black strip on the right; crop it
+  (`crop=1072:1920:0:0,scale=1080:1920`).
   Render on this machine with `--workers 3`: the default worker count ran
   out of memory on the vertical render.
 
