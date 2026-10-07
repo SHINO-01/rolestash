@@ -77,6 +77,11 @@ into the roadmap or changelog. Last reviewed 7 October 2026.
       the dashboard; then grants, new codes, referrals and targeted discounts
       can email customers
       ([operations.md](guides/operations.md#customer-emails-adr-0038)).
+- [ ] **New sign-in code email:** paste `supabase/templates/sign-in-code.html`
+      into Supabase → Authentication → Emails → _Magic Link_ and _Confirm
+      signup_ (it now matches every other Rolestash email, with the new
+      logo), then redeploy `welcome` and `launch-list` so the welcome and list
+      emails pick up the same look.
 - [ ] **Store releases:** one at a time, in the order of
       [release-backlog.md](release-backlog.md) (0.4.7 in review → 0.5.0 →
       0.6.0).

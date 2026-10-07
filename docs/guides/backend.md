@@ -67,7 +67,11 @@ timestamp as their version. Rewrite it to the file's version in
    - Redirect URL: `https://<extension-id>.chromiumapp.org/`.
    - Email OTP length 6, expiry 600 s.
    - Paste `supabase/templates/sign-in-code.html` into both the _Magic Link_
-     and _Confirm signup_ templates.
+     and _Confirm signup_ templates (subject "Your Rolestash sign-in code").
+     It's generated from the shared email layout
+     (`supabase/functions/_shared/email-layout.ts`) by
+     `npm run email:templates`; regenerate and paste again after changing the
+     layout.
 4. **SMTP:**
    - Custom SMTP through Resend.
    - Sender `Rolestash <noreply@rolestash.com>`.

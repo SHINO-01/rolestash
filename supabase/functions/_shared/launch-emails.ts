@@ -7,6 +7,8 @@
  * is sent with a List-Unsubscribe header so mail apps show their own button.
  */
 
+import { renderEmail } from './email-layout.ts';
+
 export interface Email {
   subject: string;
   html: string;
@@ -20,39 +22,8 @@ export interface News {
 }
 
 const PLAN_NAMES: Record<string, string> = { free: 'Free', pro: 'Pro', advanced: 'Pro' };
-const SENDER = 'Rolestash · New South Wales, Australia · support@rolestash.com';
 const WHY =
   'You’re getting this because you signed up for Rolestash updates at rolestash.com. We email only about new features, a few times a year at most.';
-
-const escape = (s: string) =>
-  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-
-function layout(o: {
-  title: string;
-  paragraphs: string[];
-  button?: { label: string; url: string };
-  why: string;
-  unsubscribe: { label: string; url: string };
-}): Email['html'] {
-  const p = (text: string) =>
-    `<p style="margin:0 0 16px;color:#4c5b57;line-height:1.55">${escape(text)}</p>`;
-  const button = o.button
-    ? `<p style="margin:8px 0 24px"><a href="${escape(o.button.url)}" style="display:inline-block;background:#0b5d52;color:#ffffff;text-decoration:none;font-weight:600;padding:12px 22px;border-radius:10px">${escape(o.button.label)}</a></p>`
-    : '';
-  return `<!doctype html><html lang="en"><body style="margin:0;padding:24px;background:#fbfaf7;font-family:-apple-system,'Segoe UI',Roboto,sans-serif;color:#10231f">
-<div style="max-width:480px;margin:0 auto;background:#ffffff;border:1px solid #e7e3da;border-radius:16px;padding:28px">
-<p style="margin:0 0 20px;font-weight:700;font-size:15px;color:#0b5d52">rolestash</p>
-<p style="margin:0 0 12px;font-weight:700;font-size:20px">${escape(o.title)}</p>
-${o.paragraphs.map(p).join('\n')}
-${button}
-</div>
-<div style="max-width:480px;margin:16px auto 0;font-size:12px;color:#4c5b57;line-height:1.5">
-<p style="margin:0 0 8px">${escape(o.why)}</p>
-<p style="margin:0 0 8px"><a href="${escape(o.unsubscribe.url)}" style="color:#0b5d52;font-weight:600">${escape(o.unsubscribe.label)}</a></p>
-<p style="margin:0">${escape(SENDER)}</p>
-</div>
-</body></html>`;
-}
 
 function build(o: {
   subject: string;
@@ -62,17 +33,15 @@ function build(o: {
   why?: string;
   unsubscribe: { label: string; url: string };
 }): Email {
-  const why = o.why ?? WHY;
-  return {
+  return renderEmail({
     subject: o.subject,
-    html: layout({ ...o, why }),
-    text: [
-      o.title,
-      ...o.paragraphs,
-      ...(o.button ? [`${o.button.label}: ${o.button.url}`] : []),
-      `--\n${why}\n${o.unsubscribe.label}: ${o.unsubscribe.url}\n${SENDER}`,
-    ].join('\n\n'),
-  };
+    preheader: o.paragraphs[0] ?? o.title,
+    title: o.title,
+    paragraphs: o.paragraphs,
+    ...(o.button ? { button: o.button } : {}),
+    why: o.why ?? WHY,
+    footerLink: o.unsubscribe,
+  });
 }
 
 const unsubscribeLink = (url: string) => ({

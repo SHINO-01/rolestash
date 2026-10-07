@@ -9,6 +9,7 @@ tests/fixtures/**/*.html
 docs/reference/supported-sites.md
 supabase/.temp
 site/board
+supabase/templates
 
 # Claude Security scan reports (git-ignored)
 CLAUDE-SECURITY-*/

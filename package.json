@@ -30,6 +30,7 @@
     "docs:sites": "tsx scripts/generate-supported-sites.ts",
     "site:chrome": "tsx scripts/build-site-chrome.ts",
     "site:changelog": "tsx scripts/build-site-changelog.ts",
+    "email:templates": "tsx scripts/build-email-templates.ts",
     "site:og": "tsx scripts/site-og-image.ts",
     "site:screenshots": "npm run build:e2e && tsx scripts/site-screenshots.ts",
     "site:clips": "npm run build:e2e && npm run build:web:e2e && playwright test --project=clips && tsx scripts/encode-site-clips.ts",
