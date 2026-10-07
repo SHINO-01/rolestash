@@ -14,7 +14,7 @@ into the roadmap or changelog. Last reviewed 7 October 2026.
       `store/listing.md` ([release-backlog.md](release-backlog.md)).
 - [ ] **Problem reports:** check the dashboard's _Problem reports_ page
       now and then (new ones also show under _Needs attention_ and are
-      emailed to support). Close the test report #1 sent on 7 October.
+      emailed to support).
 - [ ] **Leaked password protection:** turn it on (Supabase → Authentication
       → Providers → Email) as soon as the project moves to Pro; Supabase
       offers it on Pro and above only. The other advisor warnings are
