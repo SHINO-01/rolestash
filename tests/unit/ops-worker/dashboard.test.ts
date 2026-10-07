@@ -578,6 +578,57 @@ describe('actions', () => {
   });
 });
 
+describe('revoking grants', () => {
+  const pending = { id: 7, email: 'sh…@gmail.com', reason: 'tester', state: 'pending' };
+  const active = { id: 8, email: 'dana@example.com', reason: 'partner', state: 'active' };
+  const revoke = (g: { id: number; email: string; state: string }) => ({
+    id: String(g.id),
+    email: g.email,
+    pending: g.state === 'pending' ? '1' : '0',
+  });
+
+  it('revokes a grant still waiting for sign-up by its id, with no email to type', async () => {
+    const { fetch, calls } = backend({
+      'admin grants.get': adminAnswer(pending),
+      'admin grants.revoke_id': adminAnswer({ outcome: 'revoked' }),
+    });
+    const page = await (
+      await post({ ...(await firstStep('grant.revoke')), ...revoke(pending) }, { fetch })
+    ).text();
+    expect(page).toContain('Nobody loses access.');
+    expect(page).not.toContain('to confirm');
+    const done = await post(confirmFields(page), { fetch });
+    expect(done.status).toBe(303);
+    expect(
+      calls.find((c) => (c.body as { p_action?: string }).p_action === 'grants.revoke_id')?.body,
+    ).toMatchObject({ p_args: { id: 7 } });
+  });
+
+  it("asks for an account's email typed before revoking its grant", async () => {
+    const { fetch, calls } = backend({
+      'admin grants.get': adminAnswer(active),
+      'admin grants.revoke_id': adminAnswer({ outcome: 'revoked' }),
+    });
+    const page = await (
+      await post({ ...(await firstStep('grant.revoke')), ...revoke(active) }, { fetch })
+    ).text();
+    expect(page).toContain('Type <b>dana@example.com</b> to confirm');
+    const wrong = await post({ ...confirmFields(page), _typed: 'someone@else.com' }, { fetch });
+    expect(wrong.status).toBe(400);
+    const done = await post({ ...confirmFields(page), _typed: 'dana@example.com' }, { fetch });
+    expect(done.status).toBe(303);
+    expect(
+      calls.filter((c) => (c.body as { p_action?: string }).p_action === 'grants.revoke_id'),
+    ).toHaveLength(1);
+  });
+
+  it('refuses when the grant changed since the page loaded', async () => {
+    const { fetch } = backend({ 'admin grants.get': adminAnswer({ ...pending, state: 'active' }) });
+    const res = await post({ ...(await firstStep('grant.revoke')), ...revoke(pending) }, { fetch });
+    expect(await res.text()).toContain('changed since the page loaded');
+  });
+});
+
 describe('account help (ADR-0036)', () => {
   it('turns off two-step sign-in for someone who lost their phone, after a typed confirmation', async () => {
     const { fetch, calls } = backend({

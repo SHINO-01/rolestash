@@ -14,7 +14,9 @@ database, and the pages that run the programmes:
   also emailed to support@rolestash.com when it arrives.
 
 - **Grants:** give complimentary Pro (indefinite or until a date) to any
-  email, even before they sign up; revoke it. Same rules as
+  email, even before they sign up; revoke it, including a grant still
+  waiting for sign-up (revoked by its id: a pending grant keeps only a hash
+  and a hint of the email, so there's no email to type). Same rules as
   `scripts/grants.ts` (ADR-0035).
 - **Discount codes:** create Paddle percentage codes for some or all Pro
   prices (first payment, first 3, or every payment; last day; usage limit),

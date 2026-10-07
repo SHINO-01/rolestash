@@ -441,14 +441,18 @@ export async function grantsPage(ctx: PageContext, showAll: boolean): Promise<Re
                           <td class="faint">${day(g.granted_at)}<br />${g.granted_by}</td>
                           <td class="r">
                             ${
-                              g.state !== 'revoked' && g.email
+                              g.state !== 'revoked'
                                 ? actionForm(
                                     'grant.revoke',
                                     revokeToken,
-                                    html`<input
+                                    html`<input type="hidden" name="id" value="${g.id}" /><input
                                         type="hidden"
                                         name="email"
-                                        value="${g.email}"
+                                        value="${g.email ?? ''}"
+                                      /><input
+                                        type="hidden"
+                                        name="pending"
+                                        value="${g.state === 'pending' ? '1' : '0'}"
                                       /><button class="btn small danger">Revoke</button>`,
                                   )
                                 : null

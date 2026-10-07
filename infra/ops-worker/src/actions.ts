@@ -65,6 +65,14 @@ export interface Action {
   back?: (args: Args) => string;
 }
 
+/** One grant as the Grants page lists it (ops_admin grants.get). */
+interface GrantRecord {
+  id: number;
+  email: string | null;
+  reason: string;
+  state: 'active' | 'pending' | 'revoked';
+}
+
 export const REPORT_STATUSES = ['new', 'seen', 'fixed', 'closed'] as const;
 export const REPORT_VIEWS = ['open', 'all', ...REPORT_STATUSES] as const;
 export const REASONS = ['tester', 'team', 'partner', 'support', 'owner', 'referral'] as const;
@@ -291,27 +299,41 @@ export const ACTIONS: Record<string, Action> = {
   'grant.revoke': {
     page: '/grants',
     title: 'Revoke a grant',
-    typed: (a) => a.email ?? '',
+    // By the grant's id: a pending grant keeps no email (only a hash and a
+    // hint), so it could never be found by email. An account's grant asks
+    // for its email typed again; a pending one, which nobody has Pro from
+    // yet, doesn't.
+    typed: (a) => (a.pending === '1' ? '' : (a.email ?? '')),
     parse(form) {
-      const email = field(form, 'email').toLowerCase();
+      const id = field(form, 'id');
       const note = field(form, 'note');
-      if (!EMAIL.test(email)) return 'Enter an email address.';
+      if (!/^\d{1,12}$/.test(id)) return 'Unknown grant.';
       if (note.length > 500) return 'Keep the note to 500 characters.';
-      return { email, note };
+      return {
+        id,
+        email: field(form, 'email').toLowerCase().slice(0, 254),
+        pending: field(form, 'pending') === '1' ? '1' : '0',
+        note,
+      };
     },
     async preview(ctx, a) {
-      const p = await opsAdmin<GrantPreview>(ctx.env, ctx.deps, ctx.actor, 'grants.preview', {
-        email: a.email,
+      const g = await opsAdmin<GrantRecord | null>(ctx.env, ctx.deps, ctx.actor, 'grants.get', {
+        id: Number(a.id),
       });
-      if (!p.active_grant && !p.complimentary)
-        throw new ActionError(`${a.email ?? ''} has no grant to revoke.`);
+      if (!g || g.state === 'revoked') throw new ActionError('That grant is already revoked.');
+      if (
+        (g.state === 'pending') !== (a.pending === '1') ||
+        (g.email ?? '').toLowerCase() !== a.email
+      )
+        throw new ActionError('That grant changed since the page loaded. Go back and reload it.');
       return {
         lines: [
-          describeAccount(a.email ?? '', p),
-          p.has_account
-            ? html`Ends their grant now. The account goes back to its own plan (its subscription,
-              trial or Free); data is never touched. The extension notices at its next plan check.`
-            : html`Cancels the pending grant: they won't get Pro when they sign in.`,
+          g.state === 'pending'
+            ? html`Cancels the grant waiting for <b>${g.email ?? ''}</b> (${g.reason}): they won't
+                get Pro when they sign in. Nobody loses access.`
+            : html`Ends <b>${g.email ?? 'this account'}</b>'s complimentary Pro (${g.reason}) now.
+                The account goes back to its own plan (its subscription, trial or Free); data is
+                never touched. The extension notices at its next plan check.`,
         ],
         button: 'Revoke',
         danger: true,
@@ -322,12 +344,13 @@ export const ACTIONS: Record<string, Action> = {
         ctx.env,
         ctx.deps,
         ctx.actor,
-        'grants.revoke',
-        a,
+        'grants.revoke_id',
+        { id: Number(a.id), note: a.note },
       );
+      const who = a.email?.length ? a.email : 'that account';
       return r.outcome === 'revoked'
-        ? `Revoked ${a.email ?? ''}'s grant.`
-        : `${a.email ?? ''} had nothing to revoke.`;
+        ? `Revoked the grant for ${who}.`
+        : `The grant for ${who} was already revoked.`;
     },
   },
 
