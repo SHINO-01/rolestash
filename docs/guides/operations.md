@@ -65,7 +65,8 @@ Done on 7 October 2026.
 
 ### Customer emails (ADR-0038)
 
-To do (owner), in this order:
+Steps 1 and 2 done 7 October (the migration as version 20261023120000);
+step 3's key exists in Resend, waiting to be set on the Worker.
 
 1. Apply the migration: `npx supabase db push` (adds
    `private.marketing_contacts`, the offer audiences and the opt-out).

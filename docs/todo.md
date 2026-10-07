@@ -72,16 +72,14 @@ into the roadmap or changelog. Last reviewed 7 October 2026.
       redeployed, the dashboard's admin secret and scoped Paddle key set, the
       50% referral discount `dsc_01m49z0xfn0xmx4dmygft76q15` created and
       referrals turned on.
-- [ ] **Customer emails (ADR-0038):** apply the migration, redeploy
-      `launch-list`, and set `RESEND_SEND_KEY` (a sending-only Resend key) on
-      the dashboard; then grants, new codes, referrals and targeted discounts
-      can email customers
+- [ ] **Customer emails (ADR-0038):** the migration is applied and
+      `launch-list` and `welcome` are redeployed (7 October), and a
+      send-only Resend key ("rolestash-ops dashboard (send only)") exists.
+      Left: set it on the dashboard,
+      `npx wrangler secret put RESEND_SEND_KEY --config infra/ops-worker/wrangler.jsonc`,
+      and paste `supabase/templates/sign-in-code.html` into Supabase →
+      Authentication → Emails → _Magic Link_ and _Confirm signup_
       ([operations.md](guides/operations.md#customer-emails-adr-0038)).
-- [ ] **New sign-in code email:** paste `supabase/templates/sign-in-code.html`
-      into Supabase → Authentication → Emails → _Magic Link_ and _Confirm
-      signup_ (it now matches every other Rolestash email, with the new
-      logo), then redeploy `welcome` and `launch-list` so the welcome and list
-      emails pick up the same look.
 - [ ] **Store releases:** one at a time, in the order of
       [release-backlog.md](release-backlog.md) (0.4.7 in review → 0.5.0 →
       0.6.0).

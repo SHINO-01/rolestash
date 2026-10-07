@@ -1,8 +1,8 @@
 /**
  * The one look of every Rolestash email (ADR-0038): the account emails
  * (welcome), the updates list, and the dashboard's customer emails. The
- * sign-in code template (supabase/templates/sign-in-code.html) copies it by
- * hand, and a test keeps them in step.
+ * sign-in code template (supabase/templates/sign-in-code.html) is generated
+ * from it (npm run email:templates), and a test keeps them in step.
  *
  * Inline styles only (mail apps drop style sheets), the logo as a hosted PNG
  * (Gmail and Outlook don't show inline SVG), and a plain-text alternative.
