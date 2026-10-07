@@ -69,15 +69,21 @@ into the roadmap or changelog. Last reviewed 6 October 2026 (night).
   - check Cloudflare's **Block AI bots / AI Crawl Control** is off for
     rolestash.com, if you want AI assistants to cite the site
     ([website.md](guides/website.md#search)).
-- [ ] **Grants go live (ADR-0035):** apply the new migration
-      (`npx supabase db push`; it adds `private.grants`, restores plans when a
-      grant ends, and schedules the daily `grants-expiry` job). Then
-      `npx tsx scripts/grants.ts list` should show your own grant, copied into
-      the log ([backend.md](guides/backend.md#complimentary-access-adr-0025-adr-0035)).
+- [ ] **Go live with grants, discount codes, referrals and the new dashboard
+      (ADR-0035, ADR-0037):** in this order:
+  1. `npx supabase db push` (migrations `20261021120000_grants.sql` and
+     `20261022120000_programs.sql`);
+  2. `npx supabase functions deploy --no-verify-jwt` (create-checkout takes
+     codes; paddle-webhook records referrals and voids them on refunds);
+  3. `npx tsx scripts/ops-secret.ts --apply` (the dashboard's admin secret);
+  4. give the dashboard's `PADDLE_API_KEY` Discounts and Subscriptions write
+     ([operations.md](guides/operations.md#turning-on-changes-owner-once));
+  5. on operations.rolestash.com → Referrals: create the friends' discount
+     (50% recommended), then turn the programme on. Your own grant should
+     already be listed under Grants.
 - [ ] **Meheraj's complimentary access:** no need to wait for them to sign in
-      any more. After the migration:
-      `npx tsx scripts/grants.ts grant meherajrafid@gmail.com --reason team --apply`;
-      it applies when they first sign in.
+      any more. After the steps above: Grants → Give Pro →
+      meherajrafid@gmail.com, reason `team`; it applies when they first sign in.
 - [ ] **Go public** when the beta is clean: Distribution → Visibility →
       Public ([launch.md](guides/launch.md#7-going-public)).
 
@@ -88,17 +94,9 @@ into the roadmap or changelog. Last reviewed 6 October 2026 (night).
       sign-in (authenticator app), security-change emails and "Sign out
       everywhere". No password is required. Owner to accept or adjust
       ([ADR-0036](adr/0036-passwords-and-account-security.md)).
-- [ ] **Discount codes, then referrals (ADR-0035, parts 2 and 3):**
-      grants (part 1) are built (`scripts/grants.ts`, migration
-      `20261021120000_grants.sql`). Next: `scripts/paddle-discounts.ts` and
-      `/pricing/?code=` (about 2 hours), then "give 50%, get a month"
-      referrals (1–2 days). Live Paddle steps need the owner's approval
-      ([ADR-0035](adr/0035-grants-referrals-discounts.md)).
-- [x] **New launch film:** done 7 October: a 45-second film of all ten
-      features (Free, then "That's not all.", then Pro) is the hero, silent,
-      landscape and vertical; the music cuts for social are in the brag output
-      folder ([website.md](guides/website.md#the-hero-film)).
-
+- [ ] **Extension release for referrals:** Account's "Invite friends"
+      section ships in the next extension release (the web board has it as
+      soon as the site deploys). Release after the owner's go-live steps.
 - [ ] **When 0.4.7 is approved:** set "Current version" on `/known-issues/`
       to 0.4.7 and the date.
 - [ ] **By 4 January 2027:** re-check the facts on `/compare/teal/` and

@@ -1,8 +1,24 @@
 # Operations dashboard (operations.rolestash.com)
 
-One page for the owner that shows what needs attention across Paddle,
-Resend, Search Console, Cloudflare and GitHub ([ADR-0026](../adr/0026-operations-dashboard.md)).
-It is read-only: it never changes anything at a provider.
+The owner's console ([ADR-0026](../adr/0026-operations-dashboard.md),
+[ADR-0037](../adr/0037-dashboard-actions.md)): an overview of what needs
+attention across Paddle, Resend, Search Console, Cloudflare, GitHub and the
+database, and the pages that run the programmes:
+
+- **Grants:** give complimentary Pro (indefinite or until a date) to any
+  email, even before they sign up; revoke it. Same rules as
+  `scripts/grants.ts` (ADR-0035).
+- **Discount codes:** create Paddle percentage codes for some or all Pro
+  prices (first payment, first 3, or every payment; last day; usage limit),
+  copy their promo link (`rolestash.com/pricing/?code=…`), archive them.
+- **Referrals:** turn the programme on or off, set the friends' discount,
+  see links handed out, pending and rewarded referrals and top referrers,
+  void abuse, and run the daily step now.
+- **Activity:** every change, who made it, and the result.
+
+Every change is two steps: a preview that states the exact effect, then a
+confirm (grants and revokes also ask you to type the email). Changes are
+accepted only from the dashboard's own pages, signed for you, for an hour.
 
 - **Code:** `infra/ops-worker/` (a Cloudflare Worker, `rolestash-ops`), tests
   in `tests/unit/ops-worker/`.
@@ -15,6 +31,35 @@ It is read-only: it never changes anything at a provider.
 - **No storage, no scripts, never cached or indexed.** Each load fetches
   fresh numbers (8-second timeout per panel); a slow or failing provider
   shows an error in its own panel only.
+- **Changes** go through `public.ops_admin` (database; gated by
+  `OPS_ADMIN_SECRET`, logged in `private.ops_audit`) or Paddle's API
+  (`PADDLE_API_KEY`, logged the same way).
+- **A daily job** (cron, 03:45 UTC) runs the referral step and moves paying
+  referrers' next renewal a month out in Paddle, at no charge. The database's
+  own job (03:33 UTC) qualifies referrals and rewards Free referrers even
+  without it.
+
+## Turning on changes (owner, once)
+
+1. Apply the migrations: `npx supabase db push` (adds the grants, referrals,
+   audit log and the `ops_admin` function).
+2. Deploy the Edge Functions (create-checkout and paddle-webhook take codes
+   and record referrals):
+   `npx supabase functions deploy --no-verify-jwt`.
+3. Set the admin secret, in one command (needs `SUPABASE_ACCESS_TOKEN` from
+   `secrets.env`, and `wrangler login`):
+
+   ```bash
+   set -a; . ./secrets.env; set +a
+   npx tsx scripts/ops-secret.ts --apply
+   ```
+
+   It makes a random value, stores it in the Worker, and only its SHA-256 in
+   the database. Run it again to rotate.
+
+4. Give `PADDLE_API_KEY` its scopes (table below), including **Discounts:
+   write** and **Subscriptions: write**.
+5. On Referrals: create the friends' discount, then turn the programme on.
 
 ## Status and to-do
 
@@ -28,7 +73,8 @@ sessions) if not done yet, then add the tokens.
 
 To do (owner), one token per panel, then reload the dashboard:
 
-- [ ] `PADDLE_API_KEY`: read-only Paddle key (Revenue panel)
+- [ ] `OPS_ADMIN_SECRET`: `npx tsx scripts/ops-secret.ts --apply` (every change; see "Turning on changes")
+- [ ] `PADDLE_API_KEY`: Revenue panel, discount codes and referral rewards (scopes below)
 - [ ] `CF_ANALYTICS_TOKEN`: Zone Analytics read for rolestash.com (Site panel)
 - [ ] `GITHUB_TOKEN`: fine-grained, Actions and Dependabot alerts read (Product health panel)
 - [ ] `GOOGLE_SERVICE_ACCOUNT`: Search Console restricted user (Search panel)
@@ -103,13 +149,13 @@ Set each with `npx wrangler secret put <NAME> --config infra/ops-worker/wrangler
 A panel without its token shows "Not set up". Rotate them yearly, and at
 once if a laptop or account is lost.
 
-| Secret                   | Where to create it                                                                                                                                                                             | Access it needs                                                     |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| `PADDLE_API_KEY`         | Paddle → Developer tools → Authentication → **New API key**                                                                                                                                    | Read only: Subscriptions, Transactions, Adjustments, Discounts      |
-| `CF_ANALYTICS_TOKEN`     | Cloudflare → My Profile → API Tokens → **Create custom token**                                                                                                                                 | Zone → Analytics → Read, for the `rolestash.com` zone only          |
-| `GITHUB_TOKEN`           | GitHub → Settings → Developer settings → **Fine-grained token**, repos `rolestash` and `rolestash-extension`                                                                                   | Actions: Read, Dependabot alerts: Read (Metadata: Read is implied)  |
-| `GOOGLE_SERVICE_ACCOUNT` | Google Cloud → enable the **Search Console API** → IAM → Service accounts → create one → Keys → JSON. Then Search Console → Settings → Users and permissions → add its email as **Restricted** | The whole JSON key file as the value; Search Console read-only      |
-| `RESEND_API_KEY`         | Resend → API Keys                                                                                                                                                                              | **Caution:** Resend has no read-only key; reading needs Full access |
+| Secret                   | Where to create it                                                                                                                                                                             | Access it needs                                                                                                                                    |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PADDLE_API_KEY`         | Paddle → Developer tools → Authentication → **New API key**                                                                                                                                    | Read: Transactions, Adjustments, Products, Prices. Read and write: Discounts, Subscriptions (codes, the referral discount, referrers' free months) |
+| `CF_ANALYTICS_TOKEN`     | Cloudflare → My Profile → API Tokens → **Create custom token**                                                                                                                                 | Zone → Analytics → Read, for the `rolestash.com` zone only                                                                                         |
+| `GITHUB_TOKEN`           | GitHub → Settings → Developer settings → **Fine-grained token**, repos `rolestash` and `rolestash-extension`                                                                                   | Actions: Read, Dependabot alerts: Read (Metadata: Read is implied)                                                                                 |
+| `GOOGLE_SERVICE_ACCOUNT` | Google Cloud → enable the **Search Console API** → IAM → Service accounts → create one → Keys → JSON. Then Search Console → Settings → Users and permissions → add its email as **Restricted** | The whole JSON key file as the value; Search Console read-only                                                                                     |
+| `RESEND_API_KEY`         | Resend → API Keys                                                                                                                                                                              | **Caution:** Resend has no read-only key; reading needs Full access                                                                                |
 
 **About Resend:** a Full-access key could also send email or change domains.
 Leave `RESEND_API_KEY` unset (the panel says "Not set up") unless you accept
@@ -149,14 +195,18 @@ The dashboard needs only what the Free plan includes (US$0, up to 50 seats):
 
 ## What it shows
 
-| Panel          | Numbers                                                                                                                                                | Attention when                                 |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------- |
-| Revenue        | Active, cancelling and past-due subscriptions; sales (7 days); refunds and chargebacks (30 days); active discounts                                     | Anything past due, any chargeback              |
-| Email          | Domain status; sent, bounced and spam reports among the latest 100 (7 days)                                                                            | A bounce, a spam report, a domain not verified |
-| Search         | Clicks and views (28 days), top 5 queries, sitemap errors                                                                                              | A sitemap with errors                          |
-| Site           | Requests, 5xx errors and threats blocked (7 days)                                                                                                      | 5xx above 1%                                   |
-| Product health | Latest CI run on `dev`, latest release run, open Dependabot alerts                                                                                     | A failed run, any open alert                   |
-| Accounts       | Accounts, new this week, trials, paying by plan, cancelling, past due, complimentary, active devices, email inboxes, news subscribers, problem reports | Anything past due, a new problem report        |
+| Panel          | Numbers                                                                                                            | Attention when                                 |
+| -------------- | ------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------- |
+| Revenue        | Active, cancelling and past-due subscriptions; sales (7 days); refunds and chargebacks (30 days); active discounts | Anything past due, any chargeback              |
+| Email          | Domain status; sent, bounced and spam reports among the latest 100 (7 days)                                        | A bounce, a spam report, a domain not verified |
+| Search         | Clicks and views (28 days), top 5 queries, sitemap errors                                                          | A sitemap with errors                          |
+| Site           | Requests, 5xx errors and threats blocked (7 days)                                                                  | 5xx above 1%                                   |
+| Product health | Latest CI run on `dev`, latest release run, open Dependabot alerts                                                 | A failed run, any open alert                   |
+| Headline       | Paying, on trial, accounts (new this week), complimentary (waiting for sign-up), referrals rewarded and pending    | Past due, referral months due, grants ending   |
+| Usage          | Devices syncing this week, email update inboxes, news subscribers, problem reports                                 | A new problem report                           |
 
-Customer details never appear: counts and statuses only. Each panel links to
-the provider's own dashboard for a closer look.
+The overview shows counts and statuses only. Emails appear only where an
+action needs them: the grants list, and referrers on the Referrals page
+(friends appear as a hint, such as `ja…@gmail.com`). Each panel links to the
+provider's own dashboard for a closer look. Panels without a token collapse
+into one "Not set up" line.

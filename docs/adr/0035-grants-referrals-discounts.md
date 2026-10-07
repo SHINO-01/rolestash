@@ -1,6 +1,6 @@
 # ADR-0035: Complimentary grants you can revoke, a referral programme, and discount codes
 
-- **Status:** Accepted (owner, 2026-10-07), as written. Part 1 (grants) built 2026-10-07; parts 2 and 3 next. Two choices made while building: Paddle events during a grant are kept in `private.billing_shadow` (so a revoke restores the real plan without calling Paddle), and a pending grant keeps a short hint of the email ("da…@example.com") so the owner can recognise it in the list.
+- **Status:** Accepted (owner, 2026-10-07), as written. Built 2026-10-07: grants (part 1), discount codes and referrals (parts 2 and 3). Choices made while building: Paddle events during a grant are kept in `private.billing_shadow`, so a revoke restores the real plan without calling Paddle; a pending grant keeps a short hint of the email ("da…@example.com"); discount codes are made from the operations dashboard (ADR-0037) instead of `scripts/paddle-discounts.ts`.
 - Builds on ADR-0025 (complimentary access as data), ADR-0026 (operations
   dashboard; actions need their own decision: this is it for these three),
   ADR-0027 (sign in before website checkout) and ADR-0029 (one Pro plan;

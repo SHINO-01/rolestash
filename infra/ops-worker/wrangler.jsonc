@@ -10,6 +10,8 @@
   "compatibility_date": "2026-09-01",
   "workers_dev": false,
   "preview_urls": false,
+  // The daily referral job (ADR-0037), after the database's own daily step at 03:33 UTC.
+  "triggers": { "crons": ["45 3 * * *"] },
   "vars": {
     // Public values. ACCESS_TEAM_DOMAIN and ACCESS_AUD come from the Access
     // application; empty means nobody gets in.
@@ -23,7 +25,9 @@
     "SEARCH_CONSOLE_SITE": "sc-domain:rolestash.com",
   },
   // Secrets, set once with `wrangler secret put <NAME> --config infra/ops-worker/wrangler.jsonc`
-  // (each read-only; scopes in docs/guides/operations.md):
-  //   OWNER_EMAILS, OPS_STATS_SECRET (its SHA-256 goes in private.ops_stats_secret), PADDLE_API_KEY, CF_ANALYTICS_TOKEN, GITHUB_TOKEN,
-  //   GOOGLE_SERVICE_ACCOUNT, RESEND_API_KEY
+  // (scopes in docs/guides/operations.md):
+  //   OWNER_EMAILS, OPS_STATS_SECRET (its SHA-256 goes in private.ops_stats_secret),
+  //   OPS_ADMIN_SECRET (its SHA-256 goes in private.ops_admin_secret; scripts/ops-secret.ts),
+  //   PADDLE_API_KEY (read, plus Discounts and Subscriptions write), CF_ANALYTICS_TOKEN,
+  //   GITHUB_TOKEN, GOOGLE_SERVICE_ACCOUNT, RESEND_API_KEY
 }

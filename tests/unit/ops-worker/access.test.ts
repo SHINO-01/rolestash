@@ -149,9 +149,11 @@ describe('the dashboard request handler', () => {
     const response = await handle(req(token), env, { fetch: certs, now: NOW });
     expect(response.status).toBe(200);
     const html = await response.text();
-    expect(html).toContain('Rolestash operations');
+    expect(html).toContain('Rolestash ops');
     expect(html).toContain('owner@example.com');
-    expect(html.match(/class="badge not_configured"/g)?.length).toBe(6);
+    // Panels without a token collapse into one line instead of a card each.
+    expect(html).toMatch(/Not set up: [^<]*Usage \(Supabase\)/);
+    expect(html).not.toContain('class="card"><h2>Revenue');
     expect(html).not.toMatch(/<script/i);
   });
 
@@ -169,5 +171,7 @@ describe('the dashboard request handler', () => {
     expect((await at('/ops.css')).headers.get('Content-Type')).toContain('text/css');
     expect((await at('/admin')).status).toBe(404);
     expect((await at('/', 'POST')).status).toBe(405);
+    // Changes need the admin secret, which this environment doesn't have.
+    expect((await at('/do', 'POST')).status).toBe(403);
   });
 });

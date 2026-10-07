@@ -19,6 +19,13 @@ export interface Env {
   /** Secrets, each read-only (see the ADR for exact scopes). */
   /** Lets the Worker call public.ops_stats and nothing else; the database keeps its SHA-256. */
   OPS_STATS_SECRET?: string;
+  /**
+   * Lets the Worker call public.ops_admin (grants, referrals, the audit log;
+   * ADR-0037) and signs its forms. Separate from OPS_STATS_SECRET.
+   */
+  OPS_ADMIN_SECRET?: string;
+  /** 'sandbox' to point Paddle actions at the sandbox (tests); production otherwise. */
+  PADDLE_ENV?: string;
   PADDLE_API_KEY?: string;
   CF_ANALYTICS_TOKEN?: string;
   GITHUB_TOKEN?: string;
@@ -32,6 +39,8 @@ export interface Panel {
   title: string;
   status: PanelStatus;
   rows: [label: string, value: string][];
+  /** When status is 'attention': what exactly, for the overview's list. */
+  alert?: string;
   /** Where to look closer (the provider's own dashboard). */
   link?: { label: string; href: string };
   note?: string;
@@ -43,6 +52,10 @@ export interface Deps {
 }
 
 const DAY_MS = 86_400_000;
+
+/** "1 bounce", "3 bounces". */
+export const plural = (n: number, word: string): string =>
+  `${String(n)} ${word}${n === 1 ? '' : 's'}`;
 const TIMEOUT_MS = 8_000;
 
 export const isoDaysAgo = (now: Date, days: number) =>
@@ -144,6 +157,14 @@ export async function paddlePanel(env: Env, deps: Deps): Promise<Panel> {
   return {
     title,
     status: Number(total(pastDue)) > 0 || chargebackCount > 0 ? 'attention' : 'ok',
+    alert: [
+      Number(total(pastDue)) > 0
+        ? plural(Number(total(pastDue)), 'subscription') + ' past due'
+        : '',
+      chargebackCount > 0 ? plural(chargebackCount, 'chargeback') : '',
+    ]
+      .filter(Boolean)
+      .join(', '),
     rows: [
       ['Active subscriptions', total(active)],
       ['Cancelling at period end', total(cancelling)],
@@ -200,6 +221,7 @@ export async function cloudflarePanel(env: Env, deps: Deps): Promise<Panel> {
   return {
     title,
     status: errorRate > 1 ? 'attention' : 'ok',
+    alert: `server errors at ${errorRate.toFixed(1)}% of requests`,
     rows: [
       ['Requests, last 7 days', requests.toLocaleString('en-AU')],
       ['Server errors (5xx)', `${errors.toLocaleString('en-AU')} (${errorRate.toFixed(2)}%)`],
@@ -229,6 +251,7 @@ export async function githubPanel(env: Env, deps: Deps): Promise<Panel> {
   };
   const rows: [string, string][] = [];
   let attention = false;
+  const alerts: string[] = [];
   for (const [repo, workflow, branch] of [
     [repos[0], 'ci.yml', 'dev'],
     [repos[1], 'release.yml', ''],
@@ -241,7 +264,10 @@ export async function githubPanel(env: Env, deps: Deps): Promise<Panel> {
     );
     const run = (runs.workflow_runs as { status?: string; conclusion?: string | null }[])[0];
     const state = run ? (run.conclusion ?? run.status ?? 'unknown') : 'none';
-    if (state === 'failure') attention = true;
+    if (state === 'failure') {
+      attention = true;
+      alerts.push(`${workflow} failed`);
+    }
     rows.push([`${repo.split('/')[1] ?? repo}: ${workflow}`, state]);
   }
   if (repos[0]) {
@@ -250,14 +276,18 @@ export async function githubPanel(env: Env, deps: Deps): Promise<Panel> {
       { ...auth, signal: AbortSignal.timeout(TIMEOUT_MS) },
     );
     if (response.ok) {
-      const alerts = (await response.json()) as unknown[];
-      if (alerts.length > 0) attention = true;
-      rows.push(['Open Dependabot alerts', String(alerts.length)]);
+      const open = (await response.json()) as unknown[];
+      if (open.length > 0) {
+        attention = true;
+        alerts.push(plural(open.length, 'Dependabot alert'));
+      }
+      rows.push(['Open Dependabot alerts', String(open.length)]);
     }
   }
   return {
     title,
     status: attention ? 'attention' : 'ok',
+    alert: alerts.join(', '),
     rows,
     ...(repos[0]
       ? { link: { label: 'Open GitHub', href: `https://github.com/${repos[0]}/actions` } }
@@ -289,6 +319,13 @@ export async function resendPanel(env: Env, deps: Deps): Promise<Panel> {
   return {
     title,
     status: bounced + complained > 0 || unverified ? 'attention' : 'ok',
+    alert: [
+      bounced ? plural(bounced, 'bounce') : '',
+      complained ? plural(complained, 'spam report') : '',
+      unverified ? 'a domain not verified' : '',
+    ]
+      .filter(Boolean)
+      .join(', '),
     rows: [
       ...domainRows,
       ['Sent, last 7 days (latest 100)', String(recent.length)],
@@ -387,6 +424,7 @@ export async function searchPanel(env: Env, deps: Deps): Promise<Panel> {
   return {
     title,
     status: sitemapErrors > 0 ? 'attention' : 'ok',
+    alert: 'a sitemap has errors',
     rows: [
       ['Clicks, last 28 days', String(total?.clicks ?? 0)],
       ['Views in results', String(total?.impressions ?? 0)],
@@ -404,12 +442,12 @@ export async function searchPanel(env: Env, deps: Deps): Promise<Panel> {
 
 // ---------------------------------------------------------------- Accounts
 
-/** Counts from public.ops_stats (publishable key + the Worker's own secret). */
-export async function accountsPanel(env: Env, deps: Deps): Promise<Panel> {
-  const title = 'Accounts (Supabase)';
-  if (!env.OPS_STATS_SECRET || !env.SUPABASE_URL || !env.SUPABASE_PUBLISHABLE_KEY)
-    return notConfigured(title, 'OPS_STATS_SECRET');
-  const stats = await getJson(deps, `${env.SUPABASE_URL}/rest/v1/rpc/ops_stats`, {
+/** Account counts from public.ops_stats (publishable key + the Worker's own secret). */
+export type Stats = Record<string, unknown>;
+
+export async function fetchStats(env: Env, deps: Deps): Promise<Stats | null> {
+  if (!env.OPS_STATS_SECRET || !env.SUPABASE_URL || !env.SUPABASE_PUBLISHABLE_KEY) return null;
+  return getJson(deps, `${env.SUPABASE_URL}/rest/v1/rpc/ops_stats`, {
     method: 'POST',
     headers: {
       apikey: env.SUPABASE_PUBLISHABLE_KEY,
@@ -418,26 +456,33 @@ export async function accountsPanel(env: Env, deps: Deps): Promise<Panel> {
     },
     body: JSON.stringify({ p_secret: env.OPS_STATS_SECRET }),
   });
-  const n = (key: string) => {
-    const value = stats[key];
-    return typeof value === 'number' ? value : 0;
-  };
-  const paid = (stats.paid ?? {}) as Record<string, number>;
-  const pastDue = n('past_due');
+}
+
+export const statNumber = (stats: Stats | null, key: string): number => {
+  const value = stats?.[key];
+  return typeof value === 'number' ? value : 0;
+};
+
+/** Paying accounts: every paid tier counts as Pro since ADR-0029. */
+export const payingCount = (stats: Stats | null): number =>
+  Object.values((stats?.paid ?? {}) as Record<string, number>).reduce(
+    (sum, n) => sum + (typeof n === 'number' ? n : 0),
+    0,
+  );
+
+/** How people use it: devices, inboxes, subscribers, problem reports. */
+export async function accountsPanel(env: Env, deps: Deps, given?: Stats | null): Promise<Panel> {
+  const title = 'Usage (Supabase)';
+  const stats = given === undefined ? await fetchStats(env, deps) : given;
+  if (!stats) return notConfigured(title, 'OPS_STATS_SECRET');
+  const n = (key: string) => statNumber(stats, key);
   const newReports = n('problem_reports_new');
   return {
     title,
-    status: pastDue > 0 || newReports > 0 ? 'attention' : 'ok',
+    status: newReports > 0 ? 'attention' : 'ok',
+    alert: plural(newReports, 'new problem report'),
     rows: [
-      ['Accounts', String(n('accounts'))],
-      ['New this week', String(n('signups_7d'))],
-      ['Active trials', String(n('trials_active'))],
-      ['Paying: Pro', String(paid.pro ?? 0)],
-      ['Paying: Advanced', String(paid.advanced ?? 0)],
-      ['Cancelling at period end', String(n('cancelling'))],
-      ['Past due', String(pastDue)],
-      ['Complimentary', String(n('complimentary'))],
-      ['Devices active this week', String(n('devices_active_7d'))],
+      ['Devices syncing this week', String(n('devices_active_7d'))],
       ['Email update inboxes', String(n('email_inboxes'))],
       ['Product news subscribers', String(n('news_subscribers'))],
       [
@@ -452,9 +497,10 @@ export async function accountsPanel(env: Env, deps: Deps): Promise<Panel> {
   };
 }
 
-export async function allPanels(env: Env, deps: Deps): Promise<Panel[]> {
+/** The provider panels for the overview; account counts are fetched once by the caller. */
+export async function allPanels(env: Env, deps: Deps, stats?: Stats | null): Promise<Panel[]> {
   return Promise.all([
-    safely('Accounts (Supabase)', () => accountsPanel(env, deps)),
+    safely('Usage (Supabase)', () => accountsPanel(env, deps, stats)),
     safely('Revenue (Paddle)', () => paddlePanel(env, deps)),
     safely('Email (Resend)', () => resendPanel(env, deps)),
     safely('Search (Search Console)', () => searchPanel(env, deps)),

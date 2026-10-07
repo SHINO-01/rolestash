@@ -226,11 +226,11 @@ describe('ops panels', () => {
     expect(seen[0]?.url).toBe('https://x.supabase.co/rest/v1/rpc/ops_stats');
     expect(seen[0]?.init?.body).toBe(JSON.stringify({ p_secret: 's3cret' }));
     expect(panel.status).toBe('attention'); // a new problem report
-    expect(Object.fromEntries(panel.rows)).toMatchObject({
-      Accounts: '12',
-      'Paying: Pro': '2',
-      'Paying: Advanced': '1',
-      Complimentary: '1',
+    // Accounts, paying and trials are the overview's headline numbers; this panel is usage.
+    expect(Object.fromEntries(panel.rows)).toEqual({
+      'Devices syncing this week': '9',
+      'Email update inboxes': '1',
+      'Product news subscribers': '20',
       'Problem reports: new / this week': '1 / 2',
     });
     expect(JSON.stringify(panel)).not.toContain('s3cret');
