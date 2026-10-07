@@ -1,0 +1,3 @@
+# Referral links (ADR-0035): rolestash.com/r/<code> opens pricing with the code,
+# which the page keeps in this tab only until checkout.
+/r/:code /pricing/?ref=:code 302

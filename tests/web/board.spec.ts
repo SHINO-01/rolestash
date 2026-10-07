@@ -96,6 +96,31 @@ test('from /pricing/: signs in, then opens checkout for that account', async ({
   expect(call?.headers.authorization).toBe('Bearer e2e-access');
 });
 
+test('carries a promo code and referral to checkout, and recovers from a bad code (ADR-0035)', async ({
+  page,
+  site,
+  backend,
+}) => {
+  await page.goto(`${site}/board/?checkout=pro-month&code=badcode&ref=k7q2m9xa`);
+  await expect(page).toHaveURL(`${site}/board/`);
+  await signIn(page, site);
+  await expect(page.getByText('Code BADCODE is applied at checkout.')).toBeVisible();
+  await expect(page.getByText(/friend’s referral takes money off your first month/)).toBeVisible();
+  await page.getByRole('button', { name: 'Continue to checkout' }).click();
+  await expect(
+    page.getByText('That code isn’t valid for this plan, or it has expired.'),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Continue without the code' }).click();
+  await page.getByRole('button', { name: 'Continue to checkout' }).click();
+  await page.waitForURL(/\/pay\/\?_ptxn=txn_e2e/);
+  const calls = backend.requests.filter((r) => r.path === '/functions/v1/create-checkout');
+  expect(calls.map((c) => c.body)).toEqual([
+    { tier: 'pro', interval: 'month', code: 'BADCODE', ref: 'K7Q2M9XA' },
+    // "Continue without the code" drops the code and keeps the referral.
+    { tier: 'pro', interval: 'month', ref: 'K7Q2M9XA' },
+  ]);
+});
+
 test('from /pricing/ with a live plan: no second subscription', async ({ page, site, backend }) => {
   backend.entitlement = {
     status: 'active',
@@ -114,6 +139,39 @@ test('from /pricing/ with a live plan: no second subscription', async ({ page, s
   // `advanced-…` links buy Pro since ADR-0029).
   await expect(page.getByRole('heading', { name: 'You already have a plan' })).toHaveCount(0);
   await expect(page.getByRole('heading', { name: /part of Pro/ })).toHaveCount(0);
+});
+
+test('Account shows the referral link once the programme is on (ADR-0035)', async ({
+  page,
+  site,
+  backend,
+}) => {
+  backend.entitlement = {
+    status: 'active',
+    tier: 'advanced',
+    trial_ends_at: null,
+    current_period_end: new Date(Date.now() + 20 * 86_400_000).toISOString(),
+    provider_customer_id: 'ctm_1',
+  };
+  backend.referral = {
+    enabled: true,
+    code: 'K7Q2M9XA',
+    percent: 50,
+    joined: 2,
+    earned: 1,
+    pending: 1,
+  };
+  await signIn(page, site);
+  await page.getByRole('button', { name: 'Account' }).click();
+  await expect(page.getByLabel('Your referral link')).toHaveValue(
+    'https://rolestash.com/r/K7Q2M9XA',
+  );
+  await expect(page.getByText('2 friends joined · 1 free month earned')).toBeVisible();
+  await page.getByRole('button', { name: 'New link' }).click();
+  await page.getByRole('button', { name: 'Make a new link' }).click();
+  await expect(page.getByLabel('Your referral link')).toHaveValue(
+    'https://rolestash.com/r/NEWCQDE2',
+  );
 });
 
 test('Pro: Today, the board, quick updates and quick add, synced back', async ({

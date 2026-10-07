@@ -1,4 +1,4 @@
-import { planChip, planSummary } from '@/features/account/plan-copy';
+import { planChip, planSummary, referralCounts } from '@/features/account/plan-copy';
 
 describe('plan copy', () => {
   it('says a complimentary plan needs no subscription, with no renewal date', () => {
@@ -26,5 +26,11 @@ describe('plan copy', () => {
     expect(
       planSummary({ plan: 'pro', reason: 'subscribed', endsAt: '2026-11-02T12:00:00.000Z' }),
     ).toMatch(/^Pro\. Renews on .+\.$/);
+  });
+
+  it('counts friends and free months for the referral section (ADR-0035)', () => {
+    expect(referralCounts({})).toBe('No friends have joined yet.');
+    expect(referralCounts({ joined: 1, earned: 0 })).toBe('1 friend joined · 0 free months earned');
+    expect(referralCounts({ joined: 3, earned: 1 })).toBe('3 friends joined · 1 free month earned');
   });
 });

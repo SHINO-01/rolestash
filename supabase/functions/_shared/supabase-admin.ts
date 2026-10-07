@@ -37,6 +37,19 @@ export interface BugReportRow {
   ip_hash: string | null;
 }
 
+/** What public.checkout_code says about a code (ADR-0035). */
+export type CheckoutCode =
+  | { kind: 'unknown' }
+  | { kind: 'rate_limited' }
+  | {
+      kind: 'referral';
+      eligible: boolean;
+      reason?: string;
+      code?: string;
+      percent?: number;
+      discount_id?: string | null;
+    };
+
 export class SupabaseAdmin {
   constructor(
     private readonly config: SupabaseAdminConfig,
@@ -183,6 +196,47 @@ export class SupabaseAdmin {
     });
     if (!response.ok) throw new Error(`apply_billing_event failed: ${response.status}`);
     return (await response.json()) === true;
+  }
+
+  private async rpc(name: string, args: Record<string, unknown>): Promise<unknown> {
+    const response = await this.fetchFn(`${this.config.url}/rest/v1/rpc/${name}`, {
+      method: 'POST',
+      headers: this.serviceHeaders(),
+      body: JSON.stringify(args),
+    });
+    if (!response.ok) throw new Error(`${name} failed: ${response.status}`);
+    return response.json();
+  }
+
+  /** Is this a referral code this account can use, and with which discount? */
+  async checkoutCode(userId: string, code: string): Promise<CheckoutCode> {
+    return (await this.rpc('checkout_code', { p_user: userId, p_code: code })) as CheckoutCode;
+  }
+
+  /** Records a friend's subscription through a referral code; returns the outcome. */
+  async recordReferral(input: {
+    code: string;
+    friendId: string;
+    transactionId: string | null;
+    subscriptionId: string;
+    customerId: string | null;
+  }): Promise<string> {
+    return String(
+      await this.rpc('record_referral', {
+        p_code: input.code,
+        p_friend: input.friendId,
+        p_transaction_id: input.transactionId,
+        p_subscription_id: input.subscriptionId,
+        p_customer_id: input.customerId,
+      }),
+    );
+  }
+
+  /** A refund or chargeback voids a referral still waiting; returns how many. */
+  async voidReferral(transactionId: string, reason: string): Promise<number> {
+    return Number(
+      await this.rpc('void_referral', { p_transaction_id: transactionId, p_reason: reason }),
+    );
   }
 
   /**

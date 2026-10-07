@@ -1,7 +1,10 @@
 import {
   clearCheckoutIntent,
   parseCheckoutIntent,
+  parsePromo,
+  savePromo,
   takeCheckoutIntent,
+  takePromo,
 } from '@/web/checkout-intent';
 
 describe('checkout intent from /pricing/ (ADR-0027)', () => {
@@ -35,5 +38,22 @@ describe('checkout intent from /pricing/ (ADR-0027)', () => {
     history.replaceState(null, '', '/board/?checkout=nonsense');
     expect(takeCheckoutIntent()).toEqual({ tier: 'pro', interval: 'month' });
     expect(location.search).toBe('');
+  });
+
+  it('takes a promo code and referral from the link or the pricing page, safely (ADR-0035)', () => {
+    expect(parsePromo({ code: ' launch30 ', ref: 'k7q2m9xa' })).toEqual({
+      code: 'LAUNCH30',
+      ref: 'K7Q2M9XA',
+    });
+    expect(parsePromo({ code: '<b>', ref: 42 })).toEqual({});
+    expect(parsePromo(null)).toEqual({});
+
+    sessionStorage.setItem('rolestash:promo', JSON.stringify({ ref: 'K7Q2M9XA' }));
+    history.replaceState(null, '', '/board/?checkout=pro-month&code=spring&x=1');
+    expect(takePromo()).toEqual({ ref: 'K7Q2M9XA', code: 'SPRING' });
+    expect(location.search).toBe('?checkout=pro-month&x=1');
+    expect(takePromo()).toEqual({ ref: 'K7Q2M9XA', code: 'SPRING' });
+    savePromo({});
+    expect(takePromo()).toEqual({});
   });
 });

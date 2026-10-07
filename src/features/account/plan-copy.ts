@@ -4,7 +4,7 @@ import {
   type PaidPlan,
   type PlanState,
 } from '@/domain/plan';
-import type { BackendError } from '@/services/backend/supabase-client';
+import type { BackendError, Referral } from '@/services/backend/supabase-client';
 import type { JobLimitError } from '@/services/job-service';
 import { formatDate } from '@/ui/format';
 
@@ -73,11 +73,27 @@ export function backendErrorMessage(error: unknown): string {
       return 'There is no subscription to manage yet.';
     case 'sync_not_allowed':
       return 'This browser can’t sync on your current plan, or it was removed from sync.';
+    case 'promo_code_invalid':
+      return 'That code isn’t valid for this plan, or it has expired.';
+    case 'promo_code_unusable':
+      return 'Referral codes are for a friend’s first subscription, so this one can’t be used here.';
+    case 'promo_code_limited':
+      return 'Too many codes tried. Please wait an hour and try again.';
     default:
       return error instanceof Error && error.message === 'Sign-in was cancelled'
         ? 'Sign-in was cancelled.'
         : 'Something went wrong. Please try again.';
   }
+}
+
+/** "1 friend joined · 2 free months earned", or a nudge when there are none yet. */
+export function referralCounts(referral: Pick<Referral, 'joined' | 'earned'>): string {
+  const joined = referral.joined ?? 0;
+  const earned = referral.earned ?? 0;
+  if (joined === 0) return 'No friends have joined yet.';
+  const friends = `${String(joined)} friend${joined === 1 ? '' : 's'} joined`;
+  const months = `${String(earned)} free month${earned === 1 ? '' : 's'} earned`;
+  return `${friends} · ${months}`;
 }
 
 export function limitMessage(error: JobLimitError): string {

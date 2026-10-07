@@ -24,6 +24,7 @@ import {
   SessionSchema,
   type LocalPrices,
   type PlanChangePreview,
+  type Referral,
   type Session,
   type SupabaseClient,
 } from './backend/supabase-client';
@@ -307,10 +308,17 @@ export class AccountService implements PlanProvider {
   }
 
   /** Checkout for a new subscription (Free, trial or lapsed accounts). */
-  async checkoutUrl(tier: PaidPlan, interval: BillingInterval): Promise<string> {
+  /** A checkout for this account; `promo` carries a discount or referral code (ADR-0035). */
+  async checkoutUrl(
+    tier: PaidPlan,
+    interval: BillingInterval,
+    promo: { code?: string; ref?: string } = {},
+  ): Promise<string> {
     return this.client.functionUrl('create-checkout', await this.accessToken(), {
       tier,
       interval,
+      ...(promo.code ? { code: promo.code } : {}),
+      ...(promo.ref ? { ref: promo.ref } : {}),
     });
   }
 
@@ -341,6 +349,16 @@ export class AccountService implements PlanProvider {
   async changePlan(tier: PaidPlan, interval: BillingInterval): Promise<void> {
     await this.client.changePlan(await this.accessToken(), { tier, interval });
     await this.refreshEntitlement();
+  }
+
+  /** This account's referral link and counts (ADR-0035). */
+  async referral(): Promise<Referral> {
+    return this.client.myReferral(await this.accessToken());
+  }
+
+  /** A new referral code; the old link stops working. */
+  async rotateReferral(): Promise<string> {
+    return this.client.rotateReferralCode(await this.accessToken());
   }
 
   async billingPortalUrl(): Promise<string> {

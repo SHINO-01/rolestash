@@ -37,6 +37,8 @@ export interface MockBackend {
   welcomes: number;
   /** Bug reports received (ADR-0024). */
   bugReports: unknown[];
+  /** What my_referral returns (ADR-0035); the programme is off unless a test turns it on. */
+  referral: Record<string, unknown>;
   close(): Promise<void>;
 }
 
@@ -120,6 +122,11 @@ function route(
           share_learning: state.shareLearning,
         },
       ];
+    case '/rest/v1/rpc/my_referral':
+      return [200, state.referral];
+    case '/rest/v1/rpc/rotate_referral_code':
+      state.referral = { ...state.referral, code: 'NEWCQDE2' };
+      return [200, state.referral.code];
     case '/rest/v1/rpc/set_email_sharing':
       state.shareLearning = b.p_on === true;
       return [200, { ok: true, share_learning: state.shareLearning }];
@@ -159,6 +166,7 @@ function route(
       return [200, [state.entitlement]];
     case '/functions/v1/create-checkout':
       // Like the real function: one live subscription per account.
+      if (b.code === 'BADCODE') return [400, { error: 'invalid_code' }];
       return state.entitlement.status === 'active' && state.entitlement.provider_subscription_id
         ? [409, { error: 'already_subscribed' }]
         : [200, { url: `${MOCK_BACKEND}/pay/?_ptxn=txn_e2e` }];
@@ -226,6 +234,7 @@ export async function startMockBackend(): Promise<MockBackend> {
     shareLearning: true,
     welcomes: 0,
     bugReports: [],
+    referral: { enabled: false },
     close: () => Promise.resolve(),
   };
 

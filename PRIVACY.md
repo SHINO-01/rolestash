@@ -49,6 +49,12 @@ Full policy: https://rolestash.com/privacy/
   why and until when. If we set it up before you have an account, we keep a
   keyed hash of your email and its first two letters and domain (such as
   "da…@example.com") until you sign in or the grant ends.
+- **Referrals (only if you use a referral link or share yours):** your
+  referral code, which account referred which, the payment it came from and
+  whether a reward was given, plus a keyed hash of a referred friend's email
+  so each friend counts once. A referral link carries its code to checkout in
+  that browser tab only (no cookies). Referrers see only how many friends
+  joined, never who.
 - **Sync (Pro):** a copy of your board and a name for each
   synced device, stored in our database in Sydney, Australia, so your devices
   stay in step. Deleting your account deletes it.

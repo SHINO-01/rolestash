@@ -129,10 +129,105 @@ export function displayPrice(formatted: string, currency: string): string {
   return amount ? `$${amount} CAD` : formatted;
 }
 
-/** POST /functions/v1/create-checkout  { tier, interval } → { url } */
+/** A discount applied at checkout, as the buyer is told about it. */
+interface AppliedDiscount {
+  kind: 'code' | 'referral';
+  code: string;
+  /** Percent off, or null for a fixed amount. */
+  percent: number | null;
+}
+
+/**
+ * Works out the discount and referral for a checkout (ADR-0035): `code` is
+ * what was typed or came in a promo link, `ref` a referral link's code. A
+ * referral discount is for the monthly price only; with two discounts, the
+ * bigger one applies (Paddle takes one per payment), and the referral is still
+ * credited. Returns an error response for a code that can't be used.
+ */
+async function checkoutDiscount(
+  admin: SupabaseAdmin,
+  paddle: PaddleClient,
+  userId: string,
+  priceId: string,
+  interval: BillingInterval,
+  now: Date,
+  input: { code: string | null; ref: string | null },
+): Promise<
+  | { discountId?: string; referralCode?: string; applied?: AppliedDiscount; note?: string }
+  | Response
+> {
+  let referral: { code: string; percent: number; discountId: string | null } | undefined;
+  let note: string | undefined;
+  let typed: { id: string; applied: AppliedDiscount } | undefined;
+
+  for (const raw of [input.ref, input.code]) {
+    if (!raw) continue;
+    const answer = await admin.checkoutCode(userId, raw);
+    if (answer.kind === 'rate_limited') return json(429, { error: 'too_many_codes' });
+    if (answer.kind === 'referral') {
+      if (answer.eligible && answer.code)
+        referral = {
+          code: answer.code,
+          percent: answer.percent ?? 0,
+          discountId: answer.discount_id ?? null,
+        };
+      else if (raw === input.code)
+        return json(400, { error: 'code_not_usable', reason: answer.reason ?? 'unknown' });
+      else note = answer.reason;
+      continue;
+    }
+    if (raw !== input.code) continue; // a stale referral link: ignore quietly
+    const productId = await paddle.productOfPrice(priceId).catch(() => null);
+    const found = await paddle.discountForCode(raw.trim(), priceId, productId, now);
+    if (!found) return json(400, { error: 'invalid_code' });
+    typed = {
+      id: found.id,
+      applied: {
+        kind: 'code',
+        code: found.code,
+        percent: found.type === 'percentage' ? Number(found.amount) : null,
+      },
+    };
+  }
+
+  const referralDiscount =
+    referral && interval === 'month' && referral.discountId
+      ? {
+          id: referral.discountId,
+          applied: { kind: 'referral' as const, code: referral.code, percent: referral.percent },
+        }
+      : undefined;
+  if (referral && !referralDiscount) note = 'referral_monthly_only';
+  const best =
+    typed && referralDiscount
+      ? (typed.applied.percent ?? 0) >= referralDiscount.applied.percent
+        ? typed
+        : referralDiscount
+      : (typed ?? referralDiscount);
+  return {
+    ...(best ? { discountId: best.id, applied: best.applied } : {}),
+    ...(referral ? { referralCode: referral.code } : {}),
+    ...(note ? { note } : {}),
+  };
+}
+
+const codeOf = (value: unknown): string | null =>
+  typeof value === 'string' && /^[A-Za-z0-9_-]{2,40}$/.test(value.trim()) ? value.trim() : null;
+
+/**
+ * POST /functions/v1/create-checkout  { tier, interval, code?, ref? } →
+ * { url, discount?, note? }. `code` is a discount or referral code, `ref` a
+ * referral link's code (ADR-0035).
+ */
 export const handleCreateCheckout = userEndpoint(async ({ req, user, admin, paddle, env }) => {
-  const choice = planChoice((await req.json().catch(() => ({}))) as Record<string, unknown>);
+  const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
+  const choice = planChoice(body);
   if (!choice) return json(400, { error: 'invalid_plan' });
+  if (
+    (body.code !== undefined && !codeOf(body.code)) ||
+    (body.ref !== undefined && !codeOf(body.ref))
+  )
+    return json(400, { error: 'invalid_code' });
 
   const entitlement = await admin.entitlement(user.id);
   if (entitlement && PAID.has(entitlement.status) && entitlement.provider_subscription_id) {
@@ -149,16 +244,36 @@ export const handleCreateCheckout = userEndpoint(async ({ req, user, admin, padd
   }
   // Returning subscribers keep their Paddle customer; everyone else is bound to
   // the customer for their account email before checkout opens.
+  const priceId = env.paddle.prices[choice.interval];
+  const discount = await checkoutDiscount(
+    admin,
+    paddle,
+    user.id,
+    priceId,
+    choice.interval,
+    new Date(),
+    {
+      code: codeOf(body.code),
+      ref: codeOf(body.ref),
+    },
+  );
+  if (discount instanceof Response) return discount;
   const customerId =
     entitlement?.provider_customer_id ??
     (user.email ? await paddle.customerForEmail(user.email) : null);
   const url = await paddle.createCheckout({
-    priceId: env.paddle.prices[choice.interval],
+    priceId,
     userId: user.id,
     signature: await checkoutSignature(env.supabase.serviceRoleKey, user.id),
     customerId,
+    ...(discount.discountId ? { discountId: discount.discountId } : {}),
+    ...(discount.referralCode ? { referralCode: discount.referralCode } : {}),
   });
-  return json(200, { url });
+  return json(200, {
+    url,
+    ...(discount.applied ? { discount: discount.applied } : {}),
+    ...(discount.note ? { note: discount.note } : {}),
+  });
 });
 
 /**
@@ -497,6 +612,10 @@ export async function handlePaddleWebhook(req: Request, deps: Deps): Promise<Res
   const refund = toRefundEvent(payload);
   if (refund) {
     try {
+      // A refunded friend's referral earns nothing (ADR-0035).
+      await new SupabaseAdmin(deps.env.supabase, deps.fetch)
+        .voidReferral(refund.transactionId, 'Refunded or charged back')
+        .catch((error: unknown) => console.error('[rolestash] void_referral failed', error));
       return await endRefundedSubscription(paddle, refund);
     } catch (error) {
       console.error('[rolestash] webhook refund failed', error);
@@ -516,6 +635,24 @@ export async function handlePaddleWebhook(req: Request, deps: Deps): Promise<Res
         customerId: incoming.customerId,
       });
       return json(200, { ignored: true });
+    }
+    // A purchase through a referral link is recorded before the event applies,
+    // so "had this account paid before?" sees the account as it was.
+    if (incoming.referralCode) {
+      const outcome = await admin
+        .recordReferral({
+          code: incoming.referralCode,
+          friendId: userId,
+          transactionId: incoming.transactionId,
+          subscriptionId: incoming.subscriptionId,
+          customerId: incoming.customerId,
+        })
+        .catch((error: unknown) => {
+          console.error('[rolestash] record_referral failed', error);
+          return 'failed';
+        });
+      if (outcome !== 'recorded' && outcome !== 'duplicate')
+        console.error('[rolestash] webhook: referral not recorded', { outcome });
     }
     const applied = await admin.applyBillingEvent({ ...incoming, userId }, 'paddle');
     return json(200, { applied });

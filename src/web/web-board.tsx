@@ -20,7 +20,14 @@ import { JobSheet } from './job-sheet';
 import { QuickAdd } from './quick-add';
 import { TodayView } from './today-view';
 import { webConfig } from './config';
-import { clearCheckoutIntent, takeCheckoutIntent, type CheckoutIntent } from './checkout-intent';
+import {
+  clearCheckoutIntent,
+  savePromo,
+  takeCheckoutIntent,
+  takePromo,
+  type CheckoutIntent,
+  type Promo,
+} from './checkout-intent';
 import {
   allowExtensionSignIn,
   blockExtensionSignIn,
@@ -39,6 +46,7 @@ export function WebBoard() {
   const { account } = useServices();
   const { state } = useAccount();
   const [intent, setIntent] = useState(takeCheckoutIntent);
+  const [promo, setPromo] = useState(takePromo);
   if (!account) return <Centered>The web board isn’t available right now.</Centered>;
   if (!state)
     return (
@@ -52,6 +60,11 @@ export function WebBoard() {
       <CheckoutStep
         account={account}
         intent={intent}
+        promo={promo}
+        onPromoChange={(next) => {
+          savePromo(next);
+          setPromo(next);
+        }}
         email={state.email}
         onDone={() => {
           clearCheckoutIntent();
@@ -251,14 +264,20 @@ function WebSignIn({
 function CheckoutStep({
   account,
   intent,
+  promo,
+  onPromoChange,
   email,
   onDone,
 }: {
   account: AccountService;
   intent: CheckoutIntent;
+  /** A discount code or referral link's code, checked by create-checkout (ADR-0035). */
+  promo: Promo;
+  onPromoChange: (promo: Promo) => void;
   email: string | undefined;
   onDone: () => void;
 }) {
+  const [codeProblem, setCodeProblem] = useState(false);
   const [busy, setBusy] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
   const [error, setError] = useState<string>();
@@ -274,7 +293,13 @@ function CheckoutStep({
       await task();
     } catch (e) {
       if (e instanceof BackendError && e.code === 'already_subscribed') setSubscribed(true);
-      else setError(backendErrorMessage(e));
+      else {
+        setCodeProblem(
+          e instanceof BackendError &&
+            (e.code === 'promo_code_invalid' || e.code === 'promo_code_unusable'),
+        );
+        setError(backendErrorMessage(e));
+      }
     } finally {
       setBusy(false);
     }
@@ -312,18 +337,56 @@ function CheckoutStep({
           {planPriceLabel(intent.tier, intent.interval, local)}
           {email ? ` for ${email}` : ''}. You’ll pay on Paddle, our merchant of record.
         </p>
+        {promo.ref ? (
+          <p className="text-muted mt-2 text-sm">
+            {intent.interval === 'month'
+              ? 'Your friend’s referral takes money off your first month; Paddle shows the total.'
+              : 'Your friend’s referral discount is for the monthly plan; they’ll still be thanked for this one.'}
+          </p>
+        ) : null}
+        {promo.code ? (
+          <p className="text-muted mt-2 text-sm">
+            Code <b className="text-ink font-medium">{promo.code}</b> is applied at checkout.{' '}
+            <button
+              type="button"
+              className="text-accent underline"
+              onClick={() => {
+                const { code: _code, ...rest } = promo;
+                onPromoChange(rest);
+                setError(undefined);
+                setCodeProblem(false);
+              }}
+            >
+              Remove
+            </button>
+          </p>
+        ) : null}
       </div>
       <Button
         variant="primary"
         loading={busy}
         onClick={() =>
           void run(async () =>
-            location.assign(await account.checkoutUrl(intent.tier, intent.interval)),
+            location.assign(await account.checkoutUrl(intent.tier, intent.interval, promo)),
           )
         }
       >
         Continue to checkout
       </Button>
+      {codeProblem ? (
+        <Button
+          variant="ghost"
+          disabled={busy}
+          onClick={() => {
+            // Only the typed code: a referral the server can't use is already ignored.
+            onPromoChange(promo.ref ? { ref: promo.ref } : {});
+            setCodeProblem(false);
+            setError(undefined);
+          }}
+        >
+          Continue without the code
+        </Button>
+      ) : null}
       <Button variant="ghost" disabled={busy} onClick={onDone}>
         Not now
       </Button>

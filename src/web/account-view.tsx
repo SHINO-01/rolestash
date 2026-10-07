@@ -1,6 +1,7 @@
 import { LogOut } from 'lucide-react';
 import { planChip, planSummary } from '@/features/account/plan-copy';
 import { ProfileSection } from '@/features/account/profile-section';
+import { ReferralSection } from '@/features/account/referral-section';
 import { SyncSection } from '@/features/account/sync-section';
 import { EmailSection } from '@/features/email/email-section';
 import { Button } from '@/ui/components/button';
@@ -56,6 +57,7 @@ export function AccountView() {
       <ProfileSection account={account} state={state} />
       <SyncSection plan={state.plan.plan} />
       <EmailSection plan={state.plan.plan} trial={state.plan.reason === 'trial'} />
+      <ReferralSection account={account} />
       <Button variant="ghost" icon={<LogOut className="size-4" />} onClick={() => void signOut()}>
         Sign out and clear this browser
       </Button>

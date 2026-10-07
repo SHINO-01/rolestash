@@ -251,6 +251,159 @@ describe('user endpoints', () => {
   });
 });
 
+describe('codes at checkout (ADR-0035)', () => {
+  const PADDLE = 'https://sandbox-api.paddle.com';
+  const base = (routes: Parameters<typeof fakeFetch>[0]) =>
+    deps({
+      [`GET ${SB}/rest/v1/entitlements`]: entitlementRoute({ status: 'trialing' }),
+      [`GET ${PADDLE}/customers`]: { status: 200, body: { data: [{ id: 'ctm_1' }] } },
+      [`POST ${PADDLE}/transactions`]: {
+        status: 201,
+        body: { data: { checkout: { url: 'https://rolestash.com/pay/?_ptxn=txn_1' } } },
+      },
+      [`GET ${PADDLE}/prices/pri_pro_month`]: {
+        status: 200,
+        body: { data: { product_id: 'pro_1' } },
+      },
+      [`GET ${PADDLE}/prices/pri_pro_year`]: {
+        status: 200,
+        body: { data: { product_id: 'pro_1' } },
+      },
+      ...routes,
+    });
+  const unknown: FakeResponse = { status: 200, body: { kind: 'unknown' } };
+  const referral = (extra: Record<string, unknown> = {}): FakeResponse => ({
+    status: 200,
+    body: {
+      kind: 'referral',
+      eligible: true,
+      code: 'K7Q2M9XA',
+      percent: 50,
+      discount_id: 'dsc_ref',
+      ...extra,
+    },
+  });
+  const discount = (extra: Record<string, unknown> = {}) => ({
+    id: 'dsc_launch',
+    code: 'LAUNCH30',
+    status: 'active',
+    type: 'percentage',
+    amount: '30',
+    restrict_to: ['pri_pro_month', 'pri_pro_year'],
+    expires_at: '2026-12-31T00:00:00Z',
+    usage_limit: 200,
+    times_used: 3,
+    ...extra,
+  });
+  const transaction = (calls: RecordedCall[]) =>
+    calls.find((c) => c.method === 'POST' && c.url.endsWith('/transactions'))?.body as Record<
+      string,
+      unknown
+    >;
+
+  it('applies a Paddle discount code that fits the price', async () => {
+    const { deps: d, calls } = base({
+      [`POST ${SB}/rest/v1/rpc/checkout_code`]: unknown,
+      [`GET ${PADDLE}/discounts`]: { status: 200, body: { data: [discount()] } },
+    });
+    const res = await handleCreateCheckout(post({ interval: 'year', code: 'launch30' }), d);
+    expect(await res.json()).toEqual({
+      url: 'https://rolestash.com/pay/?_ptxn=txn_1',
+      discount: { kind: 'code', code: 'LAUNCH30', percent: 30 },
+    });
+    expect(transaction(calls)).toMatchObject({ discount_id: 'dsc_launch' });
+    expect(calls.find((c) => c.url.includes('/discounts'))?.url).toContain('code=launch30');
+  });
+
+  it('refuses codes that are expired, used up, for another price, or unknown', async () => {
+    for (const found of [
+      [discount({ expires_at: '2026-09-01T00:00:00Z' })],
+      [discount({ usage_limit: 3 })],
+      [discount({ restrict_to: ['pri_other'] })],
+      [],
+    ]) {
+      const { deps: d, calls } = base({
+        [`POST ${SB}/rest/v1/rpc/checkout_code`]: unknown,
+        [`GET ${PADDLE}/discounts`]: { status: 200, body: { data: found } },
+      });
+      const res = await handleCreateCheckout(post({ interval: 'year', code: 'LAUNCH30' }), d);
+      expect(res.status, JSON.stringify(found)).toBe(400);
+      expect(await res.json()).toEqual({ error: 'invalid_code' });
+      expect(transaction(calls)).toBeUndefined();
+    }
+    const { deps: d } = base({});
+    expect(
+      (await handleCreateCheckout(post({ interval: 'year', code: '<script>' }), d)).status,
+    ).toBe(400);
+  });
+
+  it('gives a referred friend the referral discount on monthly, and credits the referrer', async () => {
+    const { deps: d, calls } = base({ [`POST ${SB}/rest/v1/rpc/checkout_code`]: referral() });
+    const res = await handleCreateCheckout(post({ interval: 'month', ref: 'K7Q2M9XA' }), d);
+    expect(await res.json()).toMatchObject({
+      discount: { kind: 'referral', code: 'K7Q2M9XA', percent: 50 },
+    });
+    expect(transaction(calls)).toMatchObject({
+      discount_id: 'dsc_ref',
+      custom_data: { user_id: USER.id, ref: 'K7Q2M9XA' },
+    });
+  });
+
+  it('on yearly, still credits the referrer but gives no referral discount', async () => {
+    const { deps: d, calls } = base({ [`POST ${SB}/rest/v1/rpc/checkout_code`]: referral() });
+    const res = await handleCreateCheckout(post({ interval: 'year', ref: 'K7Q2M9XA' }), d);
+    expect(await res.json()).toEqual({
+      url: 'https://rolestash.com/pay/?_ptxn=txn_1',
+      note: 'referral_monthly_only',
+    });
+    expect(transaction(calls)).not.toHaveProperty('discount_id');
+    expect(transaction(calls)).toMatchObject({ custom_data: { ref: 'K7Q2M9XA' } });
+  });
+
+  it('with a referral and a code, applies the bigger discount and keeps the referral', async () => {
+    const { deps: d, calls } = base({
+      [`POST ${SB}/rest/v1/rpc/checkout_code`]: (call) =>
+        (call.body as { p_code: string }).p_code === 'K7Q2M9XA' ? referral() : unknown,
+      [`GET ${PADDLE}/discounts`]: { status: 200, body: { data: [discount()] } },
+    });
+    await handleCreateCheckout(post({ interval: 'month', ref: 'K7Q2M9XA', code: 'LAUNCH30' }), d);
+    expect(transaction(calls)).toMatchObject({
+      discount_id: 'dsc_ref',
+      custom_data: { ref: 'K7Q2M9XA' },
+    });
+  });
+
+  it("says why a typed referral code can't be used, and ignores a stale referral link", async () => {
+    const own = base({
+      [`POST ${SB}/rest/v1/rpc/checkout_code`]: referral({ eligible: false, reason: 'own_code' }),
+    });
+    const res = await handleCreateCheckout(post({ interval: 'month', code: 'K7Q2M9XA' }), own.deps);
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: 'code_not_usable', reason: 'own_code' });
+
+    const stale = base({
+      [`POST ${SB}/rest/v1/rpc/checkout_code`]: referral({
+        eligible: false,
+        reason: 'not_first_purchase',
+      }),
+    });
+    const ok = await handleCreateCheckout(post({ interval: 'month', ref: 'K7Q2M9XA' }), stale.deps);
+    expect(await ok.json()).toEqual({
+      url: 'https://rolestash.com/pay/?_ptxn=txn_1',
+      note: 'not_first_purchase',
+    });
+    expect(transaction(stale.calls)).not.toHaveProperty('discount_id');
+  });
+
+  it('stops anyone trying many codes', async () => {
+    const { deps: d } = base({
+      [`POST ${SB}/rest/v1/rpc/checkout_code`]: { status: 200, body: { kind: 'rate_limited' } },
+    });
+    const res = await handleCreateCheckout(post({ interval: 'month', code: 'GUESS123' }), d);
+    expect(res.status).toBe(429);
+  });
+});
+
 describe('plan choice and change-plan', () => {
   it('create-checkout uses the Pro price for the chosen interval, whatever the tier', async () => {
     const { deps: d, calls } = deps({
@@ -578,6 +731,50 @@ describe('paddle-webhook', () => {
     });
   });
 
+  it('records a purchase through a referral link before applying it (ADR-0035)', async () => {
+    const { deps: d, calls } = deps({
+      ...ownCustomer,
+      [`POST ${SB}/rest/v1/rpc/record_referral`]: { status: 200, body: 'recorded' },
+      [`POST ${SB}/rest/v1/rpc/apply_billing_event`]: { status: 200, body: true },
+    });
+    const event = subscriptionEvent({
+      transaction_id: 'txn_9',
+      custom_data: { user_id: USER.id, ref: 'K7Q2M9XA' },
+    });
+    const res = await handlePaddleWebhook(await signedRequest(event), d);
+    expect(await res.json()).toEqual({ applied: true });
+    const rpcs = calls.filter((c) => c.url.includes('/rpc/')).map((c) => c.url.split('/rpc/')[1]);
+    expect(rpcs).toEqual(['record_referral', 'apply_billing_event']);
+    expect(calls.find((c) => c.url.endsWith('/rpc/record_referral'))?.body).toEqual({
+      p_code: 'K7Q2M9XA',
+      p_friend: USER.id,
+      p_transaction_id: 'txn_9',
+      p_subscription_id: 'sub_01',
+      p_customer_id: 'ctm_01',
+    });
+  });
+
+  it('still applies the plan if recording a referral fails, and ignores malformed codes', async () => {
+    const failing = deps({
+      ...ownCustomer,
+      [`POST ${SB}/rest/v1/rpc/record_referral`]: { status: 500, body: {} },
+      [`POST ${SB}/rest/v1/rpc/apply_billing_event`]: { status: 200, body: true },
+    });
+    const event = subscriptionEvent({ custom_data: { user_id: USER.id, ref: 'K7Q2M9XA' } });
+    expect(
+      await (await handlePaddleWebhook(await signedRequest(event), failing.deps)).json(),
+    ).toEqual({
+      applied: true,
+    });
+    const odd = deps({
+      ...ownCustomer,
+      [`POST ${SB}/rest/v1/rpc/apply_billing_event`]: { status: 200, body: true },
+    });
+    const forged = subscriptionEvent({ custom_data: { user_id: USER.id, ref: "x' or 1=1" } });
+    await handlePaddleWebhook(await signedRequest(forged), odd.deps);
+    expect(odd.calls.some((c) => c.url.endsWith('/rpc/record_referral'))).toBe(false);
+  });
+
   it('never matches a purchase without an account to one by its checkout email', async () => {
     // A Paddle.js checkout with no custom_data, e.g. someone else's email typed in.
     const { deps: d, calls } = deps({});
@@ -631,12 +828,22 @@ describe('paddle-webhook', () => {
         adjustment({}, 'adjustment.created'),
         adjustment({ action: 'chargeback' }),
       ]) {
-        const { deps: d, calls } = deps(paddle(live));
+        const { deps: d, calls } = deps({
+          ...paddle(live),
+          [`POST ${SB}/rest/v1/rpc/void_referral`]: { status: 200, body: 0 },
+        });
         const res = await handlePaddleWebhook(await signedRequest(event), d);
         expect(await res.json()).toEqual({ canceled: true });
         expect(cancelCall(calls)?.body).toEqual({ effective_from: 'immediately' });
-        // The entitlement follows from Paddle's subscription.canceled event.
-        expect(calls.some((c) => c.url.startsWith(`${SB}/`))).toBe(false);
+        // A referral through this payment earns nothing (ADR-0035)…
+        expect(calls.find((c) => c.url.endsWith('/rpc/void_referral'))?.body).toEqual({
+          p_transaction_id: 'txn_01',
+          p_reason: 'Refunded or charged back',
+        });
+        // …and the entitlement follows from Paddle's subscription.canceled event.
+        expect(
+          calls.filter((c) => c.url.startsWith(`${SB}/`) && !c.url.endsWith('/rpc/void_referral')),
+        ).toHaveLength(0);
       }
     });
 

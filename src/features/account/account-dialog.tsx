@@ -31,6 +31,7 @@ import { NameQuestion } from './name-question';
 import { ProfileSection } from './profile-section';
 import { SharingChoice } from './sharing-choice';
 import type { LocalPrices, PlanChangePreview } from '@/services/backend/supabase-client';
+import { ReferralSection } from './referral-section';
 import { SyncSection } from './sync-section';
 
 const SITE = 'https://rolestash.com';
@@ -334,6 +335,7 @@ function SignedIn({ account, state }: { account: AccountService; state: AccountS
       )}
       <SyncSection plan={plan.plan} />
       <EmailSection plan={plan.plan} trial={plan.reason === 'trial'} />
+      <ReferralSection account={account} />
 
       {plan.complimentary ? null : (
         <section className="flex flex-col gap-3">

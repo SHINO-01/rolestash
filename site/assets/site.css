@@ -1815,6 +1815,53 @@ kbd {
   white-space: nowrap;
 }
 
+/* A referral link or promo code, carried to checkout (ADR-0035). */
+.pricing-code {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 12px;
+  margin: -8px auto 24px;
+  max-width: 640px;
+  font-size: 15px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.pricing-code .code-applied {
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+
+.pricing-code form {
+  display: flex;
+  gap: 8px;
+}
+
+.pricing-code input {
+  width: 12em;
+  padding: 7px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  text-transform: uppercase;
+}
+
+.pricing-code .link-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 .plan button.plan-cta:disabled {
   opacity: 0.6;
   cursor: wait;

@@ -24,7 +24,21 @@ export type EntitlementStatus =
 export type IncomingBillingEvent = Omit<BillingEvent, 'userId'> & {
   userId: string | null;
   checkoutSignature: string | null;
+  /** The referral code create-checkout put on the checkout (ADR-0035), if any. */
+  referralCode: string | null;
+  /** The transaction that started the subscription (on subscription.created). */
+  transactionId: string | null;
 };
+
+/** A Paddle discount code, as create-checkout needs it (ADR-0035). */
+export interface PaddleDiscount {
+  id: string;
+  code: string;
+  type: 'percentage' | 'flat' | 'flat_per_seat';
+  /** Percent for 'percentage', else an amount in the lowest unit. */
+  amount: string;
+  currency: string | null;
+}
 
 /** What apply_billing_event() needs (supabase/migrations). */
 export interface BillingEvent {
@@ -130,7 +144,8 @@ interface PaddleSubscriptionEvent {
     id?: unknown;
     status?: unknown;
     customer_id?: unknown;
-    custom_data?: { user_id?: unknown; checkout_sig?: unknown } | null;
+    transaction_id?: unknown;
+    custom_data?: { user_id?: unknown; checkout_sig?: unknown; ref?: unknown } | null;
     current_billing_period?: { ends_at?: unknown } | null;
     billing_cycle?: { interval?: unknown; frequency?: unknown } | null;
     items?: { price?: { id?: unknown; custom_data?: { tier?: unknown } | null } | null }[] | null;
@@ -140,6 +155,9 @@ interface PaddleSubscriptionEvent {
 }
 
 const str = (v: unknown): string | null => (typeof v === 'string' && v !== '' ? v : null);
+
+/** A referral code: 8 characters of unambiguous base32 (supabase/migrations/…_programs.sql). */
+export const REFERRAL_CODE = /^[2-9A-HJ-NP-Z]{8}$/;
 
 /**
  * Maps a Paddle `subscription.*` webhook to a billing event. Returns null for
@@ -197,6 +215,10 @@ export function toBillingEvent(
   return {
     userId,
     checkoutSignature: str(data.custom_data?.checkout_sig),
+    referralCode: REFERRAL_CODE.test(str(data.custom_data?.ref) ?? '')
+      ? str(data.custom_data?.ref)
+      : null,
+    transactionId: str(data.transaction_id),
     occurredAt,
     status,
     // A canceled subscription has no current period; access ends when it was canceled.
@@ -305,19 +327,90 @@ export class PaddleClient {
     /** checkoutSignature() of userId, so the webhook trusts the claim. */
     signature: string;
     customerId: string | null;
+    /** A discount to apply (a code's, or the referral discount; ADR-0035). */
+    discountId?: string;
+    /** The referral code this purchase came through, for the webhook. */
+    referralCode?: string;
   }): Promise<string> {
     const data = await this.call<{ checkout?: { url?: string | null } | null }>(
       'POST',
       '/transactions',
       {
         items: [{ price_id: input.priceId, quantity: 1 }],
-        custom_data: { user_id: input.userId, checkout_sig: input.signature },
+        custom_data: {
+          user_id: input.userId,
+          checkout_sig: input.signature,
+          ...(input.referralCode ? { ref: input.referralCode } : {}),
+        },
         ...(input.customerId ? { customer_id: input.customerId } : {}),
+        ...(input.discountId ? { discount_id: input.discountId } : {}),
       },
     );
     const url = data.checkout?.url;
     if (!url) throw new PaddleApiError(502, 'Transaction has no checkout URL');
     return url;
+  }
+
+  /**
+   * A discount code that can be used now on this price, or null: active, not
+   * expired, under its usage limit, and either unrestricted or restricted to
+   * this price or its product.
+   */
+  async discountForCode(
+    code: string,
+    priceId: string,
+    productId: string | null,
+    now: Date,
+  ): Promise<PaddleDiscount | null> {
+    const found = await this.call<
+      {
+        id?: unknown;
+        code?: unknown;
+        status?: unknown;
+        type?: unknown;
+        amount?: unknown;
+        currency_code?: unknown;
+        enabled_for_checkout?: unknown;
+        restrict_to?: unknown;
+        expires_at?: unknown;
+        usage_limit?: unknown;
+        times_used?: unknown;
+      }[]
+    >('GET', `/discounts?code=${encodeURIComponent(code)}&status=active&per_page=10`);
+    for (const d of found) {
+      const id = str(d.id);
+      const type = str(d.type);
+      if (!id || str(d.code)?.toUpperCase() !== code.toUpperCase() || d.status !== 'active')
+        continue;
+      if (type !== 'percentage' && type !== 'flat' && type !== 'flat_per_seat') continue;
+      const expires = str(d.expires_at);
+      if (expires && Date.parse(expires) <= now.getTime()) continue;
+      if (typeof d.usage_limit === 'number' && Number(d.times_used ?? 0) >= d.usage_limit) continue;
+      const restricted = Array.isArray(d.restrict_to) ? (d.restrict_to as unknown[]) : null;
+      if (
+        restricted &&
+        !restricted.includes(priceId) &&
+        !(productId && restricted.includes(productId))
+      )
+        continue;
+      return {
+        id,
+        code: str(d.code) ?? code,
+        type,
+        amount: str(d.amount) ?? '0',
+        currency: str(d.currency_code),
+      };
+    }
+    return null;
+  }
+
+  /** The product a price belongs to (null if Paddle doesn't say). */
+  async productOfPrice(priceId: string): Promise<string | null> {
+    const data = await this.call<{ product_id?: unknown }>(
+      'GET',
+      `/prices/${encodeURIComponent(priceId)}`,
+    );
+    return str(data.product_id);
   }
 
   /**

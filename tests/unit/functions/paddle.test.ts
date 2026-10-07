@@ -78,6 +78,8 @@ describe('toBillingEvent', () => {
     expect(toBillingEvent(subscriptionEvent(), TIERS)).toEqual({
       userId: USER,
       checkoutSignature: null,
+      referralCode: null,
+      transactionId: null,
       occurredAt: '2026-10-01T00:00:00.000Z',
       status: 'active',
       currentPeriodEnd: '2026-11-01T00:00:00Z',

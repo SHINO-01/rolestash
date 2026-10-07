@@ -54,3 +54,57 @@ export function clearCheckoutIntent(): void {
     // nothing stored
   }
 }
+
+/**
+ * A promo code or referral link's code (ADR-0035), kept in this tab by the
+ * pricing page (site/assets/pricing.js, same key) or taken from this page's
+ * own ?code= / ?ref=. Sent to create-checkout, which checks it.
+ */
+export interface Promo {
+  code?: string;
+  ref?: string;
+}
+
+const PROMO_KEY = 'rolestash:promo';
+const CODE = /^[A-Za-z0-9_-]{2,40}$/;
+
+export function parsePromo(value: unknown): Promo {
+  const raw = (value && typeof value === 'object' ? value : {}) as Record<string, unknown>;
+  const promo: Promo = {};
+  for (const key of ['code', 'ref'] as const) {
+    const v = raw[key];
+    if (typeof v === 'string' && CODE.test(v.trim())) promo[key] = v.trim().toUpperCase();
+  }
+  return promo;
+}
+
+export function takePromo(): Promo {
+  const url = new URL(location.href);
+  let promo: Promo = {};
+  try {
+    promo = parsePromo(JSON.parse(sessionStorage.getItem(PROMO_KEY) ?? '{}'));
+  } catch {
+    // nothing stored
+  }
+  const fromUrl = parsePromo({
+    code: url.searchParams.get('code'),
+    ref: url.searchParams.get('ref'),
+  });
+  if (url.searchParams.has('code') || url.searchParams.has('ref')) {
+    url.searchParams.delete('code');
+    url.searchParams.delete('ref');
+    history.replaceState(history.state, '', url);
+  }
+  promo = { ...promo, ...fromUrl };
+  savePromo(promo);
+  return promo;
+}
+
+export function savePromo(promo: Promo): void {
+  try {
+    if (promo.code || promo.ref) sessionStorage.setItem(PROMO_KEY, JSON.stringify(promo));
+    else sessionStorage.removeItem(PROMO_KEY);
+  } catch {
+    // Private mode: the code just isn't kept.
+  }
+}

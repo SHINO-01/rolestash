@@ -43,6 +43,109 @@ const TIERS = [
 /** @type {Record<Interval, string>} */
 const PER = { month: ' / month', quarter: ' / 3 months', year: ' / year' };
 
+/**
+ * A promo code (?code=) or referral link (/r/<code> → ?ref=), kept in this tab
+ * only (sessionStorage, no cookies) until the web board sends it to
+ * create-checkout, which checks it (ADR-0035). Same key as src/web/checkout-intent.ts.
+ */
+const PROMO_KEY = 'rolestash:promo';
+const CODE = /^[A-Za-z0-9_-]{2,40}$/;
+
+/** @returns {{ code?: string, ref?: string }} */
+function readPromo() {
+  try {
+    const stored = JSON.parse(sessionStorage.getItem(PROMO_KEY) ?? '{}');
+    /** @type {{ code?: string, ref?: string }} */
+    const promo = {};
+    if (typeof stored.code === 'string' && CODE.test(stored.code)) promo.code = stored.code;
+    if (typeof stored.ref === 'string' && CODE.test(stored.ref)) promo.ref = stored.ref;
+    return promo;
+  } catch {
+    return {};
+  }
+}
+
+/** @param {{ code?: string, ref?: string }} promo */
+function savePromo(promo) {
+  try {
+    if (promo.code || promo.ref) sessionStorage.setItem(PROMO_KEY, JSON.stringify(promo));
+    else sessionStorage.removeItem(PROMO_KEY);
+  } catch {
+    // Private mode: the code just won't carry over.
+  }
+}
+
+/** Moves ?code= and ?ref= from the address bar into this tab's storage. */
+function takePromoFromUrl() {
+  const url = new URL(location.href);
+  const promo = readPromo();
+  for (const key of /** @type {const} */ (['code', 'ref'])) {
+    const value = url.searchParams.get(key)?.trim();
+    if (value && CODE.test(value)) promo[key] = value.toUpperCase();
+    url.searchParams.delete(key);
+  }
+  savePromo(promo);
+  history.replaceState(history.state, '', url);
+}
+
+const codeBox = document.getElementById('pricing-code');
+
+function renderCode() {
+  if (!codeBox) return;
+  const promo = readPromo();
+  const parts = [];
+  if (promo.ref)
+    parts.push(
+      el(
+        'span',
+        'code-applied',
+        'A friend sent you: money off your first month on the monthly plan, applied at checkout.',
+      ),
+    );
+  if (promo.code) {
+    const applied = el('span', 'code-applied', `Code ${promo.code} will be applied at checkout. `);
+    const remove = el('button', 'link-button', 'Remove');
+    remove.type = 'button';
+    remove.addEventListener('click', () => {
+      savePromo({ ...(promo.ref ? { ref: promo.ref } : {}) });
+      renderCode();
+    });
+    applied.append(remove);
+    parts.push(applied);
+  } else {
+    const open = el('button', 'link-button', 'Have a code?');
+    open.type = 'button';
+    open.addEventListener('click', () => {
+      const form = el('form');
+      const input = /** @type {HTMLInputElement} */ (el('input'));
+      input.name = 'code';
+      input.autocomplete = 'off';
+      input.maxLength = 40;
+      input.placeholder = 'Code';
+      input.setAttribute('aria-label', 'Discount or referral code');
+      const apply = el('button', 'btn btn-sm btn-ghost', 'Apply');
+      apply.type = 'submit';
+      form.append(input, apply);
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const value = input.value.trim();
+        if (!CODE.test(value)) {
+          input.setCustomValidity('Letters, numbers, - and _ only');
+          input.reportValidity();
+          return;
+        }
+        savePromo({ ...readPromo(), code: value.toUpperCase() });
+        renderCode();
+      });
+      input.addEventListener('input', () => input.setCustomValidity(''));
+      open.replaceWith(form);
+      input.focus();
+    });
+    parts.push(open);
+  }
+  codeBox.replaceChildren(...parts);
+}
+
 const grid = document.getElementById('pricing-plans');
 const status = document.getElementById('pricing-status');
 const toggle = document.querySelectorAll('[data-interval]');
@@ -118,6 +221,8 @@ for (const button of toggle)
     render();
   });
 
+takePromoFromUrl();
+renderCode();
 render();
 try {
   const paddle = initPaddle({});

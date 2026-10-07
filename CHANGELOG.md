@@ -6,6 +6,14 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **Invite friends:** Account shows your referral link when the referral
+  programme is running. Friends get money off their first month of Pro, and
+  you get a free month for each one who stays past 14 days.
+- **Discount codes:** add a code on the pricing page, or follow a promo link,
+  and it's applied at checkout.
+
 ### Changed
 
 - **Complimentary Pro with an end date** now shows that date in Account.

@@ -70,7 +70,25 @@ export type BackendErrorCode =
   | 'no_subscription'
   /** The plan or this device may not sync (lapsed plan, removed device). */
   | 'sync_not_allowed'
+  /** A discount or referral code at checkout (ADR-0035): wrong, not usable here, or too many tries. */
+  | 'promo_code_invalid'
+  | 'promo_code_unusable'
+  | 'promo_code_limited'
   | 'server';
+
+/** The signed-in account's referral link and counts (ADR-0035); `enabled` false when the programme is off. */
+export const ReferralSchema = z.object({
+  enabled: z.boolean(),
+  code: z
+    .string()
+    .regex(/^[2-9A-HJ-NP-Z]{8}$/)
+    .optional(),
+  percent: z.number().int().min(1).max(100).optional(),
+  joined: z.number().int().nonnegative().optional(),
+  earned: z.number().int().nonnegative().optional(),
+  pending: z.number().int().nonnegative().optional(),
+});
+export type Referral = z.infer<typeof ReferralSchema>;
 
 export class BackendError extends Error {
   constructor(
@@ -360,6 +378,12 @@ export class SupabaseClient {
       throw new BackendError('already_subscribed', status);
     if (status === 404 && error === 'no_subscription')
       throw new BackendError('no_subscription', status);
+    if (status === 400 && error === 'invalid_code')
+      throw new BackendError('promo_code_invalid', status);
+    if (status === 400 && error === 'code_not_usable')
+      throw new BackendError('promo_code_unusable', status);
+    if (status === 429 && error === 'too_many_codes')
+      throw new BackendError('promo_code_limited', status);
     const url = (data as { url?: unknown } | null)?.url;
     if (status >= 300 || typeof url !== 'string') this.fail(status, data);
     return url;
@@ -435,6 +459,18 @@ export class SupabaseClient {
     if (status === 403) throw new BackendError('sync_not_allowed', status);
     if (status >= 300) this.fail(status, data);
     return data;
+  }
+
+  async myReferral(accessToken: string): Promise<Referral> {
+    const parsed = ReferralSchema.safeParse(await this.rpc('my_referral', accessToken, {}));
+    if (!parsed.success) throw new BackendError('server');
+    return parsed.data;
+  }
+
+  async rotateReferralCode(accessToken: string): Promise<string> {
+    const code = await this.rpc('rotate_referral_code', accessToken, {});
+    if (typeof code !== 'string') throw new BackendError('server');
+    return code;
   }
 
   async registerDevice(

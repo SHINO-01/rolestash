@@ -47,6 +47,7 @@ Start with **Architecture → Overview**, then go by task.
 | [0034](adr/0034-four-board-lanes.md)                          | Four board lanes; Rejected off the board; Screening and Withdrawn retired                     |
 | [0035](adr/0035-grants-referrals-discounts.md)                | Revocable complimentary grants, a referral programme and discount codes                       |
 | [0036](adr/0036-passwords-and-account-security.md)            | No required password; optional password with reset and optional two-step sign-in _(proposed)_ |
+| [0037](adr/0037-dashboard-actions.md)                         | Run grants, discount codes and referrals from the operations dashboard                        |
 
 New decision? Copy [the template](adr/0000-template.md).
 
