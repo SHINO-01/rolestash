@@ -45,6 +45,8 @@ export const SessionSchema = z.object({
     email: z.string().optional(),
     /** The full name a provider gave (Google), if any. */
     name: z.string().optional(),
+    /** The account has a password (ADR-0036; our own user_metadata flag). */
+    hasPassword: z.boolean().optional(),
   }),
 });
 export type Session = z.infer<typeof SessionSchema>;
@@ -74,6 +76,11 @@ export type BackendErrorCode =
   | 'promo_code_invalid'
   | 'promo_code_unusable'
   | 'promo_code_limited'
+  /** Passwords (ADR-0036): wrong email or password, refused by the server, unchanged, or the session is too old to change it. */
+  | 'invalid_login'
+  | 'weak_password'
+  | 'same_password'
+  | 'reauthentication_needed'
   | 'server';
 
 /** The signed-in account's referral link and counts (ADR-0035); `enabled` false when the programme is off. */
@@ -108,7 +115,11 @@ const TokenResponse = z.object({
     id: z.string(),
     email: z.string().nullish(),
     user_metadata: z
-      .object({ full_name: z.string().nullish(), name: z.string().nullish() })
+      .object({
+        full_name: z.string().nullish(),
+        name: z.string().nullish(),
+        has_password: z.boolean().nullish(),
+      })
       .nullish(),
   }),
 });
@@ -252,13 +263,14 @@ export class SupabaseClient {
         id: t.user.id,
         ...(t.user.email ? { email: t.user.email } : {}),
         ...(name ? { name: name.slice(0, 100) } : {}),
+        ...(t.user.user_metadata?.has_password ? { hasPassword: true } : {}),
       },
     };
   }
 
   private fail(status: number, data: unknown): never {
     if (status === 429) throw new BackendError('rate_limited', status);
-    const code = (data as { error?: unknown; error_code?: unknown } | null)?.error_code;
+    const code = errorCode(data);
     if (code === 'otp_expired' || code === 'invalid_credentials')
       throw new BackendError('invalid_code', status);
     throw new BackendError('server', status);
@@ -299,6 +311,60 @@ export class SupabaseClient {
     });
     if (status >= 300) this.fail(status, data);
     return this.toSession(data);
+  }
+
+  /** Signs in with an email and password (ADR-0036). */
+  async signInWithPassword(email: string, password: string): Promise<Session> {
+    const { status, data } = await this.request('/auth/v1/token?grant_type=password', {
+      body: { email, password },
+    });
+    if (status === 400 || status === 401 || status === 403) {
+      if (status === 400 && errorCode(data) !== 'invalid_credentials') this.fail(status, data);
+      throw new BackendError('invalid_login', status);
+    }
+    if (status >= 300) this.fail(status, data);
+    return this.toSession(data);
+  }
+
+  /**
+   * Sets or changes the signed-in account's password, and marks the account
+   * as having one. Supabase stores only its hash.
+   */
+  async setPassword(accessToken: string, password: string): Promise<void> {
+    const { status, data } = await this.request('/auth/v1/user', {
+      method: 'PUT',
+      body: { password, data: { has_password: true } },
+      token: accessToken,
+    });
+    if (status === 401) throw new BackendError('session_expired', status);
+    const code = errorCode(data);
+    if (code === 'weak_password') throw new BackendError('weak_password', status);
+    if (code === 'same_password') throw new BackendError('same_password', status);
+    if (code === 'reauthentication_needed')
+      throw new BackendError('reauthentication_needed', status);
+    if (status >= 300) this.fail(status, data);
+  }
+
+  /**
+   * Emails a password reset link that opens `redirectTo` (the web board). The
+   * answer is the same whether or not the email has an account.
+   */
+  async requestPasswordReset(email: string, redirectTo: string): Promise<void> {
+    const { status, data } = await this.request(
+      `/auth/v1/recover?redirect_to=${encodeURIComponent(redirectTo)}`,
+      { body: { email } },
+    );
+    if (status >= 300) this.fail(status, data);
+  }
+
+  /** Ends every session of this account, on every device (ADR-0036). */
+  async signOutEverywhere(accessToken: string): Promise<void> {
+    const { status, data } = await this.request('/auth/v1/logout?scope=global', {
+      method: 'POST',
+      token: accessToken,
+    });
+    if (status === 401) throw new BackendError('session_expired', status);
+    if (status >= 300) this.fail(status, data);
   }
 
   /** Exchanges a single-use sign-in token (from web-handoff) for a session. */
@@ -681,6 +747,11 @@ export class SupabaseClient {
 }
 
 /** URL-safe base64 without padding. */
+/** Supabase Auth's machine-readable error code, if any. */
+function errorCode(data: unknown): unknown {
+  return (data as { error_code?: unknown } | null)?.error_code;
+}
+
 export function base64Url(bytes: Uint8Array): string {
   let binary = '';
   for (const b of bytes) binary += String.fromCharCode(b);

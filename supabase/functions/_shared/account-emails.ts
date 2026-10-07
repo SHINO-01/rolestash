@@ -65,6 +65,39 @@ export function signInCodeEmail(): Email {
   });
 }
 
+/** Supabase Auth's Reset password email (ADR-0036); the link opens the web board. */
+export function passwordResetEmail(): Email {
+  return renderEmail({
+    subject: 'Reset your Rolestash password',
+    preheader: 'Choose a new password. The link works once, for 10 minutes.',
+    eyebrow: 'Password reset',
+    title: 'Choose a new password',
+    paragraphs: [
+      'Someone asked to reset the password for this Rolestash account. The button opens a page where you choose a new one; after that, every device is signed out.',
+    ],
+    button: { label: 'Choose a new password', url: '{{ .ConfirmationURL }}' },
+    closing:
+      'Didn’t ask for this? Ignore this email: your password stays the same. The link works once, for 10 minutes.',
+    why: 'You’re getting this because a password reset was asked for this address at Rolestash.',
+  });
+}
+
+/** Supabase Auth's "Password changed" security notice (ADR-0036). */
+export function passwordChangedEmail(): Email {
+  return renderEmail({
+    subject: 'Your Rolestash password was changed',
+    preheader: 'If this was you, there’s nothing to do.',
+    eyebrow: 'Security',
+    title: 'Your password was changed',
+    paragraphs: [
+      'The password for your Rolestash account ({{ .Email }}) was just added or changed. If this was you, there’s nothing to do.',
+      'Wasn’t you? Use “Forgot password?” on the sign-in screen to choose a new one, which signs out every device, and reply to this email so we can help.',
+    ],
+    button: { label: 'Open Rolestash', url: 'https://rolestash.com/board/' },
+    why: 'You’re getting this because the password of your Rolestash account changed. We send it for every change, for your safety.',
+  });
+}
+
 export interface BugReport {
   id: number;
   message: string;

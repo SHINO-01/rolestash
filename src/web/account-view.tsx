@@ -2,6 +2,7 @@ import { LogOut } from 'lucide-react';
 import { planChip, planSummary } from '@/features/account/plan-copy';
 import { ProfileSection } from '@/features/account/profile-section';
 import { ReferralSection } from '@/features/account/referral-section';
+import { SecuritySection } from '@/features/account/security-section';
 import { SyncSection } from '@/features/account/sync-section';
 import { EmailSection } from '@/features/email/email-section';
 import { Button } from '@/ui/components/button';
@@ -21,12 +22,15 @@ export function AccountView() {
 
   // The web board's data is only a synced copy: signing out frees this
   // browser's device slot and clears the copy, so nothing stays behind.
-  async function signOut() {
+  async function clearBrowser() {
     await services.sync?.disable().catch(() => undefined);
     await services.jobs.deleteAll();
     await services.settings.replace(structuredClone(DEFAULT_SETTINGS));
     await services.store.remove([SYNC_STATE_KEY, SYNC_DELETIONS_KEY, EMAIL_STATE_KEY]);
     blockExtensionSignIn();
+  }
+  async function signOut() {
+    await clearBrowser();
     await account?.signOut();
   }
 
@@ -58,6 +62,7 @@ export function AccountView() {
       <SyncSection plan={state.plan.plan} />
       <EmailSection plan={state.plan.plan} trial={state.plan.reason === 'trial'} />
       <ReferralSection account={account} />
+      <SecuritySection account={account} state={state} beforeSignOutEverywhere={clearBrowser} />
       <Button variant="ghost" icon={<LogOut className="size-4" />} onClick={() => void signOut()}>
         Sign out and clear this browser
       </Button>

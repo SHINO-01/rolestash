@@ -19,6 +19,9 @@ import { BoardView } from './board-view';
 import { JobSheet } from './job-sheet';
 import { QuickAdd } from './quick-add';
 import { TodayView } from './today-view';
+import { PasswordReset } from './password-reset';
+import { takeRecovery } from './recovery';
+import { PasswordSignIn } from '@/features/account/password-sign-in';
 import { webConfig } from './config';
 import {
   clearCheckoutIntent,
@@ -47,7 +50,23 @@ export function WebBoard() {
   const { state } = useAccount();
   const [intent, setIntent] = useState(takeCheckoutIntent);
   const [promo, setPromo] = useState(takePromo);
+  // A password reset link (ADR-0036) comes first, signed in or not.
+  const [recovery, setRecovery] = useState(takeRecovery);
   if (!account) return <Centered>The web board isn’t available right now.</Centered>;
+  if (recovery)
+    return (
+      <Shell>
+        <PasswordReset
+          account={account}
+          recovery={recovery}
+          onDone={() => {
+            setRecovery(null);
+            // Every session ended with the reset, this browser's included.
+            void account.signOut();
+          }}
+        />
+      </Shell>
+    );
   if (!state)
     return (
       <Centered>
@@ -109,6 +128,7 @@ function WebSignIn({
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [sent, setSent] = useState(false);
+  const [usePassword, setUsePassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [share, setShare] = useState(true);
   const [error, setError] = useState<string>();
@@ -185,7 +205,14 @@ function WebSignIn({
           <p className="text-subtle text-center text-xs">or get a code by email</p>
         </>
       ) : null}
-      {!sent ? (
+      {usePassword ? (
+        <PasswordSignIn
+          account={account}
+          before={() => account.chooseSharingAtSignIn(share)}
+          after={allowExtensionSignIn}
+          onUseCode={() => setUsePassword(false)}
+        />
+      ) : !sent ? (
         <form
           className="flex flex-col gap-3"
           onSubmit={(e) => {
@@ -211,6 +238,13 @@ function WebSignIn({
           <Button type="submit" variant="primary" loading={busy}>
             Email me a sign-in code
           </Button>
+          <button
+            type="button"
+            className="text-accent text-sm font-medium"
+            onClick={() => setUsePassword(true)}
+          >
+            Use a password instead
+          </button>
         </form>
       ) : (
         <form

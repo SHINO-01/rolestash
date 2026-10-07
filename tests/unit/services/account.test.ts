@@ -83,6 +83,7 @@ describe('AccountService sign-in', () => {
       hasBillingAccount: false,
       profile: {},
       needsName: false,
+      hasPassword: false,
     });
     expect(await account.onTrial()).toBe(false);
   });
@@ -193,6 +194,91 @@ describe('AccountService sign-in', () => {
     expect(await attempt((st) => `https://ext-id.chromiumapp.org/#state=${st}`)).toBeInstanceOf(
       BackendError,
     );
+  });
+});
+
+describe('AccountService passwords (ADR-0036)', () => {
+  const withPassword = (hasPassword: boolean): FakeResponse => ({
+    status: 200,
+    body: {
+      access_token: 'p1',
+      refresh_token: 'r-p1',
+      expires_in: 3600,
+      user: { ...USER, user_metadata: { has_password: hasPassword } },
+    },
+  });
+
+  it('signs in with a password, and reports a wrong one without signing in', async () => {
+    const { account, calls } = setup({
+      [`POST ${SB}/auth/v1/token`]: (c) =>
+        (c.body as { password: string }).password === 'copper lantern violin'
+          ? withPassword(true)
+          : { status: 400, body: { error_code: 'invalid_credentials' } },
+    });
+    await expect(account.signInWithPassword('jo@example.com', 'nope')).rejects.toMatchObject({
+      code: 'invalid_login',
+    });
+    expect((await account.state()).signedIn).toBe(false);
+    await account.signInWithPassword(' Jo@Example.com', 'copper lantern violin');
+    expect(calls.findLast((c) => c.url.includes('grant_type=password'))?.body).toEqual({
+      email: 'jo@example.com',
+      password: 'copper lantern violin',
+    });
+    expect(await account.state()).toMatchObject({ signedIn: true, hasPassword: true });
+  });
+
+  it('adds a password to a signed-in account and remembers it has one', async () => {
+    const { account, calls } = setup({
+      [`PUT ${SB}/auth/v1/user`]: { status: 200, body: { id: 'u-1' } },
+    });
+    await account.verifyEmailCode('jo@example.com', '123456');
+    expect((await account.state()).hasPassword).toBe(false);
+    await account.setPassword('copper lantern violin');
+    const put = calls.find((c) => c.method === 'PUT');
+    expect(put?.headers.Authorization).toBe('Bearer a1');
+    expect(put?.body).toEqual({ password: 'copper lantern violin', data: { has_password: true } });
+    expect((await account.state()).hasPassword).toBe(true);
+  });
+
+  it('maps the server refusing a password', async () => {
+    const { account } = setup({
+      [`PUT ${SB}/auth/v1/user`]: { status: 422, body: { error_code: 'same_password' } },
+    });
+    await account.verifyEmailCode('jo@example.com', '123456');
+    await expect(account.setPassword('copper lantern violin')).rejects.toMatchObject({
+      code: 'same_password',
+    });
+  });
+
+  it('sends reset links to the web board, and resets with the link’s session', async () => {
+    const { account, calls } = setup({
+      [`POST ${SB}/auth/v1/recover`]: { status: 200, body: {} },
+      [`PUT ${SB}/auth/v1/user`]: { status: 200, body: { id: 'u-1' } },
+      [`POST ${SB}/auth/v1/logout`]: { status: 204, body: null },
+    });
+    await account.requestPasswordReset('Jo@Example.com');
+    const recover = calls.find((c) => c.url.includes('/recover'));
+    expect(recover?.body).toEqual({ email: 'jo@example.com' });
+    expect(new URL(recover?.url ?? '').searchParams.get('redirect_to')).toBe(
+      'https://rolestash.com/board/?reset=1',
+    );
+
+    await account.completePasswordReset('recovery-token', 'copper lantern violin');
+    expect(calls.find((c) => c.method === 'PUT')?.headers.Authorization).toBe(
+      'Bearer recovery-token',
+    );
+    const logout = calls.find((c) => c.url.includes('/logout'));
+    expect(logout?.url).toContain('scope=global');
+  });
+
+  it('signs out everywhere, then here', async () => {
+    const { account, calls } = setup({
+      [`POST ${SB}/auth/v1/logout`]: { status: 204, body: null },
+    });
+    await account.verifyEmailCode('jo@example.com', '123456');
+    await account.signOutEverywhere();
+    expect(calls.find((c) => c.url.includes('/logout'))?.url).toContain('scope=global');
+    expect((await account.state()).signedIn).toBe(false);
   });
 });
 

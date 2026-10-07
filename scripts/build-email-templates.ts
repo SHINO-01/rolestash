@@ -1,16 +1,31 @@
 /**
  * Writes the Supabase Auth email templates from the shared email layout, so
- * the sign-in code looks like every other Rolestash email. Paste the result
- * into Supabase (Authentication → Emails → Magic Link and Confirm signup);
+ * Supabase's emails look like every other Rolestash email. Paste each into
+ * Supabase (Authentication → Emails; docs/guides/backend.md);
  * a test fails if the file is stale.
  *
  * Usage: npx tsx scripts/build-email-templates.ts   (or npm run email:templates)
  */
 import { writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { signInCodeEmail } from '../supabase/functions/_shared/account-emails.ts';
+import { fileURLToPath } from 'node:url';
+import {
+  passwordChangedEmail,
+  passwordResetEmail,
+  signInCodeEmail,
+} from '../supabase/functions/_shared/account-emails.ts';
 
 const ROOT = resolve(import.meta.dirname, '..');
 
-writeFileSync(resolve(ROOT, 'supabase/templates/sign-in-code.html'), `${signInCodeEmail().html}\n`);
-console.log('Wrote supabase/templates/sign-in-code.html');
+/** Each template file and the email it holds (Supabase's {{ .Token }} etc. stay as they are). */
+export const TEMPLATES = {
+  'sign-in-code.html': signInCodeEmail,
+  'reset-password.html': passwordResetEmail,
+  'password-changed.html': passwordChangedEmail,
+};
+
+if (process.argv[1] === fileURLToPath(import.meta.url))
+  for (const [file, email] of Object.entries(TEMPLATES)) {
+    writeFileSync(resolve(ROOT, 'supabase/templates', file), `${email().html}\n`);
+    console.log(`Wrote supabase/templates/${file}`);
+  }

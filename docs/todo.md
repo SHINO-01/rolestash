@@ -80,6 +80,14 @@ into the roadmap or changelog. Last reviewed 7 October 2026.
       and paste `supabase/templates/sign-in-code.html` into Supabase →
       Authentication → Emails → _Magic Link_ and _Confirm signup_
       ([operations.md](guides/operations.md#customer-emails-adr-0038)).
+- [ ] **Passwords (ADR-0036), Supabase settings** before 0.6.0 ships:
+      Authentication → Sign In / Providers → Email: minimum password length
+      **12**, and leave "Secure password change" off; URL Configuration →
+      Redirect URLs: add `https://rolestash.com/board/**`; Emails: paste
+      `supabase/templates/reset-password.html` into _Reset password_
+      (subject "Reset your Rolestash password") and
+      `supabase/templates/password-changed.html` into _Password changed_
+      (subject "Your Rolestash password was changed").
 - [ ] **Store releases:** one at a time, in the order of
       [release-backlog.md](release-backlog.md) (0.4.7 in review → 0.5.0 →
       0.6.0).
@@ -88,10 +96,10 @@ into the roadmap or changelog. Last reviewed 7 October 2026.
 
 ## Ours
 
-- [ ] **Account security (ADR-0036, accepted 7 October):** being built for
-      0.6.0: optional password with a strength check and a reset page
-      (`/auth/reset/`), optional two-step sign-in (authenticator app),
-      security-change emails and "Sign out everywhere"
+- [ ] **Account security (ADR-0036):** passwords, reset and "Sign out
+      everywhere" are built for 0.6.0. Next: two-step sign-in (authenticator
+      app), with database rules so a session without the second step can't
+      read the account's data
       ([ADR-0036](adr/0036-passwords-and-account-security.md)).
 - [ ] **When 0.4.7 is approved:** set "Current version" on `/known-issues/`
       to 0.4.7 and the date.

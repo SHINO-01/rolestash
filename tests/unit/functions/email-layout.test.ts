@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { TEMPLATES } from '../../../scripts/build-email-templates';
 import { codeEmail, grantEmail, referralEmail } from '../../../infra/ops-worker/src/emails';
 import { signInCodeEmail, welcomeEmail } from '../../../supabase/functions/_shared/account-emails';
 import {
@@ -49,11 +50,15 @@ describe('one look for every email', () => {
     expect(existsSync(resolve(ROOT, 'site/assets/email-mark.png'))).toBe(true);
   });
 
-  it('keeps the Supabase sign-in code template in step (npm run email:templates)', () => {
-    const file = readFileSync(resolve(ROOT, 'supabase/templates/sign-in-code.html'), 'utf8');
-    expect(file).toBe(`${signInCodeEmail().html}\n`);
-    expect(file).toContain('{{ .Token }}');
-  });
+  it.each(Object.entries(TEMPLATES))(
+    'keeps the Supabase template %s in step (npm run email:templates)',
+    (file, email) => {
+      const html = readFileSync(resolve(ROOT, 'supabase/templates', file), 'utf8');
+      expect(html).toBe(`${email().html}\n`);
+      expect(html).toContain(EMAIL_HEADER);
+      expect(html).toMatch(/\{\{ \.(Token|ConfirmationURL|Email) \}\}/);
+    },
+  );
 
   it('escapes text, and has a plain-text version', () => {
     const email = renderEmail({

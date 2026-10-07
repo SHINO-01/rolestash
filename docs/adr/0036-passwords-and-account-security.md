@@ -1,6 +1,30 @@
 # ADR-0036: Account security: no required password; optional password with reset, and optional two-step sign-in
 
-- **Status:** Accepted (owner, 2026-10-07). Being built for 0.6.0.
+- **Status:** Accepted (owner, 2026-10-07). Steps 1 and 2 built for 0.6.0;
+  two-step sign-in (step 3) next.
+
+## As built (steps 1 and 2)
+
+- **Strength check:** `src/domain/password.ts`, with zxcvbn-ts and its
+  common-password list, loaded only when someone types a new password.
+  12–128 characters, zxcvbn score 3 or more, nothing from the email or
+  "rolestash". Supabase's own minimum is 12 too.
+- **The reset page is the web board,** not a separate `/auth/reset/`: the
+  reset email links to `rolestash.com/board/?reset=1`, which already has the
+  bundled checker and the Supabase connection its CSP allows. It reads the
+  link's one-time session from the address, clears it from the address bar,
+  sets the new password, then signs out every session (`scope=global`).
+- **Has a password?** Supabase doesn't say, so setting one also sets
+  `user_metadata.has_password`, which only drives the wording in Account.
+- **Removing a password** isn't offered: Supabase Auth has no way to.
+- **Security-change emails** are Supabase's own notifications ("Password
+  changed"), with our template (`supabase/templates/password-changed.html`),
+  instead of a function of ours.
+- **Two-step sign-in (next)** must also be enforced by the database: once an
+  account has a verified authenticator, row-level security has to refuse
+  sessions without the second step (`aal2`), or the app check alone could be
+  skipped by calling the API directly.
+
 - Builds on ADR-0011 (accounts: email code via Supabase Auth) and ADR-0012
   (Google sign-in). The free plan still needs no account.
 

@@ -79,6 +79,14 @@ export function backendErrorMessage(error: unknown): string {
       return 'Referral codes are for a friend’s first subscription, so this one can’t be used here.';
     case 'promo_code_limited':
       return 'Too many codes tried. Please wait an hour and try again.';
+    case 'invalid_login':
+      return 'That email and password don’t match. Check them, or sign in with a code instead.';
+    case 'weak_password':
+      return 'That password is too easy to guess. Try a few unrelated words.';
+    case 'same_password':
+      return 'That’s already your password. Pick a new one.';
+    case 'reauthentication_needed':
+      return 'For your security, sign out and back in, then change your password.';
     default:
       return error instanceof Error && error.message === 'Sign-in was cancelled'
         ? 'Sign-in was cancelled.'

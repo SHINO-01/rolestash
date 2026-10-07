@@ -59,7 +59,12 @@ export interface AccountState {
   firstName?: string;
   /** Ask once for a name: signed in, no name anywhere, and not skipped. */
   needsName: boolean;
+  /** The account has a password (ADR-0036). */
+  hasPassword: boolean;
 }
+
+/** Where a password reset link lands: the web board, which asks for the new password. */
+export const PASSWORD_RESET_URL = 'https://rolestash.com/board/?reset=1';
 
 /** Refresh the access token this long before it expires. */
 const TOKEN_SKEW_MS = 60_000;
@@ -111,6 +116,7 @@ export class AccountService implements PlanProvider {
         ? { firstName: firstNameFrom(name, session.user.email) }
         : {}),
       needsName: session !== undefined && !name && skipped !== session.user.id,
+      hasPassword: session?.user.hasPassword === true,
     };
   }
 
@@ -154,6 +160,42 @@ export class AccountService implements PlanProvider {
       code.replace(/\s/g, ''),
     );
     await this.signedIn(session);
+  }
+
+  /** Signs in with an email and password (ADR-0036). */
+  async signInWithPassword(email: string, password: string): Promise<void> {
+    await this.signedIn(await this.client.signInWithPassword(normalizeEmail(email), password));
+  }
+
+  /** Emails a reset link; the same answer whether or not the email has an account. */
+  async requestPasswordReset(email: string): Promise<void> {
+    await this.client.requestPasswordReset(normalizeEmail(email), PASSWORD_RESET_URL);
+  }
+
+  /** Adds or changes this account's password (checked by the caller with checkPassword). */
+  async setPassword(password: string): Promise<void> {
+    await this.client.setPassword(await this.accessToken(), password);
+    const { session } = await this.load();
+    if (session)
+      await this.store.set({
+        [ACCOUNT_SESSION_KEY]: { ...session, user: { ...session.user, hasPassword: true } },
+      });
+  }
+
+  /**
+   * Finishes a reset from the emailed link: sets the new password with the
+   * link's one-time session, then ends every session of the account, that
+   * one included, so whoever had the old password is signed out everywhere.
+   */
+  async completePasswordReset(recoveryToken: string, password: string): Promise<void> {
+    await this.client.setPassword(recoveryToken, password);
+    await this.client.signOutEverywhere(recoveryToken).catch(() => undefined);
+  }
+
+  /** Signs this account out on every device, this one included (ADR-0036). */
+  async signOutEverywhere(): Promise<void> {
+    await this.client.signOutEverywhere(await this.accessToken());
+    await this.clear();
   }
 
   /** Google sign-in via an ID token and rolestash.com's forwarding page (ADR-0012). */

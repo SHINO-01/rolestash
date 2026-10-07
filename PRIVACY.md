@@ -41,6 +41,9 @@ Full policy: https://rolestash.com/privacy/
 
 ## What is sent to us, and only if you create an account
 
+- **Password (only if you add one):** stored by Supabase Auth as a salted
+  hash (bcrypt); we never see or store the password itself. It's checked for
+  strength on your device before it's sent.
 - **Account:** your email address (and Google account ID if you sign in with
   Google), your plan and subscription status from Paddle, our merchant of
   record, and a display name and small profile photo if you add them. We

@@ -33,6 +33,8 @@ import { SharingChoice } from './sharing-choice';
 import type { LocalPrices, PlanChangePreview } from '@/services/backend/supabase-client';
 import { ReferralSection } from './referral-section';
 import { SyncSection } from './sync-section';
+import { PasswordSignIn } from './password-sign-in';
+import { SecuritySection } from './security-section';
 
 const SITE = 'https://rolestash.com';
 
@@ -68,7 +70,7 @@ export function AccountDialog({
 }
 
 function SignIn({ account }: { account: AccountService }) {
-  const [step, setStep] = useState<'email' | 'code'>('email');
+  const [step, setStep] = useState<'email' | 'code' | 'password'>('email');
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState<'google' | 'email' | 'code' | null>(null);
@@ -130,7 +132,13 @@ function SignIn({ account }: { account: AccountService }) {
         </>
       ) : null}
 
-      {step === 'email' ? (
+      {step === 'password' ? (
+        <PasswordSignIn
+          account={account}
+          before={() => account.chooseSharingAtSignIn(share)}
+          onUseCode={() => setStep('email')}
+        />
+      ) : step === 'email' ? (
         <form className="flex flex-col gap-3" onSubmit={sendCode}>
           <Field label="Email">
             {(id) => (
@@ -153,6 +161,15 @@ function SignIn({ account }: { account: AccountService }) {
             icon={<Mail className="size-4" />}
           >
             Email me a sign-in code
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="self-center"
+            disabled={busy !== null}
+            onClick={() => setStep('password')}
+          >
+            Use a password instead
           </Button>
         </form>
       ) : (
@@ -336,6 +353,7 @@ function SignedIn({ account, state }: { account: AccountService; state: AccountS
       <SyncSection plan={plan.plan} />
       <EmailSection plan={plan.plan} trial={plan.reason === 'trial'} />
       <ReferralSection account={account} />
+      <SecuritySection account={account} state={state} />
 
       {plan.complimentary ? null : (
         <section className="flex flex-col gap-3">
