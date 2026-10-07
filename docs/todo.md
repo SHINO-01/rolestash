@@ -80,15 +80,13 @@ into the roadmap or changelog. Last reviewed 7 October 2026.
       and paste `supabase/templates/sign-in-code.html` into Supabase →
       Authentication → Emails → _Magic Link_ and _Confirm signup_
       ([operations.md](guides/operations.md#customer-emails-adr-0038)).
-- [ ] **Two-step sign-in (ADR-0036)** before 0.6.0 ships: apply migration
-      `20261024120000_two_step` (it makes the API refuse sessions without the
-      second step once an account has an authenticator), redeploy every Edge
-      Function (`npx supabase functions deploy --no-verify-jwt`; they refuse
-      such sessions too), check Authentication → Multi-Factor has
-      **Authenticator app (TOTP)** enabled, and paste
-      `supabase/templates/two-step-on.html` / `two-step-removed.html` into
-      the _MFA factor enrolled_ / _unenrolled_ security notices (subjects in
-      `supabase/config.toml`).
+- [ ] **Two-step sign-in (ADR-0036):** the migration is applied and every
+      Edge Function redeployed (7 October; checked live: the API runs
+      `public.require_two_step` before each request and answers normally).
+      Left: check Authentication → Multi-Factor has **Authenticator app
+      (TOTP)** enabled, and paste `supabase/templates/two-step-on.html` /
+      `two-step-removed.html` into the _MFA factor enrolled_ / _unenrolled_
+      security notices (subjects in `supabase/config.toml`).
 - [ ] **Passwords (ADR-0036), Supabase settings** before 0.6.0 ships:
       Authentication → Sign In / Providers → Email: minimum password length
       **12**, and leave "Secure password change" off; URL Configuration →
