@@ -14,32 +14,27 @@ _Last updated 7 October 2026._
 
 ## In review
 
-| Version | Submitted  | What                                | When approved                                                                                                         |
-| ------- | ---------- | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| 0.5.0   | 7 Oct 2026 | Four board lanes (ADR-0034, PR #16) | Set `/known-issues/` current version to 0.5.0; then ship 0.6.0 below. 0.4.7 (approved 7 Oct 2026) is live until then. |
+| Version | Submitted  | What                                                                                                                 | When approved                                                                                               |
+| ------- | ---------- | -------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| 0.6.0   | 7 Oct 2026 | Referrals in Account, discount codes, phone QR, password, two-step, sign out everywhere; includes 0.5.0's four lanes | Set `/known-issues/` current version to 0.6.0 and the date. 0.4.7 (approved 7 Oct 2026) is live until then. |
 
-The screenshots and the Free line are in the dashboard (7 Oct 2026).
+- **How it went:** the owner approved the waiting **Release** run
+  [37586728791](https://github.com/SHINO-01/rolestash-extension/actions/runs/37586728791)
+  on 7 October 2026 (07:29 UTC, 18:29 Sydney) while 0.5.0 was still in
+  review, so 0.6.0 took 0.5.0's place in the queue. 0.6.0 carries everything
+  0.5.0 had (the four board lanes, ADR-0034); the five screenshots and the
+  Free line were already in the dashboard.
+- **Owner, now:** in the dashboard, paste the new **Privacy → Authentication
+  information** text and the description from the release repo's
+  `store/listing.md` (the optional password, kept by Supabase Auth only as a
+  salted hash, and the two-step secret key). If the dashboard says editing
+  would restart the review, do it anyway: the disclosure must match what
+  0.6.0 does.
 
 ## Next, in order
 
-### 1. 0.6.0: referrals and account security
-
-- **State:** released and packaged on 7 October 2026: tag `v0.6.0`, release
-  PR [SHINO-01/rolestash-extension#17](https://github.com/SHINO-01/rolestash-extension/pull/17)
-  merged, GitHub Release built. The **Release** run
-  [37586728791](https://github.com/SHINO-01/rolestash-extension/actions/runs/37586728791)
-  is **waiting at the Chrome Web Store approval** on purpose.
-- **Contains:** "Invite friends" in Account (referral link, Copy, Share, New
-  link, counts); discount codes; a dated complimentary grant shows its end
-  date; the phone web board QR code in Account → Sync; an optional password,
-  sign out everywhere and two-step sign-in (ADR-0036).
-- **Ship it, after 0.5.0 is approved:** approve that run's `chrome-web-store`
-  deployment (or run **Release** again if it has expired; approvals time out
-  after 30 days). Then, in the dashboard:
-  - **Privacy tab → Authentication information:** paste the new text from
-    `store/listing.md`. It now covers the optional password (a salted hash at
-    Supabase Auth) and the two-step secret key.
-  - **Description:** paste it again (the QR code and sign-in options lines).
+Nothing queued. Add the next release here when something user-facing lands
+under _Unreleased_ in `CHANGELOG.md`.
 
 ## Adding to the backlog
 

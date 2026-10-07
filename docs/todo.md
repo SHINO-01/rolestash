@@ -6,12 +6,11 @@ into the roadmap or changelog. Last reviewed 7 October 2026.
 
 ## Owner
 
-- [ ] **v0.5.0 is in Chrome Web Store review** (submitted 7 October; 0.4.7
-      is live; screenshots and the Free line are in the dashboard).
-- [ ] **When 0.5.0 is approved, submit 0.6.0:** approve the waiting
-      **Release** run's Chrome Web Store step, then paste the new
-      Authentication information (Privacy tab) and the description from
-      `store/listing.md` ([release-backlog.md](release-backlog.md)).
+- [ ] **v0.6.0 is in Chrome Web Store review** (submitted 7 October, in
+      place of 0.5.0; 0.4.7 is live). Now: paste the new Privacy →
+      Authentication information and the description from
+      `store/listing.md` into the dashboard
+      ([release-backlog.md](release-backlog.md)).
 - [ ] **Problem reports:** check the dashboard's _Problem reports_ page
       now and then (new ones also show under _Needs attention_ and are
       emailed to support).
@@ -105,15 +104,14 @@ into the roadmap or changelog. Last reviewed 7 October 2026.
       `supabase/templates/password-changed.html` into _Password changed_
       (subject "Your Rolestash password was changed").
 - [ ] **Store releases:** one at a time, in the order of
-      [release-backlog.md](release-backlog.md) (0.5.0 in review →
-      0.6.0).
+      [release-backlog.md](release-backlog.md) (0.6.0 in review).
 - [ ] **Go public** when the beta is clean: Distribution → Visibility →
       Public ([launch.md](guides/launch.md#7-going-public)).
 
 ## Ours
 
-- [ ] **When 0.5.0 is approved:** set "Current version" on `/known-issues/`
-      to 0.5.0 and the date.
+- [ ] **When 0.6.0 is approved:** set "Current version" on `/known-issues/`
+      to 0.6.0 and the date.
 - [ ] **By 4 January 2027:** re-check the facts on `/compare/teal/` and
       `/compare/huntr/` and update their "Facts checked" date
       ([website.md](guides/website.md#search)).
