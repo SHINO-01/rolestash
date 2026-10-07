@@ -55,6 +55,11 @@ Full policy: https://rolestash.com/privacy/
   so each friend counts once. A referral link carries its code to checkout in
   that browser tab only (no cookies). Referrers see only how many friends
   joined, never who.
+- **Offer emails:** if you have an account, we may occasionally email you a
+  discount or news of the referral programme, never more than one a week.
+  We keep a random opt-out token for your account, when we last emailed an
+  offer and whether you opted out. Every offer has a one-click opt-out.
+  Sent through Resend.
 - **Sync (Pro):** a copy of your board and a name for each
   synced device, stored in our database in Sydney, Australia, so your devices
   stay in step. Deleting your account deletes it.

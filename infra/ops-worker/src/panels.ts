@@ -31,6 +31,10 @@ export interface Env {
   GITHUB_TOKEN?: string;
   GOOGLE_SERVICE_ACCOUNT?: string;
   RESEND_API_KEY?: string;
+  /** Sends customer emails (ADR-0038): a Resend key with sending access only. */
+  RESEND_SEND_KEY?: string;
+  /** From address for customer emails; defaults to Rolestash <noreply@rolestash.com>. */
+  EMAIL_FROM?: string;
 }
 
 export type PanelStatus = 'ok' | 'attention' | 'not_configured' | 'error';

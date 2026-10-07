@@ -63,6 +63,24 @@ Done on 7 October 2026.
    write** and **Subscriptions: write**.
 5. On Referrals: create the friends' discount, then turn the programme on.
 
+### Customer emails (ADR-0038)
+
+To do (owner), in this order:
+
+1. Apply the migration: `npx supabase db push` (adds
+   `private.marketing_contacts`, the offer audiences and the opt-out).
+2. Redeploy the launch-list function, which handles the opt-out link:
+   `npx supabase functions deploy launch-list --no-verify-jwt`.
+3. Resend → API Keys → **Create**, permission **Sending access**, domain
+   rolestash.com, then
+   `npx wrangler secret put RESEND_SEND_KEY --config infra/ops-worker/wrangler.jsonc`.
+
+Then: Grants → Give Pro emails the person (untick "Email them" to skip);
+Discount codes → New code can email the code; Referrals → Turn on announces
+it; **Emails** sends a targeted discount, emails a live code or announces
+referrals. Offers reach each account at most once a week, never after it
+opts out, and only people with an account.
+
 ## Status and to-do
 
 **Live since 2026-10-05** at https://operations.rolestash.com, behind

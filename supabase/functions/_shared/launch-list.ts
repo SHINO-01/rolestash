@@ -261,6 +261,14 @@ export async function handleLaunchList(req: Request, deps: LaunchDeps): Promise<
         ? new Response(null, { status: 200 })
         : redirect(`${env.siteUrl}/notify/unsubscribed/`);
     }
+    // Offer emails from the operations dashboard (ADR-0038) to account holders.
+    const optout = params.get('optout');
+    if (optout !== null && (req.method === 'GET' || req.method === 'POST')) {
+      if (TOKEN.test(optout)) await backend.rpc<boolean>('offers_unsubscribe', { p_token: optout });
+      return req.method === 'POST'
+        ? new Response(null, { status: 200 })
+        : redirect(`${env.siteUrl}/notify/no-offers/`);
+    }
     const token = params.get('confirm');
     if (token !== null && req.method === 'GET') {
       return TOKEN.test(token)

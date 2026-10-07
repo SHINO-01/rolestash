@@ -211,6 +211,34 @@ describe('launch list: unsubscribing', () => {
   });
 });
 
+describe('offer emails: opting out (ADR-0038)', () => {
+  const route = { [`POST ${SB}/rest/v1/rpc/offers_unsubscribe`]: { status: 200, body: true } };
+
+  it('stops offers from a link and says so', async () => {
+    const { deps: d, calls } = deps(route);
+    const res = await handleLaunchList(new Request(`${FN}?optout=${TOKEN}`), d);
+    expect(location(res)).toBe(`${SITE}/notify/no-offers/`);
+    expect(calls[0]?.body).toEqual({ p_token: TOKEN });
+  });
+
+  it('supports one-click opt-out from mail apps', async () => {
+    const { deps: d, calls } = deps(route);
+    const res = await handleLaunchList(
+      new Request(`${FN}?optout=${TOKEN}`, { method: 'POST', body: 'List-Unsubscribe=One-Click' }),
+      d,
+    );
+    expect(res.status).toBe(200);
+    expect(calls).toHaveLength(1);
+  });
+
+  it('ignores a malformed token', async () => {
+    const { deps: d, calls } = deps({});
+    const res = await handleLaunchList(new Request(`${FN}?optout=nope`), d);
+    expect(location(res)).toBe(`${SITE}/notify/no-offers/`);
+    expect(calls).toHaveLength(0);
+  });
+});
+
 describe('launch list: sending campaigns', () => {
   const recipients = Array.from({ length: 150 }, (_, i) => ({
     email: `u${String(i)}@example.com`,

@@ -5,6 +5,7 @@ import { signForm, verifyForm } from './forms';
 import {
   activityPage,
   discountsPage,
+  emailsPage,
   grantsPage,
   overviewPage,
   referralsPage,
@@ -41,6 +42,7 @@ const PAGES: Record<string, PageId> = {
   '/grants': 'grants',
   '/discounts': 'discounts',
   '/referrals': 'referrals',
+  '/emails': 'emails',
   '/activity': 'activity',
 };
 
@@ -66,6 +68,8 @@ async function renderPage(id: PageId, ctx: PageContext, url: URL): Promise<Rende
       return discountsPage(ctx);
     case 'referrals':
       return referralsPage(ctx);
+    case 'emails':
+      return emailsPage(ctx);
     case 'activity':
       return activityPage(ctx);
   }
@@ -75,7 +79,7 @@ async function renderPage(id: PageId, ctx: PageContext, url: URL): Promise<Rende
 function safeError(error: unknown): string {
   if (
     error instanceof Error &&
-    ['AdminError', 'PaddleAdminError', 'ActionError'].includes(error.name)
+    ['AdminError', 'PaddleAdminError', 'ActionError', 'SendError'].includes(error.name)
   )
     return error.message;
   if (error instanceof Error && /^HTTP \d{3}$/.test(error.message))

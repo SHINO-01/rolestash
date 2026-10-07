@@ -4,16 +4,17 @@ import type { Panel } from './panels';
 /**
  * The dashboard's layout and shared pieces (ADR-0026, ADR-0037): server-
  * rendered HTML, one stylesheet, no scripts. Pages: Overview, Grants,
- * Discounts, Referrals, Activity.
+ * Discounts, Referrals, Emails, Activity.
  */
 
-export type PageId = 'overview' | 'grants' | 'discounts' | 'referrals' | 'activity';
+export type PageId = 'overview' | 'grants' | 'discounts' | 'referrals' | 'emails' | 'activity';
 
 export const NAV: { id: PageId; href: string; label: string }[] = [
   { id: 'overview', href: '/', label: 'Overview' },
   { id: 'grants', href: '/grants', label: 'Grants' },
   { id: 'discounts', href: '/discounts', label: 'Discount codes' },
   { id: 'referrals', href: '/referrals', label: 'Referrals' },
+  { id: 'emails', href: '/emails', label: 'Emails' },
   { id: 'activity', href: '/activity', label: 'Activity' },
 ];
 

@@ -1,5 +1,6 @@
 import { REASONS } from './actions';
 import { adminConfigured, opsAdmin } from './admin';
+import { senderConfigured } from './emails';
 import { html, type Html } from './html';
 import {
   INTERVAL_LABEL,
@@ -22,6 +23,7 @@ import {
   type Panel,
   type Stats,
 } from './panels';
+import { audienceFields } from './offers';
 import { actionForm, day, dayTime, errorBox, notice, pageHead, panelCard } from './views';
 
 /**
@@ -46,7 +48,8 @@ export interface Rendered {
 }
 
 const safeMessage = (error: unknown): string =>
-  error instanceof Error && ['AdminError', 'PaddleAdminError', 'ActionError'].includes(error.name)
+  error instanceof Error &&
+  ['AdminError', 'PaddleAdminError', 'ActionError', 'SendError'].includes(error.name)
     ? error.message
     : error instanceof Error && /^HTTP \d{3}$/.test(error.message)
       ? `Couldn't load (${error.message}).`
@@ -232,6 +235,12 @@ export async function grantsPage(ctx: PageContext, showAll: boolean): Promise<Re
             <label class="wide"
               >Note (optional)<input name="note" maxlength="500" placeholder="Why, for the log"
             /></label>
+            <fieldset class="wide">
+              <label
+                ><input type="checkbox" name="notify" value="1" checked /> Email them that they've
+                got Pro</label
+              >
+            </fieldset>
             <div class="actions wide">
               <button class="btn primary">Preview</button
               ><span class="faint">No account yet? It applies when they first sign in.</span>
@@ -423,6 +432,7 @@ export async function discountsPage(ctx: PageContext): Promise<Rendered> {
               <legend>Plans</legend>
               ${INTERVALS.map((i) => html`<label><input type="checkbox" name="intervals" value="${i}" checked /> ${INTERVAL_LABEL[i]}</label>`)}
             </fieldset>
+            ${audienceFields('Nobody: I’ll share it myself')}
             <div class="actions wide"><button class="btn primary">Preview</button></div>
           </div>`,
         )}
@@ -443,6 +453,180 @@ export async function discountsPage(ctx: PageContext): Promise<Rendered> {
       }
     </div>`;
   return { title: 'Discount codes', body };
+}
+
+// ── Emails ──────────────────────────────────────────────────────────────────
+
+interface EmailsSummary {
+  opted_out: number;
+  emailed_7d: number;
+  recent: {
+    at: string;
+    actor: string;
+    action: string;
+    detail: Record<string, unknown>;
+    outcome: string;
+  }[];
+}
+
+const EMAIL_KIND: Record<string, string> = {
+  'email.grant': 'Complimentary Pro',
+  'email.code': 'Discount code',
+  'email.targeted': 'Targeted discount',
+  'email.referrals': 'Referral announcement',
+  'email.recipients': 'Recipients picked',
+};
+
+export async function emailsPage(ctx: PageContext): Promise<Rendered> {
+  if (!adminConfigured(ctx.env))
+    return { title: 'Emails', body: html`${pageHead('Emails')}${ADMIN_SETUP}` };
+  const [summary, codes, targetedToken, codeToken, referralsToken] = await Promise.all([
+    attempt(() => opsAdmin<EmailsSummary>(ctx.env, ctx.deps, ctx.email, 'emails.summary')),
+    paddleConfigured(ctx.env)
+      ? attempt(() => listDiscounts(ctx.env, ctx.deps))
+      : Promise.resolve({ ok: [] as Discount[] }),
+    ctx.token('offer.targeted'),
+    ctx.token('offer.code'),
+    ctx.token('offer.referrals'),
+  ]);
+  const live =
+    'ok' in codes
+      ? codes.ok.filter((d) => d.kind !== 'referral' && d.code && isLive(d, ctx.deps.now))
+      : [];
+  const sendSetup = senderConfigured(ctx.env)
+    ? null
+    : setupCard(
+        'sending',
+        html`Add <code>RESEND_SEND_KEY</code>, a Resend key with sending access only
+          (docs/guides/operations.md).`,
+      );
+  const s = 'ok' in summary ? summary.ok : undefined;
+  const body = html`${pageHead('Emails', 'Offers to people with an account, at most one a week each, always with a one-click opt-out. Complimentary Pro emails go out from Grants.')}
+    <div class="stack">
+      ${notice(ctx.notice)} ${sendSetup}
+      ${
+        s
+          ? html`<div class="kpis">
+              ${kpi('Emailed an offer in the last 7 days', s.emailed_7d, 'They get no other offer until the week is up')}
+              ${kpi('Opted out of offers', s.opted_out)}
+            </div>`
+          : errorBox('error' in summary ? summary.error : undefined)
+      }
+      <section class="card">
+        <h2>Send a targeted discount</h2>
+        <p class="muted">
+          A new code just for the people you pick, usable only as many times as people emailed, for
+          a few days. Good for a trial that just ended, or someone who left.
+        </p>
+        ${
+          paddleConfigured(ctx.env)
+            ? actionForm(
+                'offer.targeted',
+                targetedToken,
+                html`<div class="form">
+                  <label
+                    >Percent off<input
+                      name="percent"
+                      type="number"
+                      min="1"
+                      max="90"
+                      required
+                      placeholder="40"
+                  /></label>
+                  <label
+                    >Applies to<select name="payments">
+                      ${(['first', 'three', 'all'] as const).map((p) => html`<option value="${p}">${PAYMENTS_LABEL[p]}</option>`)}
+                    </select></label
+                  >
+                  <label
+                    >Days to use it<input
+                      name="days"
+                      type="number"
+                      min="1"
+                      max="90"
+                      value="14"
+                      required
+                  /></label>
+                  <fieldset class="wide">
+                    <legend>Plans</legend>
+                    ${INTERVALS.map((i) => html`<label><input type="checkbox" name="intervals" value="${i}" checked /> ${INTERVAL_LABEL[i]}</label>`)}
+                  </fieldset>
+                  ${audienceFields(null, 'trial_ended')}
+                  <div class="actions wide"><button class="btn primary">Preview</button></div>
+                </div>`,
+              )
+            : html`<p class="setup">Needs <code>PADDLE_API_KEY</code> with Discounts write.</p>`
+        }
+      </section>
+      <div class="two">
+        <section class="card">
+          <h2>Email a live code</h2>
+          ${
+            live.length
+              ? actionForm(
+                  'offer.code',
+                  codeToken,
+                  html`<div class="form">
+                    <label class="wide"
+                      >Code<select name="id">
+                        ${live.map((d) => html`<option value="${d.id}">${d.code} (${d.amount}% off)</option>`)}
+                      </select></label
+                    >
+                    ${audienceFields(null, 'free')}
+                    <div class="actions wide"><button class="btn primary">Preview</button></div>
+                  </div>`,
+                )
+              : html`<p class="faint">No live codes. Create one under Discount codes.</p>`
+          }
+        </section>
+        <section class="card">
+          <h2>Announce referrals</h2>
+          ${actionForm(
+            'offer.referrals',
+            referralsToken,
+            html`<div class="form">
+              ${audienceFields(null, 'everyone')}
+              <div class="actions wide"><button class="btn primary">Preview</button></div>
+            </div>`,
+          )}
+        </section>
+      </div>
+      <section class="card">
+        <h2>Recent sends</h2>
+        ${
+          s?.recent.length
+            ? html`<div class="scroll">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>When</th>
+                      <th>What</th>
+                      <th>Who</th>
+                      <th>Result</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${s.recent.map(
+                      (r) =>
+                        html`<tr>
+                          <td class="faint">${dayTime(r.at)}</td>
+                          <td>
+                            ${EMAIL_KIND[r.action] ?? r.action}${typeof r.detail.code === 'string' ? html` <b>${r.detail.code}</b>` : null}
+                          </td>
+                          <td class="muted">
+                            ${typeof r.detail.email === 'string' ? r.detail.email : typeof r.detail.segment === 'string' ? r.detail.segment : ''}
+                          </td>
+                          <td>${r.outcome}</td>
+                        </tr>`,
+                    )}
+                  </tbody>
+                </table>
+              </div>`
+            : html`<p class="faint">Nothing sent yet.</p>`
+        }
+      </section>
+    </div>`;
+  return { title: 'Emails', body };
 }
 
 // ── Referrals ───────────────────────────────────────────────────────────────
@@ -505,7 +689,19 @@ export async function referralsPage(ctx: PageContext): Promise<Rendered> {
           <p class="muted">
             ${on ? 'Account shows everyone their link, and referral links give the discount.' : 'Off: Account hides the section and links give no discount.'}
           </p>
-          ${actionForm('referrals.toggle', toggleToken, html`<input type="hidden" name="on" value="${on ? '0' : '1'}" /><button class="btn ${on ? 'danger' : 'primary'}">${on ? 'Turn off' : 'Turn on'}</button>`)}
+          ${actionForm(
+            'referrals.toggle',
+            toggleToken,
+            on
+              ? html`<input type="hidden" name="on" value="0" /><button class="btn danger">
+                    Turn off
+                  </button>`
+              : html`<input type="hidden" name="on" value="1" />
+                  <div class="form">
+                    ${audienceFields('Nobody: just turn it on', 'everyone')}
+                    <div class="actions wide"><button class="btn primary">Turn on</button></div>
+                  </div>`,
+          )}
         </section>
         <section class="card">
           <h2>Friends' discount</h2>

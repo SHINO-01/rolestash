@@ -1,6 +1,6 @@
 # ADR-0036: Account security: no required password; optional password with reset, and optional two-step sign-in
 
-- **Status:** Proposed (owner request, 2026-10-07). Not built.
+- **Status:** Accepted (owner, 2026-10-07). Being built for 0.6.0.
 - Builds on ADR-0011 (accounts: email code via Supabase Auth) and ADR-0012
   (Google sign-in). The free plan still needs no account.
 

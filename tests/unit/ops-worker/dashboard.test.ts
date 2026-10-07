@@ -540,6 +540,229 @@ describe('actions', () => {
   });
 });
 
+describe('customer emails (ADR-0038)', () => {
+  const SEND_ENV: Env = { ...ENV, RESEND_SEND_KEY: 're_send' };
+  const RESEND = 'POST https://api.resend.com/emails/batch';
+  const sendPost = (fields: Record<string, string | string[]>, f: typeof fetch) => {
+    const form = new FormData();
+    for (const [k, v] of Object.entries(fields)) for (const one of [v].flat()) form.append(k, one);
+    return handle(
+      new Request(`${ORIGIN}/do`, {
+        method: 'POST',
+        body: form,
+        headers: {
+          'Cf-Access-Jwt-Assertion': token,
+          Origin: ORIGIN,
+          'Sec-Fetch-Site': 'same-origin',
+        },
+      }),
+      SEND_ENV,
+      { fetch: f, now: NOW },
+    );
+  };
+  const PRICES = {
+    [`GET ${PADDLE}/products`]: [{ id: 'pro_1', custom_data: { app: 'rolestash', tier: 'pro' } }],
+    [`GET ${PADDLE}/prices`]: [
+      { id: 'pri_m', billing_cycle: { interval: 'month', frequency: 1 } },
+      { id: 'pri_q', billing_cycle: { interval: 'month', frequency: 3 } },
+      { id: 'pri_y', billing_cycle: { interval: 'year', frequency: 1 } },
+    ],
+  };
+  interface Mail {
+    to: string[];
+    subject: string;
+    html: string;
+    text: string;
+    headers?: Record<string, string>;
+  }
+  const mails = (calls: Call[]) =>
+    calls
+      .filter((c) => c.url === 'https://api.resend.com/emails/batch')
+      .flatMap((c) => c.body as Mail[]);
+
+  it('emails someone who was given Pro, without an opt-out (a service message)', async () => {
+    const { fetch, calls } = backend({
+      'admin grants.preview': adminAnswer({
+        has_account: false,
+        status: null,
+        complimentary: null,
+        active_grant: null,
+      }),
+      'admin grants.grant': adminAnswer({ outcome: 'pending' }),
+      'admin audit.log': adminAnswer({ outcome: 'logged' }),
+      [RESEND]: new Response('{"data":[{"id":"1"}]}'),
+    });
+    const preview = await sendPost(
+      {
+        ...(await firstStep('grant.give')),
+        email: 'dana@example.com',
+        reason: 'tester',
+        until: '2027-01-31',
+        notify: '1',
+      },
+      fetch,
+    );
+    const page = await preview.text();
+    expect(page).toContain('Emails them');
+    const done = await sendPost({ ...confirmFields(page), _typed: 'dana@example.com' }, fetch);
+    expect(
+      new URL(done.headers.get('Location') ?? '', ORIGIN).searchParams.get('notice'),
+    ).toContain('We emailed them');
+    const [mail] = mails(calls);
+    expect(mail?.to).toEqual(['dana@example.com']);
+    expect(mail?.subject).toContain('Rolestash Pro');
+    expect(mail?.text).toContain('31 January 2027');
+    expect(mail?.text).toContain('Add Rolestash to Chrome');
+    expect(mail?.headers).toBeUndefined();
+    const grant = calls.find((c) => (c.body as { p_action?: string }).p_action === 'grants.grant');
+    expect((grant?.body as { p_args: Record<string, string> }).p_args).not.toHaveProperty('notify');
+  });
+
+  it('sends a targeted discount: a new code limited to the people emailed, each with an opt-out', async () => {
+    const recipients = [
+      { email: 'ann@example.com', token: '11111111-2222-4333-8444-555555555555' },
+      { email: 'cal@example.com', token: '66666666-2222-4333-8444-555555555555' },
+    ];
+    const { fetch, calls } = backend({
+      ...PRICES,
+      'admin audience.count': adminAnswer({ count: 2, sample: ['an…@example.com'], unknown: 0 }),
+      'admin audience.claim': adminAnswer(recipients),
+      'admin audit.log': adminAnswer({ outcome: 'logged' }),
+      [`POST ${PADDLE}/discounts`]: (b: Record<string, unknown>) => ({
+        id: 'dsc_01targettarget',
+        code: b.code,
+        status: 'active',
+        amount: b.amount,
+        type: 'percentage',
+        recur: false,
+        restrict_to: b.restrict_to,
+        expires_at: b.expires_at,
+      }),
+      [RESEND]: new Response('{"data":[]}'),
+    });
+    const preview = await sendPost(
+      {
+        ...(await firstStep('offer.targeted')),
+        percent: '40',
+        payments: 'first',
+        days: '14',
+        intervals: ['month', 'year'],
+        segment: 'trial_ended',
+        message: 'Thanks for trying Rolestash.',
+      },
+      fetch,
+    );
+    const page = await preview.text();
+    expect(preview.status).toBe(200);
+    expect(page).toContain('<b>2 people</b>');
+    expect(page).toContain('Trial ended, never paid');
+    expect(calls.some((c) => c.url === `${PADDLE}/discounts` && c.method === 'POST')).toBe(false);
+
+    const done = await sendPost(confirmFields(page), fetch);
+    expect(done.status).toBe(303);
+    const created = calls.find((c) => c.method === 'POST' && c.url === `${PADDLE}/discounts`);
+    expect(created?.body).toMatchObject({
+      amount: '40',
+      usage_limit: 2,
+      restrict_to: ['pri_m', 'pri_y'],
+      expires_at: '2026-10-21T12:59:59.000Z',
+    });
+    const code = (created?.body as { code: string }).code;
+    expect(code).toMatch(/^FOR[A-HJ-NP-Z2-9]{6}$/);
+    const sent = mails(calls);
+    expect(sent.map((m) => m.to[0])).toEqual(['ann@example.com', 'cal@example.com']);
+    expect(sent[0]?.subject).toBe('40% off Rolestash Pro, just for you');
+    expect(sent[0]?.html).toContain(`https://rolestash.com/pricing/?code=${code}`);
+    expect(sent[0]?.text).toContain('Thanks for trying Rolestash.');
+    expect(sent[0]?.text).toContain('21 October 2026');
+    expect(sent[1]?.headers?.['List-Unsubscribe']).toBe(
+      `<${SB}/functions/v1/launch-list?optout=${recipients[1]?.token ?? ''}>`,
+    );
+    expect(sent[1]?.html).toContain('No more offers');
+    expect(
+      calls.find(
+        (c) => (c.body as { p_args?: { action?: string } }).p_args?.action === 'email.targeted',
+      )?.body,
+    ).toMatchObject({ p_args: { outcome: '2 sent' } });
+  });
+
+  it('refuses an offer nobody can get, and checks listed emails', async () => {
+    const { fetch } = backend({
+      'admin audience.count': adminAnswer({ count: 0, sample: [], unknown: 1 }),
+      'admin emails.summary': adminAnswer({ opted_out: 0, emailed_7d: 0, recent: [] }),
+      'admin referrals.summary': adminAnswer({ settings: { referrals_enabled: true } }),
+    });
+    const bad = await sendPost(
+      {
+        ...(await firstStep('offer.referrals')),
+        segment: 'listed',
+        emails: 'ann@example.com, nope',
+      },
+      fetch,
+    );
+    expect(await bad.text()).toContain('nope isn&#39;t an email address.');
+    const none = await sendPost(
+      { ...(await firstStep('offer.referrals')), segment: 'listed', emails: 'zed@example.com' },
+      fetch,
+    );
+    expect(none.status).toBe(400);
+    expect(await none.text()).toContain('Nobody in that audience');
+  });
+
+  it('turns referrals on and announces them by email', async () => {
+    const { fetch, calls } = backend({
+      'admin referrals.summary': adminAnswer({
+        settings: { referral_discount_id: 'dsc_01abcdefghijk', referral_percent: 50 },
+      }),
+      'admin settings.set': adminAnswer({ outcome: 'saved' }),
+      'admin audience.count': adminAnswer({ count: 1, sample: [], unknown: 0 }),
+      'admin audience.claim': adminAnswer([
+        { email: 'tom@example.com', token: '11111111-2222-4333-8444-555555555555' },
+      ]),
+      'admin audit.log': adminAnswer({ outcome: 'logged' }),
+      [RESEND]: new Response('{"data":[]}'),
+    });
+    const preview = await sendPost(
+      { ...(await firstStep('referrals.toggle')), on: '1', segment: 'everyone' },
+      fetch,
+    );
+    const page = await preview.text();
+    expect(page).toContain('Then announces it by email.');
+    const done = await sendPost(confirmFields(page), fetch);
+    expect(
+      new URL(done.headers.get('Location') ?? '', ORIGIN).searchParams.get('notice'),
+    ).toContain('1 email sent');
+    expect(mails(calls)[0]?.subject).toContain('Invite friends');
+    expect(mails(calls)[0]?.text).toContain('50% off their first month');
+  });
+
+  it('shows the Emails page, and asks for the sending key when it is missing', async () => {
+    const { fetch } = backend({
+      'admin emails.summary': adminAnswer({
+        opted_out: 3,
+        emailed_7d: 12,
+        recent: [
+          {
+            at: '2026-10-06T00:00:00Z',
+            actor: 'owner@example.com',
+            action: 'email.code',
+            detail: { code: 'LAUNCH30', segment: 'free' },
+            outcome: '12 sent',
+          },
+        ],
+      }),
+      [`GET ${PADDLE}/discounts`]: [],
+    });
+    const res = await get('/emails', { fetch });
+    const page = await res.text();
+    expect(res.status).toBe(200);
+    expect(page).toContain('Send a targeted discount');
+    expect(page).toContain('Opted out of offers');
+    expect(page).toContain('LAUNCH30');
+    expect(page).toContain('RESEND_SEND_KEY');
+  });
+});
+
 describe('the daily referral job', () => {
   it("moves paying referrers' renewals in Paddle, and falls back to a grant", async () => {
     const { fetch, calls } = backend({

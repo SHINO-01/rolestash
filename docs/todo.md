@@ -72,6 +72,11 @@ into the roadmap or changelog. Last reviewed 7 October 2026.
       redeployed, the dashboard's admin secret and scoped Paddle key set, the
       50% referral discount `dsc_01m49z0xfn0xmx4dmygft76q15` created and
       referrals turned on.
+- [ ] **Customer emails (ADR-0038):** apply the migration, redeploy
+      `launch-list`, and set `RESEND_SEND_KEY` (a sending-only Resend key) on
+      the dashboard; then grants, new codes, referrals and targeted discounts
+      can email customers
+      ([operations.md](guides/operations.md#customer-emails-adr-0038)).
 - [ ] **Store releases:** one at a time, in the order of
       [release-backlog.md](release-backlog.md) (0.4.7 in review → 0.5.0 →
       0.6.0).

@@ -66,6 +66,7 @@ describe('rolestash.com static site', () => {
         'known-issues/index.html',
         'notify/check-email/index.html',
         'notify/confirmed/index.html',
+        'notify/no-offers/index.html',
         'notify/problem/index.html',
         'notify/unsubscribed/index.html',
         'pay/index.html',
