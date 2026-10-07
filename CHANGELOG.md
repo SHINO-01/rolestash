@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.6.1] — 2026-10-07
+
 ### Changed
 
 - **Rejected is a lane again:** the board has five lanes, Saved, Applied,
