@@ -183,6 +183,20 @@ updates the entitlement as usual. Partial refunds, credits and refunds of an
 earlier period's payment keep the plan, and the last of these is logged as
 `refund is not for the current period; plan kept`.
 
+## Database advisor findings we accept
+
+Supabase's security advisor flags these on purpose-built parts of the
+schema. Each was checked against the live project on 7 October 2026; leave
+them unless the design changes.
+
+| Finding                                                                                                             | Why it stays                                                                                                                                                                                                                                                                                                                                           |
+| ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `public.ops_admin` executable by `anon` (SECURITY DEFINER)                                                          | The dashboard calls it with the publishable key, so it never holds the service-role key. Its first step, `private.ops_admin_allowed`, compares the SHA-256 of a 256-bit secret (`scripts/ops-secret.ts`) and refuses everything else                                                                                                                   |
+| `public.require_two_step` executable by `anon` and `authenticated`                                                  | It is PostgREST's `db_pre_request` (ADR-0036), which runs as the caller's role, so both roles need EXECUTE. Called directly it reveals nothing: signed out it returns, signed in it only says whether your own account has an authenticator. Moving it out of the API schema would only quiet the advisor, and a mistake there stops every API request |
+| `public.my_referral`, `public.rotate_referral_code` executable by `authenticated`                                   | Each acts on `auth.uid()` only; `anon` has no EXECUTE                                                                                                                                                                                                                                                                                                  |
+| RLS enabled with no policies on `bug_reports`, `email_inboxes`, `launch_subscribers`, `synced_jobs`, `trial_claims` | Deliberate deny-all: `anon` and `authenticated` have no grants on these tables either. Only the service role (Edge Functions) and SECURITY DEFINER functions reach them                                                                                                                                                                                |
+| Leaked password protection disabled                                                                                 | A Supabase Auth setting that needs the Pro plan. Turn it on (Authentication → Providers → Email) right after upgrading                                                                                                                                                                                                                                 |
+
 ## Edge Functions
 
 | Function          | Caller                  | Does                                                                                         |

@@ -15,9 +15,10 @@ into the roadmap or changelog. Last reviewed 7 October 2026.
 - [ ] **Problem reports:** check the dashboard's _Problem reports_ page
       now and then (new ones also show under _Needs attention_ and are
       emailed to support). Close the test report #1 sent on 7 October.
-- [ ] **Leaked password protection** (Supabase → Authentication → Passwords,
-      HaveIBeenPwned check), if the plan offers it. The database advisor
-      flags it now that passwords are optional (ADR-0036).
+- [ ] **Leaked password protection:** turn it on (Supabase → Authentication
+      → Providers → Email) as soon as the project moves to Pro; Supabase
+      offers it on Pro and above only. The other advisor warnings are
+      intended ([backend.md](guides/backend.md#database-advisor-findings-we-accept)).
 - [ ] **Gmail (ADR-0032):** Google Cloud is done (Gmail API, the
       `gmail.readonly` scope, both redirect URIs, checked working on 6
       October). Waiting on Google's restricted-scope verification; until then
