@@ -52,11 +52,37 @@ function respond(body: string, status = 200): Response {
 
 const plain = (text: string, status: number) => new Response(text, { status, headers: HEADERS });
 
-const SIGN_IN_AGAIN =
-  '<!doctype html><html lang="en"><meta charset="utf-8"><title>Sign in again</title>' +
-  '<p>Your sign-in is more than an hour old.</p>' +
-  '<p><a href="/cdn-cgi/access/logout">Sign out</a>, then open ' +
-  '<a href="/">the dashboard</a> again for a new code.</p></html>';
+/** Shown when the Access sign-in is past the Worker's hour (styled by /ops.css). */
+const SIGN_IN_AGAIN = html`<!doctype html>
+  <html lang="en">
+    <head>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <meta name="robots" content="noindex, nofollow" />
+      <title>Sign in again · Rolestash operations</title>
+      <link rel="stylesheet" href="/ops.css" />
+    </head>
+    <body>
+      <main class="gate">
+        <section class="card gate-card">
+          <div class="brand"><i aria-hidden="true"></i>Rolestash ops</div>
+          <h1>Time for a fresh sign-in</h1>
+          <p class="muted">
+            Your sign-in is more than an hour old, so the dashboard needs a new code before it shows
+            anything or makes changes.
+          </p>
+          <ol class="gate-steps">
+            <li><b>Sign out</b> of this session.</li>
+            <li>Open the dashboard again and enter the code we email you.</li>
+          </ol>
+          <div class="actions">
+            <a class="btn primary" href="/cdn-cgi/access/logout">Sign out</a
+            ><a class="btn link" href="/">Open the dashboard</a>
+          </div>
+        </section>
+      </main>
+    </body>
+  </html>`.value;
 
 async function renderPage(id: PageId, ctx: PageContext, url: URL): Promise<Rendered> {
   switch (id) {
@@ -240,6 +266,11 @@ function context(s: Session, notice: string | undefined): PageContext {
 }
 
 export async function handle(request: Request, env: Env, deps: Deps): Promise<Response> {
+  // The stylesheet holds nothing private, so the sign-in-again page can use it too.
+  if (new URL(request.url).pathname === '/ops.css' && request.method === 'GET')
+    return new Response(CSS, {
+      headers: { ...HEADERS, 'Content-Type': 'text/css; charset=utf-8' },
+    });
   const access = await verifyAccess(
     request,
     {

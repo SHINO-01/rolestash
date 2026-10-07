@@ -149,6 +149,13 @@ describe('the dashboard request handler', () => {
     const response = await handle(req(token), env, { fetch: certs, now: NOW });
     expect(response.status).toBe(403);
     expect(await response.text()).toContain('href="/cdn-cgi/access/logout"');
+    // Styled like the dashboard: the stylesheet loads without a fresh sign-in.
+    const css = await handle(new Request('https://operations.rolestash.com/ops.css'), env, {
+      fetch: certs,
+      now: NOW,
+    });
+    expect(css.headers.get('Content-Type')).toContain('text/css');
+    expect(await css.text()).toContain('.gate{');
   });
 
   it('renders the page, escaped, with every panel "not set up" when no tokens exist', async () => {

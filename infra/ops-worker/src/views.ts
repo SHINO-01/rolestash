@@ -68,6 +68,7 @@ fieldset label{flex-direction:row;align-items:center;gap:6px;color:var(--ink);fo
 .confirm{max-width:640px}.confirm ul{margin:8px 0 0;padding-left:18px}.confirm li{margin:4px 0}
 .setup{font-size:13px;color:var(--muted)}code{font:12.5px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--sunk);padding:1px 5px;border-radius:5px}
 details summary{cursor:pointer;color:var(--muted);font-weight:500}.narrow{width:7em}
+.gate{min-height:100vh;display:grid;place-items:center;padding:24px 16px}.gate-card{width:100%;max-width:460px;padding:28px}.gate-card .brand{padding:0 0 20px}.gate-card h1{margin:0 0 8px;font-size:22px;letter-spacing:-.01em}.gate-steps{margin:18px 0 22px;padding-left:20px;display:grid;gap:6px}
 @media (max-width:860px){.shell{grid-template-columns:1fr}.side{position:static;height:auto;flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line);padding:10px 12px;gap:4px}.brand{padding:4px 8px 4px 4px}.side .who{display:none}.side a{white-space:nowrap}main{padding:22px 16px 56px}.two{grid-template-columns:1fr}}`;
 
 export interface NavCounts {
