@@ -64,16 +64,11 @@ into the roadmap or changelog. Last reviewed 6 October 2026 (night).
   - check Cloudflare's **Block AI bots / AI Crawl Control** is off for
     rolestash.com, if you want AI assistants to cite the site
     ([website.md](guides/website.md#search)).
-- [ ] **Paddle key for the dashboard (last go-live step, ADR-0037):** the
-      rest went live on 7 October (migrations applied, Edge Functions
-      redeployed, admin secret set, the 50% referral discount
-      `dsc_01m49z0xfn0xmx4dmygft76q15` created and referrals turned on).
-      Create a Paddle API key (Developer tools → Authentication) with only:
-      read Transactions, Adjustments, Products, Prices; read and write
-      Discounts and Subscriptions. Then store it (it asks for the value):
-      `npx wrangler secret put PADDLE_API_KEY --config infra/ops-worker/wrangler.jsonc`.
-      Until then, the Discount codes page asks for it and paying referrers'
-      free months wait (Free referrers are rewarded anyway).
+- [x] **Go-live for grants, discount codes and referrals (ADR-0035,
+      ADR-0037):** done 7 October: migrations applied, Edge Functions
+      redeployed, the dashboard's admin secret and scoped Paddle key set, the
+      50% referral discount `dsc_01m49z0xfn0xmx4dmygft76q15` created and
+      referrals turned on.
 - [ ] **Store releases:** one at a time, in the order of
       [release-backlog.md](release-backlog.md) (0.4.7 in review → 0.5.0 →
       0.6.0).
