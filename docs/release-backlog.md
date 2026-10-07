@@ -35,18 +35,24 @@ _Last updated 7 October 2026._
 
 ### 1. 0.6.1: Rejected is a lane again
 
-- **State:** on `dev` under _Unreleased_ in `CHANGELOG.md` (8 October 2026);
-  not tagged. The web board already shows the fifth lane: it deploys with the
-  site.
+- **State:** released and packaged on 7 October 2026: tag `v0.6.1`, release
+  PR [SHINO-01/rolestash-extension#18](https://github.com/SHINO-01/rolestash-extension/pull/18)
+  merged (five-lane screenshots, listing line), GitHub Release built. The
+  **Release** run
+  [37614825963](https://github.com/SHINO-01/rolestash-extension/actions/runs/37614825963)
+  is **waiting at the Chrome Web Store approval** on purpose. The web board
+  already shows the fifth lane.
 - **Contains:** five lanes (Saved, Applied, Interviewing, Offer, Rejected);
   lanes narrow down to 232px so all five fit a 1280px window; new jobs still
   can't start in Rejected (ADR-0034, amended).
-- **Ship it, after 0.6.0 is approved:** `npm run release -- patch` on `dev`
-  (Sydney's date), push, then the release-repo PR with new screenshots:
-  `npm run store:screenshots` and copy `.output/store-screenshots/*.png`
-  into the release repo's `store/screenshots/` (the board shot now shows
-  five lanes). Upload them in the dashboard after the submission. The
-  homepage clips and films still show four lanes; re-shoot when convenient.
+- **Ship it, once 0.6.0 is live (owner):** approve that run's
+  `chrome-web-store` deployment (Actions → the run → Review deployments). A
+  new manual or daily run won't submit: it sees v0.6.1 already released and
+  stops. If the approval expires (30 days), delete the v0.6.1 GitHub Release
+  and tag in the release repo and run **Release** again. Then upload the five
+  screenshots from `store/screenshots/` and paste the changed board line from
+  `store/listing.md` in the dashboard. The homepage clips and films still
+  show four lanes; re-shoot when convenient.
 
 ## Adding to the backlog
 

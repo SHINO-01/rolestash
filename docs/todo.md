@@ -11,6 +11,9 @@ into the roadmap or changelog. Last reviewed 7 October 2026.
       Authentication information and the description from
       `store/listing.md` into the dashboard
       ([release-backlog.md](release-backlog.md)).
+- [ ] **When 0.6.0 is live, submit 0.6.1:** approve the waiting Release
+      run's Chrome Web Store step, then upload the new screenshots and the
+      board line ([release-backlog.md](release-backlog.md)).
 - [ ] **Problem reports:** check the dashboard's _Problem reports_ page
       now and then (new ones also show under _Needs attention_ and are
       emailed to support).
