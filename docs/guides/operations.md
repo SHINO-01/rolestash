@@ -41,6 +41,8 @@ accepted only from the dashboard's own pages, signed for you, for an hour.
 
 ## Turning on changes (owner, once)
 
+Done on 7 October 2026 except step 4 (the Paddle key); see `docs/todo.md`.
+
 1. Apply the migrations: `npx supabase db push` (adds the grants, referrals,
    audit log and the `ops_admin` function).
 2. Deploy the Edge Functions (create-checkout and paddle-webhook take codes

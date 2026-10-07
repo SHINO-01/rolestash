@@ -9,13 +9,8 @@ into the roadmap or changelog. Last reviewed 6 October 2026 (night).
 - [ ] **v0.4.7 is in Chrome Web Store review** (submitted 6 October; 0.4.3
       stays live until then). After approval, check the dashboard's
       **Privacy** tab and listing match the release repo's
-      `store/listing.md` ([launch.md](guides/launch.md#v047-in-review-to-do)).
-- [ ] **v0.5.0, four board lanes (ADR-0034):** released here on 7 October;
-      the release repo's PR (SHINO-01/rolestash-extension#16) has the new
-      screenshots and one changed listing line. Wait for 0.4.7's approval,
-      then merge, run **Release**, approve the submission, and in the
-      dashboard upload the five screenshots and paste the changed Free line
-      from `store/listing.md`.
+      `store/listing.md` ([launch.md](guides/launch.md#v047-in-review-to-do)),
+      then ship the next release in [release-backlog.md](release-backlog.md).
 - [ ] **Gmail (ADR-0032):** Google Cloud is done (Gmail API, the
       `gmail.readonly` scope, both redirect URIs, checked working on 6
       October). Waiting on Google's restricted-scope verification; until then
@@ -69,20 +64,21 @@ into the roadmap or changelog. Last reviewed 6 October 2026 (night).
   - check Cloudflare's **Block AI bots / AI Crawl Control** is off for
     rolestash.com, if you want AI assistants to cite the site
     ([website.md](guides/website.md#search)).
-- [ ] **Go live with grants, discount codes, referrals and the new dashboard
-      (ADR-0035, ADR-0037):** in this order:
-  1. `npx supabase db push` (migrations `20261021120000_grants.sql` and
-     `20261022120000_programs.sql`);
-  2. `npx supabase functions deploy --no-verify-jwt` (create-checkout takes
-     codes; paddle-webhook records referrals and voids them on refunds);
-  3. `npx tsx scripts/ops-secret.ts --apply` (the dashboard's admin secret);
-  4. give the dashboard's `PADDLE_API_KEY` Discounts and Subscriptions write
-     ([operations.md](guides/operations.md#turning-on-changes-owner-once));
-  5. on operations.rolestash.com → Referrals: create the friends' discount
-     (50% recommended), then turn the programme on. Your own grant should
-     already be listed under Grants.
+- [ ] **Paddle key for the dashboard (last go-live step, ADR-0037):** the
+      rest went live on 7 October (migrations applied, Edge Functions
+      redeployed, admin secret set, the 50% referral discount
+      `dsc_01m49z0xfn0xmx4dmygft76q15` created and referrals turned on).
+      Create a Paddle API key (Developer tools → Authentication) with only:
+      read Transactions, Adjustments, Products, Prices; read and write
+      Discounts and Subscriptions. Then store it (it asks for the value):
+      `npx wrangler secret put PADDLE_API_KEY --config infra/ops-worker/wrangler.jsonc`.
+      Until then, the Discount codes page asks for it and paying referrers'
+      free months wait (Free referrers are rewarded anyway).
+- [ ] **Store releases:** one at a time, in the order of
+      [release-backlog.md](release-backlog.md) (0.4.7 in review → 0.5.0 →
+      0.6.0).
 - [ ] **Meheraj's complimentary access:** no need to wait for them to sign in
-      any more. After the steps above: Grants → Give Pro →
+      any more: Grants → Give Pro →
       meherajrafid@gmail.com, reason `team`; it applies when they first sign in.
 - [ ] **Go public** when the beta is clean: Distribution → Visibility →
       Public ([launch.md](guides/launch.md#7-going-public)).
@@ -94,9 +90,6 @@ into the roadmap or changelog. Last reviewed 6 October 2026 (night).
       sign-in (authenticator app), security-change emails and "Sign out
       everywhere". No password is required. Owner to accept or adjust
       ([ADR-0036](adr/0036-passwords-and-account-security.md)).
-- [ ] **Extension release for referrals:** Account's "Invite friends"
-      section ships in the next extension release (the web board has it as
-      soon as the site deploys). Release after the owner's go-live steps.
 - [ ] **When 0.4.7 is approved:** set "Current version" on `/known-issues/`
       to 0.4.7 and the date.
 - [ ] **By 4 January 2027:** re-check the facts on `/compare/teal/` and

@@ -51,6 +51,8 @@ Start with **Architecture → Overview**, then go by task.
 
 New decision? Copy [the template](adr/0000-template.md).
 
+**Store releases waiting their turn:** [release-backlog.md](release-backlog.md).
+
 ## Guides (how-to)
 
 - [Development setup & workflow](guides/development.md)
