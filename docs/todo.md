@@ -6,10 +6,11 @@ into the roadmap or changelog. Last reviewed 7 October 2026.
 
 ## Owner
 
-- [ ] **v0.4.7 is live** (approved and published 7 October). Check the
-      dashboard's **Privacy** tab and listing match the release repo's
-      `store/listing.md` ([launch.md](guides/launch.md#v047-approved)),
-      then ship 0.5.0 from [release-backlog.md](release-backlog.md).
+- [ ] **v0.5.0 is in Chrome Web Store review** (submitted 7 October; 0.4.7
+      is live). Now: upload the five screenshots from the release repo's
+      `store/screenshots/` and paste the changed Free line from
+      `store/listing.md` into the dashboard. After approval, ship 0.6.0 from
+      [release-backlog.md](release-backlog.md).
 - [ ] **Gmail (ADR-0032):** Google Cloud is done (Gmail API, the
       `gmail.readonly` scope, both redirect URIs, checked working on 6
       October). Waiting on Google's restricted-scope verification; until then
@@ -95,15 +96,15 @@ into the roadmap or changelog. Last reviewed 7 October 2026.
       `supabase/templates/password-changed.html` into _Password changed_
       (subject "Your Rolestash password was changed").
 - [ ] **Store releases:** one at a time, in the order of
-      [release-backlog.md](release-backlog.md) (0.5.0 next →
+      [release-backlog.md](release-backlog.md) (0.5.0 in review →
       0.6.0).
 - [ ] **Go public** when the beta is clean: Distribution → Visibility →
       Public ([launch.md](guides/launch.md#7-going-public)).
 
 ## Ours
 
-- [x] **When 0.4.7 is approved:** set "Current version" on `/known-issues/`
-      to 0.4.7 and the date (done 7 October).
+- [ ] **When 0.5.0 is approved:** set "Current version" on `/known-issues/`
+      to 0.5.0 and the date.
 - [ ] **By 4 January 2027:** re-check the facts on `/compare/teal/` and
       `/compare/huntr/` and update their "Facts checked" date
       ([website.md](guides/website.md#search)).

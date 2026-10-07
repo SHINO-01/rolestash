@@ -12,30 +12,25 @@ here, except where a release depends on them.
 
 _Last updated 7 October 2026._
 
-## Live
+## In review
 
-**0.4.7** (button on job sites by default, all sites by choice, ADR-0033):
-submitted 6 October 2026, approved and published 7 October 2026. Nothing is
-in review, so 0.5.0 below can go in.
+| Version | Submitted  | What                                | When approved                                                                                                         |
+| ------- | ---------- | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| 0.5.0   | 7 Oct 2026 | Four board lanes (ADR-0034, PR #16) | Set `/known-issues/` current version to 0.5.0; then ship 0.6.0 below. 0.4.7 (approved 7 Oct 2026) is live until then. |
+
+Owner, now: in the dashboard, upload the five screenshots from the release
+repo's `store/screenshots/` and paste the changed Free line from
+`store/listing.md`.
 
 ## Next, in order
 
-### 1. 0.5.0: four board lanes (ADR-0034)
-
-- **State:** tagged `v0.5.0`; release PR
-  [SHINO-01/rolestash-extension#16](https://github.com/SHINO-01/rolestash-extension/pull/16)
-  open with Integration passing (screenshots and one listing line).
-- **Contains:** Saved, Applied, Interviewing, Offer lanes; Rejected off the
-  board; Screening and Withdrawn retired (storage migration v2).
-- **Ship it:** 0.4.7 is approved; merge #16, run **Release**, approve
-  the submission; in the dashboard upload the five screenshots and paste the
-  changed Free line from `store/listing.md`.
-
-### 2. 0.6.0: referrals in Account
+### 1. 0.6.0: referrals and account security
 
 - **State:** on `dev` under _Unreleased_ in `CHANGELOG.md`; not tagged.
 - **Contains:** "Invite friends" in Account (referral link, Copy, Share, New
-  link, counts); a dated complimentary grant shows its end date.
+  link, counts); discount codes; a dated complimentary grant shows its end
+  date; the phone web board QR code in Account → Sync; an optional password,
+  sign out everywhere and two-step sign-in (ADR-0036).
 - **Already live without it:** referral links, codes at checkout, the web
   board's Account section, and the dashboard (all deployed 7 Oct 2026). Until
   this ships, extension users find their link on the web board.
