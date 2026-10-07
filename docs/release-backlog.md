@@ -18,26 +18,28 @@ _Last updated 7 October 2026._
 | ------- | ---------- | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
 | 0.5.0   | 7 Oct 2026 | Four board lanes (ADR-0034, PR #16) | Set `/known-issues/` current version to 0.5.0; then ship 0.6.0 below. 0.4.7 (approved 7 Oct 2026) is live until then. |
 
-Owner, now: in the dashboard, upload the five screenshots from the release
-repo's `store/screenshots/` and paste the changed Free line from
-`store/listing.md`.
+The screenshots and the Free line are in the dashboard (7 Oct 2026).
 
 ## Next, in order
 
 ### 1. 0.6.0: referrals and account security
 
-- **State:** on `dev` under _Unreleased_ in `CHANGELOG.md`; not tagged.
+- **State:** released and packaged on 7 October 2026: tag `v0.6.0`, release
+  PR [SHINO-01/rolestash-extension#17](https://github.com/SHINO-01/rolestash-extension/pull/17)
+  merged, GitHub Release built. The **Release** run
+  [37586728791](https://github.com/SHINO-01/rolestash-extension/actions/runs/37586728791)
+  is **waiting at the Chrome Web Store approval** on purpose.
 - **Contains:** "Invite friends" in Account (referral link, Copy, Share, New
   link, counts); discount codes; a dated complimentary grant shows its end
   date; the phone web board QR code in Account → Sync; an optional password,
   sign out everywhere and two-step sign-in (ADR-0036).
-- **Already live without it:** referral links, codes at checkout, the web
-  board's Account section, and the dashboard (all deployed 7 Oct 2026). Until
-  this ships, extension users find their link on the web board.
-- **Ship it:** after 0.5.0 is approved: `npm run release -- minor` on `dev`
-  (fix the date to Sydney's), push, then the release-repo PR (no permission or
-  listing change expected; check `store/listing.md` mentions referrals if you
-  want them in the description).
+- **Ship it, after 0.5.0 is approved:** approve that run's `chrome-web-store`
+  deployment (or run **Release** again if it has expired; approvals time out
+  after 30 days). Then, in the dashboard:
+  - **Privacy tab → Authentication information:** paste the new text from
+    `store/listing.md`. It now covers the optional password (a salted hash at
+    Supabase Auth) and the two-step secret key.
+  - **Description:** paste it again (the QR code and sign-in options lines).
 
 ## Adding to the backlog
 

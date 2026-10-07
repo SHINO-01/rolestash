@@ -7,10 +7,17 @@ into the roadmap or changelog. Last reviewed 7 October 2026.
 ## Owner
 
 - [ ] **v0.5.0 is in Chrome Web Store review** (submitted 7 October; 0.4.7
-      is live). Now: upload the five screenshots from the release repo's
-      `store/screenshots/` and paste the changed Free line from
-      `store/listing.md` into the dashboard. After approval, ship 0.6.0 from
-      [release-backlog.md](release-backlog.md).
+      is live; screenshots and the Free line are in the dashboard).
+- [ ] **When 0.5.0 is approved, submit 0.6.0:** approve the waiting
+      **Release** run's Chrome Web Store step, then paste the new
+      Authentication information (Privacy tab) and the description from
+      `store/listing.md` ([release-backlog.md](release-backlog.md)).
+- [ ] **Problem reports:** check the dashboard's _Problem reports_ page
+      now and then (new ones also show under _Needs attention_ and are
+      emailed to support). Close the test report #1 sent on 7 October.
+- [ ] **Leaked password protection** (Supabase → Authentication → Passwords,
+      HaveIBeenPwned check), if the plan offers it. The database advisor
+      flags it now that passwords are optional (ADR-0036).
 - [ ] **Gmail (ADR-0032):** Google Cloud is done (Gmail API, the
       `gmail.readonly` scope, both redirect URIs, checked working on 6
       October). Waiting on Google's restricted-scope verification; until then
