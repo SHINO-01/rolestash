@@ -9,6 +9,7 @@ import {
   grantsPage,
   overviewPage,
   referralsPage,
+  reportsPage,
   type PageContext,
   type Rendered,
 } from './pages';
@@ -39,6 +40,7 @@ const HTML_TYPE = { 'Content-Type': 'text/html; charset=utf-8' };
 
 const PAGES: Record<string, PageId> = {
   '/': 'overview',
+  '/reports': 'reports',
   '/grants': 'grants',
   '/discounts': 'discounts',
   '/referrals': 'referrals',
@@ -88,6 +90,8 @@ async function renderPage(id: PageId, ctx: PageContext, url: URL): Promise<Rende
   switch (id) {
     case 'overview':
       return overviewPage(ctx);
+    case 'reports':
+      return reportsPage(ctx, url.searchParams.get('status') ?? 'open');
     case 'grants':
       return grantsPage(ctx, url.searchParams.get('all') === '1');
     case 'discounts':
@@ -222,6 +226,7 @@ async function handleAction(request: Request, s: Session): Promise<Response> {
         400,
       );
     }
+    if (action.instant) return applyAction(request, s, name, action, parsed);
     return previewPage(s, name, action, parsed);
   }
 
@@ -237,6 +242,17 @@ async function handleAction(request: Request, s: Session): Promise<Response> {
   const typed = action.typed?.(args);
   if (typed && text(form, '_typed').trim().toLowerCase() !== typed.toLowerCase())
     return previewPage(s, name, action, args, `Type ${typed} exactly to confirm.`);
+  return applyAction(request, s, name, action, args);
+}
+
+/** Does the change, then goes back to the action's page with a signed notice. */
+async function applyAction(
+  request: Request,
+  s: Session,
+  name: string,
+  action: Action,
+  args: Args,
+): Promise<Response> {
   let result: string;
   try {
     result = await action.apply({ env: s.env, deps: s.deps, actor: s.email }, args);
@@ -245,7 +261,7 @@ async function handleAction(request: Request, s: Session): Promise<Response> {
   }
   const notice = result.slice(0, 300);
   const sig = await signForm(s.secret, s.email, s.deps.now, { notice });
-  const to = new URL(action.page, request.url);
+  const to = new URL(action.back?.(args) ?? action.page, request.url);
   to.searchParams.set('notice', notice);
   to.searchParams.set('n', sig);
   return new Response(null, {

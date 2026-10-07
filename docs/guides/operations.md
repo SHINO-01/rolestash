@@ -5,6 +5,14 @@ The owner's console ([ADR-0026](../adr/0026-operations-dashboard.md),
 attention across Paddle, Resend, Search Console, Cloudflare, GitHub and the
 database, and the pages that run the programmes:
 
+- **Problem reports:** everything sent from _Report a problem_ (ADR-0024),
+  newest first: the message, the reply address, the version, browser, plan
+  and where it was sent from. Filter by open (new and seen), status or all;
+  **Reply by email** opens your mail app addressed to the reporter; mark
+  reports seen, fixed or closed, or reopen them (one click, logged). New
+  reports show in the side bar and under _Needs attention_. Each report is
+  also emailed to support@rolestash.com when it arrives.
+
 - **Grants:** give complimentary Pro (indefinite or until a date) to any
   email, even before they sign up; revoke it. Same rules as
   `scripts/grants.ts` (ADR-0035).
@@ -16,8 +24,8 @@ database, and the pages that run the programmes:
   void abuse, and run the daily step now.
 - **Activity:** every change, who made it, and the result.
 
-Every change is two steps: a preview that states the exact effect, then a
-confirm (grants and revokes also ask you to type the email). Changes are
+Every change is two steps (except a report's status, which is one click and
+easily undone): a preview that states the exact effect, then a confirm (grants and revokes also ask you to type the email). Changes are
 accepted only from the dashboard's own pages, signed for you, for an hour.
 
 - **Code:** `infra/ops-worker/` (a Cloudflare Worker, `rolestash-ops`), tests

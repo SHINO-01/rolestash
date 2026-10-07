@@ -3,14 +3,16 @@ import type { Panel } from './panels';
 
 /**
  * The dashboard's layout and shared pieces (ADR-0026, ADR-0037): server-
- * rendered HTML, one stylesheet, no scripts. Pages: Overview, Grants,
- * Discounts, Referrals, Emails, Activity.
+ * rendered HTML, one stylesheet, no scripts. Pages: Overview, Problem
+ * reports, Grants, Discounts, Referrals, Emails, Activity.
  */
 
-export type PageId = 'overview' | 'grants' | 'discounts' | 'referrals' | 'emails' | 'activity';
+export type PageId =
+  'overview' | 'reports' | 'grants' | 'discounts' | 'referrals' | 'emails' | 'activity';
 
 export const NAV: { id: PageId; href: string; label: string }[] = [
   { id: 'overview', href: '/', label: 'Overview' },
+  { id: 'reports', href: '/reports', label: 'Problem reports' },
   { id: 'grants', href: '/grants', label: 'Grants' },
   { id: 'discounts', href: '/discounts', label: 'Discount codes' },
   { id: 'referrals', href: '/referrals', label: 'Referrals' },
@@ -67,6 +69,7 @@ fieldset label{flex-direction:row;align-items:center;gap:6px;color:var(--ink);fo
 .error{padding:12px 14px;border-radius:10px;background:var(--bad-soft);color:var(--bad);font-weight:500}
 .confirm{max-width:640px}.confirm ul{margin:8px 0 0;padding-left:18px}.confirm li{margin:4px 0}
 .setup{font-size:13px;color:var(--muted)}code{font:12.5px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--sunk);padding:1px 5px;border-radius:5px}
+blockquote.report{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}.report-meta{display:flex;gap:6px 14px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:10px}.report-meta span{overflow-wrap:anywhere}.report-actions{margin-top:12px}.tabs{display:flex;gap:6px;flex-wrap:wrap}.tabs a{padding:5px 12px;border-radius:999px;border:1px solid var(--line-2);color:var(--muted);text-decoration:none;font-weight:500;font-size:13px}.tabs a[aria-current=page]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 details summary{cursor:pointer;color:var(--muted);font-weight:500}.narrow{width:7em}
 .gate{min-height:100vh;display:grid;place-items:center;padding:24px 16px}.gate-card{width:100%;max-width:460px;padding:28px}.gate-card .brand{padding:0 0 20px}.gate-card h1{margin:0 0 8px;font-size:22px;letter-spacing:-.01em}.gate-steps{margin:18px 0 22px;padding-left:20px;display:grid;gap:6px}
 @media (max-width:860px){.shell{grid-template-columns:1fr}.side{position:static;height:auto;flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line);padding:10px 12px;gap:4px}.brand{padding:4px 8px 4px 4px}.side .who{display:none}.side a{white-space:nowrap}main{padding:22px 16px 56px}.two{grid-template-columns:1fr}}`;
@@ -74,6 +77,8 @@ details summary{cursor:pointer;color:var(--muted);font-weight:500}.narrow{width:
 export interface NavCounts {
   grants?: number;
   referrals?: number;
+  /** New problem reports, not yet looked at. */
+  reports?: number;
 }
 
 export function page(input: {
@@ -89,8 +94,11 @@ export function page(input: {
         ? input.counts?.grants
         : id === 'referrals'
           ? input.counts?.referrals
-          : undefined;
-    return n ? html`<span class="count${id === 'referrals' ? ' hot' : ''}">${n}</span>` : null;
+          : id === 'reports'
+            ? input.counts?.reports
+            : undefined;
+    const hot = id === 'referrals' || id === 'reports';
+    return n ? html`<span class="count${hot ? ' hot' : ''}">${n}</span>` : null;
   };
   return html`<!doctype html>
     <html lang="en">

@@ -235,6 +235,8 @@ describe('pages', () => {
         referrals_pending: 3,
         referrals_awaiting_paddle: 1,
         referrals_rewarded_30d: 4,
+        reports_new: 2,
+        reports_open: 3,
         last_change: null,
       }),
       [`GET ${PADDLE}/subscriptions`]: { data: [], meta: { pagination: { estimated_total: 4 } } },
@@ -246,6 +248,7 @@ describe('pages', () => {
     expect(page).toContain('1 subscription past due');
     expect(page).toContain('Revenue (Paddle): Couldn&#39;t load (HTTP 404 discounts).');
     expect(page).toContain('1 referral month waiting for Paddle');
+    expect(page).toContain('2 new problem reports');
     expect(page).toMatch(/<div class="n">4<\/div>\s*<div class="l">Paying<\/div>/);
     expect(page).toContain('Not set up: ');
     expect(page).toContain('aria-current="page"');
@@ -593,6 +596,96 @@ describe('account help (ADR-0036)', () => {
       { fetch },
     );
     expect(await res.text()).toContain('have two-step sign-in on');
+  });
+});
+
+describe('problem reports (ADR-0024)', () => {
+  const REPORTS = {
+    by_status: { new: 1, seen: 1, fixed: 3 },
+    reports: [
+      {
+        id: 12,
+        created_at: '2026-10-06T22:00:00Z',
+        message: 'Board is blank <script>x</script>\nafter update',
+        contact_email: 'sam@example.com',
+        context: { version: '0.5.0', browser: 'Chrome 141', where: 'board' },
+        status: 'new',
+        signed_in: true,
+        plan_status: 'trialing',
+      },
+      {
+        id: 11,
+        created_at: '2026-10-05T22:00:00Z',
+        message: 'Autofill missed a field',
+        contact_email: null,
+        context: {},
+        status: 'seen',
+        signed_in: false,
+        plan_status: null,
+      },
+    ],
+  };
+
+  it('lists open reports with their details, a reply link and status buttons', async () => {
+    const { fetch, calls } = backend({ 'admin reports.list': adminAnswer(REPORTS) });
+    const res = await get('/reports', { fetch });
+    expect(res.status).toBe(200);
+    const page = await res.text();
+    expect(page).toContain('Board is blank &lt;script&gt;x&lt;/script&gt;');
+    expect(page).toContain('Version: 0.5.0');
+    expect(page).toContain('account (trialing)');
+    expect(page).toContain(
+      'href="mailto:sam%40example.com?subject=Re%3A%20your%20Rolestash%20report%20%2312"',
+    );
+    expect(page).toContain('No email given');
+    expect(page).toMatch(/Mark seen/);
+    expect(page).toMatch(/>Open 2</);
+    expect(page).toMatch(/class="count hot">1</);
+    expect(
+      calls.find((c) => (c.body as { p_action?: string }).p_action === 'reports.list')?.body,
+    ).toMatchObject({ p_args: { status: 'open' } });
+  });
+
+  it('filters by status, and ignores an unknown filter', async () => {
+    const { fetch, calls } = backend({ 'admin reports.list': adminAnswer(REPORTS) });
+    await get('/reports?status=fixed', { fetch });
+    await get('/reports?status=bogus', { fetch });
+    const asked = calls
+      .filter((c) => (c.body as { p_action?: string }).p_action === 'reports.list')
+      .map((c) => (c.body as { p_args: { status: string } }).p_args.status);
+    expect(asked).toEqual(['fixed', 'open']);
+  });
+
+  it('changes a status in one step and goes back to the same list', async () => {
+    const { fetch, calls } = backend({
+      'admin reports.set_status': adminAnswer({ outcome: 'fixed' }),
+    });
+    const res = await post(
+      { ...(await firstStep('report.status')), id: '12', status: 'fixed', view: 'new' },
+      { fetch },
+    );
+    expect(res.status).toBe(303);
+    expect(res.headers.get('Location')).toMatch(/^\/reports\?status=new&notice=Report\+%2312/);
+    expect(
+      calls.find((c) => (c.body as { p_action?: string }).p_action === 'reports.set_status')?.body,
+    ).toMatchObject({ p_args: { id: 12, status: 'fixed' } });
+  });
+
+  it('refuses an unknown status, and still needs a signed form', async () => {
+    const { fetch, calls } = backend({});
+    const bad = await post(
+      { ...(await firstStep('report.status')), id: '12', status: 'deleted' },
+      { fetch },
+    );
+    expect(bad.status).toBe(400);
+    const unsigned = await post(
+      { _action: 'report.status', _step: 'preview', _token: 'x', id: '12', status: 'fixed' },
+      { fetch },
+    );
+    expect(unsigned.status).toBe(403);
+    expect(
+      calls.some((c) => (c.body as { p_action?: string }).p_action === 'reports.set_status'),
+    ).toBe(false);
   });
 });
 

@@ -1,4 +1,5 @@
-import { REASONS } from './actions';
+import type { REPORT_STATUSES } from './actions';
+import { REASONS, REPORT_VIEWS } from './actions';
 import { adminConfigured, opsAdmin } from './admin';
 import { senderConfigured } from './emails';
 import { html, type Html } from './html';
@@ -44,7 +45,7 @@ export interface PageContext {
 export interface Rendered {
   title: string;
   body: Html;
-  counts?: { grants?: number; referrals?: number };
+  counts?: { grants?: number; referrals?: number; reports?: number };
 }
 
 const safeMessage = (error: unknown): string =>
@@ -90,6 +91,8 @@ interface Overview {
   referrals_pending?: number;
   referrals_awaiting_paddle?: number;
   referrals_rewarded_30d?: number;
+  reports_new?: number;
+  reports_open?: number;
   last_change?: { at: string; actor: string; action: string; outcome: string } | null;
 }
 
@@ -128,6 +131,11 @@ export async function overviewPage(ctx: PageContext): Promise<Rendered> {
     attention.push({
       text: `${plural(programmes.referrals_awaiting_paddle, 'referral month')} waiting for Paddle`,
       href: '/referrals',
+    });
+  if (programmes?.reports_new)
+    attention.push({
+      text: plural(programmes.reports_new, 'new problem report'),
+      href: '/reports',
     });
   if (programmes?.grants_ending_14d)
     attention.push({
@@ -177,8 +185,145 @@ export async function overviewPage(ctx: PageContext): Promise<Rendered> {
   return {
     title: 'Overview',
     body,
-    counts: { grants: programmes?.grants_active, referrals: programmes?.referrals_awaiting_paddle },
+    counts: {
+      grants: programmes?.grants_active,
+      referrals: programmes?.referrals_awaiting_paddle,
+      reports: programmes?.reports_new,
+    },
   };
+}
+
+// ── Problem reports ─────────────────────────────────────────────────────────
+
+interface ReportRow {
+  id: number;
+  created_at: string;
+  message: string;
+  contact_email: string | null;
+  context: Record<string, string>;
+  status: (typeof REPORT_STATUSES)[number];
+  signed_in: boolean;
+  plan_status: string | null;
+}
+
+interface ReportList {
+  by_status: Record<string, number>;
+  reports: ReportRow[];
+}
+
+const VIEW_LABEL: Record<(typeof REPORT_VIEWS)[number], string> = {
+  open: 'Open',
+  new: 'New',
+  seen: 'Seen',
+  fixed: 'Fixed',
+  closed: 'Closed',
+  all: 'All',
+};
+
+const CONTEXT_LABEL: [key: string, label: string][] = [
+  ['version', 'Version'],
+  ['browser', 'Browser'],
+  ['platform', 'System'],
+  ['plan', 'Plan'],
+  ['where', 'From'],
+  ['page', 'Page'],
+];
+
+/** What people sent from "Report a problem" (ADR-0024), to read, reply to and close. */
+export async function reportsPage(ctx: PageContext, wanted: string): Promise<Rendered> {
+  if (!adminConfigured(ctx.env))
+    return { title: 'Problem reports', body: html`${pageHead('Problem reports')}${ADMIN_SETUP}` };
+  const view = (REPORT_VIEWS as readonly string[]).includes(wanted)
+    ? (wanted as (typeof REPORT_VIEWS)[number])
+    : 'open';
+  const [list, statusToken] = await Promise.all([
+    attempt(() =>
+      opsAdmin<ReportList>(ctx.env, ctx.deps, ctx.email, 'reports.list', { status: view }),
+    ),
+    ctx.token('report.status'),
+  ]);
+  const counts = 'ok' in list ? list.ok.by_status : {};
+  const count = (v: (typeof REPORT_VIEWS)[number]) =>
+    v === 'all'
+      ? Object.values(counts).reduce((a, b) => a + b, 0)
+      : v === 'open'
+        ? (counts.new ?? 0) + (counts.seen ?? 0)
+        : (counts[v] ?? 0);
+  const next: Record<ReportRow['status'], ReportRow['status'][]> = {
+    new: ['seen', 'fixed', 'closed'],
+    seen: ['fixed', 'closed'],
+    fixed: ['new', 'closed'],
+    closed: ['new'],
+  };
+  const reply = (r: ReportRow) =>
+    r.contact_email
+      ? `mailto:${encodeURIComponent(r.contact_email)}?subject=${encodeURIComponent(`Re: your Rolestash report #${String(r.id)}`)}`
+      : null;
+
+  const card = (r: ReportRow) => {
+    const mail = reply(r);
+    return html`<section class="card">
+      <h2>
+        <span
+          >#${r.id}
+          <span
+            class="pill ${r.status === 'new' ? 'pending' : r.status === 'fixed' ? 'ok' : r.status === 'closed' ? 'void' : ''}"
+            >${r.status}</span
+          ></span
+        ><span class="faint">${dayTime(r.created_at)}</span>
+      </h2>
+      <blockquote class="report">${r.message}</blockquote>
+      <div class="report-meta">
+        <span
+          >${r.contact_email ? html`Reply to <b>${r.contact_email}</b>` : 'No email given'}${r.signed_in ? html` · account${r.plan_status ? ` (${r.plan_status})` : ''}` : ' · signed out'}</span
+        >
+        ${CONTEXT_LABEL.filter(([k]) => r.context[k]).map(
+          ([k, label]) => html`<span>${label}: ${r.context[k]}</span>`,
+        )}
+      </div>
+      <div class="actions report-actions">
+        ${mail ? html`<a class="btn small primary" href="${mail}">Reply by email</a>` : null}
+        ${next[r.status].map((to) =>
+          actionForm(
+            'report.status',
+            statusToken,
+            html`<input type="hidden" name="id" value="${r.id}" /><input
+                type="hidden"
+                name="status"
+                value="${to}"
+              /><input type="hidden" name="view" value="${view}" /><button class="btn small">
+                ${to === 'new' ? 'Reopen' : `Mark ${to}`}
+              </button>`,
+          ),
+        )}
+      </div>
+    </section>`;
+  };
+
+  const body = html`${pageHead('Problem reports', 'What people send from “Report a problem” in the extension (board, popup and widget). Each one is also emailed to support. Reports are deleted after 12 months.')}
+    <div class="stack">
+      ${notice(ctx.notice)}
+      <nav class="tabs" aria-label="Filter">
+        ${REPORT_VIEWS.map(
+          (v) =>
+            html`<a
+              href="${v === 'open' ? '/reports' : `/reports?status=${v}`}"
+              ${v === view ? html` aria-current="page"` : null}
+              >${VIEW_LABEL[v]} ${count(v)}</a
+            >`,
+        )}
+      </nav>
+      ${
+        'error' in list
+          ? errorBox(list.error)
+          : list.ok.reports.length
+            ? list.ok.reports.map(card)
+            : html`<p class="allclear">
+                ${view === 'open' ? 'No open reports.' : `No ${VIEW_LABEL[view].toLowerCase()} reports.`}
+              </p>`
+      }
+    </div>`;
+  return { title: 'Problem reports', body, counts: { reports: counts.new } };
 }
 
 // ── Grants ──────────────────────────────────────────────────────────────────

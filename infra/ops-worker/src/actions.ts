@@ -56,8 +56,17 @@ export interface Action {
   preview(ctx: ActionContext, args: Args): Promise<Preview>;
   /** Returns the notice shown afterwards. */
   apply(ctx: ActionContext, args: Args): Promise<string>;
+  /**
+   * Small, easily undone changes (a report's status) skip the confirmation
+   * page; the signed first-step token, Access and the Origin check still apply.
+   */
+  instant?: boolean;
+  /** Where to go afterwards, when not `page` (keeps a list's filter). */
+  back?: (args: Args) => string;
 }
 
+export const REPORT_STATUSES = ['new', 'seen', 'fixed', 'closed'] as const;
+export const REPORT_VIEWS = ['open', 'all', ...REPORT_STATUSES] as const;
 export const REASONS = ['tester', 'team', 'partner', 'support', 'owner', 'referral'] as const;
 const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -164,6 +173,43 @@ const describeAccount = (email: string, p: GrantPreview): Html =>
     : html`<b>${email}</b> has no account yet.`;
 
 export const ACTIONS: Record<string, Action> = {
+  'report.status': {
+    page: '/reports',
+    title: 'Change a report',
+    instant: true,
+    back: (a) => (a.view && a.view !== 'open' ? `/reports?status=${a.view}` : '/reports'),
+    parse(form) {
+      const id = field(form, 'id');
+      const status = field(form, 'status');
+      const view = field(form, 'view');
+      if (!/^\d{1,12}$/.test(id)) return 'Unknown report.';
+      if (!(REPORT_STATUSES as readonly string[]).includes(status)) return 'Unknown status.';
+      return {
+        id,
+        status,
+        view: (REPORT_VIEWS as readonly string[]).includes(view) ? view : 'open',
+      };
+    },
+    preview(_ctx, a) {
+      return Promise.resolve({
+        lines: [html`Marks report #${a.id} as ${a.status}.`],
+        button: 'Save',
+      });
+    },
+    async apply(ctx, a) {
+      const r = await opsAdmin<{ outcome: string }>(
+        ctx.env,
+        ctx.deps,
+        ctx.actor,
+        'reports.set_status',
+        { id: Number(a.id), status: a.status },
+      );
+      return r.outcome === 'none'
+        ? `Report #${a.id ?? ''} was already ${a.status ?? ''}.`
+        : `Report #${a.id ?? ''} is now ${a.status ?? ''}.`;
+    },
+  },
+
   'grant.give': {
     page: '/grants',
     title: 'Give Pro',

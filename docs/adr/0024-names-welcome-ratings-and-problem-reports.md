@@ -104,6 +104,10 @@ field in favour of a guess from the address ("sakifhussain33" →
   - reports older than 12 months are deleted whenever a new one arrives;
   - deleting an account sets `user_id` to null and keeps the report.
 - **Builds without a backend** fall back to a prefilled `mailto:`.
+- **Reading them (7 October 2026):** the operations dashboard's _Problem
+  reports_ page lists them through `ops_admin` (`reports.list`) and moves
+  them through new → seen → fixed / closed (`reports.set_status`, logged in
+  `private.ops_audit`). The table still has no API access for anyone else.
 
 ## Consequences
 
