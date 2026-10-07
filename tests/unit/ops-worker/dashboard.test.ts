@@ -240,7 +240,7 @@ describe('pages', () => {
     expect(res.status).toBe(200);
     // Paddle's panel can't load here, so past due comes from the account counts, once.
     expect(page).toContain('1 subscription past due');
-    expect(page).toContain('Revenue (Paddle): Couldn&#39;t load (HTTP 404).');
+    expect(page).toContain('Revenue (Paddle): Couldn&#39;t load (HTTP 404 discounts).');
     expect(page).toContain('1 referral month waiting for Paddle');
     expect(page).toMatch(/<div class="n">4<\/div>\s*<div class="l">Paying<\/div>/);
     expect(page).toContain('Not set up: ');
@@ -322,6 +322,19 @@ describe('pages', () => {
     expect(discounts).toContain('4 / 200');
     expect(discounts).toContain('Ended or archived (1)');
     expect(discounts).not.toContain('dsc_01bbbbbbbbbb'); // the referral discount lives on Referrals
+  });
+
+  it("says why Paddle refused the key, in Paddle's own words", async () => {
+    const forbidden = new Response(
+      JSON.stringify({
+        error: { code: 'forbidden', detail: 'You aren’t permitted to perform this request.' },
+      }),
+      { status: 403 },
+    );
+    const { fetch } = backend({ [`GET ${PADDLE}/discounts`]: forbidden });
+    const page = await (await get('/discounts', { fetch })).text();
+    expect(page).toContain('Paddle refused the API key (forbidden: You aren’t permitted');
+    expect(page).toContain('live key');
   });
 
   it('asks for setup instead of failing when secrets are missing', async () => {

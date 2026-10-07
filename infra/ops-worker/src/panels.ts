@@ -5,6 +5,8 @@
  * the rest of the page still renders. Errors never include secrets.
  */
 
+import { paddleError } from './paddle-admin';
+
 export interface Env {
   ACCESS_TEAM_DOMAIN?: string;
   ACCESS_AUD?: string;
@@ -82,11 +84,12 @@ export async function safely(title: string, run: () => Promise<Panel>): Promise<
   } catch (error) {
     const message = error instanceof Error ? error.message : 'failed';
     // Only our own short messages ("HTTP 401", "timeout") reach the page.
-    const safe = /^HTTP \d{3}$/.test(message)
-      ? message
-      : error instanceof Error && error.name === 'TimeoutError'
-        ? 'timed out'
-        : 'failed';
+    const safe =
+      /^HTTP \d{3}$/.test(message) || error instanceof PanelError
+        ? message
+        : error instanceof Error && error.name === 'TimeoutError'
+          ? 'timed out'
+          : 'failed';
     return { title, status: 'error', rows: [], note: `Couldn't load (${safe}).` };
   }
 }
@@ -107,6 +110,11 @@ export function formatTotals(totals: Map<string, number>): string {
     .join(' · ');
 }
 
+/** A panel failure whose message is ours and safe to show as is. */
+export class PanelError extends Error {
+  override name = 'PanelError';
+}
+
 // ---------------------------------------------------------------- Paddle
 
 export async function paddlePanel(env: Env, deps: Deps): Promise<Panel> {
@@ -115,6 +123,15 @@ export async function paddlePanel(env: Env, deps: Deps): Promise<Panel> {
   if (!key) return notConfigured(title, 'PADDLE_API_KEY (read-only)');
   const base = 'https://api.paddle.com';
   const auth = { headers: { Authorization: `Bearer ${key}` } };
+  // Which request Paddle refused, and Paddle's own code, so a key missing a
+  // scope says which ("HTTP 403 discounts: forbidden").
+  const get = async (url: string) => {
+    const response = await deps.fetch(url, { ...auth, signal: AbortSignal.timeout(TIMEOUT_MS) });
+    if (response.ok) return (await response.json()) as Record<string, unknown>;
+    const what = /\/([a-z]+)\?/.exec(url)?.[1] ?? 'request';
+    const { code } = paddleError(await response.text());
+    throw new PanelError(`HTTP ${String(response.status)} ${what}${code ? `: ${code}` : ''}`);
+  };
   const total = (body: Record<string, unknown>) =>
     String(
       (body.meta as { pagination?: { estimated_total?: number } } | undefined)?.pagination
@@ -125,21 +142,15 @@ export async function paddlePanel(env: Env, deps: Deps): Promise<Panel> {
   const since30 = isoDaysAgo(deps.now, 30);
   const [active, pastDue, cancelling, discounts, transactions, refunds, chargebacks] =
     await Promise.all([
-      getJson(deps, `${base}/subscriptions?status=active&per_page=1`, auth),
-      getJson(deps, `${base}/subscriptions?status=past_due&per_page=1`, auth),
-      getJson(
-        deps,
-        `${base}/subscriptions?status=active&scheduled_change_action=cancel&per_page=1`,
-        auth,
-      ),
-      getJson(deps, `${base}/discounts?status=active&per_page=1`, auth),
-      getJson(
-        deps,
+      get(`${base}/subscriptions?status=active&per_page=1`),
+      get(`${base}/subscriptions?status=past_due&per_page=1`),
+      get(`${base}/subscriptions?status=active&scheduled_change_action=cancel&per_page=1`),
+      get(`${base}/discounts?status=active&per_page=1`),
+      get(
         `${base}/transactions?status=completed&billed_at[GTE]=${encodeURIComponent(since7)}&per_page=200`,
-        auth,
       ),
-      getJson(deps, `${base}/adjustments?action=refund&per_page=200`, auth),
-      getJson(deps, `${base}/adjustments?action=chargeback&per_page=200`, auth),
+      get(`${base}/adjustments?action=refund&per_page=200`),
+      get(`${base}/adjustments?action=chargeback&per_page=200`),
     ]);
 
   const sales = new Map<string, number>();

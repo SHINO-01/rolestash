@@ -23,6 +23,19 @@ export const PAYMENTS_LABEL: Record<Payments, string> = {
   all: 'every payment',
 };
 
+/** Paddle's error code and message from an error body, if it is one. */
+export function paddleError(text: string): { code: string; detail: string } {
+  try {
+    const error = (JSON.parse(text) as { error?: { detail?: unknown; code?: unknown } }).error;
+    return {
+      code: typeof error?.code === 'string' ? error.code.slice(0, 60) : '',
+      detail: typeof error?.detail === 'string' ? error.detail : '',
+    };
+  } catch {
+    return { code: '', detail: '' };
+  }
+}
+
 export class PaddleAdminError extends Error {
   override name = 'PaddleAdminError';
 }
@@ -67,16 +80,12 @@ async function call<T>(
   });
   const text = await response.text();
   if (!response.ok) {
-    let detail = '';
-    try {
-      const error = (JSON.parse(text) as { error?: { detail?: string; code?: string } }).error;
-      detail = error?.detail ?? error?.code ?? '';
-    } catch {
-      // not JSON
-    }
+    const { code, detail } = paddleError(text);
     if (response.status === 403)
       throw new PaddleAdminError(
-        'Paddle refused: the API key needs Discounts and Subscriptions write access.',
+        code
+          ? `Paddle refused the API key (${code}${detail ? `: ${detail.slice(0, 160)}` : ''}). Check it's a live key with the scopes in docs/guides/operations.md.`
+          : 'Paddle refused the request before reading the key (not a Paddle error). Try again later.',
       );
     throw new PaddleAdminError(
       `Paddle said ${String(response.status)}${detail ? `: ${detail.slice(0, 200)}` : ''}.`,
