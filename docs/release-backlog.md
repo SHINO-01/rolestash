@@ -20,11 +20,16 @@ two-step sign-in, sign out everywhere).
 
 ## Next, in order
 
-### 1. 0.6.2: guided tour, Help guides, a clearer first run
+### 1. 0.6.3: guided tour, Help guides, a clearer first run
 
-- **State:** released on `dev` on 9 October 2026 (`npm run release -- 0.6.2`).
-  CI tags `v0.6.2`; the release repo's **Release** run builds it and waits at
-  the Chrome Web Store approval.
+- **State:** 0.6.2 was released on `dev` on 9 October 2026 but its Release
+  run (37822060441) was **cancelled** at the store approval: it still showed
+  "Connect Gmail", which Google hasn't verified yet. 0.6.3 is 0.6.2 plus
+  hiding Gmail in release builds until Google approves
+  ([gmail-verification.md](guides/gmail-verification.md)). CI tags
+  `v0.6.3`; the release repo's **Release** run builds it and waits at the
+  Chrome Web Store approval. (The `v0.6.2` GitHub Release in the release repo
+  was never submitted.)
 - **Contains (ADR-0039):**
   - the guided tour on first run, with a practice card;
   - a corner card offering it to people who already have jobs;
@@ -33,10 +38,12 @@ two-step sign-in, sign out everywhere).
   - the widget's first-run quick guide, and a "doesn't look like a job
     posting" state instead of a job form on other pages;
   - the board opening after install, a clearer empty board, a grouped board
-    menu, and higher-contrast small text.
+    menu, and higher-contrast small text;
+  - "Connect Gmail" hidden until Google verifies the scope (forwarding
+    still works).
 - **Ship it (owner):** approve the run's `chrome-web-store` deployment
   (Actions → the run → Review deployments).
-- **When it's live:** set "Current version" on `/known-issues/` to 0.6.2 and
+- **When it's live:** set "Current version" on `/known-issues/` to 0.6.3 and
   the date. The store screenshots still show the old header (no Help button);
   retake them when convenient (`npm run store:screenshots`).
 

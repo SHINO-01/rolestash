@@ -1,7 +1,14 @@
 import { analyzeEmail } from '@/email';
 import { EmailUpdateService } from '@/services/email-update-service';
 import { JobService } from '@/services/job-service';
-import { gmailAuthUrl, gmailQuery, GMAIL_SCOPE, readGmailRedirect } from '@/services/mail/gmail';
+import {
+  gmailAuthUrl,
+  gmailOffered,
+  gmailQuery,
+  GMAIL_SCOPE,
+  GMAIL_VERIFIED,
+  readGmailRedirect,
+} from '@/services/mail/gmail';
 import { outlookToken, readOutlookRedirect } from '@/services/mail/outlook';
 import { MailAuthError } from '@/services/mail/types';
 import { MailboxService } from '@/services/mailbox-service';
@@ -119,6 +126,18 @@ const dinner = {
   subject: 'Dinner Sunday?',
   at: '2026-10-05T11:00:00Z',
 };
+
+describe('offering Gmail before Google verifies the scope', () => {
+  it('release builds hide it until GMAIL_VERIFIED; other builds keep it for testing', () => {
+    // Flip GMAIL_VERIFIED only once Google approves (docs/guides/gmail-verification.md).
+    expect(GMAIL_VERIFIED).toBe(false);
+    expect(gmailOffered('production')).toBe(false);
+    expect(gmailOffered('staging')).toBe(true);
+    expect(gmailOffered('development')).toBe(true);
+    expect(gmailOffered('e2e')).toBe(true);
+    expect(gmailOffered('production', true)).toBe(true);
+  });
+});
 
 describe('Gmail sign-in (ADR-0032)', () => {
   it('asks for read-only Gmail, and renews silently for the same account', () => {

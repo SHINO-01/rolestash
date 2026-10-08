@@ -1,4 +1,5 @@
 import { browser } from 'wxt/browser';
+import { gmailOffered } from '@/services/mail/gmail';
 import type { BackendConfig } from '@/services/backend/supabase-client';
 import type { WebAuthFlow } from '@/services/ports';
 
@@ -48,8 +49,11 @@ export class ChromeWebAuthFlow implements WebAuthFlow {
 
 /** OAuth client IDs for connecting a mailbox (ADR-0032); each provider is off without its own. */
 export function mailConfig(): { googleClientId?: string; microsoftClientId?: string } {
-  // Its own switch, though usually the same client as sign-in: set once Google approves Gmail access.
-  const google = import.meta.env.WXT_GMAIL_CLIENT_ID;
+  // Its own switch, though usually the same client as sign-in. Release builds
+  // also wait for Google's verification of the Gmail scope (GMAIL_VERIFIED).
+  const google = gmailOffered(import.meta.env.MODE)
+    ? import.meta.env.WXT_GMAIL_CLIENT_ID
+    : undefined;
   const microsoft = import.meta.env.WXT_MICROSOFT_CLIENT_ID;
   return {
     ...(google ? { googleClientId: google } : {}),

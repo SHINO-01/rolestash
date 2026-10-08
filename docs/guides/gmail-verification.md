@@ -8,10 +8,12 @@ policy). That covers sign-in only. `gmail.readonly` is a **restricted**
 scope and needs its own review: Google Cloud → Google Auth Platform → **Data
 access** → the restricted scopes section → fill in the form below.
 
-Until Google approves, keep `WXT_GMAIL_CLIENT_ID` **unset** in the
-rolestash-extension repository, so release builds hide "Connect Gmail".
-Google's form warns against shipping unverified scopes to production users.
-Staging builds have it, for testing and the video.
+Until Google approves, release builds don't offer Gmail: `GMAIL_VERIFIED`
+in `src/services/mail/gmail.ts` is `false`, which hides "Connect Gmail" in
+production builds even though `WXT_GMAIL_CLIENT_ID` is set in the
+rolestash-extension repository (Google's form warns against showing
+unverified scopes to production users). Staging, development and E2E builds
+keep it, for testing and the video.
 
 ## The form
 
@@ -106,7 +108,9 @@ Upload to YouTube as **Unlisted** and paste the link in the form.
 
 ## After Google approves
 
-1. Set `WXT_GMAIL_CLIENT_ID` in rolestash-extension (Settings → Secrets and
-   variables → Actions → Variables) to the client ID in `docs/todo.md`.
-2. Release the next version; "Connect Gmail" appears for everyone.
-3. Untick this in `docs/todo.md`.
+1. Set `GMAIL_VERIFIED = true` in `src/services/mail/gmail.ts` (and the
+   test that pins it in `tests/unit/services/mailbox.test.ts`).
+2. Check `WXT_GMAIL_CLIENT_ID` is still set in rolestash-extension (Settings
+   → Secrets and variables → Actions → Variables).
+3. Release; "Connect Gmail" appears for everyone.
+4. Untick this in `docs/todo.md`.

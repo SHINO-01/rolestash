@@ -6,7 +6,7 @@ into the roadmap or changelog. Last reviewed 9 October 2026.
 
 ## Owner
 
-- [ ] **0.6.2 (guided tour, Help guides):** approve the waiting Release
+- [ ] **0.6.3 (guided tour, Help guides):** approve the waiting Release
       run's Chrome Web Store step; 0.6.1 is live
       ([release-backlog.md](release-backlog.md)).
 - [ ] **After 0.6.1 is live: make `rolestash` private** (owner, 8 October;
@@ -32,11 +32,9 @@ into the roadmap or changelog. Last reviewed 9 October 2026.
       its own restricted-scope review: submit it with the answers and video
       in [gmail-verification.md](guides/gmail-verification.md). Until then
       only listed test users can connect, behind Google's "unverified app"
-      screen. **The variable below is already set (6 October), so the live
-      store builds show "Connect Gmail" to everyone: delete it and release
-      to hide it until approval.** After approval, set the
-      rolestash-extension repository variable `WXT_GMAIL_CLIENT_ID` =
-      `681262997873-d085gg7n42vd4b5tl8q68ri8jm8i0vhe.apps.googleusercontent.com`
+      screen. Release builds hide "Connect Gmail" until then
+      (`GMAIL_VERIFIED = false`, from 0.6.3); `WXT_GMAIL_CLIENT_ID` stays set
+      in rolestash-extension. After approval, flip `GMAIL_VERIFIED`
       and release. The homepage FAQ already says users can connect Gmail or
       Outlook; if verification drags on, ask us to soften it.
 - [ ] **Outlook (ADR-0032):** register the Microsoft Entra app (public
@@ -117,14 +115,14 @@ into the roadmap or changelog. Last reviewed 9 October 2026.
       `supabase/templates/password-changed.html` into _Password changed_
       (subject "Your Rolestash password was changed").
 - [ ] **Store releases:** one at a time, in the order of
-      [release-backlog.md](release-backlog.md) (0.6.2 next).
+      [release-backlog.md](release-backlog.md) (0.6.3 next).
 - [ ] **Go public** when the beta is clean: Distribution → Visibility →
       Public ([launch.md](guides/launch.md#7-going-public)).
 
 ## Ours
 
-- [ ] **When 0.6.2 is approved:** set "Current version" on `/known-issues/`
-      to 0.6.2 and the date.
+- [ ] **When 0.6.3 is approved:** set "Current version" on `/known-issues/`
+      to 0.6.3 and the date.
 - [ ] **By 4 January 2027:** re-check the facts on `/compare/teal/` and
       `/compare/huntr/` and update their "Facts checked" date
       ([website.md](guides/website.md#search)).

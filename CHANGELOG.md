@@ -6,6 +6,13 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- **Connecting Gmail is paused** until Google finishes reviewing Rolestash's
+  read-only Gmail access, so nobody sees Google's "unverified app" warning.
+  Forwarding your job emails still updates your board.
+- Everything listed under 0.6.2 below, which wasn't published on its own.
+
 ## [0.6.2] — 2026-10-09
 
 ### Added

@@ -9,6 +9,20 @@ import { getJson, MailAuthError, type MailClient } from './types';
  */
 
 export const GMAIL_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
+
+/**
+ * Google's restricted-scope verification of `gmail.readonly`
+ * (docs/guides/gmail-verification.md). Until it's approved, Google shows
+ * every user an "unverified app" warning, so release builds don't offer
+ * Gmail at all; staging, development and E2E builds keep it for testing and
+ * the review video. Set to true, and release, once Google approves.
+ */
+export const GMAIL_VERIFIED = false;
+
+/** Whether this build offers "Connect Gmail" (given a client ID). */
+export function gmailOffered(mode: string, verified: boolean = GMAIL_VERIFIED): boolean {
+  return verified || mode !== 'production';
+}
 const AUTHORIZE = 'https://accounts.google.com/o/oauth2/v2/auth';
 const API = 'https://gmail.googleapis.com/gmail/v1/users/me';
 

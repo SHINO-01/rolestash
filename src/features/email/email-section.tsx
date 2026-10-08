@@ -73,7 +73,7 @@ export function EmailSection({ plan, trial = false }: { plan: Plan; trial?: bool
       <section className="border-line rounded-xl border p-4">
         <Header pitch />
         <p className="text-muted mt-2 text-sm">
-          With Pro, connect Gmail or Outlook (or forward your job emails) and your board updates
+          With Pro, {mailboxPitch(services.mailbox?.providers() ?? [])} and your board updates
           itself: applications received, assessments, interviews (with Join and map links),
           rejections and offers. Plain rules, no AI.
         </p>
@@ -263,4 +263,12 @@ function Header({ status, pitch = false }: { status?: string | undefined; pitch?
       {status ? <span className="text-muted text-xs">{status}</span> : null}
     </div>
   );
+}
+
+/** What Pro offers for email here: only the mailboxes this build can connect, and forwarding. */
+function mailboxPitch(providers: readonly string[]): string {
+  const names = providers.map((p) => (p === 'gmail' ? 'Gmail' : 'Outlook'));
+  return names.length
+    ? `connect ${names.join(' or ')} (or forward your job emails)`
+    : 'forward your job emails';
 }
