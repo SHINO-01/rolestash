@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.6.3] — 2026-10-09
+
 ### Changed
 
 - **Connecting Gmail is paused** until Google finishes reviewing Rolestash's
