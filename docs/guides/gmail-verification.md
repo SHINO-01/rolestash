@@ -72,8 +72,9 @@ not to put unverified scopes in front of production users.
      Labs, an invitation to a video interview on a date next week at 10:00 am
      with a time zone, and a meeting link, e.g.
      `https://meet.google.com/abc-defg-hij`.
-6. Screen recorder at full screen; make sure the browser's address bar is
-   visible (reviewers look for the client ID in the consent screen's URL).
+6. A screen recorder for the **whole screen**, not just a tab, because the
+   Google sign-in opens in its own window. On Ubuntu: Ctrl+Shift+Alt+R starts
+   and stops GNOME's recorder (saved to `~/Videos/Screencasts`), or use OBS.
 
 **Shots**
 
@@ -82,13 +83,21 @@ not to put unverified scopes in front of production users.
    lets it update cards when employers reply."
 2. **(20 s) Where to connect.** Account → Email updates → **Connect Gmail**.
    Pause on the text explaining mail is read on this computer.
-3. **(40 s) The OAuth grant, slowly.** The Google window opens.
-   - **Zoom into the address bar.** Show `client_id=681262997873-…` and
-     `scope=…gmail.readonly`.
+3. **(40 s) The OAuth grant, slowly.** The Google window opens. It's
+   Chrome's sign-in window for extensions, which has **no address bar**, so
+   show the client ID first, in a normal tab, before clicking Connect: paste
+   this URL (the staging build's own redirect; nothing completes from this
+   tab) and zoom into the address bar, where `client_id=681262997873-…` and
+   `scope=…gmail.readonly` show:
+
+   `https://accounts.google.com/o/oauth2/v2/auth?client_id=681262997873-d085gg7n42vd4b5tl8q68ri8jm8i0vhe.apps.googleusercontent.com&response_type=token&redirect_uri=https%3A%2F%2Fbdajnmkjahhphadpdbbkibljcheonejp.chromiumapp.org%2F&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.readonly&state=demo-video&include_granted_scopes=true&prompt=consent+select_account`
+
+   Then, in the real Connect Gmail window:
    - Pick the account. The **unverified app** screen appears: Google
      expects it in the video. Click Advanced → Go to Rolestash.
    - The consent screen shows the app name **Rolestash** and "View your email
      messages and settings". Hold on it, then Continue.
+
 4. **(15 s) Connected.** Back on the board: "Gmail connected ·
    address@gmail.com".
 5. **(40 s) What the scope does.** Click **Check now**. The Northwind Labs
