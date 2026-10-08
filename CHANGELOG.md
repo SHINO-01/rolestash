@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.6.4] — 2026-10-09
+
 ### Changed
 
 - **Gmail stays paused for everyone except Google's reviewers,** who can
