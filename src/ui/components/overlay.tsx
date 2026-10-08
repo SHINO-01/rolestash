@@ -100,9 +100,16 @@ export function Drawer({
       ref={ref}
       aria-label={label}
       onClick={(e) => e.target === ref.current && onClose()}
-      className="bg-surface text-ink shadow-pop open:animate-slide-in border-line fixed inset-y-0 right-0 left-auto m-0 h-dvh max-h-dvh w-[min(560px,100vw)] max-w-none border-l p-0 backdrop:bg-zinc-950/25"
+      className="text-ink fixed inset-y-0 right-0 left-auto m-0 h-dvh max-h-dvh w-[min(560px,100vw)] max-w-none overflow-visible border-0 bg-transparent p-0 backdrop:bg-zinc-950/25"
     >
-      {open ? children : null}
+      {/* The panel slides in, not the <dialog>: a moving dialog would become
+          the frame for anything fixed inside it (the guided tour's overlay),
+          shifting and clipping it for the length of the slide. */}
+      {open ? (
+        <div className="bg-surface shadow-pop animate-slide-in border-line h-full overflow-hidden border-l">
+          {children}
+        </div>
+      ) : null}
     </dialog>
   );
 }

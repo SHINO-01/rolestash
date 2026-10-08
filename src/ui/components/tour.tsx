@@ -1,7 +1,7 @@
 import clsx from 'clsx';
 import { ArrowLeft, ArrowRight, Check, MousePointerClick, X } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { createPortal } from 'react-dom';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { createPortal, flushSync } from 'react-dom';
 import { placeCard, type Box, type TourPlacement } from '../tour-placement';
 import { Button, IconButton } from './button';
 
@@ -190,10 +190,10 @@ export function Tour({
         aria-modal={interactive ? 'false' : 'true'}
         aria-labelledby={`tour-title-${step.id}`}
         aria-describedby={`tour-body-${step.id}`}
-        className="bg-surface text-ink border-line shadow-pop pointer-events-auto absolute top-0 left-0 overflow-hidden rounded-2xl border opacity-0 transition-opacity duration-150"
+        className="bg-surface text-ink border-line shadow-pop pointer-events-auto absolute top-0 left-0 overflow-hidden rounded-2xl border opacity-0"
         style={{ width: `min(${String(CARD_WIDTH)}px, calc(100vw - ${String(MARGIN * 2)}px))` }}
       >
-        <div key={step.id} className="tour-step-in flex flex-col">
+        <div className="flex flex-col">
           <div className="flex items-center gap-3 px-4 pt-3.5">
             <div
               className="bg-surface-3 h-1 flex-1 overflow-hidden rounded-full"
@@ -352,6 +352,28 @@ interface Frame {
 function useTourMotion(step: TourStepView | undefined, refs: TourParts): HTMLElement | null {
   const [host, setHost] = useState<HTMLElement | null>(null);
   const live = useRef(step);
+  // A drawer opening (showModal) puts the page under its backdrop at once:
+  // move into it in the same frame, before the browser paints, not a frame later.
+  useEffect(() => {
+    const follow = () => {
+      const top = topModal();
+      flushSync(() => setHost((h) => (h === top ? h : top)));
+    };
+    const observer = new MutationObserver(follow);
+    observer.observe(document.body, { subtree: true, attributes: true, attributeFilter: ['open'] });
+    follow();
+    return () => observer.disconnect();
+  }, []);
+  /** The last frame drawn, so new DOM nodes (a new host) start where the old ones were. */
+  const drawn = useRef<Frame | undefined>(undefined);
+  // Moving into a drawer rebuilds the layer: draw it in place before the
+  // browser paints, or the card would flash in from nothing.
+  useLayoutEffect(() => {
+    const frame = drawn.current;
+    if (!frame) return;
+    const layer = refs.layer.current?.getBoundingClientRect();
+    paint(frame, refs, { top: layer?.top ?? 0, left: layer?.left ?? 0 });
+  }, [host, refs]);
   useEffect(() => {
     live.current = step;
   }, [step]);
@@ -379,11 +401,6 @@ function useTourMotion(step: TourStepView | undefined, refs: TourParts): HTMLEle
 
     const tick = (now: number) => {
       const current = live.current;
-      const modals = [...document.querySelectorAll<HTMLDialogElement>('dialog[open]')].filter((d) =>
-        d.matches(':modal'),
-      );
-      const top = modals.at(-1) ?? null;
-      setHost((h) => (h === top ? h : top));
 
       if (current && current.id !== stepId) {
         stepId = current.id;
@@ -424,6 +441,7 @@ function useTourMotion(step: TourStepView | undefined, refs: TourParts): HTMLEle
       // drawer, not the window: measure where the layer really is, and offset.
       const layer = refs.layer.current?.getBoundingClientRect();
       paint(shown, refs, { top: layer?.top ?? 0, left: layer?.left ?? 0 });
+      drawn.current = shown;
       frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
@@ -431,6 +449,14 @@ function useTourMotion(step: TourStepView | undefined, refs: TourParts): HTMLEle
   }, [refs]);
 
   return host;
+}
+
+/** The topmost modal dialog: everything outside it is inert, so the tour renders inside. */
+function topModal(): HTMLElement | null {
+  const modals = [...document.querySelectorAll<HTMLDialogElement>('dialog[open]')].filter((d) =>
+    d.matches(':modal'),
+  );
+  return modals.at(-1) ?? null;
 }
 
 function mix(a: Frame, b: Frame, e: number): Frame {

@@ -70,6 +70,11 @@ anywhere; the board must work offline.
   is a ring scaling and fading (transform and opacity); nothing animates the
   dimming shadow, which would repaint the whole window each frame. Reduced
   motion jumps instead of gliding.
+- **Drawers slide their panel, not the `<dialog>`:** a transformed dialog
+  becomes the frame for anything fixed inside it, so the tour's layer would
+  shift and clip while it slid. The tour follows a dialog opening or
+  closing at once (a MutationObserver and `flushSync`), redrawing in place
+  before the browser paints.
 - **E2E builds don't open either guide by themselves**, because they would
   cover what tests click. A test opts in with `tour:e2eAutoStart`. The fixtures
   mark both as seen, so smoke and perf runs against the release build aren't

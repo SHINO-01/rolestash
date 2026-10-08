@@ -179,15 +179,6 @@ body {
     transform: scale(1.06);
   }
 }
-/* A new step's words settle in while the card glides: never a blank card. */
-.tour-step-in {
-  animation: tour-step-in 180ms ease-out;
-}
-@keyframes tour-step-in {
-  from {
-    opacity: 0.35;
-  }
-}
 /* The widget's first-run guide: a ring on what it's talking about. */
 .guide-target {
   border-radius: 0.75rem;

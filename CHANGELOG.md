@@ -6,6 +6,11 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- **The guided tour stays put when a job's details open or close:** it no
+  longer blinks or jumps while the panel slides.
+
 ## [0.6.5] — 2026-10-09
 
 ### Fixed
