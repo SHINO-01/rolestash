@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.6.2] — 2026-10-09
+
 ### Added
 
 - **A guided tour:** the first time you open Rolestash, a short tour shows
