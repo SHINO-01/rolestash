@@ -166,7 +166,10 @@ export function Kanban({
       onDragEnd={(e) => void onDragEnd(e)}
       onDragCancel={reset}
     >
-      <div className="flex h-full scrollbar-thin items-start gap-3 overflow-x-auto px-6 pb-6">
+      <div
+        className="flex h-full scrollbar-thin items-start gap-3 overflow-x-auto px-6 pb-6"
+        data-tour="board"
+      >
         {laneStages(settings.stages).map((stage) => (
           <BoardColumn
             key={stage.id}

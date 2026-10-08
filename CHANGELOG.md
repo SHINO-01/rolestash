@@ -6,6 +6,28 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **A guided tour:** the first time you open Rolestash, a short tour shows
+  every part of the board: saving jobs from job sites, the lanes, a card's
+  details, adding jobs yourself, search, Insights, History, selecting several
+  jobs, the menu, autofill and accounts. You try dragging and opening a
+  practice card, which is removed when the tour ends. Skip or close it at any
+  step (Esc works too), and replay it from the new **Help (?)** menu.
+- **A quick guide in the widget:** the first time the Save job panel shows a
+  job, three short tips explain what it found, the lanes and saving.
+- **Help (?) menu:** take the tour again, see every keyboard shortcut, open
+  the help pages or report a problem.
+- **The board opens after you install Rolestash,** so the tour can start.
+
+### Changed
+
+- **A clearer empty board:** three steps to your first saved job, with
+  buttons for the tour and for adding a job yourself.
+- **The board menu is grouped** into Board, Export and backup, Save job button
+  and Theme. Keyboard shortcuts and Report a problem moved to Help.
+- **The widget's board button now says "Board".**
+
 ## [0.6.1] — 2026-10-07
 
 ### Changed

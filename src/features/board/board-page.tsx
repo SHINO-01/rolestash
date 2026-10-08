@@ -1,6 +1,5 @@
 import {
   BarChart3,
-  Bug,
   Download,
   Globe,
   BellRing,
@@ -10,7 +9,6 @@ import {
   FileSpreadsheet,
   ListChecks,
   Inbox,
-  Keyboard,
   Monitor,
   Moon,
   MoreHorizontal,
@@ -22,7 +20,6 @@ import {
   Wand2,
 } from 'lucide-react';
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
-import { browser } from 'wxt/browser';
 import { boardEvents, calendarFile } from '@/domain/calendar';
 import { boardView, historyStart } from '@/domain/history';
 import type { Theme } from '@/domain/settings';
@@ -32,6 +29,8 @@ import { requestNotifications } from '@/platform/notifications';
 import { setAllSites } from '@/platform/all-sites';
 import { WIDGET_ALL_SITES_KEY } from '@/features/capture/widget-protocol';
 import { PinTip } from './pin-tip';
+import { HelpMenu } from './help-menu';
+import { useBoardTour } from '@/features/tour/board-tour';
 import { Greeting } from '@/features/feedback/greeting';
 import { RatingPrompt } from '@/features/feedback/rating-prompt';
 import { ReportDialog } from '@/features/feedback/report-dialog';
@@ -149,9 +148,23 @@ export function BoardPage() {
     history.replaceState(null, '', id ? `#job=${encodeURIComponent(id)}` : location.pathname);
   }, []);
 
-  // Keyboard: "/" focuses search, "n" adds a job.
+  // The guided tour (ADR-0039): opens by itself the first time, and from Help.
+  const tour = useBoardTour({
+    jobs,
+    loaded,
+    stages: settings.stages,
+    accounts: account !== undefined,
+    autofill: services.autofill !== undefined,
+    openJobId,
+    openCard,
+    openProfile: useCallback(() => setDialog('profile'), []),
+  });
+  const tourActive = tour.active;
+
+  // Keyboard: "/" focuses search, "n" adds a job (not while the tour is showing).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (tourActive) return;
       const target = e.target as HTMLElement;
       if (target.closest('input, textarea, select, [contenteditable], dialog[open]')) return;
       if (e.key === '/') {
@@ -164,7 +177,7 @@ export function BoardPage() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, []);
+  }, [tourActive]);
 
   function download(contents: string, type: string, name: string, extension: string) {
     const a = document.createElement('a');
@@ -283,7 +296,7 @@ export function BoardPage() {
     <div className="flex h-dvh flex-col">
       <header className="flex h-16 shrink-0 items-center gap-4 px-6">
         <Logo />
-        <div className="relative ml-4 w-full max-w-sm min-w-48">
+        <div className="relative ml-4 w-full max-w-sm min-w-48" data-tour="search">
           <Search className="text-subtle pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" />
           <input
             ref={searchRef}
@@ -318,6 +331,7 @@ export function BoardPage() {
               onClick={() => setDialog('insights')}
               aria-label="Insights"
               title="Insights"
+              data-tour="insights"
             >
               <span className="hidden lg:inline">Insights</span>
             </Button>
@@ -327,6 +341,7 @@ export function BoardPage() {
               onClick={() => setDialog('history')}
               aria-label="History"
               title="History"
+              data-tour="history"
             >
               <span className="hidden lg:inline">History</span>
             </Button>
@@ -336,6 +351,8 @@ export function BoardPage() {
           variant="primary"
           icon={<Plus className="size-4" />}
           onClick={() => setDialog('add')}
+          title="Add a job yourself (N)"
+          data-tour="add-job"
         >
           Add job
         </Button>
@@ -356,107 +373,108 @@ export function BoardPage() {
             }
             onClick={() => setDialog('account')}
             aria-label="Account"
+            title={
+              accountState?.signedIn
+                ? 'Account, plan and sync'
+                : 'Sign in (optional): sync, email updates and Pro'
+            }
+            data-tour="account"
           >
             {accountState?.signedIn ? planChip(accountState.plan).label : 'Sign in'}
           </Button>
         ) : null}
-        <Menu
-          trigger={(props) => (
-            <IconButton label="Board menu" {...props}>
-              <MoreHorizontal className="size-5" />
-            </IconButton>
-          )}
-          items={[
-            {
-              label: 'Edit columns…',
-              icon: <Columns3 className="size-4" />,
-              onSelect: () => setDialog('columns'),
-            },
-            ...(services.autofill
-              ? [
-                  {
-                    label: 'Autofill profile…',
-                    icon: <Wand2 className="size-4" />,
-                    onSelect: () => setDialog('profile'),
-                  },
-                ]
-              : []),
-            'separator',
-            {
-              label: 'Export to CSV',
-              icon: <FileSpreadsheet className="size-4" />,
-              onSelect: () => void exportCsv(),
-            },
-            ...(recordsAllowed
-              ? [
-                  {
-                    label: 'Export calendar (.ics)',
-                    icon: <CalendarDays className="size-4" />,
-                    onSelect: exportCalendar,
-                  },
-                ]
-              : []),
-            {
-              label: 'Export backup',
-              icon: <Download className="size-4" />,
-              onSelect: () => void exportBackup(),
-            },
-            {
-              label: 'Import backup…',
-              icon: <Upload className="size-4" />,
-              onSelect: () => setDialog('import'),
-            },
-            ...(plan !== 'free'
-              ? [
-                  'separator' as const,
-                  {
-                    label: 'Closing-date alerts',
-                    icon: <BellRing className="size-4" />,
-                    checked: settings.closingAlerts !== false,
-                    onSelect: () => void toggleClosingAlerts(),
-                  },
-                ]
-              : []),
-            'separator',
-            {
-              label: 'Show the button on all sites',
-              icon: <Globe className="size-4" />,
-              checked: allSites,
-              onSelect: () => void toggleAllSites(),
-            },
-            'separator',
-            { heading: 'Theme' },
-            {
-              label: 'System',
-              icon: <Monitor className="size-4" />,
-              checked: settings.theme === 'system',
-              onSelect: () => setTheme('system'),
-            },
-            {
-              label: 'Light',
-              icon: <Sun className="size-4" />,
-              checked: settings.theme === 'light',
-              onSelect: () => setTheme('light'),
-            },
-            {
-              label: 'Dark',
-              icon: <Moon className="size-4" />,
-              checked: settings.theme === 'dark',
-              onSelect: () => setTheme('dark'),
-            },
-            'separator',
-            {
-              label: 'Keyboard shortcuts',
-              icon: <Keyboard className="size-4" />,
-              onSelect: () => void browser.tabs.create({ url: 'chrome://extensions/shortcuts' }),
-            },
-            {
-              label: 'Report a problem…',
-              icon: <Bug className="size-4" />,
-              onSelect: () => setDialog('report'),
-            },
-          ]}
-        />
+        <HelpMenu onTour={tour.start} onReport={() => setDialog('report')} />
+        <span data-tour="board-menu">
+          <Menu
+            trigger={(props) => (
+              <IconButton label="Board menu" {...props}>
+                <MoreHorizontal className="size-5" />
+              </IconButton>
+            )}
+            items={[
+              { heading: 'Board' },
+              {
+                label: 'Edit columns…',
+                icon: <Columns3 className="size-4" />,
+                onSelect: () => setDialog('columns'),
+              },
+              ...(services.autofill
+                ? [
+                    {
+                      label: 'Autofill profile…',
+                      icon: <Wand2 className="size-4" />,
+                      onSelect: () => setDialog('profile'),
+                    },
+                  ]
+                : []),
+              'separator',
+              { heading: 'Export and backup' },
+              {
+                label: 'Export to CSV',
+                icon: <FileSpreadsheet className="size-4" />,
+                onSelect: () => void exportCsv(),
+              },
+              ...(recordsAllowed
+                ? [
+                    {
+                      label: 'Export calendar (.ics)',
+                      icon: <CalendarDays className="size-4" />,
+                      onSelect: exportCalendar,
+                    },
+                  ]
+                : []),
+              {
+                label: 'Export backup',
+                icon: <Download className="size-4" />,
+                onSelect: () => void exportBackup(),
+              },
+              {
+                label: 'Import backup…',
+                icon: <Upload className="size-4" />,
+                onSelect: () => setDialog('import'),
+              },
+              ...(plan !== 'free'
+                ? [
+                    'separator' as const,
+                    {
+                      label: 'Closing-date alerts',
+                      icon: <BellRing className="size-4" />,
+                      checked: settings.closingAlerts !== false,
+                      onSelect: () => void toggleClosingAlerts(),
+                    },
+                  ]
+                : []),
+              'separator',
+              { heading: 'Save job button' },
+              {
+                label: 'Show on every site',
+                icon: <Globe className="size-4" />,
+                checked: allSites,
+                onSelect: () => void toggleAllSites(),
+              },
+              'separator',
+              { heading: 'Theme' },
+              {
+                label: 'System',
+                icon: <Monitor className="size-4" />,
+                checked: settings.theme === 'system',
+                onSelect: () => setTheme('system'),
+              },
+              {
+                label: 'Light',
+                icon: <Sun className="size-4" />,
+                checked: settings.theme === 'light',
+                onSelect: () => setTheme('light'),
+              },
+              {
+                label: 'Dark',
+                icon: <Moon className="size-4" />,
+                checked: settings.theme === 'dark',
+                onSelect: () => setTheme('dark'),
+              },
+            ]}
+          />
+        </span>
       </header>
 
       {/* The greeting has a row of its own, so it's never cut short (it was squeezed into the header). */}
@@ -477,6 +495,7 @@ export function BoardPage() {
             icon={<ListChecks className="size-4" />}
             aria-pressed={selecting}
             title={selecting ? 'Done selecting' : 'Select several jobs'}
+            data-tour="select"
             onClick={() => {
               if (!bulkAllowed) {
                 pitchSelect();
@@ -509,7 +528,7 @@ export function BoardPage() {
             <Spinner /> Loading your board…
           </div>
         ) : jobs.length === 0 ? (
-          <EmptyBoard onAdd={() => setDialog('add')} />
+          <EmptyBoard onAdd={() => setDialog('add')} onTour={tour.start} />
         ) : (
           <SelectionContext.Provider value={selection}>
             <Kanban
@@ -567,7 +586,8 @@ export function BoardPage() {
         where="board"
         {...(accountState?.email ? { email: accountState.email } : {})}
       />
-      <RatingPrompt feedback={services.feedback} />
+      {tourActive ? null : <RatingPrompt feedback={services.feedback} />}
+      {tour.element}
       <UnsortedDialog open={dialog === 'unsorted'} onClose={() => setDialog(null)} />
       <InsightsDialog
         open={dialog === 'insights'}

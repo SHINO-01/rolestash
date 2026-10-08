@@ -31,6 +31,9 @@ All data lives in `chrome.storage.local` (with `unlimitedStorage`). A backup
 | `widget:hiddenSites`      | Hostnames where "Hide on this site" was chosen (ADR-0030)                                                                    |
 | `tips:pinDismissed`       | The board's "Pin Rolestash" tip was dismissed                                                                                |
 | `tips:autofillDismissed`  | The widget's "Set up autofill" tip was dismissed                                                                             |
+| `tour:board`              | How the board's guided tour ended (finished or skipped, and when); while absent it opens by itself (ADR-0039)                |
+| `tour:practiceJob`        | Id of the tour's practice card while a tour runs, so a closed tab can't leave it on the board (ADR-0039)                     |
+| `tour:widget`             | The widget's first-run guide was finished or closed (ADR-0039)                                                               |
 
 Access only through `JobRepository` / `SettingsRepository`
 (`src/storage/`), which depend on the `KeyValueStore` port.

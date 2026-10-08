@@ -33,6 +33,7 @@ export function SortableJobCard({ job, onOpen }: { job: Job; onOpen: (id: string
       style={style}
       {...attributes}
       {...listeners}
+      data-job-id={job.id}
       onClick={(e) => activate(e.metaKey || e.ctrlKey)}
       onKeyDown={(e) => {
         listeners?.onKeyDown?.(e);

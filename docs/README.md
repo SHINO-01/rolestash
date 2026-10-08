@@ -49,6 +49,7 @@ Start with **Architecture → Overview**, then go by task.
 | [0036](adr/0036-passwords-and-account-security.md)            | No required password; optional password with reset and optional two-step sign-in |
 | [0037](adr/0037-dashboard-actions.md)                         | Run grants, discount codes and referrals from the operations dashboard           |
 | [0038](adr/0038-customer-emails-from-the-dashboard.md)        | Customer emails and targeted discounts from the operations dashboard             |
+| [0039](adr/0039-guided-tour.md)                               | A guided tour on first run, with a practice card; a short guide in the widget    |
 
 New decision? Copy [the template](adr/0000-template.md).
 

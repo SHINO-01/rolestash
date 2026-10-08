@@ -133,7 +133,9 @@ test.describe('board @smoke', () => {
   test('shows the empty state on first run', async ({ context, extensionId }) => {
     const page = await context.newPage();
     await page.goto(`chrome-extension://${extensionId}/board.html`);
-    await expect(page.getByRole('heading', { name: 'Your job board is empty' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Your board is ready for its first job' }),
+    ).toBeVisible();
   });
 
   test('renders seeded jobs in their columns and opens the drawer', async ({

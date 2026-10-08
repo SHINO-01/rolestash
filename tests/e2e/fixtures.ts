@@ -71,6 +71,12 @@ export const test = base.extend<Fixtures & Options>({
         { timeout: 10_000 },
       )
       .toBe('object');
+    // The guided tour and the widget's guide open by themselves in release
+    // builds (ADR-0039) and would cover what tests click. Tour tests clear these.
+    await worker.evaluate(() => {
+      const seen = { status: 'skipped', at: new Date().toISOString() };
+      return chrome.storage.local.set({ 'tour:board': seen, 'tour:widget': seen });
+    });
     await use(worker);
   },
   extensionId: async ({ worker }, use) => {

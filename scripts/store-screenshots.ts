@@ -292,8 +292,15 @@ async function main() {
 
     const first = await open(board);
     await seed(first);
-    // The "pin Rolestash" tip is for real installs, not the store.
-    await first.evaluate(() => chrome.storage.local.set({ 'tips:pinDismissed': true }));
+    // The "pin Rolestash" tip and the first-run guides are for real installs, not the store.
+    await first.evaluate(() => {
+      const seen = { status: 'skipped', at: new Date().toISOString() };
+      return chrome.storage.local.set({
+        'tips:pinDismissed': true,
+        'tour:board': seen,
+        'tour:widget': seen,
+      });
+    });
     // A fictional autofill profile, so the widget offers "Fill this application".
     await first.evaluate(() =>
       chrome.storage.local.set({

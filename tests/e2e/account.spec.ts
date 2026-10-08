@@ -831,7 +831,7 @@ test.describe('accounts', () => {
   }) => {
     const page = await context.newPage();
     await page.goto(`chrome-extension://${extensionId}/board.html`);
-    await page.getByRole('button', { name: 'Board menu' }).click();
+    await page.getByRole('button', { name: 'Help', exact: true }).click();
     await page.getByRole('menuitem', { name: 'Report a problem…' }).click();
     const dialog = page.getByRole('dialog', { name: 'Report a problem' });
     await expect(dialog.getByText('We’ll also send')).toBeVisible();

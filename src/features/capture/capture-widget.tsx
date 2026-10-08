@@ -1,3 +1,4 @@
+import clsx from 'clsx';
 import {
   AlertCircle,
   Bug,
@@ -28,6 +29,7 @@ import { draftFromResult, emptyDraft, postingFromDraft, type Draft } from './cap
 import { CaptureForm } from './capture-form';
 import { DebugPanel } from './debug-panel';
 import { closeWidget, reportHeight } from './widget-frame';
+import { useWidgetGuide, type GuideTarget } from './widget-guide';
 import { showsLauncher, WIDGET_ALL_SITES_KEY, WIDGET_HIDDEN_SITES_KEY } from './widget-protocol';
 import { setAllSites } from '@/platform/all-sites';
 import { AutofillBar } from '@/features/autofill/autofill-bar';
@@ -218,14 +220,22 @@ export function CaptureWidget() {
   }
 
   const result = state.kind === 'ready' ? state.result : undefined;
+  // First run: a short guide to the quick-save view (ADR-0039).
+  const guide = useWidgetGuide(result !== undefined && !editing);
   return (
     <div ref={root} className="bg-canvas text-ink flex w-full flex-col">
       <header className="bg-surface border-line sticky top-0 z-10 flex h-11 shrink-0 items-center gap-1 border-b pr-1.5 pl-3">
         <Logo />
         <div className="flex-1" />
-        <IconButton size="sm" label="Open board" onClick={() => void openBoard()}>
-          <LayoutGrid className="size-4" />
-        </IconButton>
+        <Button
+          size="sm"
+          variant="ghost"
+          icon={<LayoutGrid className="size-4" />}
+          title="Open your board"
+          onClick={() => void openBoard()}
+        >
+          Board
+        </Button>
         <Menu
           trigger={(props) => (
             <IconButton size="sm" label="More" {...props}>
@@ -284,6 +294,8 @@ export function CaptureWidget() {
           />
         ) : null}
 
+        {guide.element}
+
         {result ? (
           editing ? (
             <CaptureForm
@@ -301,6 +313,7 @@ export function CaptureWidget() {
               defaultStageId={settings.defaultStageId}
               saving={saving}
               error={error}
+              guide={guide.target}
               onEdit={() => setEditing(true)}
               onSave={(stageId) =>
                 void save({ ...draftFromResult(result, settings.defaultStageId), stageId })
@@ -367,6 +380,7 @@ function QuickSave({
   defaultStageId,
   saving,
   error,
+  guide,
   onEdit,
   onSave,
 }: {
@@ -375,6 +389,8 @@ function QuickSave({
   defaultStageId: StageId;
   saving: boolean;
   error: string | undefined;
+  /** The first-run guide's current target, ringed. */
+  guide: GuideTarget | undefined;
   onEdit: () => void;
   onSave: (stageId: StageId) => void;
 }) {
@@ -390,7 +406,7 @@ function QuickSave({
   ].filter(Boolean);
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-start gap-3">
+      <div className={clsx('flex items-start gap-3', guide === 'found' && 'guide-target')}>
         <CompanyAvatar company={f.company ?? result.site.name} />
         <div className="min-w-0 flex-1">
           <p className="line-clamp-2 text-[15px] leading-snug font-semibold">{f.title}</p>
@@ -414,8 +430,10 @@ function QuickSave({
           </button>
         </p>
       ) : null}
-      <StagePicker stages={stages} value={stageId} onChange={setStageId} />
-      <div className="flex gap-2">
+      <div className={clsx(guide === 'lane' && 'guide-target')}>
+        <StagePicker stages={stages} value={stageId} onChange={setStageId} />
+      </div>
+      <div className={clsx('flex gap-2', guide === 'save' && 'guide-target')}>
         <Button
           className="flex-1 justify-center"
           variant="primary"

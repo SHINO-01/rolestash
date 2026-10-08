@@ -179,7 +179,7 @@ function DrawerBody({
   const stage = stages.find((s) => s.id === job.stageId);
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col" data-tour="drawer">
       {/* Header */}
       <div className="border-line border-b px-6 pt-5 pb-4">
         <div className="flex items-start gap-3.5">

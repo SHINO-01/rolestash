@@ -134,8 +134,43 @@ body {
   }
 }
 
+/* The product tour's spotlight: a ring around the target, the rest dimmed. */
+.tour-spotlight {
+  box-shadow:
+    0 0 0 2px var(--jt-accent),
+    0 0 0 9999px rgb(9 9 11 / 0.55);
+  transition:
+    top 240ms cubic-bezier(0.23, 1, 0.32, 1),
+    left 240ms cubic-bezier(0.23, 1, 0.32, 1),
+    width 240ms cubic-bezier(0.23, 1, 0.32, 1),
+    height 240ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+/* "Try it" steps: the ring breathes until the task is done. */
+.tour-pulse {
+  animation: tour-pulse 1.6s ease-in-out infinite;
+}
+@keyframes tour-pulse {
+  50% {
+    box-shadow:
+      0 0 0 5px var(--jt-accent),
+      0 0 0 9999px rgb(9 9 11 / 0.55);
+  }
+}
+/* The widget's first-run guide: a ring on what it's talking about. */
+.guide-target {
+  border-radius: 0.75rem;
+  outline: 2px solid var(--jt-accent);
+  outline-offset: 3px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-rise {
     animation: fade-in 160ms ease-out;
+  }
+  .tour-spotlight {
+    transition: none;
+  }
+  .tour-pulse {
+    animation: none;
   }
 }

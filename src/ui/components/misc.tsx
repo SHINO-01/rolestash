@@ -79,9 +79,14 @@ export function PriorityBadge({ value }: { value: Priority }) {
   );
 }
 
-export function Kbd({ children }: { children: string }) {
+export function Kbd({ children, large = false }: { children: string; large?: boolean }) {
   return (
-    <kbd className="text-subtle bg-surface-2 border-line rounded border px-1 font-sans text-[10px] font-medium">
+    <kbd
+      className={clsx(
+        'text-subtle bg-surface-2 border-line rounded border font-sans font-medium',
+        large ? 'min-w-6 px-1.5 py-0.5 text-center text-xs' : 'px-1 text-[10px]',
+      )}
+    >
       {children}
     </kbd>
   );

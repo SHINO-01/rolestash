@@ -63,6 +63,13 @@ async function main() {
     ],
   });
   try {
+    // The widget's first-run guide is for real installs, not the promo tile.
+    const worker = context.serviceWorkers()[0] ?? (await context.waitForEvent('serviceworker'));
+    await worker.evaluate(() =>
+      chrome.storage.local.set({
+        'tour:widget': { status: 'skipped', at: new Date().toISOString() },
+      }),
+    );
     // 1. The widget on a job page, captured from the production build.
     const page = await context.newPage();
     await page.emulateMedia({ colorScheme: 'light', reducedMotion: 'reduce' });

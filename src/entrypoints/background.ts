@@ -26,6 +26,7 @@ import { WEB_HANDOFF_MESSAGE, type WebHandoffReply } from '@/services/web-handof
  *                                 → read new job mail on this device and update the
  *                                   board (ADR-0032), then sync
  *  - The web board asks to sign in → a single-use token for this account (ADR-0017)
+ *  - First install                → open the board, where the guided tour starts (ADR-0039)
  */
 
 const MENU_TRACK = 'rolestash.track';
@@ -137,8 +138,11 @@ export default defineBackground(() => {
     return true; // responds asynchronously
   });
 
-  browser.runtime.onInstalled.addListener(() => {
+  browser.runtime.onInstalled.addListener((details) => {
     void getServices().ready;
+    // A first install opens the board, where the guided tour starts (ADR-0039).
+    // E2E runs install fresh every time and open the pages they need themselves.
+    if (details.reason === 'install' && import.meta.env.MODE !== 'e2e') void openBoard();
     void ensureReminderAlarm();
     void ensureMailAlarm();
     void syncAllSites().catch(() => undefined);
