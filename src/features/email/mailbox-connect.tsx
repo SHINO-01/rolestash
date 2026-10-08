@@ -5,6 +5,7 @@ import type { MailProvider } from '@/services/mail/types';
 import { Button } from '@/ui/components/button';
 import { useToast } from '@/ui/components/toast';
 import { relativeTime } from '@/ui/format';
+import { useAccount } from '@/ui/hooks/account';
 import { useMailboxState } from '@/ui/hooks/mailbox';
 import { useServices } from '@/ui/hooks/services';
 
@@ -18,11 +19,12 @@ const NAMES: Record<MailProvider, string> = { gmail: 'Gmail', outlook: 'Outlook'
  */
 export function MailboxConnect() {
   const { mailbox, email } = useServices();
+  const { state: account } = useAccount();
   const state = useMailboxState();
   const toast = useToast();
   const [busy, setBusy] = useState<MailProvider | 'check' | 'disconnect' | null>(null);
   if (!mailbox || state === undefined) return null;
-  const providers = mailbox.providers();
+  const providers = mailbox.providers(account?.email);
 
   async function run(key: NonNullable<typeof busy>, task: () => Promise<void>) {
     setBusy(key);

@@ -8,12 +8,29 @@ policy). That covers sign-in only. `gmail.readonly` is a **restricted**
 scope and needs its own review: Google Cloud → Google Auth Platform → **Data
 access** → the restricted scopes section → fill in the form below.
 
-Until Google approves, release builds don't offer Gmail: `GMAIL_VERIFIED`
-in `src/services/mail/gmail.ts` is `false`, which hides "Connect Gmail" in
-production builds even though `WXT_GMAIL_CLIENT_ID` is set in the
-rolestash-extension repository (Google's form warns against showing
-unverified scopes to production users). Staging, development and E2E builds
-keep it, for testing and the video.
+Until Google approves, release builds offer Gmail only to Google's
+reviewers: `GMAIL_VERIFIED` in `src/services/mail/gmail.ts` is `false`, so
+"Connect Gmail" shows only for a Rolestash account in `GMAIL_REVIEWERS`
+(Google's form warns against showing unverified scopes to production
+users). Staging, development and E2E builds show it to everyone, for testing
+and the video. Mailboxes connected before 0.6.3 keep working.
+
+## The reviewer account
+
+- **Email:** `review@rolestash.com`, listed in `GMAIL_REVIEWERS`. Only the
+  email is in the code, never a password: anyone can unpack the extension.
+- **Pro, indefinitely:** a `tester` grant (ADR-0035), which waits until the
+  address first signs in:
+  `npx tsx scripts/grants.ts grant review@rolestash.com --reason tester --apply`.
+- **Sign-in for the reviewer:** sign in once with the emailed code, then add
+  a password in Account → Security (12+ characters, from a password manager)
+  and leave two-step sign-in off. Give Google the email and that password in
+  the form's test-account field, with: install Rolestash from the Chrome Web
+  Store, open the board, Account → Sign in with email and password, then
+  Account → Automatic status updates → Connect Gmail.
+- **After Google approves:** revoke the grant
+  (`scripts/grants.ts revoke review@rolestash.com --apply`) and remove the
+  email from `GMAIL_REVIEWERS`.
 
 ## The form
 

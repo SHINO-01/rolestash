@@ -3,7 +3,7 @@ import type { DomainContext } from '@/domain/job-factory';
 import { likelyJobEmail, type EmailInput } from '@/email/mailbox';
 import type { KeyValueStore } from '@/storage/key-value-store';
 import { MAILBOX_AUTH_KEY, MAILBOX_STATE_KEY } from '@/storage/keys';
-import { GmailClient, gmailAuthUrl, readGmailRedirect } from './mail/gmail';
+import { GmailClient, gmailAuthUrl, gmailOffered, readGmailRedirect } from './mail/gmail';
 import { OutlookClient, outlookAuthUrl, outlookToken, readOutlookRedirect } from './mail/outlook';
 import {
   MAIL_PROVIDERS,
@@ -31,6 +31,8 @@ import type { WebAuthFlow } from './ports';
 export interface MailConfig {
   googleClientId?: string;
   microsoftClientId?: string;
+  /** The build's mode; release builds ("production") gate Gmail (gmailOffered). */
+  mode?: string;
 }
 
 /** How far back a newly connected mailbox is read. */
@@ -87,10 +89,16 @@ export class MailboxService {
     this.clients = { gmail: new GmailClient(fetcher), outlook: new OutlookClient(fetcher) };
   }
 
-  /** The providers this build can connect (each needs its OAuth client ID). */
-  providers(): MailProvider[] {
+  /**
+   * The providers this account can connect here: each needs its OAuth client
+   * ID, and Gmail waits for Google's verification in release builds, except
+   * for reviewers (gmailOffered).
+   */
+  providers(account?: string): MailProvider[] {
     return [
-      ...(this.config.googleClientId ? (['gmail'] as const) : []),
+      ...(this.config.googleClientId && gmailOffered(this.config.mode ?? 'development', account)
+        ? (['gmail'] as const)
+        : []),
       ...(this.config.microsoftClientId ? (['outlook'] as const) : []),
     ];
   }

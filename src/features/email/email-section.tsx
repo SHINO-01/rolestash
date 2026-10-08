@@ -9,6 +9,7 @@ import { useServices } from '@/ui/hooks/services';
 import { relativeTime } from '@/ui/format';
 import { backendErrorMessage } from '@/features/account/plan-copy';
 import { EmailSetupGuide } from './email-setup';
+import { useAccount } from '@/ui/hooks/account';
 import { useMailboxState } from '@/ui/hooks/mailbox';
 import { MailboxConnect } from './mailbox-connect';
 
@@ -29,6 +30,7 @@ export function EmailSection({ plan, trial = false }: { plan: Plan; trial?: bool
   const [confirmRotate, setConfirmRotate] = useState(false);
   const [verification, setVerification] = useState<{ code?: string; url?: string }>();
   const mailboxState = useMailboxState();
+  const { state: account } = useAccount();
 
   const run = useCallback(
     async (key: 'check' | 'rotate' | 'share', task: () => Promise<void>) => {
@@ -73,8 +75,8 @@ export function EmailSection({ plan, trial = false }: { plan: Plan; trial?: bool
       <section className="border-line rounded-xl border p-4">
         <Header pitch />
         <p className="text-muted mt-2 text-sm">
-          With Pro, {mailboxPitch(services.mailbox?.providers() ?? [])} and your board updates
-          itself: applications received, assessments, interviews (with Join and map links),
+          With Pro, {mailboxPitch(services.mailbox?.providers(account?.email) ?? [])} and your board
+          updates itself: applications received, assessments, interviews (with Join and map links),
           rejections and offers. Plain rules, no AI.
         </p>
       </section>

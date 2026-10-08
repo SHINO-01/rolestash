@@ -19,10 +19,25 @@ export const GMAIL_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
  */
 export const GMAIL_VERIFIED = false;
 
-/** Whether this build offers "Connect Gmail" (given a client ID). */
-export function gmailOffered(mode: string, verified: boolean = GMAIL_VERIFIED): boolean {
-  return verified || mode !== 'production';
+/**
+ * Rolestash accounts that see "Connect Gmail" in release builds before
+ * GMAIL_VERIFIED: Google's reviewers (docs/guides/gmail-verification.md).
+ * Only an email, never a password: their Pro comes from a server-side grant,
+ * and this list just shows them the button.
+ */
+export const GMAIL_REVIEWERS: readonly string[] = ['review@rolestash.com'];
+
+/** Whether this build offers "Connect Gmail" (given a client ID) to this account. */
+export function gmailOffered(
+  mode: string,
+  account?: string,
+  verified: boolean = GMAIL_VERIFIED,
+): boolean {
+  if (verified || mode !== 'production') return true;
+  const email = account?.trim().toLowerCase();
+  return email !== undefined && GMAIL_REVIEWERS.includes(email);
 }
+
 const AUTHORIZE = 'https://accounts.google.com/o/oauth2/v2/auth';
 const API = 'https://gmail.googleapis.com/gmail/v1/users/me';
 

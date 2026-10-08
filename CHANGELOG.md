@@ -6,6 +6,12 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- **Gmail stays paused for everyone except Google's reviewers,** who can
+  connect it to check Rolestash before approving it. Mailboxes connected
+  earlier keep working.
+
 ### Fixed
 
 - **A connected inbox reads new job emails straight away,** however much

@@ -32,9 +32,10 @@ into the roadmap or changelog. Last reviewed 9 October 2026.
       its own restricted-scope review: submit it with the answers and video
       in [gmail-verification.md](guides/gmail-verification.md). Until then
       only listed test users can connect, behind Google's "unverified app"
-      screen. Release builds hide "Connect Gmail" until then
-      (`GMAIL_VERIFIED = false`, from 0.6.3); `WXT_GMAIL_CLIENT_ID` stays set
-      in rolestash-extension. After approval, flip `GMAIL_VERIFIED`
+      screen. Release builds show "Connect Gmail" only to the reviewer
+      account `review@rolestash.com` until then (`GMAIL_VERIFIED = false`,
+      `GMAIL_REVIEWERS`; give Google its password in the form). After
+      approval, flip `GMAIL_VERIFIED`, revoke the reviewer's grant
       and release. The homepage FAQ already says users can connect Gmail or
       Outlook; if verification drags on, ask us to soften it.
 - [ ] **Outlook (ADR-0032):** register the Microsoft Entra app (public
