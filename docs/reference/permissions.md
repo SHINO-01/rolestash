@@ -46,9 +46,9 @@ Manifest keys that aren't permissions:
 
 Optional permissions (requested at the moment of use):
 
-| Permission      | Why                                                                                                   | Asked when                                                        |
-| --------------- | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| `notifications` | Follow-up reminders and the closing-soon digest (Pro; ADR-0015). Optional so installs show no warning | Setting a first follow-up, or turning on closing alerts (a click) |
+| Permission      | Why                                                                                                                                                                    | Asked when                                                                                           |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `notifications` | Follow-up reminders, the closing-soon digest (Pro; ADR-0015) and email updates that changed a card while the board isn't in view. Optional so installs show no warning | Setting a first follow-up, turning on closing alerts, or Turn on under a connected mailbox (a click) |
 
 Capture from a pasted link runs in the board page:
 

@@ -14,7 +14,7 @@ import { EmailUpdateService } from './email-update-service';
 import { MailboxService, type MailConfig } from './mailbox-service';
 import { JobService } from './job-service';
 import { SyncService, type ThisDevice } from './sync-service';
-import type { AutofillRunner, ExtractorRunner, WebAuthFlow } from './ports';
+import type { AutofillRunner, ExtractorRunner, WebAuthFlow, Notifier } from './ports';
 
 /**
  * Composition root. Each extension context (background, widget, board) builds
@@ -54,6 +54,8 @@ export interface BackendDeps {
   authFlow: WebAuthFlow;
   /** OAuth client IDs for connecting Gmail or Outlook (ADR-0032), and how to reach them. */
   mail?: { config: MailConfig; fetch: typeof fetch };
+  /** System notifications, e.g. for an email that updated a card. */
+  notifier?: Notifier;
 }
 
 export function createServices(
@@ -90,6 +92,7 @@ export function createServices(
         account,
         ctx,
         mailbox,
+        backend?.notifier,
       )
     : undefined;
   return {

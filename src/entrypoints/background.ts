@@ -8,6 +8,7 @@ import { openBoard } from '@/platform/tabs';
 import { AutofillBlockedError } from '@/services/autofill-service';
 import { DuplicateJobError, JobLimitError } from '@/services/job-service';
 import { FOLLOW_UP_PREFIX, ReminderService } from '@/services/reminder-service';
+import { EMAIL_UPDATE_PREFIX } from '@/services/email-update-service';
 import { WEB_HANDOFF_MESSAGE, type WebHandoffReply } from '@/services/web-handoff';
 
 /**
@@ -51,13 +52,14 @@ async function ensureReminderAlarm(): Promise<void> {
 
 let listeningForClicks = false;
 
-/** A click on a reminder opens the job's card (or the board, for a summary). */
+/** A click on a reminder or an email update opens the job's card (or the board, for a summary). */
 function listenForNotificationClicks(): void {
   const notifications = browser.notifications as typeof browser.notifications | undefined;
   if (listeningForClicks || !notifications) return;
   listeningForClicks = true;
   notifications.onClicked.addListener((id) => {
-    void openBoard(id.startsWith(FOLLOW_UP_PREFIX) ? id.slice(FOLLOW_UP_PREFIX.length) : undefined);
+    const card = [FOLLOW_UP_PREFIX, EMAIL_UPDATE_PREFIX].find((p) => id.startsWith(p));
+    void openBoard(card ? id.slice(card.length) : undefined);
     void notifications.clear(id);
   });
 }

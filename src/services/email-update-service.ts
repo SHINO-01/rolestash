@@ -27,7 +27,7 @@ import type { SettingsRepository } from '@/storage/settings-repository';
 import { BackendError, type InboxInfo, type KnowledgeVote } from './backend/supabase-client';
 import { DuplicateJobError, type JobService } from './job-service';
 import type { MailItem } from './mailbox-service';
-import type { EmailInbox } from './ports';
+import type { EmailInbox, Notifier } from './ports';
 
 /** A connected Gmail or Outlook mailbox (ADR-0032), read on this device. */
 export interface MailboxSource {
@@ -120,6 +120,58 @@ export interface EmailRun {
   skipped?: 'not_advanced' | 'busy';
 }
 
+/** A click on an email-update notification opens this job's card. */
+export const EMAIL_UPDATE_PREFIX = 'rolestash.email:';
+/** "Job emails to sort": a click opens the board. */
+export const EMAIL_UNSORTED_ID = 'rolestash.email-unsorted';
+/** More updates than this in one check become one summary notification. */
+const NOTIFY_MAX = 3;
+
+/** A card an email just changed, for a notification. */
+export interface EmailChange {
+  job: Job;
+  intent: EmailUpdateIntent;
+  /** The lane it moved to, if it moved. */
+  stageName?: string | undefined;
+  interview?: JobInterview | undefined;
+  /** Waiting for Accept, not applied. */
+  suggested: boolean;
+}
+
+const INTENT_HEADLINE: Record<EmailUpdateIntent, string> = {
+  received: 'application received',
+  assessment: 'assessment to do',
+  interview: 'interview',
+  rejected: 'not going ahead',
+  offer: 'offer',
+};
+
+/** "Northwind Labs: interview" / "Frontend Engineer · Thu 15 Oct, 10:00 · now in Interviewing". */
+export function emailNotification(change: EmailChange): { title: string; message: string } {
+  const { job } = change;
+  const who = job.company || job.title;
+  const when = change.interview?.start ? interviewWhen(change.interview.start) : undefined;
+  const details = change.suggested
+    ? ['An email may be about this job: review it on your board']
+    : [when, change.stageName ? `now in ${change.stageName}` : undefined];
+  return {
+    title: `${who}: ${INTENT_HEADLINE[change.intent]}`,
+    message: [job.company ? job.title : undefined, ...details].filter(Boolean).join(' · '),
+  };
+}
+
+function interviewWhen(start: string): string | undefined {
+  const at = new Date(start);
+  if (Number.isNaN(at.getTime())) return undefined;
+  return at.toLocaleString(undefined, {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
 export interface EmailUpdateAccount {
   currentPlan(): Promise<Plan>;
   /** True during the free trial: trial accounts get updates but don't vote. */
@@ -190,6 +242,8 @@ export class EmailUpdateService {
     private readonly ctx: DomainContext,
     /** A connected mailbox, when this build can connect one (ADR-0032). */
     private readonly mailbox?: MailboxSource,
+    /** System notifications for updates, when someone isn't looking at the board. */
+    private readonly notifier?: Notifier,
   ) {}
 
   async state(): Promise<EmailUpdateState> {
@@ -233,8 +287,14 @@ export class EmailUpdateService {
   }
 
   /** Pulls new events and applies, suggests or files each one. */
-  async run(): Promise<EmailRun> {
+  /**
+   * Applies new email updates. `notify` (default on) also shows a system
+   * notification for each changed card, for someone on another tab or app;
+   * a board in view passes false, since it shows its own toast.
+   */
+  async run(options: { notify?: boolean } = {}): Promise<EmailRun> {
     const none: EmailRun = { applied: 0, suggested: 0, unsorted: 0 };
+    this.changes = [];
     if ((await this.account.currentPlan()) !== 'pro') return { ...none, skipped: 'not_advanced' };
     if (!(await this.lock())) return { ...none, skipped: 'busy' };
     const state = await this.state();
@@ -271,6 +331,7 @@ export class EmailUpdateService {
       state.lastRunAt = this.ctx.now().toISOString();
       delete state.problem;
       await this.save(state);
+      if (options.notify !== false) await this.notify(this.changes, result.unsorted);
       return result;
     } catch (error) {
       state.problem =
@@ -338,15 +399,27 @@ export class EmailUpdateService {
     }
 
     this.remember(state, event.thread.messageId, job.id);
+    const interview = intent === 'interview' ? interviewOf(event.interview) : undefined;
     const changed = await this.update(
       job,
       noteOf(intent, event),
-      intent === 'interview' ? interviewOf(event.interview) : undefined,
+      interview,
       event.action === 'apply',
       event.template,
       event.tickets?.template,
     );
-    return changed ? (event.action === 'apply' ? 'applied' : 'suggested') : undefined;
+    if (!changed) return undefined;
+    const after = (await this.jobs.get(job.id)) ?? job;
+    this.changes.push({
+      job: after,
+      intent,
+      ...(after.stageId !== job.stageId
+        ? { stageName: settings.stages.find((st) => st.id === after.stageId)?.name }
+        : {}),
+      ...(interview ? { interview } : {}),
+      suggested: event.action !== 'apply',
+    });
+    return event.action === 'apply' ? 'applied' : 'suggested';
   }
 
   /** Applies or suggests an update for `job`. Returns false when nothing would change. */
@@ -501,6 +574,36 @@ export class EmailUpdateService {
   }
 
   /** A storage lease, so the board and the background worker don't run at the same time. */
+  /** Cards changed in the current run, for notifications. */
+  private changes: EmailChange[] = [];
+
+  private async notify(changes: readonly EmailChange[], unsorted: number): Promise<void> {
+    if (!this.notifier || (changes.length === 0 && unsorted === 0)) return;
+    try {
+      if (!(await this.notifier.granted())) return;
+      if (changes.length > NOTIFY_MAX) {
+        await this.notifier.notify(
+          EMAIL_UNSORTED_ID,
+          'Rolestash: your board was updated',
+          `${String(changes.length)} jobs changed from your email. Open the board to see them.`,
+        );
+      } else {
+        for (const change of changes) {
+          const { title, message } = emailNotification(change);
+          await this.notifier.notify(`${EMAIL_UPDATE_PREFIX}${change.job.id}`, title, message);
+        }
+      }
+      if (unsorted > 0)
+        await this.notifier.notify(
+          EMAIL_UNSORTED_ID,
+          'Rolestash: job emails to sort',
+          `${String(unsorted)} ${unsorted === 1 ? 'email needs' : 'emails need'} a job. Open the board to sort ${unsorted === 1 ? 'it' : 'them'}.`,
+        );
+    } catch {
+      // A notification is a courtesy: never fail the run over it.
+    }
+  }
+
   private async lock(): Promise<boolean> {
     const now = this.ctx.now().getTime();
     const held = (await this.store.get([EMAIL_LOCK_KEY]))[EMAIL_LOCK_KEY] as number | undefined;

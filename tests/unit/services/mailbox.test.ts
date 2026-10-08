@@ -1,5 +1,9 @@
 import { analyzeEmail } from '@/email';
-import { EmailUpdateService } from '@/services/email-update-service';
+import {
+  EMAIL_UPDATE_PREFIX,
+  EmailUpdateService,
+  emailNotification,
+} from '@/services/email-update-service';
 import { JobService } from '@/services/job-service';
 import {
   gmailAuthUrl,
@@ -12,7 +16,7 @@ import {
 import { outlookToken, readOutlookRedirect } from '@/services/mail/outlook';
 import { MailAuthError } from '@/services/mail/types';
 import { MailboxService } from '@/services/mailbox-service';
-import type { EmailInbox, WebAuthFlow } from '@/services/ports';
+import type { EmailInbox, Notifier, WebAuthFlow } from '@/services/ports';
 import { JobRepository } from '@/storage/job-repository';
 import { MemoryKeyValueStore } from '@/storage/key-value-store';
 import { MAILBOX_AUTH_KEY } from '@/storage/keys';
@@ -234,6 +238,91 @@ describe('a busy inbox (owner demo, 9 October 2026)', () => {
     // One page of the newest, not the whole two weeks.
     const fulls = api.calls.filter((c) => c.url.includes('format=full')).length;
     expect(fulls).toBeLessThanOrEqual(30);
+  });
+});
+
+describe('notifications for email updates', () => {
+  class FakeNotifier implements Notifier {
+    shown: { id: string; title: string; message: string }[] = [];
+    constructor(private readonly allowed = true) {}
+    granted() {
+      return Promise.resolve(this.allowed);
+    }
+    notify(id: string, title: string, message: string) {
+      this.shown.push({ id, title, message });
+      return Promise.resolve();
+    }
+  }
+
+  async function service(notifier: Notifier) {
+    const mail: FakeMail[] = [
+      {
+        id: 'nw',
+        from: 'Jordan Lee <jordan@northwindlabs.example>',
+        subject: 'Interview invitation: Frontend Engineer at Northwind Labs',
+        at: '2026-10-05T23:59:00Z',
+        html: '<div>Thank you for applying for the Frontend Engineer role at Northwind Labs. We would like to invite you to a video interview.</div><div>When: Thursday, 15 October 2026 at 10:00am AEDT</div><div>Join: https://meet.google.com/abc-defg-hij</div><div>Jordan Lee<br>Talent Team, Northwind Labs</div>',
+      },
+    ];
+    const { store, ctx, mailbox } = await setup(mail);
+    const jobs = new JobRepository(store);
+    const settings = new SettingsRepository(store);
+    await jobs.save(
+      makeJob({
+        id: 'fe',
+        stageId: 'applied',
+        appliedAt: '2026-10-05T23:00:00.000Z',
+        title: 'Frontend Engineer',
+        company: 'Northwind Labs',
+      }),
+    );
+    const inbox: EmailInbox = {
+      address: () =>
+        Promise.resolve({ ok: true, address: 'x@in.rolestash.com', shareLearning: true }),
+      events: () => Promise.resolve([]),
+      remove: () => Promise.resolve(),
+      vote: () => Promise.resolve(),
+      setSharing: () => Promise.resolve(),
+    };
+    const email = new EmailUpdateService(
+      store,
+      jobs,
+      settings,
+      new JobService(jobs, settings, ctx),
+      inbox,
+      { currentPlan: () => Promise.resolve('pro'), onTrial: () => Promise.resolve(false) },
+      ctx,
+      mailbox,
+      notifier,
+    );
+    await mailbox.connect('gmail');
+    return email;
+  }
+
+  it('tells someone on another tab, and a click opens the card', async () => {
+    const notifier = new FakeNotifier();
+    await (await service(notifier)).run();
+    expect(notifier.shown).toHaveLength(1);
+    expect(notifier.shown[0]?.id).toBe(`${EMAIL_UPDATE_PREFIX}fe`);
+    expect(notifier.shown[0]?.title).toBe('Northwind Labs: interview');
+    expect(notifier.shown[0]?.message).toMatch(/^Frontend Engineer · .+ · now in Interviewing$/);
+  });
+
+  it('stays quiet for a board in view, and without permission', async () => {
+    const inView = new FakeNotifier();
+    await (await service(inView)).run({ notify: false });
+    expect(inView.shown).toEqual([]);
+    const denied = new FakeNotifier(false);
+    await (await service(denied)).run();
+    expect(denied.shown).toEqual([]);
+  });
+
+  it('words a suggestion as one to review', () => {
+    const job = makeJob({ title: 'Data Analyst', company: 'Kestrel Health' });
+    expect(emailNotification({ job, intent: 'rejected', suggested: true })).toEqual({
+      title: 'Kestrel Health: not going ahead',
+      message: 'Data Analyst · An email may be about this job: review it on your board',
+    });
   });
 });
 

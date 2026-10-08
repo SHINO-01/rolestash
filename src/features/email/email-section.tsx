@@ -83,7 +83,7 @@ export function EmailSection({ plan, trial = false }: { plan: Plan; trial?: bool
 
   const check = () =>
     run('check', async () => {
-      const result = await email.run();
+      const result = await email.run({ notify: false });
       if (result.skipped) {
         // Nothing was checked: never say "no new updates" then.
         toast({

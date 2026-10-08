@@ -14,8 +14,12 @@ All notable changes to this project are documented here. The format follows
   LinkedIn, SEEK and Indeed alerts no longer count as job emails; their
   application emails still do.
 - **Updates arrive within about a minute** while your board is open with
-  Gmail or Outlook connected, and as soon as you come back to the board. It
-  used to wait up to five minutes unless you clicked Check now.
+  Gmail or Outlook connected (even on another tab), and as soon as you come
+  back to the board. It used to wait up to five minutes unless you clicked
+  Check now.
+- **A notification when an email updates a card** while you're on another
+  tab or app (turn it on under your connected mailbox). Click it to open the
+  card.
 - **Check now says what happened:** it no longer says "Your board is up to
   date" when the check was skipped or couldn't reach the inbox.
 

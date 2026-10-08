@@ -195,7 +195,8 @@ It should be about 180 KiB.
 `src/services/email-update-service.ts` runs on any client with the account:
 the extension's 15-minute background tick (just before sync), and an open
 board or web board on open, on focus and every 5 minutes (every minute
-while an extension board is in view with a mailbox connected). A storage lease
+while an extension board is open with a mailbox connected, with a system
+notification when the board isn't in view). A storage lease
 stops two contexts running at once. Each run:
 
 1. **Pulls events** after its cursor (`email_events`, owner RLS) and
@@ -318,8 +319,9 @@ engine on the device; nothing from the mailbox reaches our servers. Code:
 `src/services/mail/` (sign-in and API calls), `src/services/mailbox-service.ts`
 (cursor, tokens) and `EmailUpdateService.run` (which applies the results).
 It checks at browser startup, every 5 minutes (`rolestash.mail` alarm), when
-a board opens or comes back into view, and every minute while a board is in
-view. Push (Gmail's Pub/Sub watch) would need a server to receive it, so it
+a board opens or comes back into view, and every minute while a board is
+open (Chrome runs a hidden tab's timer about once a minute). A change made
+while the board isn't in view shows a system notification, if allowed. Push (Gmail's Pub/Sub watch) would need a server to receive it, so it
 isn't used: mail stays on the device.
 
 ### Google (owner, Google Cloud console, the project with the sign-in client)

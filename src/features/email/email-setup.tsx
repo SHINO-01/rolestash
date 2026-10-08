@@ -55,7 +55,10 @@ export function EmailSetupGuide({
   const waitingForCode = provider === 'gmail' && done.has('forward') && !code && !working;
   useEffect(() => {
     if (!email || !waitingForCode) return;
-    const timer = setInterval(() => void email.run().catch(() => undefined), POLL_MS);
+    const timer = setInterval(
+      () => void email.run({ notify: false }).catch(() => undefined),
+      POLL_MS,
+    );
     return () => clearInterval(timer);
   }, [email, waitingForCode]);
 

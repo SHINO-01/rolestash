@@ -1,5 +1,6 @@
-import { Mail, RefreshCw, Unplug } from 'lucide-react';
-import { useState } from 'react';
+import { BellRing, Mail, RefreshCw, Unplug } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { notificationsGranted, requestNotifications } from '@/platform/notifications';
 import type { MailProvider } from '@/services/mail/types';
 import { Button } from '@/ui/components/button';
 import { useToast } from '@/ui/components/toast';
@@ -44,7 +45,7 @@ export function MailboxConnect() {
   }
 
   const check = async (announce: boolean) => {
-    const result = await email?.run();
+    const result = await email?.run({ notify: false });
     if (!announce || !result) return;
     if (result.skipped) {
       // Nothing was checked: never say "up to date" then.
@@ -147,6 +148,7 @@ export function MailboxConnect() {
           Couldn’t reach {NAMES[state.provider]}. It will try again shortly.
         </p>
       ) : null}
+      <NotifyPrompt />
       <div className="mt-3 flex flex-wrap gap-2">
         <Button
           size="sm"
@@ -173,6 +175,40 @@ export function MailboxConnect() {
           Disconnect
         </Button>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Offers system notifications for email updates, so they reach someone on
+ * another tab. `notifications` is optional (ADR-0015): Chrome asks on this
+ * click. Hidden once granted.
+ */
+function NotifyPrompt() {
+  const toast = useToast();
+  const [granted, setGranted] = useState<boolean>();
+  useEffect(() => {
+    void notificationsGranted().then(setGranted);
+  }, []);
+  if (granted !== false) return null;
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-2">
+      <p className="text-muted flex-1 text-[13px]">
+        Get a notification when an email updates a card, even on another tab.
+      </p>
+      <Button
+        size="sm"
+        variant="secondary"
+        icon={<BellRing className="size-3.5" />}
+        onClick={() =>
+          void requestNotifications().then((on) => {
+            setGranted(on);
+            if (on) toast({ tone: 'success', message: 'Notifications are on' });
+          })
+        }
+      >
+        Turn on
+      </Button>
     </div>
   );
 }
