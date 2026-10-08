@@ -28,13 +28,13 @@ Help button); retake them when convenient (`npm run store:screenshots`).
 
 ## Next, in order
 
-### 1. 0.6.5: connected inbox fixes, notifications, account switching, Google's reviewer
+### 1. 0.6.6: connected inbox fixes, notifications, account switching, Google's reviewer
 
 - **State:** released on `dev` on 9 October 2026. Its Release run waits at
   the Chrome Web Store approval; approve it once 0.6.3 is live (submitting
-  sooner restarts 0.6.3's review). 0.6.4 was released on `dev` but its run
-  was cancelled before the store (it named the reviewer in the code); 0.6.5
-  carries everything it had.
+  sooner restarts 0.6.3's review). 0.6.4 and 0.6.5 were released on `dev`
+  but their runs were cancelled before the store; 0.6.6 carries everything
+  they had, plus a steadier tour around the job drawer.
 - **Contains:**
   - a connected inbox reads new mail first, not two weeks of backlog;
   - an open board checks a connected inbox every minute, and a system
@@ -45,7 +45,7 @@ Help button); retake them when convenient (`npm run store:screenshots`).
   - another account signing in on the same browser starts clean (sync,
     mailbox and email updates reset; the previous account's jobs wait for
     Keep or Remove); signing out disconnects the mailbox;
-  - a smoother guided tour.
+  - a smoother guided tour, steady while a job's drawer slides.
 - **Owner, before Google reviews:** the reviewer account is set up (tester
   grant, password in your password manager); give its sign-in to Google in
   the verification form ([gmail-verification.md](guides/gmail-verification.md)).

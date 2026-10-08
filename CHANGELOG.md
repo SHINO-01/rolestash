@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.6.6] — 2026-10-09
+
 ### Fixed
 
 - **The guided tour stays put when a job's details open or close:** it no
