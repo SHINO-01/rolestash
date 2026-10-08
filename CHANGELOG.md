@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.6.5] — 2026-10-09
+
 ### Fixed
 
 - **Someone else signing in on the same browser starts clean.** Sync, a
