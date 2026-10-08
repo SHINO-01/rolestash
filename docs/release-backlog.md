@@ -20,35 +20,29 @@ two-step sign-in, sign out everywhere).
 
 ## In review
 
-**0.6.3** (guided tour, Help guides, a clearer first run; Connect Gmail
-hidden until Google verifies it), submitted on 9 October 2026 (Release run
-37825928875). When it's live, set "Current version" on `/known-issues/` to
-0.6.3 and the date. The store screenshots still show the old header (no
-Help button); retake them when convenient (`npm run store:screenshots`).
+**0.6.6**, submitted on 9 October 2026 (Release run 37854408290). It
+includes everything in 0.6.3, 0.6.4 and 0.6.5 (0.6.3 was in review and is
+replaced by it; 0.6.4 and 0.6.5 never reached the store):
+
+- the guided tour, Help → How do I…? guides, the corner card for boards
+  that already have jobs, and a clearer first run;
+- a connected inbox reads new mail first, checks every minute while a board
+  is open, and notifies when an email changed a card off-screen;
+- Connect Gmail only for accounts with a `tester` grant (Google's reviewer)
+  until Google verifies the scope;
+- another account signing in on the same browser starts clean; signing out
+  disconnects the mailbox;
+- a smoother tour, steady while a job's drawer slides.
+
+**When it's live (owner and us):** set "Current version" on
+`/known-issues/` to 0.6.6 and the date; retake the store screenshots when
+convenient (`npm run store:screenshots`; the header now has Help); give
+Google the reviewer's sign-in in the Gmail verification form
+([gmail-verification.md](guides/gmail-verification.md)).
 
 ## Next, in order
 
-### 1. 0.6.6: connected inbox fixes, notifications, account switching, Google's reviewer
-
-- **State:** released on `dev` on 9 October 2026. Its Release run waits at
-  the Chrome Web Store approval; approve it once 0.6.3 is live (submitting
-  sooner restarts 0.6.3's review). 0.6.4 and 0.6.5 were released on `dev`
-  but their runs were cancelled before the store; 0.6.6 carries everything
-  they had, plus a steadier tour around the job drawer.
-- **Contains:**
-  - a connected inbox reads new mail first, not two weeks of backlog;
-  - an open board checks a connected inbox every minute, and a system
-    notification says when an email changed a card off-screen;
-  - Check now says when it was skipped or couldn't reach the inbox;
-  - Connect Gmail for accounts with a `tester` grant only (Google's
-    reviewer), everyone else waits for verification;
-  - another account signing in on the same browser starts clean (sync,
-    mailbox and email updates reset; the previous account's jobs wait for
-    Keep or Remove); signing out disconnects the mailbox;
-  - a smoother guided tour, steady while a job's drawer slides.
-- **Owner, before Google reviews:** the reviewer account is set up (tester
-  grant, password in your password manager); give its sign-in to Google in
-  the verification form ([gmail-verification.md](guides/gmail-verification.md)).
+Nothing waiting.
 
 ## Adding to the backlog
 

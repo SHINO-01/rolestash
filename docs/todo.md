@@ -6,8 +6,9 @@ into the roadmap or changelog. Last reviewed 9 October 2026.
 
 ## Owner
 
-- [ ] **0.6.3 is in store review;** when it's live, approve the waiting
-      0.6.6 Release run's Chrome Web Store step
+- [ ] **0.6.6 is in store review** (submitted 9 October; replaces 0.6.3).
+      When it's live: known-issues version, store screenshots, and the
+      reviewer's sign-in in Google's Gmail form
       ([release-backlog.md](release-backlog.md)).
 - [ ] **After 0.6.1 is live: make `rolestash` private** (owner, 8 October;
       `rolestash-extension` stays public: its store approval gate and
@@ -116,14 +117,14 @@ into the roadmap or changelog. Last reviewed 9 October 2026.
       `supabase/templates/password-changed.html` into _Password changed_
       (subject "Your Rolestash password was changed").
 - [ ] **Store releases:** one at a time, in the order of
-      [release-backlog.md](release-backlog.md) (0.6.3 in review, 0.6.6 next).
+      [release-backlog.md](release-backlog.md) (0.6.6 in review).
 - [ ] **Go public** when the beta is clean: Distribution → Visibility →
       Public ([launch.md](guides/launch.md#7-going-public)).
 
 ## Ours
 
-- [ ] **When 0.6.3 is approved:** set "Current version" on `/known-issues/`
-      to 0.6.3 and the date.
+- [ ] **When 0.6.6 is approved:** set "Current version" on `/known-issues/`
+      to 0.6.6 and the date.
 - [ ] **By 4 January 2027:** re-check the facts on `/compare/teal/` and
       `/compare/huntr/` and update their "Facts checked" date
       ([website.md](guides/website.md#search)).
