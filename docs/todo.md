@@ -28,8 +28,13 @@ into the roadmap or changelog. Last reviewed 9 October 2026.
       intended ([backend.md](guides/backend.md#database-advisor-findings-we-accept)).
 - [ ] **Gmail (ADR-0032):** Google Cloud is done (Gmail API, the
       `gmail.readonly` scope, both redirect URIs, checked working on 6
-      October). Waiting on Google's restricted-scope verification; until then
-      only listed test users can connect. After approval, set the
+      October). Brand verification is done, but `gmail.readonly` needs
+      its own restricted-scope review: submit it with the answers and video
+      in [gmail-verification.md](guides/gmail-verification.md). Until then
+      only listed test users can connect, behind Google's "unverified app"
+      screen. **The variable below is already set (6 October), so the live
+      store builds show "Connect Gmail" to everyone: delete it and release
+      to hide it until approval.** After approval, set the
       rolestash-extension repository variable `WXT_GMAIL_CLIENT_ID` =
       `681262997873-d085gg7n42vd4b5tl8q68ri8jm8i0vhe.apps.googleusercontent.com`
       and release. The homepage FAQ already says users can connect Gmail or

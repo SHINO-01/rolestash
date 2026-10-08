@@ -69,6 +69,7 @@ New decision? Copy [the template](adr/0000-template.md).
 - [Updates list ("Notify me at launch")](guides/launch-list.md)
 - [Launching on the Chrome Web Store (runbook)](guides/launch.md)
 - [Email status updates (engine, fixtures, accuracy)](guides/email-updates.md)
+- [Gmail verification (restricted scope: form answers, demo video)](guides/gmail-verification.md)
 - [Application autofill (rules, fixtures, live checks)](guides/autofill.md)
 - [Operations dashboard (operations.rolestash.com)](guides/operations.md)
 - [Open to-dos (owner and us)](todo.md)

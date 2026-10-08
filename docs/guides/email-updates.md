@@ -329,7 +329,8 @@ when a board opens.
    `https://cncilbdakhabnocnjokbonggomndedgp.chromiumapp.org/` (store build)
    and `https://bdajnmkjahhphadpdbbkibljcheonejp.chromiumapp.org/`
    (development, staging and E2E builds).
-4. **Verification** (restricted scope): submit the app with the privacy
+4. **Verification** (restricted scope; the form's answers and the video
+   script are in [gmail-verification.md](gmail-verification.md)): submit the app with the privacy
    policy (it has the Limited Use statement), a short video of connecting
    Gmail and an update arriving, and the explanation that mail is processed
    only in the extension on the user's device and never sent to our servers
