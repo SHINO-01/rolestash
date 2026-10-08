@@ -14,6 +14,23 @@ const storedJobs = (worker: Worker) =>
     Object.keys(await chrome.storage.local.get(null)).filter((k) => k.startsWith('job:')),
   );
 
+/**
+ * The widget's panel grows and shrinks from the bottom of the window as its
+ * content changes: wait until it stops before clicking inside it (AGENTS.md).
+ */
+async function panelSettled(page: Page) {
+  const frame = page.locator('iframe[title="Rolestash"]');
+  let last = -1;
+  await expect
+    .poll(async () => {
+      const top = (await frame.boundingBox())?.y ?? -1;
+      const settled = top === last;
+      last = top;
+      return settled;
+    })
+    .toBe(true);
+}
+
 /** The tour's card: modal on steps that only explain, not on "Try it" steps. */
 const tourCard = (page: Page) => page.locator('[data-tour-layer] [role="dialog"]');
 
@@ -140,11 +157,14 @@ test.describe('the guided tour (ADR-0039)', () => {
     const widget = page.frameLocator('iframe[title="Rolestash"]');
     const guide = widget.getByRole('region', { name: 'Quick guide' });
     await expect(guide.getByText('This is the job on this page')).toBeVisible();
+    await panelSettled(page);
     await guide.getByRole('button', { name: 'Next' }).click();
     await expect(guide.getByText('Pick a lane')).toBeVisible();
+    await panelSettled(page);
     await guide.getByRole('button', { name: 'Close guide' }).click();
     await expect(guide).toHaveCount(0);
 
+    await panelSettled(page);
     await widget.getByRole('button', { name: 'Close', exact: true }).click();
     await page.getByRole('button', { name: 'Open Rolestash' }).click();
     await expect(widget.getByRole('button', { name: 'Save job' })).toBeVisible();
@@ -164,6 +184,7 @@ test.describe('the guided tour (ADR-0039)', () => {
     await expect(widget.getByRole('button', { name: 'Open my board' })).toBeVisible();
     await expect(widget.getByLabel('Job title')).toHaveCount(0);
     // Still possible, on purpose.
+    await panelSettled(page);
     await widget.getByRole('button', { name: 'It is a job: save this page' }).click();
     await expect(widget.getByLabel('Job title')).toBeVisible();
   });
