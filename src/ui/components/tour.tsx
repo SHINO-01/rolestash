@@ -23,10 +23,15 @@ export interface TourStepView {
   body: ReactNode;
   /** CSS selector of the element to spotlight; none, or not found, centres the card. */
   target?: string | undefined;
+  /** A second element to ring inside the spotlight (the practice card on a busy board). */
+  highlight?: string | undefined;
   placement?: TourPlacement | undefined;
   illustration?: ReactNode;
-  /** "Try it" task: clicks reach the page, and the step moves on once `done`. */
-  task?: { label: string; done: boolean } | undefined;
+  /**
+   * "Try it" task: clicks reach the page, and the step moves on once `done`.
+   * `focus` is a selector for "Go to the card", so keyboard users can reach it.
+   */
+  task?: { label: string; done: boolean; focus?: string | undefined } | undefined;
   /** An extra button, e.g. "Set up autofill". */
   action?: { label: string; onClick: () => void } | undefined;
 }
@@ -42,16 +47,24 @@ export function Tour({
   index,
   onIndex,
   onEnd,
-  startLabel = 'Start the tour',
+  startLabel,
+  finishLabel = 'Finish',
+  skipLabel = 'Skip tour',
+  closeLabel = 'Close tour',
 }: {
   steps: readonly TourStepView[];
   index: number;
   onIndex: (index: number) => void;
   onEnd: (how: TourEnd) => void;
+  /** The first step's Next ("Start the tour"); without one it's Next. */
   startLabel?: string;
+  finishLabel?: string;
+  /** The text "Skip tour" link; null leaves only the ✕ (short guides). */
+  skipLabel?: string | null;
+  closeLabel?: string;
 }) {
   const step = steps[index];
-  const { host, rect } = useTourGeometry(step?.target);
+  const { host, rect, highlight } = useTourGeometry(step?.target, step?.highlight);
   const cardRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const [card, setCard] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
@@ -77,6 +90,7 @@ export function Tour({
   // A task finished on this step moves on after a moment, so the result is
   // seen. One already done when the step opened (after Back) waits for Next.
   const taskDone = step?.task?.done === true;
+  const interactiveStep = step?.task !== undefined;
   const doneOnEntry = useRef(false);
   useEffect(() => {
     doneOnEntry.current = taskDone;
@@ -98,6 +112,24 @@ export function Tour({
         onEnd('skipped');
         return;
       }
+      // Steps that only explain keep Tab inside the card: the page behind waits.
+      // "Try it" steps let it out, so the keyboard can reach the card to move.
+      if (e.key === 'Tab' && !interactiveStep && cardRef.current) {
+        const items = [
+          ...cardRef.current.querySelectorAll<HTMLElement>('button:not(:disabled), [href]'),
+        ];
+        const firstItem = items[0];
+        const lastItem = items.at(-1);
+        const inside = cardRef.current.contains(document.activeElement);
+        if (!inside || (e.shiftKey && document.activeElement === firstItem)) {
+          e.preventDefault();
+          (e.shiftKey ? lastItem : firstItem)?.focus();
+        } else if (!e.shiftKey && document.activeElement === lastItem) {
+          e.preventDefault();
+          firstItem?.focus();
+        }
+        return;
+      }
       if (!cardRef.current?.contains(e.target as Node)) return;
       if ((e.target as HTMLElement).closest('button') && (e.key === ' ' || e.key === 'Enter'))
         return;
@@ -112,7 +144,7 @@ export function Tour({
     };
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
-  }, [index, first, last, onIndex, onEnd]);
+  }, [index, first, last, interactiveStep, onIndex, onEnd]);
 
   if (!step) return null;
   const hole = rect ? inflate(rect, PAD) : undefined;
@@ -136,13 +168,25 @@ export function Tour({
       ) : (
         <div aria-hidden className="animate-fade-in absolute inset-0 bg-zinc-950/55" />
       )}
+      {highlight ? (
+        <div
+          aria-hidden
+          className={clsx('tour-highlight absolute rounded-xl', !taskDone && 'tour-pulse-ring')}
+          style={{
+            top: highlight.top - PAD,
+            left: highlight.left - PAD,
+            width: highlight.width + PAD * 2,
+            height: highlight.height + PAD * 2,
+          }}
+        />
+      ) : null}
       {/* Outside an interactive step, the page waits: clicks land on this shield. */}
       {interactive ? null : <div className="pointer-events-auto absolute inset-0" />}
 
       <div
         ref={cardRef}
         role="dialog"
-        aria-modal="false"
+        aria-modal={interactive ? 'false' : 'true'}
         aria-labelledby={`tour-title-${step.id}`}
         aria-describedby={`tour-body-${step.id}`}
         className="bg-surface text-ink border-line shadow-pop animate-rise pointer-events-auto absolute flex flex-col overflow-hidden rounded-2xl border"
@@ -164,14 +208,14 @@ export function Tour({
             aria-valuenow={index + 1}
           >
             <div
-              className="bg-accent h-full rounded-full transition-[width] duration-300"
+              className="bg-accent h-full rounded-full transition-[width] duration-300 motion-reduce:transition-none"
               style={{ width: `${String(((index + 1) / steps.length) * 100)}%` }}
             />
           </div>
           <span className="text-subtle text-xs tabular-nums">
             {index + 1} of {steps.length}
           </span>
-          <IconButton size="sm" label="Close tour" onClick={() => onEnd('skipped')}>
+          <IconButton size="sm" label={closeLabel} onClick={() => onEnd('skipped')}>
             <X className="size-4" />
           </IconButton>
         </div>
@@ -200,8 +244,7 @@ export function Tour({
         </div>
 
         {step.task ? (
-          <p
-            role="status"
+          <div
             className={clsx(
               'mx-4 mt-2 flex items-center gap-2 rounded-lg px-3 py-2 text-[13px] font-medium',
               taskDone
@@ -210,12 +253,26 @@ export function Tour({
             )}
           >
             {taskDone ? (
-              <Check className="size-4 shrink-0" strokeWidth={3} />
+              <Check aria-hidden className="size-4 shrink-0" strokeWidth={3} />
             ) : (
-              <MousePointerClick className="size-4 shrink-0" />
+              <MousePointerClick aria-hidden className="size-4 shrink-0" />
             )}
-            {taskDone ? 'Nice, that’s it.' : `Try it: ${step.task.label}`}
-          </p>
+            <span role="status" className="flex-1">
+              {taskDone ? 'Nice, that’s it.' : `Try it: ${step.task.label}`}
+            </span>
+            {!taskDone && step.task.focus ? (
+              <button
+                type="button"
+                className="text-accent-ink min-h-6 shrink-0 rounded-md px-1.5 text-xs font-semibold underline underline-offset-2"
+                onClick={() => {
+                  const selector = step.task?.focus;
+                  if (selector) document.querySelector<HTMLElement>(selector)?.focus();
+                }}
+              >
+                Go to the card
+              </button>
+            ) : null}
+          </div>
         ) : null}
 
         {step.action ? (
@@ -227,13 +284,13 @@ export function Tour({
         ) : null}
 
         <div className="mt-3 flex items-center gap-2 px-4 pb-4">
-          {last ? null : (
+          {last || skipLabel === null ? null : (
             <button
               type="button"
               onClick={() => onEnd('skipped')}
               className="text-muted hover:text-ink rounded-md px-1 py-1 text-[13px] font-medium underline-offset-2 hover:underline"
             >
-              Skip tour
+              {skipLabel}
             </button>
           )}
           <div className="flex-1" />
@@ -252,7 +309,13 @@ export function Tour({
             variant={interactive && !taskDone ? 'secondary' : 'primary'}
             onClick={() => (last ? onEnd('finished') : onIndex(index + 1))}
           >
-            {first ? startLabel : last ? 'Finish' : interactive && !taskDone ? 'Skip step' : 'Next'}
+            {first && startLabel
+              ? startLabel
+              : last
+                ? finishLabel
+                : interactive && !taskDone
+                  ? 'Skip step'
+                  : 'Next'}
             {last ? null : <ArrowRight className="size-4" />}
           </Button>
         </div>
@@ -267,37 +330,56 @@ export function Tour({
  * one is open (everything else is inert), else the body. Polled each frame
  * while the tour is up, so scrolling, resizing and opening a drawer all follow.
  */
-function useTourGeometry(target: string | undefined): {
+function useTourGeometry(
+  target: string | undefined,
+  ring: string | undefined,
+): {
   host: HTMLElement | null;
   rect: Box | undefined;
+  highlight: Box | undefined;
 } {
   const [host, setHost] = useState<HTMLElement | null>(null);
   const [rect, setRect] = useState<Box | undefined>();
+  const [highlight, setHighlight] = useState<Box | undefined>();
   useEffect(() => {
     let frame = 0;
+    // On a busy board what the step is about may be scrolled away: bring it
+    // into view once, when it's first found.
+    let scrolled = false;
+    const find = (selector: string | undefined) =>
+      selector
+        ? [...document.querySelectorAll<HTMLElement>(selector)].find(
+            (e) => e.getClientRects().length > 0,
+          )
+        : undefined;
+    const measure = (el: HTMLElement | undefined) => {
+      const r = el?.getBoundingClientRect();
+      return r && r.width > 0 && r.height > 0
+        ? clip({ top: r.top, left: r.left, width: r.width, height: r.height })
+        : undefined;
+    };
     const tick = () => {
       const modals = [...document.querySelectorAll<HTMLDialogElement>('dialog[open]')].filter((d) =>
         d.matches(':modal'),
       );
       const top = modals.at(-1) ?? null;
       setHost((current) => (current === top ? current : top));
-      const el = target
-        ? [...document.querySelectorAll<HTMLElement>(target)].find(
-            (e) => e.getClientRects().length > 0,
-          )
-        : undefined;
-      const r = el?.getBoundingClientRect();
-      const next =
-        r && r.width > 0 && r.height > 0
-          ? clip({ top: r.top, left: r.left, width: r.width, height: r.height })
-          : undefined;
+      const el = find(target);
+      const ringed = find(ring);
+      if (!scrolled && (ringed ?? el)) {
+        scrolled = true;
+        (ringed ?? el)?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      }
+      const next = measure(el);
+      const nextRing = measure(ringed);
       setRect((current) => (sameBox(current, next) ? current : next));
+      setHighlight((current) => (sameBox(current, nextRing) ? current : nextRing));
       frame = requestAnimationFrame(tick);
     };
     tick();
     return () => cancelAnimationFrame(frame);
-  }, [target]);
-  return { host, rect };
+  }, [target, ring]);
+  return { host, rect, highlight };
 }
 
 function inflate(box: Box, by: number): Box {

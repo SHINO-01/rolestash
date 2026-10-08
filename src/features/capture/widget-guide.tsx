@@ -30,7 +30,8 @@ const STEPS: { target: GuideTarget; title: string; body: string }[] = [
 ];
 
 /**
- * A three-step guide the first time the widget shows a job (ADR-0039),
+ * A three-step guide the first time the widget shows a job to someone
+ * with no saved jobs yet (ADR-0039),
  * inline above it: the panel is sized to its content, so nothing floats.
  * Skip and Close end it for good; so does finishing it.
  */
@@ -38,18 +39,23 @@ export function useWidgetGuide(ready: boolean): {
   target: GuideTarget | undefined;
   element: ReactNode;
 } {
-  const { store } = useServices();
+  const { store, jobService } = useServices();
   const [seen, setSeen] = useState<boolean>(true);
   const [index, setIndex] = useState(0);
   const titleRef = useRef<HTMLParagraphElement>(null);
 
   useEffect(() => {
-    void store
-      .get([WIDGET_GUIDE_KEY, E2E_AUTO_START_KEY])
-      .then((s) =>
-        setSeen(s[WIDGET_GUIDE_KEY] !== undefined || !autoStartAllowed(import.meta.env.MODE, s)),
-      );
-  }, [store]);
+    // Only for someone who hasn't saved a job yet: people who have been using
+    // Rolestash know this panel, and Help → How do I…? is there if they forget.
+    void Promise.all([store.get([WIDGET_GUIDE_KEY, E2E_AUTO_START_KEY]), jobService.list()]).then(
+      ([s, jobs]) =>
+        setSeen(
+          s[WIDGET_GUIDE_KEY] !== undefined ||
+            jobs.length > 0 ||
+            !autoStartAllowed(import.meta.env.MODE, s),
+        ),
+    );
+  }, [store, jobService]);
 
   const show = ready && !seen;
   const step = STEPS[index];
@@ -95,7 +101,7 @@ export function useWidgetGuide(ready: boolean): {
             <button
               type="button"
               onClick={() => end('skipped')}
-              className="text-[13px] font-medium underline-offset-2 opacity-80 hover:underline hover:opacity-100"
+              className="min-h-6 rounded-md px-1 text-[13px] font-medium underline-offset-2 hover:underline"
             >
               Skip
             </button>

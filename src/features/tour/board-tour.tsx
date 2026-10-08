@@ -11,23 +11,35 @@ import {
   BOARD_TOUR_KEY,
   boardTourSteps,
   E2E_AUTO_START_KEY,
+  firstAppearance,
+  guideSteps,
+  needsPractice,
   PRACTICE_JOB_KEY,
   PRACTICE_POSTING,
   practiceTaskDone,
   readTourRecord,
-  shouldAutoStart,
+  type BoardTourContext,
   type BoardTourStep,
+  type GuideTopic,
   type TourRecord,
 } from './board-tour-steps';
 import { BoardArt, CaptureArt, PinArt } from './tour-art';
+import { TourInvite } from './tour-invite';
 
 const sel = (name: string) => `[data-tour~="${name}"]`;
+const cardSel = (id: string) => `[data-job-id="${CSS.escape(id)}"]`;
+
+/** What is running: the whole tour, or one Help → How do I…? topic. */
+export type TourSubject = 'full' | GuideTopic;
 
 /**
  * The board's guided tour (ADR-0039). It opens by itself the first time
- * the board does, and again from Help → Take the tour. A practice card is
- * added for the hands-on steps and removed when the tour ends, however it
- * ends (a closed tab clears it next time).
+ * an empty board does; a board that already has jobs gets a corner card
+ * offering it instead. Help → Take the full tour replays it, and Help →
+ * How do I…? runs one feature's steps on their own. A practice card is
+ * added for the hands-on steps and removed when the guide ends, however it
+ * ends (a closed tab clears it next time). Nothing else on the board is
+ * changed.
  */
 export function useBoardTour({
   jobs,
@@ -38,6 +50,7 @@ export function useBoardTour({
   openJobId,
   openCard,
   openProfile,
+  prepare,
 }: {
   jobs: readonly Job[];
   loaded: boolean;
@@ -47,11 +60,23 @@ export function useBoardTour({
   openJobId: string | undefined;
   openCard: (id: string | undefined) => void;
   openProfile: () => void;
-}): { active: boolean; start: () => void; element: ReactNode } {
+  /** Clears what would hide the practice card: search, selection, open dialogs. */
+  prepare: () => void;
+}): {
+  /** A tour or guide is showing. */
+  running: boolean;
+  /** The corner card offering the tour is showing. */
+  offered: boolean;
+  start: (subject?: TourSubject) => void;
+  element: ReactNode;
+} {
   const { store, jobService } = useServices();
   const live = useLiveJobs();
   const toast = useToast();
-  const [active, setActive] = useState(false);
+  const [subject, setSubject] = useState<TourSubject | undefined>();
+  const active = subject !== undefined;
+  /** The corner card offering the tour to someone who already has jobs. */
+  const [invite, setInvite] = useState(false);
   const [index, setIndex] = useState(0);
   const [pinned, setPinned] = useState<boolean | undefined>(true);
   const [practiceId, setPracticeId] = useState<string>();
@@ -65,6 +90,15 @@ export function useBoardTour({
     if (!active) run.current += 1;
   }, [active]);
 
+  const lanes = useMemo(() => laneStages(stages), [stages]);
+  const practice = practiceId ? jobs.find((j) => j.id === practiceId) : undefined;
+  /** One of the person's own cards, for "open a card" when there's no practice card. */
+  const ownCard = useMemo(
+    () => jobs.find((j) => !j.archivedAt && j.id !== practiceId),
+    [jobs, practiceId],
+  );
+  const ownJobs = jobs.filter((j) => j.id !== practiceId).length;
+
   const removePractice = useCallback(
     async (id: string | undefined) => {
       if (id) {
@@ -76,43 +110,15 @@ export function useBoardTour({
     [jobService, live, store],
   );
 
-  // Once per page: tidy a practice card a closed tab left, then maybe start.
-  useEffect(() => {
-    if (!loaded || checked.current) return;
-    checked.current = true;
-    void Promise.all([
-      store.get([BOARD_TOUR_KEY, PRACTICE_JOB_KEY, E2E_AUTO_START_KEY]),
-      isPinned(),
-    ]).then(async ([stored, pin]) => {
-      setPinned(pin);
-      const leftover = stored[PRACTICE_JOB_KEY];
-      if (typeof leftover === 'string') await removePractice(leftover);
-      if (
-        autoStartAllowed(import.meta.env.MODE, stored) &&
-        shouldAutoStart(readTourRecord(stored[BOARD_TOUR_KEY]))
-      ) {
-        setIndex(0);
-        setActive(true);
-      }
-    });
-  }, [loaded, store, removePractice]);
+  /** A full Free board has no room for the practice card: know before step one. */
+  const checkRoom = useCallback(async (): Promise<boolean> => {
+    const check = await jobService.limitCheck().catch(() => undefined);
+    const room = check?.allowed !== false;
+    setPracticeFailed(!room);
+    return room;
+  }, [jobService]);
 
-  const start = useCallback(() => {
-    openCard(undefined);
-    setPracticeFailed(false);
-    void isPinned().then(setPinned);
-    setIndex(0);
-    setActive(true);
-  }, [openCard]);
-
-  const lanes = useMemo(() => laneStages(stages), [stages]);
-  const practice = practiceId ? jobs.find((j) => j.id === practiceId) : undefined;
-  const steps = useMemo(
-    () => boardTourSteps({ accounts, autofill, pinned, practice: !practiceFailed }),
-    [accounts, autofill, pinned, practiceFailed],
-  );
-
-  /** "Start the tour": add the practice card in the first lane (a full Free board skips it). */
+  /** Adds the practice card at the top of the first lane. */
   const addPractice = useCallback(async () => {
     const first = lanes[0];
     const thisRun = run.current;
@@ -130,45 +136,123 @@ export function useBoardTour({
       setStartStageId(job.stageId);
       setPracticeId(job.id);
     } catch {
-      // No room on the plan: the tour runs without the hands-on steps.
+      // No room on the plan: the guide runs without the hands-on steps.
       setPracticeFailed(true);
     }
   }, [jobService, lanes, live, store, removePractice]);
 
+  const context = useCallback(
+    (practiceOk: boolean): BoardTourContext => ({
+      accounts,
+      autofill,
+      pinned,
+      practice: practiceOk,
+      ownJob: ownCard !== undefined,
+    }),
+    [accounts, autofill, pinned, ownCard],
+  );
+  const steps = useMemo(
+    () =>
+      subject === undefined
+        ? []
+        : subject === 'full'
+          ? boardTourSteps(context(!practiceFailed))
+          : guideSteps(subject, context(!practiceFailed)),
+    [subject, context, practiceFailed],
+  );
+
+  // Once per page: tidy a practice card a closed tab left, then maybe start.
+  useEffect(() => {
+    if (!loaded || checked.current) return;
+    checked.current = true;
+    void Promise.all([
+      store.get([BOARD_TOUR_KEY, PRACTICE_JOB_KEY, E2E_AUTO_START_KEY]),
+      isPinned(),
+    ]).then(async ([stored, pin]) => {
+      setPinned(pin);
+      const leftover = stored[PRACTICE_JOB_KEY];
+      const own = jobs.filter((j) => j.id !== leftover).length;
+      if (typeof leftover === 'string') await removePractice(leftover);
+      if (!autoStartAllowed(import.meta.env.MODE, stored)) return;
+      const how = firstAppearance(readTourRecord(stored[BOARD_TOUR_KEY]), own);
+      if (how === 'invite') setInvite(true);
+      if (how === 'tour') {
+        await checkRoom();
+        setIndex(0);
+        setSubject('full');
+      }
+    });
+  }, [loaded, jobs, store, removePractice, checkRoom]);
+
+  const start = useCallback(
+    (next: TourSubject = 'full') => {
+      prepare();
+      openCard(undefined);
+      setInvite(false);
+      void isPinned().then(setPinned);
+      void checkRoom().then((room) => {
+        // A topic with hands-on steps gets its practice card straight away;
+        // the full tour adds it after the welcome, so skipping there adds nothing.
+        if (next !== 'full' && room && needsPractice(guideSteps(next, context(true))))
+          void addPractice();
+        setIndex(0);
+        setSubject(next);
+      });
+    },
+    [prepare, openCard, checkRoom, context, addPractice],
+  );
+
+  /** "Not now" on the corner card: it doesn't come back; Help still has the tour. */
+  const declineInvite = useCallback(() => {
+    setInvite(false);
+    const record: TourRecord = { status: 'skipped', at: new Date().toISOString(), step: 'invite' };
+    void store.set({ [BOARD_TOUR_KEY]: record });
+    toast({ message: 'You can take the tour any time from Help (?).', tone: 'info' });
+  }, [store, toast]);
+
   const end = useCallback(
     (how: TourEnd) => {
+      const step = steps[index];
+      setSubject(undefined);
+      // A card the guide was about closes with it.
+      if (openJobId && (openJobId === practiceId || step === 'card' || step === 'open-card'))
+        openCard(undefined);
+      void removePractice(practiceId);
+      setPracticeId(undefined);
+      // Only the full tour is remembered; a single topic leaves the record alone.
+      if (subject !== 'full') return;
       const record: TourRecord = {
         status: how,
         at: new Date().toISOString(),
-        ...(how === 'skipped' ? { step: steps[index] } : {}),
+        ...(how === 'skipped' && step ? { step } : {}),
       };
-      setActive(false);
-      if (practiceId && openJobId === practiceId) openCard(undefined);
       void store.set({ [BOARD_TOUR_KEY]: record });
-      void removePractice(practiceId);
-      setPracticeId(undefined);
       toast({
         message:
           how === 'finished'
-            ? 'You’re all set. Replay the tour any time from Help (?).'
-            : 'Tour closed. Replay it any time from Help (?).',
+            ? 'You’re all set. Replay the tour, or one feature, from Help (?).'
+            : 'Tour closed. Replay it, or one feature, from Help (?).',
         tone: how === 'finished' ? 'success' : 'info',
       });
     },
-    [steps, index, practiceId, openJobId, openCard, store, removePractice, toast],
+    [steps, index, subject, practiceId, openJobId, openCard, store, removePractice, toast],
   );
+
+  /** The card the "card" step shows: the practice card, else one of theirs. */
+  const shownCardId = practiceId ?? ownCard?.id;
 
   /** Moving between steps keeps the drawer in step: open on "card", closed elsewhere. */
   const go = useCallback(
     (next: number) => {
       const from = steps[index];
       const to = steps[next];
-      if (from === 'welcome' && next > index && !practiceId) void addPractice();
-      if (to === 'card' && practiceId && openJobId !== practiceId) openCard(practiceId);
-      if (to !== 'card' && openJobId !== undefined && openJobId === practiceId) openCard(undefined);
+      if (from === 'welcome' && next > index && !practiceId && !practiceFailed) void addPractice();
+      if (to === 'card' && openJobId === undefined && shownCardId) openCard(shownCardId);
+      if (to !== 'card' && openJobId !== undefined && (from === 'card' || openJobId === practiceId))
+        openCard(undefined);
       setIndex(next);
     },
-    [steps, index, practiceId, openJobId, openCard, addPractice],
+    [steps, index, practiceId, practiceFailed, openJobId, shownCardId, openCard, addPractice],
   );
 
   const views = useMemo(
@@ -177,7 +261,10 @@ export function useBoardTour({
         stepView(step, {
           lanes,
           practice,
-          practiceSelector: practiceId ? `[data-job-id="${CSS.escape(practiceId)}"]` : undefined,
+          practiceFailed,
+          returning: ownJobs > 0,
+          practiceSelector: practiceId ? cardSel(practiceId) : undefined,
+          cardSelector: shownCardId ? cardSel(shownCardId) : undefined,
           done: practiceTaskDone(step, practice, startStageId, openJobId),
           openProfile: () => {
             end('finished');
@@ -185,13 +272,42 @@ export function useBoardTour({
           },
         }),
       ),
-    [steps, lanes, practice, practiceId, startStageId, openJobId, end, openProfile],
+    [
+      steps,
+      lanes,
+      practice,
+      practiceFailed,
+      ownJobs,
+      practiceId,
+      shownCardId,
+      startStageId,
+      openJobId,
+      end,
+      openProfile,
+    ],
   );
 
+  const full = subject === 'full';
   return {
-    active,
+    // A topic with nothing to show here (it can't happen in practice) shows nothing.
+    running: active && views.length > 0,
+    offered: invite,
     start,
-    element: active ? <Tour steps={views} index={index} onIndex={go} onEnd={end} /> : null,
+    element: active ? (
+      views.length ? (
+        <Tour
+          steps={views}
+          index={index}
+          onIndex={go}
+          onEnd={end}
+          {...(full
+            ? { startLabel: 'Start the tour' }
+            : { finishLabel: 'Done', skipLabel: null, closeLabel: 'Close guide' })}
+        />
+      ) : null
+    ) : invite ? (
+      <TourInvite onStart={() => start('full')} onDecline={declineInvite} />
+    ) : null,
   };
 }
 
@@ -200,7 +316,13 @@ function stepView(
   ctx: {
     lanes: readonly Stage[];
     practice: Job | undefined;
+    /** No room for a practice card: the copy mustn't promise one. */
+    practiceFailed: boolean;
+    /** The board already has the person's own jobs. */
+    returning: boolean;
     practiceSelector: string | undefined;
+    /** The card "open a card" points at: the practice card, else one of theirs. */
+    cardSelector: string | undefined;
     done: boolean;
     openProfile: () => void;
   },
@@ -210,17 +332,23 @@ function stepView(
     case 'welcome':
       return {
         id: step,
-        title: 'Welcome to Rolestash',
+        title: ctx.returning ? 'A tour of Rolestash' : 'Welcome to Rolestash',
         illustration: <BoardArt />,
         body: (
           <>
             <p>
-              Rolestash keeps every job you’re going for on one board, from the moment you save it
-              to the offer.
+              {ctx.returning
+                ? 'Every part of your board, step by step, including the ones that hide in menus.'
+                : 'Rolestash keeps every job you’re going for on one board, from the moment you save it to the offer.'}
             </p>
             <p>
-              This tour takes about two minutes. You’ll try a practice card, and we’ll remove it at
-              the end. Skip it if you like. You can replay it any time from <b>Help (?)</b>.
+              It takes about two minutes.{' '}
+              {ctx.practiceFailed
+                ? ''
+                : ctx.returning
+                  ? 'You’ll try things on a practice card, which we remove at the end. Your own jobs stay exactly as they are. '
+                  : 'You’ll try a practice card, and we’ll remove it at the end. '}
+              Skip it if you like. You can replay it any time from <b>Help (?)</b>.
             </p>
           </>
         ),
@@ -270,8 +398,14 @@ function stepView(
               .
             </p>
             <p>
-              We’ve added a practice card to <b>{ctx.lanes[0]?.name ?? 'the first lane'}</b>. You
-              can rename lanes, change their colour or add your own from <b>⋯ → Edit columns</b>.
+              {ctx.practiceFailed ? null : (
+                <>
+                  We’ve added a practice card at the top of{' '}
+                  <b>{ctx.lanes[0]?.name ?? 'the first lane'}</b>.{' '}
+                </>
+              )}
+              You can rename lanes, change their colour or add your own from <b>⋯ → Edit columns</b>
+              .
             </p>
           </>
         ),
@@ -288,23 +422,33 @@ function stepView(
               Drag a card into another lane. Moving it to {second} records the date you applied.
             </p>
             <p>
-              With a keyboard: Tab to the card, press <Kbd>Space</Kbd>, move it with the arrow keys,
-              then press <Kbd>Space</Kbd> again.
+              With a keyboard: use <b>Go to the card</b> below, press <Kbd>Space</Kbd>, move it with
+              the arrow keys, then press <Kbd>Space</Kbd> again. Or open the card and pick its lane
+              at the top.
             </p>
           </>
         ),
         target: sel('board'),
+        highlight: ctx.practiceSelector,
         placement: 'bottom',
-        task: { label: `drag the practice card to ${second}`, done: ctx.done },
+        task: {
+          label: `drag the practice card (ringed) to ${second}`,
+          done: ctx.done,
+          focus: ctx.practiceSelector,
+        },
       };
     case 'open-card':
       return {
         id: step,
         title: 'Open a card for the details',
         body: <p>Click a card, or press Enter on it, to see everything about that job.</p>,
-        target: ctx.practiceSelector,
+        target: ctx.cardSelector,
         placement: 'right',
-        task: { label: 'click the practice card', done: ctx.done },
+        task: {
+          label: ctx.practice ? 'click the practice card' : 'click any card',
+          done: ctx.done,
+          focus: ctx.cardSelector,
+        },
       };
     case 'card':
       return {
@@ -464,8 +608,8 @@ function stepView(
         illustration: <CaptureArt />,
         body: (
           <p>
-            Open a job posting you like and click <b>Save job</b>. It will show up here. We’ll
-            remove the practice card when you finish.
+            Open a job posting you like and click <b>Save job</b>. It will show up here.
+            {ctx.practice ? ' We’ll remove the practice card when you finish.' : ''}
           </p>
         ),
         placement: 'center',

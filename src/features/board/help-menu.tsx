@@ -1,16 +1,30 @@
-import { Bug, CircleHelp, Compass, Keyboard, LifeBuoy } from 'lucide-react';
+import { BookOpen, Bug, CircleHelp, Compass, Keyboard, LifeBuoy } from 'lucide-react';
 import { useState } from 'react';
 import { browser } from 'wxt/browser';
 import { Button, IconButton } from '@/ui/components/button';
 import { Menu } from '@/ui/components/menu';
 import { Kbd } from '@/ui/components/misc';
 import { Dialog } from '@/ui/components/overlay';
+import type { GuideTopic } from '@/features/tour/board-tour-steps';
+import { GuidesDialog } from '@/features/tour/guides-dialog';
 
 const SUPPORT_URL = 'https://rolestash.com/support/';
 
-/** Help (?) in the board's header: the tour, shortcuts, help pages, a problem report. */
-export function HelpMenu({ onTour, onReport }: { onTour: () => void; onReport: () => void }) {
+/**
+ * Help (?) in the board's header: the full tour, a guide to any one feature
+ * (How do I…?), shortcuts, help pages and a problem report.
+ */
+export function HelpMenu({
+  topics,
+  onGuide,
+  onReport,
+}: {
+  topics: readonly GuideTopic[];
+  onGuide: (topic: GuideTopic | 'full') => void;
+  onReport: () => void;
+}) {
   const [shortcuts, setShortcuts] = useState(false);
+  const [guides, setGuides] = useState(false);
   return (
     <>
       <span data-tour="help">
@@ -21,7 +35,16 @@ export function HelpMenu({ onTour, onReport }: { onTour: () => void; onReport: (
             </IconButton>
           )}
           items={[
-            { label: 'Take the tour', icon: <Compass className="size-4" />, onSelect: onTour },
+            {
+              label: 'How do I…?',
+              icon: <BookOpen className="size-4" />,
+              onSelect: () => setGuides(true),
+            },
+            {
+              label: 'Take the full tour',
+              icon: <Compass className="size-4" />,
+              onSelect: () => onGuide('full'),
+            },
             {
               label: 'Keyboard shortcuts',
               icon: <Keyboard className="size-4" />,
@@ -38,6 +61,12 @@ export function HelpMenu({ onTour, onReport }: { onTour: () => void; onReport: (
         />
       </span>
       <ShortcutsDialog open={shortcuts} onClose={() => setShortcuts(false)} />
+      <GuidesDialog
+        open={guides}
+        onClose={() => setGuides(false)}
+        topics={topics}
+        onPick={onGuide}
+      />
     </>
   );
 }

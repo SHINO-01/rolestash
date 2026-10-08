@@ -31,6 +31,7 @@ import { WIDGET_ALL_SITES_KEY } from '@/features/capture/widget-protocol';
 import { PinTip } from './pin-tip';
 import { HelpMenu } from './help-menu';
 import { useBoardTour } from '@/features/tour/board-tour';
+import { guideTopics } from '@/features/tour/board-tour-steps';
 import { Greeting } from '@/features/feedback/greeting';
 import { RatingPrompt } from '@/features/feedback/rating-prompt';
 import { ReportDialog } from '@/features/feedback/report-dialog';
@@ -148,37 +149,6 @@ export function BoardPage() {
     history.replaceState(null, '', id ? `#job=${encodeURIComponent(id)}` : location.pathname);
   }, []);
 
-  // The guided tour (ADR-0039): opens by itself the first time, and from Help.
-  const tour = useBoardTour({
-    jobs,
-    loaded,
-    stages: settings.stages,
-    accounts: account !== undefined,
-    autofill: services.autofill !== undefined,
-    openJobId,
-    openCard,
-    openProfile: useCallback(() => setDialog('profile'), []),
-  });
-  const tourActive = tour.active;
-
-  // Keyboard: "/" focuses search, "n" adds a job (not while the tour is showing).
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (tourActive) return;
-      const target = e.target as HTMLElement;
-      if (target.closest('input, textarea, select, [contenteditable], dialog[open]')) return;
-      if (e.key === '/') {
-        e.preventDefault();
-        searchRef.current?.focus();
-      } else if (e.key === 'n' && !e.metaKey && !e.ctrlKey) {
-        e.preventDefault();
-        setDialog('add');
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [tourActive]);
-
   function download(contents: string, type: string, name: string, extension: string) {
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([contents], { type }));
@@ -244,6 +214,43 @@ export function BoardPage() {
     return () => window.removeEventListener('keydown', onKey);
   }, [selecting, selected, clearSelection]);
 
+  // The guided tour (ADR-0039): opens by itself the first time, and from Help.
+  const tour = useBoardTour({
+    jobs,
+    loaded,
+    stages: settings.stages,
+    accounts: account !== undefined,
+    autofill: services.autofill !== undefined,
+    openJobId,
+    openCard,
+    openProfile: useCallback(() => setDialog('profile'), []),
+    // Nothing may hide the practice card: no search, no selection, no dialog.
+    prepare: useCallback(() => {
+      setQuery('');
+      clearSelection();
+      setDialog(null);
+    }, [clearSelection]),
+  });
+  const tourActive = tour.running;
+
+  // Keyboard: "/" focuses search, "n" adds a job (not while the tour is showing).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (tourActive) return;
+      const target = e.target as HTMLElement;
+      if (target.closest('input, textarea, select, [contenteditable], dialog[open]')) return;
+      if (e.key === '/') {
+        e.preventDefault();
+        searchRef.current?.focus();
+      } else if (e.key === 'n' && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        setDialog('add');
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [tourActive]);
+
   function exportCalendar() {
     const events = boardEvents(jobs);
     download(
@@ -294,6 +301,17 @@ export function BoardPage() {
 
   return (
     <div className="flex h-dvh flex-col">
+      {/* Keyboard users can skip the header's dozen controls. */}
+      <a
+        href="#board-main"
+        onClick={(e) => {
+          e.preventDefault();
+          document.getElementById('board-main')?.focus();
+        }}
+        className="bg-surface text-ink shadow-pop sr-only z-50 rounded-lg px-3 py-2 text-sm font-medium focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
+      >
+        Skip to the board
+      </a>
       <header className="flex h-16 shrink-0 items-center gap-4 px-6">
         <Logo />
         <div className="relative ml-4 w-full max-w-sm min-w-48" data-tour="search">
@@ -383,7 +401,14 @@ export function BoardPage() {
             {accountState?.signedIn ? planChip(accountState.plan).label : 'Sign in'}
           </Button>
         ) : null}
-        <HelpMenu onTour={tour.start} onReport={() => setDialog('report')} />
+        <HelpMenu
+          topics={guideTopics({
+            accounts: account !== undefined,
+            autofill: services.autofill !== undefined,
+          })}
+          onGuide={tour.start}
+          onReport={() => setDialog('report')}
+        />
         <span data-tour="board-menu">
           <Menu
             trigger={(props) => (
@@ -522,13 +547,13 @@ export function BoardPage() {
         />
       ) : null}
 
-      <main className="min-h-0 flex-1 pt-2">
+      <main id="board-main" tabIndex={-1} className="min-h-0 flex-1 pt-2 outline-none">
         {!loaded ? (
           <div className="text-muted flex h-full items-center justify-center gap-2 text-sm">
             <Spinner /> Loading your board…
           </div>
         ) : jobs.length === 0 ? (
-          <EmptyBoard onAdd={() => setDialog('add')} onTour={tour.start} />
+          <EmptyBoard onAdd={() => setDialog('add')} onTour={() => tour.start('full')} />
         ) : (
           <SelectionContext.Provider value={selection}>
             <Kanban
@@ -586,7 +611,7 @@ export function BoardPage() {
         where="board"
         {...(accountState?.email ? { email: accountState.email } : {})}
       />
-      {tourActive ? null : <RatingPrompt feedback={services.feedback} />}
+      {tourActive || tour.offered ? null : <RatingPrompt feedback={services.feedback} />}
       {tour.element}
       <UnsortedDialog open={dialog === 'unsorted'} onClose={() => setDialog(null)} />
       <InsightsDialog

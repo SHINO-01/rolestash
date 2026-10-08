@@ -2,18 +2,13 @@
 
 Everything still open, in one place, with who does it. Details live in the
 linked guides; tick items here when they're done and move finished work
-into the roadmap or changelog. Last reviewed 7 October 2026.
+into the roadmap or changelog. Last reviewed 9 October 2026.
 
 ## Owner
 
-- [ ] **v0.6.0 is in Chrome Web Store review** (submitted 7 October, in
-      place of 0.5.0; 0.4.7 is live). Now: paste the new Privacy →
-      Authentication information and the description from
-      `store/listing.md` into the dashboard
+- [ ] **0.6.2 (guided tour, Help guides):** approve the waiting Release
+      run's Chrome Web Store step; 0.6.1 is live
       ([release-backlog.md](release-backlog.md)).
-- [ ] **When 0.6.0 is live, submit 0.6.1:** approve the waiting Release
-      run's Chrome Web Store step, then upload the new screenshots and the
-      board line ([release-backlog.md](release-backlog.md)).
 - [ ] **After 0.6.1 is live: make `rolestash` private** (owner, 8 October;
       `rolestash-extension` stays public: its store approval gate and
       environment secrets need a public repo on the current GitHub plan).
@@ -117,14 +112,14 @@ into the roadmap or changelog. Last reviewed 7 October 2026.
       `supabase/templates/password-changed.html` into _Password changed_
       (subject "Your Rolestash password was changed").
 - [ ] **Store releases:** one at a time, in the order of
-      [release-backlog.md](release-backlog.md) (0.6.0 in review).
+      [release-backlog.md](release-backlog.md) (0.6.2 next).
 - [ ] **Go public** when the beta is clean: Distribution → Visibility →
       Public ([launch.md](guides/launch.md#7-going-public)).
 
 ## Ours
 
-- [ ] **When 0.6.0 is approved:** set "Current version" on `/known-issues/`
-      to 0.6.0 and the date.
+- [ ] **When 0.6.2 is approved:** set "Current version" on `/known-issues/`
+      to 0.6.2 and the date.
 - [ ] **By 4 January 2027:** re-check the facts on `/compare/teal/` and
       `/compare/huntr/` and update their "Facts checked" date
       ([website.md](guides/website.md#search)).

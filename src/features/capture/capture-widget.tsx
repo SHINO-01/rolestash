@@ -2,6 +2,7 @@ import clsx from 'clsx';
 import {
   AlertCircle,
   Bug,
+  FileSearch,
   Check,
   EyeOff,
   Globe,
@@ -25,7 +26,13 @@ import { Logo } from '@/ui/components/misc';
 import { WORKPLACE_LABEL } from '@/ui/format';
 import { useServices, useSettings } from '@/ui/hooks/services';
 import { STAGE_STYLE } from '@/ui/stage-style';
-import { draftFromResult, emptyDraft, postingFromDraft, type Draft } from './capture-draft';
+import {
+  draftFromResult,
+  emptyDraft,
+  looksLikeNoJob,
+  postingFromDraft,
+  type Draft,
+} from './capture-draft';
 import { CaptureForm } from './capture-form';
 import { DebugPanel } from './debug-panel';
 import { closeWidget, reportHeight } from './widget-frame';
@@ -60,6 +67,8 @@ export function CaptureWidget() {
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState(false);
   const [debug, setDebug] = useState(false);
+  /** "Save this page anyway" on a page that doesn't look like a job posting. */
+  const [anyway, setAnyway] = useState(false);
   const [error, setError] = useState<string>();
   const [limited, setLimited] = useState<JobLimitError>();
   const [reporting, setReporting] = useState(false);
@@ -219,7 +228,11 @@ export function CaptureWidget() {
     closeWidget();
   }
 
-  const result = state.kind === 'ready' ? state.result : undefined;
+  const found = state.kind === 'ready' ? state.result : undefined;
+  // Not a job posting (a news article, a search page): say so, rather than
+  // open a job form titled after whatever the page is.
+  const notAJob = found !== undefined && looksLikeNoJob(found) && !anyway;
+  const result = notAJob ? undefined : found;
   // First run: a short guide to the quick-save view (ADR-0039).
   const guide = useWidgetGuide(result !== undefined && !editing);
   return (
@@ -294,6 +307,10 @@ export function CaptureWidget() {
           />
         ) : null}
 
+        {notAJob ? (
+          <NotAJob onOpenBoard={() => void openBoard()} onSaveAnyway={() => setAnyway(true)} />
+        ) : null}
+
         {guide.element}
 
         {result ? (
@@ -343,6 +360,39 @@ export function CaptureWidget() {
         {...(accountState?.email ? { email: accountState.email } : {})}
         {...(tab?.url?.startsWith('http') ? { page: tab.url } : {})}
       />
+    </div>
+  );
+}
+
+/** The page isn't a job posting: what Rolestash is for, and the way to the board. */
+function NotAJob({
+  onOpenBoard,
+  onSaveAnyway,
+}: {
+  onOpenBoard: () => void;
+  onSaveAnyway: () => void;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-3 py-2 text-center">
+      <div className="bg-accent-soft text-accent-ink flex size-10 items-center justify-center rounded-full">
+        <FileSearch className="size-5" />
+      </div>
+      <div>
+        <p className="text-[15px] font-semibold">This doesn’t look like a job posting</p>
+        <p className="text-muted mx-auto mt-1 max-w-[300px] text-[13px] leading-relaxed">
+          Rolestash saves job ads. Open one on LinkedIn, Seek, Indeed or another job site, then
+          click <b className="text-ink font-medium">Save job</b> at the edge of the page.
+        </p>
+      </div>
+      <div className="flex w-full flex-col gap-2">
+        <Button variant="primary" icon={<LayoutGrid className="size-4" />} onClick={onOpenBoard}>
+          Open my board
+        </Button>
+        <Button variant="ghost" onClick={onSaveAnyway}>
+          It is a job: save this page
+        </Button>
+      </div>
+      <p className="text-subtle text-xs">New here? The board has a short tour under Help (?).</p>
     </div>
   );
 }

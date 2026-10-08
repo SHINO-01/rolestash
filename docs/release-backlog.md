@@ -10,49 +10,35 @@ no store review (the website, the web board, Edge Functions, the database,
 the operations dashboard) go live when CI deploys them and are not listed
 here, except where a release depends on them.
 
-_Last updated 7 October 2026._
+_Last updated 9 October 2026._
 
-## In review
+## Live
 
-| Version | Submitted  | What                                                                                                                 | When approved                                                                                               |
-| ------- | ---------- | -------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| 0.6.0   | 7 Oct 2026 | Referrals in Account, discount codes, phone QR, password, two-step, sign out everywhere; includes 0.5.0's four lanes | Set `/known-issues/` current version to 0.6.0 and the date. 0.4.7 (approved 7 Oct 2026) is live until then. |
-
-- **How it went:** the owner approved the waiting **Release** run
-  [37586728791](https://github.com/SHINO-01/rolestash-extension/actions/runs/37586728791)
-  on 7 October 2026 (07:29 UTC, 18:29 Sydney) while 0.5.0 was still in
-  review, so 0.6.0 took 0.5.0's place in the queue. 0.6.0 carries everything
-  0.5.0 had (the four board lanes, ADR-0034); the five screenshots and the
-  Free line were already in the dashboard.
-- **Owner, now:** in the dashboard, paste the new **Privacy → Authentication
-  information** text and the description from the release repo's
-  `store/listing.md` (the optional password, kept by Supabase Auth only as a
-  salted hash, and the two-step secret key). If the dashboard says editing
-  would restart the review, do it anyway: the disclosure must match what
-  0.6.0 does.
+**0.6.1** (five lanes, Rejected back as a lane), live on 9 October 2026. It
+followed 0.6.0 (referrals, discount codes, phone QR, optional password,
+two-step sign-in, sign out everywhere).
 
 ## Next, in order
 
-### 1. 0.6.1: Rejected is a lane again
+### 1. 0.6.2: guided tour, Help guides, a clearer first run
 
-- **State:** released and packaged on 7 October 2026: tag `v0.6.1`, release
-  PR [SHINO-01/rolestash-extension#18](https://github.com/SHINO-01/rolestash-extension/pull/18)
-  merged (five-lane screenshots, listing line), GitHub Release built. The
-  **Release** run
-  [37614825963](https://github.com/SHINO-01/rolestash-extension/actions/runs/37614825963)
-  is **waiting at the Chrome Web Store approval** on purpose. The web board
-  already shows the fifth lane.
-- **Contains:** five lanes (Saved, Applied, Interviewing, Offer, Rejected);
-  lanes narrow down to 232px so all five fit a 1280px window; new jobs still
-  can't start in Rejected (ADR-0034, amended).
-- **Ship it, once 0.6.0 is live (owner):** approve that run's
-  `chrome-web-store` deployment (Actions → the run → Review deployments). A
-  new manual or daily run won't submit: it sees v0.6.1 already released and
-  stops. If the approval expires (30 days), delete the v0.6.1 GitHub Release
-  and tag in the release repo and run **Release** again. Then upload the five
-  screenshots from `store/screenshots/` and paste the changed board line from
-  `store/listing.md` in the dashboard. The homepage clips and films still
-  show four lanes; re-shoot when convenient.
+- **State:** released on `dev` on 9 October 2026 (`npm run release -- 0.6.2`).
+  CI tags `v0.6.2`; the release repo's **Release** run builds it and waits at
+  the Chrome Web Store approval.
+- **Contains (ADR-0039):**
+  - the guided tour on first run, with a practice card;
+  - a corner card offering it to people who already have jobs;
+  - Help (?) → How do I…? per-feature guides, with the full tour, shortcuts,
+    help pages and Report a problem;
+  - the widget's first-run quick guide, and a "doesn't look like a job
+    posting" state instead of a job form on other pages;
+  - the board opening after install, a clearer empty board, a grouped board
+    menu, and higher-contrast small text.
+- **Ship it (owner):** approve the run's `chrome-web-store` deployment
+  (Actions → the run → Review deployments).
+- **When it's live:** set "Current version" on `/known-issues/` to 0.6.2 and
+  the date. The store screenshots still show the old header (no Help button);
+  retake them when convenient (`npm run store:screenshots`).
 
 ## Adding to the backlog
 

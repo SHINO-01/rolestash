@@ -74,7 +74,8 @@
   --jt-line-strong: #d4d4d8;
   --jt-ink: #18181b;
   --jt-muted: #52525b;
-  --jt-subtle: #8a8a93;
+  /* ≥4.5:1 on every surface, canvas to surface-3: small text uses it (WCAG AA). */
+  --jt-subtle: #686871;
   --jt-accent: #0b5d52;
   --jt-accent-hover: #084a41;
   --jt-accent-soft: #e7f3ef;
@@ -92,7 +93,7 @@
   --jt-line-strong: #34343c;
   --jt-ink: #f4f4f5;
   --jt-muted: #a1a1aa;
-  --jt-subtle: #71717a;
+  --jt-subtle: #8e8e97;
   --jt-accent: #5cc4ad;
   --jt-accent-hover: #7fd1be;
   --jt-accent-soft: #0d2b26;
@@ -121,6 +122,12 @@ body {
 @layer base {
   :focus-visible {
     @apply outline-accent outline-2 outline-offset-2;
+  }
+  /* Tailwind 4 leaves buttons with the default arrow; clickable things show a hand. */
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']),
+  summary {
+    cursor: pointer;
   }
   ::selection {
     @apply bg-accent-soft text-accent-ink;
@@ -156,6 +163,18 @@ body {
       0 0 0 9999px rgb(9 9 11 / 0.55);
   }
 }
+/* A second ring inside the spotlight: what to act on (the practice card). */
+.tour-highlight {
+  box-shadow: 0 0 0 3px var(--jt-accent);
+}
+.tour-pulse-ring {
+  animation: tour-pulse-ring 1.6s ease-in-out infinite;
+}
+@keyframes tour-pulse-ring {
+  50% {
+    box-shadow: 0 0 0 6px var(--jt-accent);
+  }
+}
 /* The widget's first-run guide: a ring on what it's talking about. */
 .guide-target {
   border-radius: 0.75rem;
@@ -170,7 +189,8 @@ body {
   .tour-spotlight {
     transition: none;
   }
-  .tour-pulse {
+  .tour-pulse,
+  .tour-pulse-ring {
     animation: none;
   }
 }

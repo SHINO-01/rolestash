@@ -83,7 +83,7 @@ export function Kbd({ children, large = false }: { children: string; large?: boo
   return (
     <kbd
       className={clsx(
-        'text-subtle bg-surface-2 border-line rounded border font-sans font-medium',
+        'text-muted bg-surface-2 border-line rounded border font-sans font-medium',
         large ? 'min-w-6 px-1.5 py-0.5 text-center text-xs' : 'px-1 text-[10px]',
       )}
     >

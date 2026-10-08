@@ -52,27 +52,74 @@ export interface BoardTourContext {
   pinned: boolean | undefined;
   /** A practice card is (or will be) on the board for the hands-on steps. */
   practice: boolean;
+  /**
+   * The board has one of the person's own jobs. Without a practice card
+   * (a full Free board), opening a card is shown on one of theirs, which
+   * changes nothing. Dragging is only ever practised on the practice card.
+   */
+  ownJob?: boolean;
 }
 
-/** The steps for this person, in order. */
+function applies(step: BoardTourStep, ctx: BoardTourContext): boolean {
+  switch (step) {
+    case 'pin':
+      return ctx.pinned !== true;
+    case 'drag':
+      return ctx.practice;
+    case 'open-card':
+    case 'card':
+      return ctx.practice || ctx.ownJob === true;
+    case 'autofill':
+      return ctx.autofill;
+    case 'account':
+      return ctx.accounts;
+    default:
+      return true;
+  }
+}
+
+/** The full tour's steps for this person, in order. */
 export function boardTourSteps(ctx: BoardTourContext): BoardTourStep[] {
-  return BOARD_TOUR_STEPS.filter((step) => {
-    switch (step) {
-      case 'pin':
-        return ctx.pinned !== true;
-      // Dragging and opening need a card to practise on.
-      case 'drag':
-      case 'open-card':
-      case 'card':
-        return ctx.practice;
-      case 'autofill':
-        return ctx.autofill;
-      case 'account':
-        return ctx.accounts;
-      default:
-        return true;
-    }
-  });
+  return BOARD_TOUR_STEPS.filter((step) => applies(step, ctx));
+}
+
+/**
+ * Help → How do I…?: one feature at a time, for when someone has forgotten
+ * how something works. Each topic is a short guide made of the tour's own
+ * steps, shown on the person's board.
+ */
+export const GUIDE_TOPICS = {
+  save: ['capture', 'pin'],
+  move: ['lanes', 'drag'],
+  details: ['open-card', 'card'],
+  add: ['add'],
+  search: ['search'],
+  insights: ['insights'],
+  history: ['history'],
+  select: ['select'],
+  menu: ['menu'],
+  autofill: ['autofill'],
+  account: ['account'],
+} as const satisfies Record<string, readonly BoardTourStep[]>;
+export type GuideTopic = keyof typeof GUIDE_TOPICS;
+
+/** A topic's steps for this person; empty when the topic doesn't apply to this build. */
+export function guideSteps(topic: GuideTopic, ctx: BoardTourContext): BoardTourStep[] {
+  const steps: readonly BoardTourStep[] = GUIDE_TOPICS[topic];
+  // Without a practice card, "Move a job" still explains the lanes.
+  return steps.filter((step) => applies(step, ctx));
+}
+
+/** The topics this build has (no autofill or accounts, no topic for them). */
+export function guideTopics(ctx: Pick<BoardTourContext, 'accounts' | 'autofill'>): GuideTopic[] {
+  return (Object.keys(GUIDE_TOPICS) as GuideTopic[]).filter(
+    (topic) => (topic !== 'autofill' || ctx.autofill) && (topic !== 'account' || ctx.accounts),
+  );
+}
+
+/** Whether a set of steps needs the practice card. */
+export function needsPractice(steps: readonly BoardTourStep[]): boolean {
+  return steps.some((step) => step === 'drag' || step === 'open-card' || step === 'card');
 }
 
 export interface TourRecord {
@@ -94,6 +141,20 @@ export function shouldAutoStart(record: TourRecord | undefined): boolean {
   return record === undefined;
 }
 
+/**
+ * How the tour first appears. On an empty board, the tour itself: there is
+ * nothing else to do yet. For someone who already has jobs (an update, not
+ * an install) the tour is only offered, in a corner card that leaves the
+ * board usable: they came to work, not to be taught.
+ */
+export function firstAppearance(
+  record: TourRecord | undefined,
+  ownJobs: number,
+): 'tour' | 'invite' | 'none' {
+  if (!shouldAutoStart(record)) return 'none';
+  return ownJobs > 0 ? 'invite' : 'tour';
+}
+
 /** The card the tour adds for practice, and removes when it ends. */
 export const PRACTICE_POSTING: Posting = {
   title: 'Practice job',
@@ -110,8 +171,11 @@ export function practiceTaskDone(
   startStageId: string | undefined,
   openJobId: string | undefined,
 ): boolean {
-  if (!practice) return false;
-  if (step === 'drag') return startStageId !== undefined && practice.stageId !== startStageId;
-  if (step === 'open-card') return openJobId === practice.id;
+  // Any card will do for opening: on a full Free board there is no practice card.
+  if (step === 'open-card') return openJobId !== undefined;
+  if (step === 'drag')
+    return (
+      practice !== undefined && startStageId !== undefined && practice.stageId !== startStageId
+    );
   return false;
 }

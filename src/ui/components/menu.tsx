@@ -17,7 +17,11 @@ export function Menu({
   items,
   align = 'end',
 }: {
-  trigger: (props: { onClick: () => void; 'aria-expanded': boolean }) => ReactNode;
+  trigger: (props: {
+    onClick: () => void;
+    'aria-expanded': boolean;
+    'aria-haspopup': 'menu';
+  }) => ReactNode;
   items: MenuEntry[];
   align?: 'start' | 'end';
 }) {
@@ -51,7 +55,11 @@ export function Menu({
 
   return (
     <div ref={root} className="relative">
-      {trigger({ onClick: () => setOpen((o) => !o), 'aria-expanded': open })}
+      {trigger({
+        onClick: () => setOpen((o) => !o),
+        'aria-expanded': open,
+        'aria-haspopup': 'menu',
+      })}
       {open ? (
         <div
           role="menu"

@@ -61,3 +61,24 @@ export function postingFromDraft(draft: Draft, result?: ExtractionResult): Posti
   if (salary) posting.salary = salary;
   return posting;
 }
+
+/**
+ * A page the widget should call "not a job posting" (ADR-0039): the
+ * extractor isn't sure it's a job, and found nothing a job ad has besides a
+ * title (a page's title is always there). A posting on an unknown careers
+ * site still has a company or a place, so it keeps the form.
+ */
+export function looksLikeNoJob(result: ExtractionResult): boolean {
+  if (result.isJobPage) return false;
+  const f = result.fields;
+  const jobDetails = [
+    f.company,
+    f.location,
+    f.salary,
+    f.workplaceType,
+    f.employmentTypes?.length ? f.employmentTypes : undefined,
+    f.closesAt,
+    f.externalId,
+  ];
+  return !jobDetails.some(Boolean);
+}

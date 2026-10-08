@@ -3,6 +3,11 @@ import {
   BOARD_TOUR_STEPS,
   boardTourSteps,
   E2E_AUTO_START_KEY,
+  firstAppearance,
+  GUIDE_TOPICS,
+  guideSteps,
+  guideTopics,
+  needsPractice,
   practiceTaskDone,
   readTourRecord,
   shouldAutoStart,
@@ -64,11 +69,61 @@ describe('the board tour (ADR-0039)', () => {
     expect(practiceTaskDone('drag', { ...practice, stageId: 'applied' }, 'saved', undefined)).toBe(
       true,
     );
+    // Dragging is only ever practised on the practice card.
+    expect(practiceTaskDone('drag', undefined, 'saved', 'p')).toBe(false);
+    // Opening any card counts: a full Free board has no practice card.
     expect(practiceTaskDone('open-card', practice, 'saved', undefined)).toBe(false);
     expect(practiceTaskDone('open-card', practice, 'saved', 'p')).toBe(true);
-    expect(practiceTaskDone('open-card', practice, 'saved', 'other')).toBe(false);
-    expect(practiceTaskDone('drag', undefined, 'saved', 'p')).toBe(false);
+    expect(practiceTaskDone('open-card', undefined, undefined, 'own')).toBe(true);
     expect(practiceTaskDone('lanes', practice, 'saved', 'p')).toBe(false);
+  });
+
+  it('opens on an empty board, and only offers itself on a board with jobs', () => {
+    expect(firstAppearance(undefined, 0)).toBe('tour');
+    expect(firstAppearance(undefined, 120)).toBe('invite');
+    expect(firstAppearance({ status: 'skipped', at: 'x', step: 'invite' }, 120)).toBe('none');
+    expect(firstAppearance({ status: 'finished', at: 'x' }, 0)).toBe('none');
+  });
+
+  it('shows "open a card" on one of their own when a full Free board has no room', () => {
+    const full = { ...EVERYTHING, practice: false, ownJob: true };
+    const steps = boardTourSteps(full);
+    expect(steps).not.toContain('drag');
+    expect(steps).toContain('open-card');
+    expect(steps).toContain('card');
+  });
+});
+
+describe('Help → How do I…? guides (ADR-0039)', () => {
+  it('has a topic for every feature step of the tour', () => {
+    const covered = new Set<string>(Object.values(GUIDE_TOPICS).flat());
+    for (const step of BOARD_TOUR_STEPS)
+      if (!['welcome', 'help', 'done'].includes(step)) expect(covered).toContain(step);
+  });
+
+  it('runs only the topic’s own steps', () => {
+    expect(guideSteps('search', EVERYTHING)).toEqual(['search']);
+    expect(guideSteps('move', EVERYTHING)).toEqual(['lanes', 'drag']);
+    expect(guideSteps('details', EVERYTHING)).toEqual(['open-card', 'card']);
+    expect(guideSteps('save', { ...EVERYTHING, pinned: true })).toEqual(['capture']);
+  });
+
+  it('still explains the lanes when there is no room for a practice card', () => {
+    expect(guideSteps('move', { ...EVERYTHING, practice: false })).toEqual(['lanes']);
+  });
+
+  it('lists autofill and accounts only in builds that have them', () => {
+    expect(guideTopics({ accounts: true, autofill: true })).toContain('account');
+    const bare = guideTopics({ accounts: false, autofill: false });
+    expect(bare).not.toContain('account');
+    expect(bare).not.toContain('autofill');
+    expect(bare).toContain('move');
+  });
+
+  it('adds a practice card only for topics with hands-on steps', () => {
+    expect(needsPractice(guideSteps('move', EVERYTHING))).toBe(true);
+    expect(needsPractice(guideSteps('details', EVERYTHING))).toBe(true);
+    expect(needsPractice(guideSteps('search', EVERYTHING))).toBe(false);
   });
 });
 
