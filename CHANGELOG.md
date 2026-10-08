@@ -6,6 +6,21 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- **Someone else signing in on the same browser starts clean.** Sync, a
+  connected inbox and email updates belonged to the last person, so they're
+  reset, and jobs left on the board aren't synced into the new account: a
+  notice asks whether to keep them or remove them from this browser.
+- **Signing out disconnects a connected inbox,** so mail access ends with you.
+- **Smoother guided tour:** the spotlight and the card glide between steps
+  and follow what they point at without lagging or flickering.
+
+### Changed
+
+- **Gmail for Google's review goes by a tester grant on the server,** so no
+  account is named in the extension.
+
 ## [0.6.4] — 2026-10-09
 
 ### Changed

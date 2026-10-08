@@ -10,6 +10,8 @@ import {
 import type { KeyValueStore } from '@/storage/key-value-store';
 import { AccountProfileSchema, firstNameFrom, type AccountProfile } from '@/domain/account-profile';
 import {
+  ACCOUNT_BOARD_FROM_KEY,
+  ACCOUNT_BOARD_OWNER_KEY,
   ACCOUNT_ENTITLEMENT_KEY,
   ACCOUNT_PROFILE_KEY,
   ACCOUNT_SECOND_STEP_KEY,
@@ -18,6 +20,12 @@ import {
   ACCOUNT_PRICES_KEY,
   ACCOUNT_NAME_SKIPPED_KEY,
   ACCOUNT_WELCOMED_KEY,
+  EMAIL_STATE_KEY,
+  isJobKey,
+  MAILBOX_AUTH_KEY,
+  MAILBOX_STATE_KEY,
+  SYNC_DELETIONS_KEY,
+  SYNC_STATE_KEY,
 } from '@/storage/keys';
 import {
   BackendError,
@@ -67,7 +75,21 @@ export interface AccountState {
   twoStep: boolean;
   /** Signed in, but waiting for the authenticator code (not signed in until then). */
   needsSecondStep: boolean;
+  /**
+   * Jobs on this browser came from another account (its email, masked) and
+   * wait for keepBoard() or removeBoard(); sync stays off until then.
+   */
+  boardFrom?: { email: string; jobs: number };
 }
+
+/** "sa…@gmail.com": enough to recognise, not to read out. */
+export function maskEmail(email: string): string {
+  const [user = '', domain = ''] = email.split('@');
+  return `${user.slice(0, 2)}…@${domain}`;
+}
+
+const BoardOwnerSchema = z.object({ id: z.string(), email: z.string().optional() });
+const BoardFromSchema = z.object({ email: z.string() });
 
 /** Where a password reset link lands: the web board, which asks for the new password. */
 export const PASSWORD_RESET_URL = 'https://rolestash.com/board/?reset=1';
@@ -107,6 +129,12 @@ export class AccountService implements PlanProvider {
 
   async state(): Promise<AccountState> {
     const { session, entitlement, profile } = await this.load();
+    const boardFrom = session ? await this.boardFrom() : undefined;
+    // Signed in from before boards had owners: this account owns this board.
+    if (session && !(await this.store.get([ACCOUNT_BOARD_OWNER_KEY]))[ACCOUNT_BOARD_OWNER_KEY])
+      await this.store.set({
+        [ACCOUNT_BOARD_OWNER_KEY]: { id: session.user.id, email: session.user.email },
+      });
     const plan = planOf(session ? entitlement : undefined, this.now());
     const name = session ? (profile.displayName ?? session.user.name) : undefined;
     const skipped = (await this.store.get([ACCOUNT_NAME_SKIPPED_KEY]))[ACCOUNT_NAME_SKIPPED_KEY];
@@ -129,7 +157,70 @@ export class AccountService implements PlanProvider {
         SessionSchema.safeParse(
           (await this.store.get([ACCOUNT_SECOND_STEP_KEY]))[ACCOUNT_SECOND_STEP_KEY],
         ).success,
+      ...(boardFrom ? { boardFrom } : {}),
     };
+  }
+
+  private async boardFrom(): Promise<{ email: string; jobs: number } | undefined> {
+    const all = await this.store.get(null);
+    const from = BoardFromSchema.safeParse(all[ACCOUNT_BOARD_FROM_KEY]);
+    if (!from.success) return undefined;
+    return { email: from.data.email, jobs: Object.keys(all).filter(isJobKey).length };
+  }
+
+  /**
+   * A new sign-in on this browser. The same account (or the first one here)
+   * carries on with the board. A different one starts clean: sync, the
+   * connected mailbox and email updates belonged to the last person, so
+   * they're reset here, and jobs left on the board wait for keepBoard() or
+   * removeBoard() instead of syncing into this account.
+   */
+  private async claimBoard(user: { id: string; email?: string | undefined }): Promise<void> {
+    const all = await this.store.get(null);
+    const owner = BoardOwnerSchema.safeParse(all[ACCOUNT_BOARD_OWNER_KEY]);
+    const me = { id: user.id, ...(user.email ? { email: user.email } : {}) };
+    if (!owner.success || owner.data.id === user.id) {
+      await this.store.set({ [ACCOUNT_BOARD_OWNER_KEY]: me });
+      return;
+    }
+    await this.store.remove([
+      SYNC_STATE_KEY,
+      SYNC_DELETIONS_KEY,
+      MAILBOX_STATE_KEY,
+      MAILBOX_AUTH_KEY,
+      EMAIL_STATE_KEY,
+    ]);
+    const hasJobs = Object.keys(all).some(isJobKey);
+    if (hasJobs)
+      await this.store.set({
+        [ACCOUNT_BOARD_FROM_KEY]: { email: maskEmail(owner.data.email ?? 'another account') },
+      });
+    else await this.store.set({ [ACCOUNT_BOARD_OWNER_KEY]: me });
+  }
+
+  /** "Keep them": the jobs from the other account become this account's board. */
+  async keepBoard(): Promise<void> {
+    const { session } = await this.load();
+    if (!session) return;
+    await this.store.remove([ACCOUNT_BOARD_FROM_KEY]);
+    await this.store.set({
+      [ACCOUNT_BOARD_OWNER_KEY]: { id: session.user.id, email: session.user.email },
+    });
+  }
+
+  /**
+   * "Remove them from this browser": deletes the other account's jobs here
+   * (without tombstones: they were never this account's). Its own synced
+   * copy, if it had one, is untouched.
+   */
+  async removeBoard(): Promise<void> {
+    const { session } = await this.load();
+    if (!session) return;
+    const all = await this.store.get(null);
+    await this.store.remove([...Object.keys(all).filter(isJobKey), ACCOUNT_BOARD_FROM_KEY]);
+    await this.store.set({
+      [ACCOUNT_BOARD_OWNER_KEY]: { id: session.user.id, email: session.user.email },
+    });
   }
 
   async currentPlan(): Promise<Plan> {
@@ -147,7 +238,8 @@ export class AccountService implements PlanProvider {
         ACCOUNT_SESSION_KEY in changes ||
         ACCOUNT_SECOND_STEP_KEY in changes ||
         ACCOUNT_ENTITLEMENT_KEY in changes ||
-        ACCOUNT_PROFILE_KEY in changes
+        ACCOUNT_PROFILE_KEY in changes ||
+        ACCOUNT_BOARD_FROM_KEY in changes
       )
         listener();
     });
@@ -316,6 +408,7 @@ export class AccountService implements PlanProvider {
       return;
     }
     await this.store.remove([ACCOUNT_SECOND_STEP_KEY]);
+    await this.claimBoard(session.user);
     await this.store.set({ [ACCOUNT_SESSION_KEY]: session });
     await this.refreshEntitlement();
     await this.refreshProfile().catch(() => undefined);
@@ -499,6 +592,8 @@ export class AccountService implements PlanProvider {
   async deleteAccount(): Promise<void> {
     await this.client.deleteAccount(await this.accessToken());
     await this.clear();
+    // The account is gone: the jobs kept on this device belong to no one now.
+    await this.store.remove([ACCOUNT_BOARD_OWNER_KEY, ACCOUNT_BOARD_FROM_KEY]);
   }
 
   async signOut(): Promise<void> {

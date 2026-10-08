@@ -132,29 +132,27 @@ const dinner = {
 };
 
 describe('offering Gmail before Google verifies the scope', () => {
-  it('release builds offer it only to reviewers until GMAIL_VERIFIED; other builds to all', () => {
+  it('release builds offer it only to testers until GMAIL_VERIFIED; other builds to all', () => {
     // Flip GMAIL_VERIFIED only once Google approves (docs/guides/gmail-verification.md).
     expect(GMAIL_VERIFIED).toBe(false);
     expect(gmailOffered('production')).toBe(false);
-    expect(gmailOffered('production', 'sam@gmail.com')).toBe(false);
-    expect(gmailOffered('production', ' Review@Rolestash.com ')).toBe(true);
+    expect(gmailOffered('production', true)).toBe(true);
     expect(gmailOffered('staging')).toBe(true);
     expect(gmailOffered('development')).toBe(true);
     expect(gmailOffered('e2e')).toBe(true);
-    expect(gmailOffered('production', undefined, true)).toBe(true);
+    expect(gmailOffered('production', false, true)).toBe(true);
   });
 
-  it('lists Gmail by account in a release build', () => {
-    const store = new MemoryKeyValueStore();
+  it('lists Gmail for a tester in a release build', () => {
     const service = new MailboxService(
-      store,
+      new MemoryKeyValueStore(),
       new FakeAuthFlow(),
       fetch,
       { googleClientId: 'gid', microsoftClientId: 'mid', mode: 'production' },
       testContext('2026-10-06T00:00:00.000Z'),
     );
-    expect(service.providers('sam@gmail.com')).toEqual(['outlook']);
-    expect(service.providers('review@rolestash.com')).toEqual(['gmail', 'outlook']);
+    expect(service.providers()).toEqual(['outlook']);
+    expect(service.providers(true)).toEqual(['gmail', 'outlook']);
   });
 });
 
@@ -211,7 +209,7 @@ describe('a busy inbox (owner demo, 9 October 2026)', () => {
     }));
     mail.push({
       id: 'nw',
-      from: 'Sakif Hussain <shachcha01@gmail.com>',
+      from: 'Jordan Lee <jordan.lee.careers@gmail.com>',
       subject: 'Interview invitation: Frontend Engineer at Northwind Labs',
       at: '2026-10-05T23:59:00Z',
       html: '<div>Thank you for applying for the Frontend Engineer role at Northwind Labs. We would like to invite you to a video interview.</div><div>When: Thursday, 15 October 2026 at 10:00am AEDT</div><div>Join: <a href="https://meet.google.com/abc-defg-hij">https://meet.google.com/abc-defg-hij</a></div><div>Kind regards,<br>Jordan Lee<br>Talent Team, Northwind Labs</div>',

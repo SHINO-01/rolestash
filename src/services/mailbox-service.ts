@@ -92,11 +92,11 @@ export class MailboxService {
   /**
    * The providers this account can connect here: each needs its OAuth client
    * ID, and Gmail waits for Google's verification in release builds, except
-   * for reviewers (gmailOffered).
+   * for testers (gmailOffered).
    */
-  providers(account?: string): MailProvider[] {
+  providers(tester = false): MailProvider[] {
     return [
-      ...(this.config.googleClientId && gmailOffered(this.config.mode ?? 'development', account)
+      ...(this.config.googleClientId && gmailOffered(this.config.mode ?? 'development', tester)
         ? (['gmail'] as const)
         : []),
       ...(this.config.microsoftClientId ? (['outlook'] as const) : []),

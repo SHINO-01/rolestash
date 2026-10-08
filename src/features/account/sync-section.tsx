@@ -6,6 +6,7 @@ import type { SyncProblem } from '@/services/sync-service';
 import { Button, IconButton } from '@/ui/components/button';
 import { QrCode } from '@/ui/components/qr-code';
 import { useToast } from '@/ui/components/toast';
+import { useAccount } from '@/ui/hooks/account';
 import { useServices } from '@/ui/hooks/services';
 import { useSyncState } from '@/ui/hooks/sync';
 import { relativeTime } from '@/ui/format';
@@ -25,6 +26,7 @@ const PROBLEM: Record<SyncProblem, string> = {
 export function SyncSection({ plan }: { plan: Plan }) {
   const { sync } = useServices();
   const state = useSyncState();
+  const boardFrom = useAccount().state?.boardFrom;
   const toast = useToast();
   const [busy, setBusy] = useState<string | null>(null);
   const [devices, setDevices] = useState<RemoteDevice[]>();
@@ -111,11 +113,17 @@ export function SyncSection({ plan }: { plan: Plan }) {
               You’re syncing the maximum {limit} devices. Remove one below to add this browser.
             </p>
           ) : null}
+          {boardFrom ? (
+            <p className="mt-2 text-sm text-amber-800 dark:text-amber-300">
+              This board has jobs from another account. Keep them or remove them (on the board)
+              before syncing.
+            </p>
+          ) : null}
           <Button
             className="mt-3"
             variant="primary"
             loading={busy === 'on'}
-            disabled={busy !== null}
+            disabled={busy !== null || boardFrom !== undefined}
             onClick={() => void turnOn()}
           >
             Sync this browser

@@ -17,6 +17,7 @@ import { Chip } from '@/ui/components/chip';
 import { Field, Input } from '@/ui/components/field';
 import { Dialog } from '@/ui/components/overlay';
 import { useToast } from '@/ui/components/toast';
+import { useServices } from '@/ui/hooks/services';
 import { useJobs, useSettings } from '@/ui/hooks/services';
 import {
   backendErrorMessage,
@@ -262,6 +263,7 @@ function SignIn({ account }: { account: AccountService }) {
 
 function SignedIn({ account, state }: { account: AccountService; state: AccountState }) {
   const toast = useToast();
+  const services = useServices();
   const { jobs } = useJobs();
   const { stages } = useSettings();
   const [busy, setBusy] = useState<string | null>(null);
@@ -441,7 +443,13 @@ function SignedIn({ account, state }: { account: AccountService; state: AccountS
           variant="ghost"
           icon={<LogOut className="size-4" />}
           disabled={busy !== null}
-          onClick={() => void run('signout', () => account.signOut())}
+          onClick={() =>
+            void run('signout', async () => {
+              // Mail access is the person's, not the browser's: it ends with them.
+              await services.mailbox?.disconnect().catch(() => undefined);
+              await account.signOut();
+            })
+          }
         >
           Sign out
         </Button>

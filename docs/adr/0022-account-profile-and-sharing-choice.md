@@ -62,7 +62,7 @@ field to fill in:
   written. Supabase passes it as `user_metadata.full_name`, which is now kept
   on the session.
 - **Email-only sign-up:** a best guess from the address, made by
-  `firstNameFrom()`: `sam.taylor` → Sam, `sakifhussain33` → Sakifhussain.
+  `firstNameFrom()`: `sam.taylor` → Sam, `jordanlee88` → Jordanlee.
 - The `display_name` column stays, unused, because migrations are
   append-only. The photo remains.
 

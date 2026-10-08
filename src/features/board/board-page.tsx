@@ -37,6 +37,7 @@ import { RatingPrompt } from '@/features/feedback/rating-prompt';
 import { ReportDialog } from '@/features/feedback/report-dialog';
 import { AccountDialog } from '@/features/account/account-dialog';
 import { PlanBanner } from '@/features/account/plan-banner';
+import { BoardFromBanner } from '@/features/account/board-from-banner';
 import { UnsortedDialog } from '@/features/email/unsorted-dialog';
 import { ProfileDialog } from '@/features/autofill/profile-dialog';
 import { allows } from '@/domain/plan';
@@ -535,6 +536,9 @@ export function BoardPage() {
         </div>
       ) : null}
       <PinTip />
+      {account && accountState?.boardFrom ? (
+        <BoardFromBanner account={account} state={accountState} />
+      ) : null}
       {accountState ? (
         <PlanBanner state={accountState} onOpenAccount={() => setDialog('account')} />
       ) : null}

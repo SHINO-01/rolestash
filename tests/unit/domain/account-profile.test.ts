@@ -39,10 +39,10 @@ describe('account profile', () => {
   });
 
   it('finds a first name from the provider, or else the email address', () => {
-    expect(firstNameFrom('Sakif Hussain', 'x@example.com')).toBe('Sakif');
+    expect(firstNameFrom('Jordan Lee', 'x@example.com')).toBe('Jordan');
     expect(firstNameFrom('Ailsa McKenzie', undefined)).toBe('Ailsa');
     expect(firstNameFrom('McKenzie', undefined)).toBe('McKenzie');
-    expect(firstNameFrom(undefined, 'sakifhussain33@gmail.com')).toBe('Sakifhussain');
+    expect(firstNameFrom(undefined, 'jordanlee88@gmail.com')).toBe('Jordanlee');
     expect(firstNameFrom(undefined, 'sam.taylor@example.com')).toBe('Sam');
     expect(firstNameFrom(undefined, 'JO_bloggs+jobs@example.com')).toBe('Jo');
     expect(firstNameFrom('  ', '12345@example.com')).toBeUndefined();

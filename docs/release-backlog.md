@@ -38,11 +38,14 @@ Help button); retake them when convenient (`npm run store:screenshots`).
   - an open board checks a connected inbox every minute, and a system
     notification says when an email changed a card off-screen;
   - Check now says when it was skipped or couldn't reach the inbox;
-  - Connect Gmail for Google's reviewer account only (`review@rolestash.com`,
-    `GMAIL_REVIEWERS`), everyone else waits for verification.
-- **Owner, before Google reviews:** create the `review@rolestash.com`
-  mailbox, sign in once, add a password (Account → Security), and give it to
-  Google in the verification form ([gmail-verification.md](guides/gmail-verification.md)).
+  - Connect Gmail for accounts with a `tester` grant only (Google's
+    reviewer), everyone else waits for verification;
+  - another account signing in on the same browser starts clean: sync,
+    the connected mailbox and email updates reset, and the previous
+    account's jobs wait for Keep or Remove instead of syncing.
+- **Owner, before Google reviews:** the reviewer account is set up (tester
+  grant, password in your password manager); give its sign-in to Google in
+  the verification form ([gmail-verification.md](guides/gmail-verification.md)).
 
 ## Adding to the backlog
 

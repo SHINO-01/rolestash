@@ -23,8 +23,8 @@ Constraints (AGENTS.md):
 - the free plan works without an account.
 
 An email address carries no name. ADR-0022's revision had removed the name
-field in favour of a guess from the address ("sakifhussain33" →
-"Sakifhussain").
+field in favour of a guess from the address ("jordanlee88" →
+"Jordanlee").
 
 ## Decision
 

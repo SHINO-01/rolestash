@@ -53,7 +53,7 @@ export function initials(displayName: string | undefined, email: string | undefi
 /**
  * The first name to greet someone by: the first word of the name their
  * provider gave (Google), or else a best guess from the email address
- * ("sam.taylor" → "Sam", "sakifhussain33" → "Sakifhussain"). Undefined when
+ * ("sam.taylor" → "Sam", "jordanlee88" → "Jordanlee"). Undefined when
  * nothing sensible is left (a number-only address, say).
  */
 export function firstNameFrom(

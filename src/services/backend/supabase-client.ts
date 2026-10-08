@@ -65,6 +65,8 @@ export interface RemoteEntitlement {
   hasBillingAccount: boolean;
   /** Granted by hand, with no subscription (ADR-0025). */
   complimentary: boolean;
+  /** Why it was granted (ADR-0035: owner, team, tester, …), when complimentary. */
+  grantReason?: string;
 }
 
 export type BackendErrorCode =
@@ -504,6 +506,7 @@ export class SupabaseClient {
       tier: row.tier ?? 'pro',
       hasBillingAccount: Boolean(row.provider_customer_id),
       complimentary: Boolean(row.complimentary),
+      ...(row.complimentary ? { grantReason: row.complimentary.slice(0, 40) } : {}),
     };
   }
 

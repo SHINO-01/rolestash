@@ -63,6 +63,13 @@ anywhere; the board must work offline.
   describes.
 - **While a modal dialog is open** (the card drawer), the tour renders inside
   it, because a modal makes the rest of the page inert.
+- **Motion:** one animation-frame loop places the spotlight, rings and card
+  directly on the DOM (no React render per frame). A new step glides for
+  320 ms with an ease-out, then everything tracks its target exactly, so a
+  scroll or a sliding drawer never makes it lag. The pulse on "Try it" steps
+  is a ring scaling and fading (transform and opacity); nothing animates the
+  dimming shadow, which would repaint the whole window each frame. Reduced
+  motion jumps instead of gliding.
 - **E2E builds don't open either guide by themselves**, because they would
   cover what tests click. A test opts in with `tour:e2eAutoStart`. The fixtures
   mark both as seen, so smoke and perf runs against the release build aren't

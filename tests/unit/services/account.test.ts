@@ -478,6 +478,7 @@ describe('AccountService session and entitlement', () => {
     await s.store.set({ 'job:keep': makeJob({ id: 'keep' }) });
     await s.account.deleteAccount();
     expect((await s.account.state()).signedIn).toBe(false);
+    // The account is gone: its jobs stay on this device, belonging to no one.
     expect(Object.keys(await s.store.get(null))).toEqual(['job:keep']);
 
     const t = await signedIn({ [`POST ${SB}/auth/v1/logout`]: { status: 500, body: {} } });
@@ -783,5 +784,79 @@ describe('AccountService profile and sharing choice (ADR-0022)', () => {
     ctx.advance(25 * 3_600_000);
     // Paddle unreachable: the last known prices stay.
     expect((await account.localPrices())?.currency).toBe('AUD');
+  });
+});
+
+describe('another account signing in on the same browser', () => {
+  const people = {
+    'sam@example.com': { id: 'u-sam', email: 'sam@example.com' },
+    'alex@example.com': { id: 'u-alex', email: 'alex@example.com' },
+  } as const;
+  function twoPeople() {
+    return setup({
+      [`POST ${SB}/auth/v1/verify`]: (c) => {
+        const email = (c.body as { email: keyof typeof people }).email;
+        return {
+          status: 200,
+          body: {
+            access_token: `a-${email}`,
+            refresh_token: `r-${email}`,
+            expires_in: 3600,
+            user: people[email],
+          },
+        };
+      },
+      [`POST ${SB}/auth/v1/logout*`]: { status: 204, body: {} },
+    });
+  }
+
+  it("never syncs or reads mail as the previous person's, and asks about their jobs", async () => {
+    const { account, store } = twoPeople();
+    await account.verifyEmailCode('sam@example.com', '123456');
+    await store.set({
+      'job:j1': makeJob({ id: 'j1' }),
+      'sync:state': { enabled: true, deviceId: 'd1', cursor: 9, seen: {} },
+      'mailbox:state': { provider: 'gmail', address: 'sam@gmail.com' },
+      'mailbox:auth': { accessToken: 'ya29.sam' },
+      'email:state': { cursor: 42 },
+    });
+    await account.signOut();
+
+    await account.verifyEmailCode('alex@example.com', '123456');
+    const left = await store.get(['sync:state', 'mailbox:state', 'mailbox:auth', 'email:state']);
+    expect(left).toEqual({});
+    expect((await account.state()).boardFrom).toEqual({ email: 'sa…@example.com', jobs: 1 });
+
+    await account.removeBoard();
+    expect(await store.get(['job:j1'])).toEqual({});
+    expect((await account.state()).boardFrom).toBeUndefined();
+  });
+
+  it('lets the new account keep the jobs, and the same person carries on untouched', async () => {
+    const { account, store } = twoPeople();
+    await account.verifyEmailCode('sam@example.com', '123456');
+    await store.set({ 'job:j1': makeJob({ id: 'j1' }), 'mailbox:state': { provider: 'gmail' } });
+    await account.signOut();
+    // Same person again: nothing reset, nothing asked.
+    await account.verifyEmailCode('sam@example.com', '123456');
+    expect(await store.get(['mailbox:state'])).toEqual({ 'mailbox:state': { provider: 'gmail' } });
+    expect((await account.state()).boardFrom).toBeUndefined();
+
+    await account.signOut();
+    await account.verifyEmailCode('alex@example.com', '123456');
+    await account.keepBoard();
+    expect((await account.state()).boardFrom).toBeUndefined();
+    expect(Object.keys(await store.get(['job:j1']))).toEqual(['job:j1']);
+  });
+
+  it('adopts an empty board without asking', async () => {
+    const { account, store } = twoPeople();
+    await account.verifyEmailCode('sam@example.com', '123456');
+    await account.signOut();
+    await account.verifyEmailCode('alex@example.com', '123456');
+    expect((await account.state()).boardFrom).toBeUndefined();
+    expect(await store.get(['account:board-owner'])).toMatchObject({
+      'account:board-owner': { id: 'u-alex' },
+    });
   });
 });

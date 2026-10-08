@@ -486,21 +486,23 @@ function ProOnly({ account }: { account: AccountService }) {
 
 /** Registers this browser as a sync device on first use; explains the limit if full. */
 function JoinSync({ children }: { children: ReactNode }) {
-  const { sync } = useServices();
+  const { sync, account } = useServices();
   const state = useSyncState();
   const [full, setFull] = useState(false);
   const [error, setError] = useState<string>();
 
   useEffect(() => {
     if (!sync || !state || state.enabled || full) return;
-    sync
-      .enable()
+    // The web board's jobs are only a synced copy: another account's copy goes.
+    void (account?.state() ?? Promise.resolve(undefined))
+      .then((a) => (a?.boardFrom ? account?.removeBoard() : undefined))
+      .then(() => sync.enable())
       .then(async (result) => {
         if (result.ok) await sync.sync();
         else setFull(true);
       })
       .catch((e: unknown) => setError(backendErrorMessage(e)));
-  }, [sync, state, full]);
+  }, [sync, account, state, full]);
 
   if (state?.enabled) return children;
   if (full)

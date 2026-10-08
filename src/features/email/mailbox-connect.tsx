@@ -24,7 +24,7 @@ export function MailboxConnect() {
   const toast = useToast();
   const [busy, setBusy] = useState<MailProvider | 'check' | 'disconnect' | null>(null);
   if (!mailbox || state === undefined) return null;
-  const providers = mailbox.providers(account?.email);
+  const providers = mailbox.providers(account?.plan.grantReason === 'tester');
 
   async function run(key: NonNullable<typeof busy>, task: () => Promise<void>) {
     setBusy(key);

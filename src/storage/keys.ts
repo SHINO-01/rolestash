@@ -37,6 +37,15 @@ export const ACCOUNT_WELCOMED_KEY = 'account:welcomed';
 /** "Skip" on the one-time "What's your name?" question; userId it applies to. */
 export const ACCOUNT_NAME_SKIPPED_KEY = 'account:name-skipped';
 
+/**
+ * Whose board this browser's jobs are (id and email), so a different
+ * account signing in doesn't sync them, or read mail, as its own.
+ * Kept across sign-out, so the same person carries on.
+ */
+export const ACCOUNT_BOARD_OWNER_KEY = 'account:board-owner';
+/** Jobs from another account are on this board, waiting for "keep" or "remove". */
+export const ACCOUNT_BOARD_FROM_KEY = 'account:board-from';
+
 export const REMINDERS_KEY = 'reminders';
 
 /** Sync bookkeeping (ADR-0016); never backed up. */

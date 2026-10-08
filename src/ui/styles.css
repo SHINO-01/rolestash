@@ -141,38 +141,51 @@ body {
   }
 }
 
-/* The product tour's spotlight: a ring around the target, the rest dimmed. */
+/* The product tour's spotlight: everything around it dimmed. Moved with
+   transforms by the tour's animation loop; nothing here animates the huge
+   shadow, which would repaint the whole window every frame. */
 .tour-spotlight {
-  box-shadow:
-    0 0 0 2px var(--jt-accent),
-    0 0 0 9999px rgb(9 9 11 / 0.55);
-  transition:
-    top 240ms cubic-bezier(0.23, 1, 0.32, 1),
-    left 240ms cubic-bezier(0.23, 1, 0.32, 1),
-    width 240ms cubic-bezier(0.23, 1, 0.32, 1),
-    height 240ms cubic-bezier(0.23, 1, 0.32, 1);
+  box-shadow: 0 0 0 9999px rgb(9 9 11 / 0.55);
+  will-change: transform, width, height;
 }
-/* "Try it" steps: the ring breathes until the task is done. */
-.tour-pulse {
-  animation: tour-pulse 1.6s ease-in-out infinite;
+/* The ring around the target, and the second one around what to act on. */
+.tour-ring {
+  border: 2px solid var(--jt-accent);
+  border-radius: 0.75rem;
+  box-sizing: border-box;
+  opacity: 0;
+  will-change: transform, width, height, opacity;
 }
-@keyframes tour-pulse {
-  50% {
-    box-shadow:
-      0 0 0 5px var(--jt-accent),
-      0 0 0 9999px rgb(9 9 11 / 0.55);
+.tour-ring-strong {
+  border-width: 3px;
+}
+/* "Try it" steps: a soft echo that grows and fades: transform and opacity
+   only, so the compositor handles it. */
+.tour-ring-pulse::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border: 2px solid var(--jt-accent);
+  border-radius: inherit;
+  animation: tour-ring-pulse 1.8s cubic-bezier(0.23, 1, 0.32, 1) infinite;
+}
+@keyframes tour-ring-pulse {
+  from {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.06);
   }
 }
-/* A second ring inside the spotlight: what to act on (the practice card). */
-.tour-highlight {
-  box-shadow: 0 0 0 3px var(--jt-accent);
+/* A new step's words settle in while the card glides: never a blank card. */
+.tour-step-in {
+  animation: tour-step-in 180ms ease-out;
 }
-.tour-pulse-ring {
-  animation: tour-pulse-ring 1.6s ease-in-out infinite;
-}
-@keyframes tour-pulse-ring {
-  50% {
-    box-shadow: 0 0 0 6px var(--jt-accent);
+@keyframes tour-step-in {
+  from {
+    opacity: 0.35;
   }
 }
 /* The widget's first-run guide: a ring on what it's talking about. */
@@ -186,11 +199,7 @@ body {
   .animate-rise {
     animation: fade-in 160ms ease-out;
   }
-  .tour-spotlight {
-    transition: none;
-  }
-  .tour-pulse,
-  .tour-pulse-ring {
+  .tour-ring-pulse::after {
     animation: none;
   }
 }

@@ -1,6 +1,6 @@
 import clsx from 'clsx';
 import { ArrowLeft, ArrowRight, Check, MousePointerClick, X } from 'lucide-react';
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { placeCard, type Box, type TourPlacement } from '../tour-placement';
 import { Button, IconButton } from './button';
@@ -64,23 +64,29 @@ export function Tour({
   closeLabel?: string;
 }) {
   const step = steps[index];
-  const { host, rect, highlight } = useTourGeometry(step?.target, step?.highlight);
   const cardRef = useRef<HTMLDivElement>(null);
+  const spotRef = useRef<HTMLDivElement>(null);
+  const ringRef = useRef<HTMLDivElement>(null);
+  const highlightRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
-  const [card, setCard] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
   const last = index === steps.length - 1;
   const first = index === 0;
-
-  // The card's own size, for placing it beside the target.
-  useLayoutEffect(() => {
-    const el = cardRef.current;
-    if (!el) return;
-    const measure = () => setCard({ width: el.offsetWidth, height: el.offsetHeight });
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [host, step?.id]);
+  const layerRef = useRef<HTMLDivElement>(null);
+  // One object for the whole tour: a new one each render would restart the
+  // animation loop, and every step would jump instead of glide.
+  const parts = useMemo(
+    () => ({
+      layer: layerRef,
+      card: cardRef,
+      spot: spotRef,
+      ring: ringRef,
+      highlight: highlightRef,
+    }),
+    [],
+  );
+  const host = useTourMotion(step, parts);
+  // The layer fades in once; moving into a drawer (a new host) mustn't flash it again.
+  const [faded, setFaded] = useState(false);
 
   // A new step: focus its title, so screen readers read it and Tab starts in the card.
   useEffect(() => {
@@ -147,39 +153,34 @@ export function Tour({
   }, [index, first, last, interactiveStep, onIndex, onEnd]);
 
   if (!step) return null;
-  const hole = rect ? inflate(rect, PAD) : undefined;
-  const position = placeCard(hole, card, step.placement ?? 'bottom', {
-    width: window.innerWidth,
-    height: window.innerHeight,
-  });
   const interactive = step.task !== undefined;
 
   return createPortal(
-    <div className="pointer-events-none fixed inset-0 z-[60]" data-tour-layer="">
-      {hole ? (
-        <div
-          aria-hidden
-          className={clsx(
-            'tour-spotlight absolute rounded-xl',
-            interactive && !taskDone && 'tour-pulse',
-          )}
-          style={{ top: hole.top, left: hole.left, width: hole.width, height: hole.height }}
-        />
-      ) : (
-        <div aria-hidden className="animate-fade-in absolute inset-0 bg-zinc-950/55" />
-      )}
-      {highlight ? (
-        <div
-          aria-hidden
-          className={clsx('tour-highlight absolute rounded-xl', !taskDone && 'tour-pulse-ring')}
-          style={{
-            top: highlight.top - PAD,
-            left: highlight.left - PAD,
-            width: highlight.width + PAD * 2,
-            height: highlight.height + PAD * 2,
-          }}
-        />
-      ) : null}
+    <div
+      ref={layerRef}
+      className={clsx('pointer-events-none fixed inset-0 z-[60]', !faded && 'animate-fade-in')}
+      onAnimationEnd={() => setFaded(true)}
+      data-tour-layer=""
+    >
+      {/* One spotlight for every step (a centred step closes it to a point), moved
+          by useTourMotion: it glides between steps and tracks its target exactly. */}
+      <div ref={spotRef} aria-hidden className="tour-spotlight absolute top-0 left-0 rounded-xl" />
+      <div
+        ref={ringRef}
+        aria-hidden
+        className={clsx(
+          'tour-ring absolute top-0 left-0',
+          interactive && !taskDone && 'tour-ring-pulse',
+        )}
+      />
+      <div
+        ref={highlightRef}
+        aria-hidden
+        className={clsx(
+          'tour-ring tour-ring-strong absolute top-0 left-0',
+          step.highlight && !taskDone && 'tour-ring-pulse',
+        )}
+      />
       {/* Outside an interactive step, the page waits: clicks land on this shield. */}
       {interactive ? null : <div className="pointer-events-auto absolute inset-0" />}
 
@@ -189,135 +190,131 @@ export function Tour({
         aria-modal={interactive ? 'false' : 'true'}
         aria-labelledby={`tour-title-${step.id}`}
         aria-describedby={`tour-body-${step.id}`}
-        className="bg-surface text-ink border-line shadow-pop animate-rise pointer-events-auto absolute flex flex-col overflow-hidden rounded-2xl border"
-        style={{
-          top: position.top,
-          left: position.left,
-          width: `min(${String(CARD_WIDTH)}px, calc(100vw - ${String(MARGIN * 2)}px))`,
-          visibility: card.width ? 'visible' : 'hidden',
-        }}
-        key={step.id}
+        className="bg-surface text-ink border-line shadow-pop pointer-events-auto absolute top-0 left-0 overflow-hidden rounded-2xl border opacity-0 transition-opacity duration-150"
+        style={{ width: `min(${String(CARD_WIDTH)}px, calc(100vw - ${String(MARGIN * 2)}px))` }}
       >
-        <div className="flex items-center gap-3 px-4 pt-3.5">
-          <div
-            className="bg-surface-3 h-1 flex-1 overflow-hidden rounded-full"
-            role="progressbar"
-            aria-label="Tour progress"
-            aria-valuemin={1}
-            aria-valuemax={steps.length}
-            aria-valuenow={index + 1}
-          >
+        <div key={step.id} className="tour-step-in flex flex-col">
+          <div className="flex items-center gap-3 px-4 pt-3.5">
             <div
-              className="bg-accent h-full rounded-full transition-[width] duration-300 motion-reduce:transition-none"
-              style={{ width: `${String(((index + 1) / steps.length) * 100)}%` }}
-            />
-          </div>
-          <span className="text-subtle text-xs tabular-nums">
-            {index + 1} of {steps.length}
-          </span>
-          <IconButton size="sm" label={closeLabel} onClick={() => onEnd('skipped')}>
-            <X className="size-4" />
-          </IconButton>
-        </div>
-
-        {step.illustration ? (
-          <div className="bg-surface-2 border-line mx-4 mt-3 overflow-hidden rounded-xl border">
-            {step.illustration}
-          </div>
-        ) : null}
-
-        <div className="px-4 pt-3 pb-1">
-          <h2
-            ref={titleRef}
-            id={`tour-title-${step.id}`}
-            tabIndex={-1}
-            className="text-[15px] leading-snug font-semibold tracking-tight outline-none"
-          >
-            {step.title}
-          </h2>
-          <div
-            id={`tour-body-${step.id}`}
-            className="text-muted mt-1.5 flex flex-col gap-2 text-[13px] leading-relaxed"
-          >
-            {step.body}
-          </div>
-        </div>
-
-        {step.task ? (
-          <div
-            className={clsx(
-              'mx-4 mt-2 flex items-center gap-2 rounded-lg px-3 py-2 text-[13px] font-medium',
-              taskDone
-                ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300'
-                : 'bg-accent-soft text-accent-ink',
-            )}
-          >
-            {taskDone ? (
-              <Check aria-hidden className="size-4 shrink-0" strokeWidth={3} />
-            ) : (
-              <MousePointerClick aria-hidden className="size-4 shrink-0" />
-            )}
-            <span role="status" className="flex-1">
-              {taskDone ? 'Nice, that’s it.' : `Try it: ${step.task.label}`}
+              className="bg-surface-3 h-1 flex-1 overflow-hidden rounded-full"
+              role="progressbar"
+              aria-label="Tour progress"
+              aria-valuemin={1}
+              aria-valuemax={steps.length}
+              aria-valuenow={index + 1}
+            >
+              <div
+                className="bg-accent h-full rounded-full transition-[width] duration-300 motion-reduce:transition-none"
+                style={{ width: `${String(((index + 1) / steps.length) * 100)}%` }}
+              />
+            </div>
+            <span className="text-subtle text-xs tabular-nums">
+              {index + 1} of {steps.length}
             </span>
-            {!taskDone && step.task.focus ? (
+            <IconButton size="sm" label={closeLabel} onClick={() => onEnd('skipped')}>
+              <X className="size-4" />
+            </IconButton>
+          </div>
+
+          {step.illustration ? (
+            <div className="bg-surface-2 border-line mx-4 mt-3 overflow-hidden rounded-xl border">
+              {step.illustration}
+            </div>
+          ) : null}
+
+          <div className="px-4 pt-3 pb-1">
+            <h2
+              ref={titleRef}
+              id={`tour-title-${step.id}`}
+              tabIndex={-1}
+              className="text-[15px] leading-snug font-semibold tracking-tight outline-none"
+            >
+              {step.title}
+            </h2>
+            <div
+              id={`tour-body-${step.id}`}
+              className="text-muted mt-1.5 flex flex-col gap-2 text-[13px] leading-relaxed"
+            >
+              {step.body}
+            </div>
+          </div>
+
+          {step.task ? (
+            <div
+              className={clsx(
+                'mx-4 mt-2 flex items-center gap-2 rounded-lg px-3 py-2 text-[13px] font-medium',
+                taskDone
+                  ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300'
+                  : 'bg-accent-soft text-accent-ink',
+              )}
+            >
+              {taskDone ? (
+                <Check aria-hidden className="size-4 shrink-0" strokeWidth={3} />
+              ) : (
+                <MousePointerClick aria-hidden className="size-4 shrink-0" />
+              )}
+              <span role="status" className="flex-1">
+                {taskDone ? 'Nice, that’s it.' : `Try it: ${step.task.label}`}
+              </span>
+              {!taskDone && step.task.focus ? (
+                <button
+                  type="button"
+                  className="text-accent-ink min-h-6 shrink-0 rounded-md px-1.5 text-xs font-semibold underline underline-offset-2"
+                  onClick={() => {
+                    const selector = step.task?.focus;
+                    if (selector) document.querySelector<HTMLElement>(selector)?.focus();
+                  }}
+                >
+                  Go to the card
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+
+          {step.action ? (
+            <div className="px-4 pt-2">
+              <Button size="sm" variant="secondary" onClick={step.action.onClick}>
+                {step.action.label}
+              </Button>
+            </div>
+          ) : null}
+
+          <div className="mt-3 flex items-center gap-2 px-4 pb-4">
+            {last || skipLabel === null ? null : (
               <button
                 type="button"
-                className="text-accent-ink min-h-6 shrink-0 rounded-md px-1.5 text-xs font-semibold underline underline-offset-2"
-                onClick={() => {
-                  const selector = step.task?.focus;
-                  if (selector) document.querySelector<HTMLElement>(selector)?.focus();
-                }}
+                onClick={() => onEnd('skipped')}
+                className="text-muted hover:text-ink rounded-md px-1 py-1 text-[13px] font-medium underline-offset-2 hover:underline"
               >
-                Go to the card
+                {skipLabel}
               </button>
-            ) : null}
-          </div>
-        ) : null}
-
-        {step.action ? (
-          <div className="px-4 pt-2">
-            <Button size="sm" variant="secondary" onClick={step.action.onClick}>
-              {step.action.label}
-            </Button>
-          </div>
-        ) : null}
-
-        <div className="mt-3 flex items-center gap-2 px-4 pb-4">
-          {last || skipLabel === null ? null : (
-            <button
-              type="button"
-              onClick={() => onEnd('skipped')}
-              className="text-muted hover:text-ink rounded-md px-1 py-1 text-[13px] font-medium underline-offset-2 hover:underline"
-            >
-              {skipLabel}
-            </button>
-          )}
-          <div className="flex-1" />
-          {first ? null : (
+            )}
+            <div className="flex-1" />
+            {first ? null : (
+              <Button
+                size="sm"
+                variant="ghost"
+                icon={<ArrowLeft className="size-4" />}
+                onClick={() => onIndex(index - 1)}
+              >
+                Back
+              </Button>
+            )}
             <Button
               size="sm"
-              variant="ghost"
-              icon={<ArrowLeft className="size-4" />}
-              onClick={() => onIndex(index - 1)}
+              variant={interactive && !taskDone ? 'secondary' : 'primary'}
+              onClick={() => (last ? onEnd('finished') : onIndex(index + 1))}
             >
-              Back
+              {first && startLabel
+                ? startLabel
+                : last
+                  ? finishLabel
+                  : interactive && !taskDone
+                    ? 'Skip step'
+                    : 'Next'}
+              {last ? null : <ArrowRight className="size-4" />}
             </Button>
-          )}
-          <Button
-            size="sm"
-            variant={interactive && !taskDone ? 'secondary' : 'primary'}
-            onClick={() => (last ? onEnd('finished') : onIndex(index + 1))}
-          >
-            {first && startLabel
-              ? startLabel
-              : last
-                ? finishLabel
-                : interactive && !taskDone
-                  ? 'Skip step'
-                  : 'Next'}
-            {last ? null : <ArrowRight className="size-4" />}
-          </Button>
+          </div>
         </div>
       </div>
     </div>,
@@ -325,27 +322,48 @@ export function Tour({
   );
 }
 
-/**
- * Where the target is, and where to render: the topmost modal dialog when
- * one is open (everything else is inert), else the body. Polled each frame
- * while the tour is up, so scrolling, resizing and opening a drawer all follow.
- */
-function useTourGeometry(
-  target: string | undefined,
-  ring: string | undefined,
-): {
-  host: HTMLElement | null;
-  rect: Box | undefined;
+/** How long the spotlight and card glide to a new step. */
+const GLIDE_MS = 320;
+
+interface TourParts {
+  layer: React.RefObject<HTMLDivElement | null>;
+  card: React.RefObject<HTMLDivElement | null>;
+  spot: React.RefObject<HTMLDivElement | null>;
+  ring: React.RefObject<HTMLDivElement | null>;
+  highlight: React.RefObject<HTMLDivElement | null>;
+}
+
+interface Frame {
+  spot: Box;
+  /** 1 when there's a target to ring, 0 for a centred step. */
+  ring: number;
   highlight: Box | undefined;
-} {
+  card: { top: number; left: number } | undefined;
+}
+
+/**
+ * Where to render (the topmost modal dialog when one is open, since it makes
+ * everything else inert; else the body) and the motion: one animation-frame
+ * loop places the spotlight, rings and card straight on the DOM, no React
+ * renders per frame. A new step glides for GLIDE_MS (ease-out); after that
+ * everything tracks its target exactly, so scrolling or a drawer sliding in
+ * never makes it lag or wobble. Reduced motion jumps instead.
+ */
+function useTourMotion(step: TourStepView | undefined, refs: TourParts): HTMLElement | null {
   const [host, setHost] = useState<HTMLElement | null>(null);
-  const [rect, setRect] = useState<Box | undefined>();
-  const [highlight, setHighlight] = useState<Box | undefined>();
+  const live = useRef(step);
+  useEffect(() => {
+    live.current = step;
+  }, [step]);
+
   useEffect(() => {
     let frame = 0;
-    // On a busy board what the step is about may be scrolled away: bring it
-    // into view once, when it's first found.
+    let stepId: string | undefined;
+    let shown: Frame | undefined;
+    let from: Frame | undefined;
+    let start = 0;
     let scrolled = false;
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const find = (selector: string | undefined) =>
       selector
         ? [...document.querySelectorAll<HTMLElement>(selector)].find(
@@ -358,28 +376,113 @@ function useTourGeometry(
         ? clip({ top: r.top, left: r.left, width: r.width, height: r.height })
         : undefined;
     };
-    const tick = () => {
+
+    const tick = (now: number) => {
+      const current = live.current;
       const modals = [...document.querySelectorAll<HTMLDialogElement>('dialog[open]')].filter((d) =>
         d.matches(':modal'),
       );
       const top = modals.at(-1) ?? null;
-      setHost((current) => (current === top ? current : top));
-      const el = find(target);
-      const ringed = find(ring);
+      setHost((h) => (h === top ? h : top));
+
+      if (current && current.id !== stepId) {
+        stepId = current.id;
+        from = shown;
+        start = now;
+        scrolled = false;
+      }
+      const el = find(current?.target);
+      const ringed = find(current?.highlight);
+      // On a busy board what the step is about may be scrolled away: bring it
+      // into view once, smoothly; the spotlight follows it there.
       if (!scrolled && (ringed ?? el)) {
         scrolled = true;
-        (ringed ?? el)?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+        (ringed ?? el)?.scrollIntoView({
+          block: 'nearest',
+          inline: 'nearest',
+          behavior: reduced ? 'auto' : 'smooth',
+        });
       }
-      const next = measure(el);
-      const nextRing = measure(ringed);
-      setRect((current) => (sameBox(current, next) ? current : next));
-      setHighlight((current) => (sameBox(current, nextRing) ? current : nextRing));
+      const target = measure(el);
+      const hole = target ? inflate(target, PAD) : undefined;
+      const viewport = { width: window.innerWidth, height: window.innerHeight };
+      const cardEl = refs.card.current;
+      const size = cardEl ? { width: cardEl.offsetWidth, height: cardEl.offsetHeight } : undefined;
+      const ringBox = measure(ringed);
+      const goal: Frame = {
+        spot: hole ?? { top: viewport.height / 2, left: viewport.width / 2, width: 0, height: 0 },
+        ring: hole ? 1 : 0,
+        highlight: ringBox ? inflate(ringBox, PAD) : undefined,
+        card:
+          size && size.width > 0
+            ? placeCard(hole, size, current?.placement ?? 'bottom', viewport)
+            : undefined,
+      };
+      const t = reduced || !from ? 1 : Math.min(1, (now - start) / GLIDE_MS);
+      shown = t < 1 && from ? mix(from, goal, 1 - (1 - t) ** 3) : goal;
+      // Inside a drawer that's still sliding in, "fixed" is relative to the
+      // drawer, not the window: measure where the layer really is, and offset.
+      const layer = refs.layer.current?.getBoundingClientRect();
+      paint(shown, refs, { top: layer?.top ?? 0, left: layer?.left ?? 0 });
       frame = requestAnimationFrame(tick);
     };
-    tick();
+    frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [target, ring]);
-  return { host, rect, highlight };
+  }, [refs]);
+
+  return host;
+}
+
+function mix(a: Frame, b: Frame, e: number): Frame {
+  const n = (x: number, y: number) => x + (y - x) * e;
+  const box = (x: Box, y: Box): Box => ({
+    top: n(x.top, y.top),
+    left: n(x.left, y.left),
+    width: n(x.width, y.width),
+    height: n(x.height, y.height),
+  });
+  return {
+    spot: box(a.spot, b.spot),
+    ring: n(a.ring, b.ring),
+    highlight: a.highlight && b.highlight ? box(a.highlight, b.highlight) : b.highlight,
+    card:
+      a.card && b.card
+        ? { top: n(a.card.top, b.card.top), left: n(a.card.left, b.card.left) }
+        : b.card,
+  };
+}
+
+/** Writes a frame to the DOM; only what changed is touched. */
+function paint(f: Frame, refs: TourParts, offset: { top: number; left: number }): void {
+  const set = (
+    el: HTMLElement | null,
+    prop: 'transform' | 'width' | 'height' | 'opacity',
+    v: string,
+  ) => {
+    if (el && el.style[prop] !== v) el.style[prop] = v;
+  };
+  const place = (el: HTMLElement | null, b: Box) => {
+    set(
+      el,
+      'transform',
+      `translate3d(${(b.left - offset.left).toFixed(1)}px, ${(b.top - offset.top).toFixed(1)}px, 0)`,
+    );
+    set(el, 'width', `${b.width.toFixed(1)}px`);
+    set(el, 'height', `${b.height.toFixed(1)}px`);
+  };
+  place(refs.spot.current, f.spot);
+  place(refs.ring.current, f.spot);
+  set(refs.ring.current, 'opacity', f.ring.toFixed(2));
+  if (f.highlight) place(refs.highlight.current, f.highlight);
+  set(refs.highlight.current, 'opacity', f.highlight ? '1' : '0');
+  if (f.card) {
+    set(
+      refs.card.current,
+      'transform',
+      `translate3d(${(f.card.left - offset.left).toFixed(1)}px, ${(f.card.top - offset.top).toFixed(1)}px, 0)`,
+    );
+    set(refs.card.current, 'opacity', '1');
+  }
 }
 
 function inflate(box: Box, by: number): Box {
@@ -398,14 +501,4 @@ function clip(box: Box): Box {
   const bottom = Math.min(box.top + box.height, window.innerHeight - PAD);
   const right = Math.min(box.left + box.width, window.innerWidth - PAD);
   return { top, left, width: Math.max(0, right - left), height: Math.max(0, bottom - top) };
-}
-
-function sameBox(a: Box | undefined, b: Box | undefined): boolean {
-  if (!a || !b) return a === b;
-  return (
-    Math.abs(a.top - b.top) < 0.5 &&
-    Math.abs(a.left - b.left) < 0.5 &&
-    Math.abs(a.width - b.width) < 0.5 &&
-    Math.abs(a.height - b.height) < 0.5
-  );
 }

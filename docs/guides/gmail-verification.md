@@ -8,29 +8,30 @@ policy). That covers sign-in only. `gmail.readonly` is a **restricted**
 scope and needs its own review: Google Cloud → Google Auth Platform → **Data
 access** → the restricted scopes section → fill in the form below.
 
-Until Google approves, release builds offer Gmail only to Google's
-reviewers: `GMAIL_VERIFIED` in `src/services/mail/gmail.ts` is `false`, so
-"Connect Gmail" shows only for a Rolestash account in `GMAIL_REVIEWERS`
-(Google's form warns against showing unverified scopes to production
-users). Staging, development and E2E builds show it to everyone, for testing
-and the video. Mailboxes connected before 0.6.3 keep working.
+Until Google approves, release builds offer Gmail only to testers:
+`GMAIL_VERIFIED` in `src/services/mail/gmail.ts` is `false`, so "Connect
+Gmail" shows only for an account with an active `tester` grant (ADR-0035),
+such as Google's reviewer. The server decides who that is; no account is
+named in the code. (Google's form warns against showing unverified scopes
+to production users.) Staging, development and E2E builds show it to
+everyone, for testing and the video. Mailboxes connected before 0.6.3 keep
+working.
 
 ## The reviewer account
 
-- **Email:** `review@rolestash.com`, listed in `GMAIL_REVIEWERS`. Only the
-  email is in the code, never a password: anyone can unpack the extension.
-- **Pro, indefinitely:** a `tester` grant (ADR-0035), which waits until the
-  address first signs in:
-  `npx tsx scripts/grants.ts grant review@rolestash.com --reason tester --apply`.
+- **Its address and password live in the owner's password manager**, never
+  in this repository (it's public).
+- **Pro, and Connect Gmail, indefinitely:** a `tester` grant:
+  `npx tsx scripts/grants.ts grant <reviewer address> --reason tester --apply`
+  (it waits until the address first signs in).
 - **Sign-in for the reviewer:** sign in once with the emailed code, then add
   a password in Account → Security (12+ characters, from a password manager)
-  and leave two-step sign-in off. Give Google the email and that password in
-  the form's test-account field, with: install Rolestash from the Chrome Web
-  Store, open the board, Account → Sign in with email and password, then
+  and leave two-step sign-in off. Give Google the address and that password
+  in the form's test-account field, with: install Rolestash from the Chrome
+  Web Store, open the board, Account → Sign in with email and password, then
   Account → Automatic status updates → Connect Gmail.
 - **After Google approves:** revoke the grant
-  (`scripts/grants.ts revoke review@rolestash.com --apply`) and remove the
-  email from `GMAIL_REVIEWERS`.
+  (`scripts/grants.ts revoke <reviewer address> --apply`).
 
 ## The form
 
@@ -104,10 +105,13 @@ not to put unverified scopes in front of production users.
    Chrome's sign-in window for extensions, which has **no address bar**, so
    show the client ID first, in a normal tab, before clicking Connect: paste
    this URL (the staging build's own redirect; nothing completes from this
-   tab) and zoom into the address bar, where `client_id=681262997873-…` and
+   tab) and zoom into the address bar, where `client_id=…` (the OAuth client ID) and
    `scope=…gmail.readonly` show:
 
-   `https://accounts.google.com/o/oauth2/v2/auth?client_id=681262997873-d085gg7n42vd4b5tl8q68ri8jm8i0vhe.apps.googleusercontent.com&response_type=token&redirect_uri=https%3A%2F%2Fbdajnmkjahhphadpdbbkibljcheonejp.chromiumapp.org%2F&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.readonly&state=demo-video&include_granted_scopes=true&prompt=consent+select_account`
+   `https://accounts.google.com/o/oauth2/v2/auth?client_id=<OAuth client ID>&response_type=token&redirect_uri=https%3A%2F%2F<staging extension ID>.chromiumapp.org%2F&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.readonly&state=demo-video&prompt=consent+select_account`
+
+   (the client ID is in Google Cloud → Credentials; the staging extension ID is
+   in `docs/guides/email-updates.md`)
 
    Then, in the real Connect Gmail window:
    - Pick the account. The **unverified app** screen appears: Google

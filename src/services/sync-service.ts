@@ -5,7 +5,7 @@ import { normalizeJob } from '@/domain/retired-stages';
 import { SettingsSchema, type Settings } from '@/domain/settings';
 import type { JobRepository } from '@/storage/job-repository';
 import type { KeyValueStore } from '@/storage/key-value-store';
-import { SYNC_LOCK_KEY, SYNC_STATE_KEY } from '@/storage/keys';
+import { ACCOUNT_BOARD_FROM_KEY, SYNC_LOCK_KEY, SYNC_STATE_KEY } from '@/storage/keys';
 import type { SettingsRepository } from '@/storage/settings-repository';
 import {
   BackendError,
@@ -95,6 +95,10 @@ export class SyncService {
 
   /** Registers this device and turns sync on, unless the plan's limit is reached. */
   async enable(): Promise<DeviceRegistration> {
+    // Jobs from another account wait for "keep" or "remove" (AccountService),
+    // so they can never sync into this one unasked.
+    if ((await this.store.get([ACCOUNT_BOARD_FROM_KEY]))[ACCOUNT_BOARD_FROM_KEY] !== undefined)
+      throw new Error('Choose what to do with the jobs from another account first.');
     const state = await this.state();
     const deviceId = state.deviceId ?? this.ctx.newId();
     const result = await this.remote.registerDevice({ id: deviceId, ...this.device });

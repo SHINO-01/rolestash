@@ -75,9 +75,10 @@ export function EmailSection({ plan, trial = false }: { plan: Plan; trial?: bool
       <section className="border-line rounded-xl border p-4">
         <Header pitch />
         <p className="text-muted mt-2 text-sm">
-          With Pro, {mailboxPitch(services.mailbox?.providers(account?.email) ?? [])} and your board
-          updates itself: applications received, assessments, interviews (with Join and map links),
-          rejections and offers. Plain rules, no AI.
+          With Pro,{' '}
+          {mailboxPitch(services.mailbox?.providers(account?.plan.grantReason === 'tester') ?? [])}{' '}
+          and your board updates itself: applications received, assessments, interviews (with Join
+          and map links), rejections and offers. Plain rules, no AI.
         </p>
       </section>
     );

@@ -96,6 +96,8 @@ export const EntitlementSchema = z.object({
   tier: z.enum(['pro', 'advanced']).optional(),
   /** Granted by hand with no subscription (ADR-0025): no renewal date, no plan changes. */
   complimentary: z.boolean().optional(),
+  /** Why a complimentary plan was granted (ADR-0035), e.g. "tester". */
+  grantReason: z.string().max(40).optional(),
   /** When this snapshot was fetched; drives the offline grace period. */
   checkedAt: IsoDateTime,
 });
@@ -122,6 +124,8 @@ export interface PlanState {
   trialDaysLeft?: number;
   /** A complimentary plan (ADR-0025): paid features with no subscription. */
   complimentary?: true;
+  /** Its reason (ADR-0035), e.g. "tester" for someone testing Rolestash. */
+  grantReason?: string;
 }
 
 const before = (now: Date, iso: string | undefined, slackDays = 0) =>
@@ -156,6 +160,7 @@ export function planOf(entitlement: Entitlement | undefined, now: Date): PlanSta
           plan: tier,
           reason: 'subscribed',
           complimentary: true,
+          ...(entitlement.grantReason ? { grantReason: entitlement.grantReason } : {}),
           ...(dated ? { endsAt: currentPeriodEnd } : {}),
         };
         break;
