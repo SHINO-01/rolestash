@@ -37,9 +37,13 @@ export interface MailConfig {
 const BACKFILL_DAYS = 14;
 /** Re-list a little before the last message seen, in case of clock skew. */
 const OVERLAP_MS = 10 * 60_000;
-/** Messages listed, and downloaded in full, per check. */
-const LIST_LIMIT = 50;
-const READ_LIMIT = 30;
+/**
+ * Per check: the newest this many likely job emails since the last check are
+ * listed, and all of them are read. Older ones beyond it (a busy inbox's
+ * backfill) are let go, so new mail is never stuck behind a backlog.
+ */
+const LIST_LIMIT = 30;
+const READ_LIMIT = LIST_LIMIT;
 const SEEN_LIMIT = 1000;
 /** Renew a token this long before it runs out. */
 const RENEW_EARLY_MS = 60_000;

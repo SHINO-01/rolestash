@@ -34,6 +34,19 @@ describe('connected mailbox: the first look (ADR-0032)', () => {
 
   it('leaves everyday mail alone', () => {
     expect(likelyJobEmail({ from: 'Mum <mum@gmail.com>', subject: 'Dinner Sunday?' })).toBe(false);
+    // Job boards: only their application mail, not the daily alerts and news.
+    expect(
+      likelyJobEmail({
+        from: 'LinkedIn <jobalerts-noreply@linkedin.com>',
+        subject: '30 new jobs for you',
+      }),
+    ).toBe(false);
+    expect(
+      likelyJobEmail({
+        from: 'LinkedIn <jobs-noreply@linkedin.com>',
+        subject: 'Sam, your application was sent to Northwind Labs',
+      }),
+    ).toBe(true);
     expect(
       likelyJobEmail({ from: 'deals@promo.shop.example', subject: '50% off this weekend' }),
     ).toBe(false);

@@ -84,6 +84,17 @@ export function EmailSection({ plan, trial = false }: { plan: Plan; trial?: bool
   const check = () =>
     run('check', async () => {
       const result = await email.run();
+      if (result.skipped) {
+        // Nothing was checked: never say "no new updates" then.
+        toast({
+          tone: 'info',
+          message:
+            result.skipped === 'busy'
+              ? 'Already checking your email. Try again in a moment.'
+              : 'Email updates are part of Pro.',
+        });
+        return;
+      }
       toast({
         tone: 'success',
         message:

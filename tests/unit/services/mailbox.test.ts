@@ -181,6 +181,62 @@ describe('Gmail sign-in (ADR-0032)', () => {
   });
 });
 
+describe('a busy inbox (owner demo, 9 October 2026)', () => {
+  it('reads new mail at once, however much older job-board mail there is', async () => {
+    // Two weeks of LinkedIn alerts and application receipts, then the interview.
+    const mail: FakeMail[] = Array.from({ length: 120 }, (_, i) => ({
+      id: `li${String(i)}`,
+      from: 'LinkedIn <jobs-noreply@linkedin.com>',
+      subject: `Sam, your application was sent to Company ${String(i)}`,
+      at: new Date(Date.parse('2026-09-23T00:00:00Z') + i * 2 * 3600_000).toISOString(),
+    }));
+    mail.push({
+      id: 'nw',
+      from: 'Sakif Hussain <shachcha01@gmail.com>',
+      subject: 'Interview invitation: Frontend Engineer at Northwind Labs',
+      at: '2026-10-05T23:59:00Z',
+      html: '<div>Thank you for applying for the Frontend Engineer role at Northwind Labs. We would like to invite you to a video interview.</div><div>When: Thursday, 15 October 2026 at 10:00am AEDT</div><div>Join: <a href="https://meet.google.com/abc-defg-hij">https://meet.google.com/abc-defg-hij</a></div><div>Kind regards,<br>Jordan Lee<br>Talent Team, Northwind Labs</div>',
+    });
+    const { store, ctx, mailbox, api } = await setup(mail);
+    const jobs = new JobRepository(store);
+    const settings = new SettingsRepository(store);
+    const jobService = new JobService(jobs, settings, ctx);
+    await jobs.save(
+      makeJob({
+        id: 'fe',
+        stageId: 'applied',
+        appliedAt: '2026-10-05T23:00:00.000Z',
+        title: 'Front End Engineer',
+        company: 'Northwind Labs',
+      }),
+    );
+    const inbox: EmailInbox = {
+      address: () =>
+        Promise.resolve({ ok: true, address: 'x@in.rolestash.com', shareLearning: true }),
+      events: () => Promise.resolve([]),
+      remove: () => Promise.resolve(),
+      vote: () => Promise.resolve(),
+      setSharing: () => Promise.resolve(),
+    };
+    const service = new EmailUpdateService(
+      store,
+      jobs,
+      settings,
+      jobService,
+      inbox,
+      { currentPlan: () => Promise.resolve('pro'), onTrial: () => Promise.resolve(false) },
+      ctx,
+      mailbox,
+    );
+    await mailbox.connect('gmail');
+    await service.run();
+    expect((await jobs.get('fe'))?.stageId).toBe('interviewing');
+    // One page of the newest, not the whole two weeks.
+    const fulls = api.calls.filter((c) => c.url.includes('format=full')).length;
+    expect(fulls).toBeLessThanOrEqual(30);
+  });
+});
+
 describe('Outlook sign-in', () => {
   it('exchanges a code with PKCE, and treats a dead refresh token as "connect again"', async () => {
     expect(() => readOutlookRedirect(`${REDIRECT}?code=c&state=x`, 'y')).toThrow(MailAuthError);

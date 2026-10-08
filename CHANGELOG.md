@@ -6,6 +6,16 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- **A connected inbox reads new job emails straight away,** however much
+  older job-board mail it holds. It used to work through the last two weeks
+  oldest first, so on a busy inbox a new email could wait many checks.
+  LinkedIn, SEEK and Indeed alerts no longer count as job emails; their
+  application emails still do.
+- **Check now says what happened:** it no longer says "Your board is up to
+  date" when the check was skipped or couldn't reach the inbox.
+
 ## [0.6.3] — 2026-10-09
 
 ### Changed

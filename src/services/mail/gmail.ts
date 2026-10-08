@@ -69,7 +69,7 @@ export function readGmailRedirect(
   };
 }
 
-/** Recruiting systems and job boards whose mail is about applications. */
+/** Recruiting systems, whose mail is about applications. */
 const RECRUITING_SENDERS = [
   'greenhouse.io',
   'greenhouse-mail.io',
@@ -88,11 +88,9 @@ const RECRUITING_SENDERS = [
   'recruitee.com',
   'pageuppeople.com',
   'jobadder.com',
-  'indeed.com',
-  'indeedemail.com',
-  'seek.com.au',
-  'linkedin.com',
 ];
+// Job boards (LinkedIn, SEEK, Indeed) aren't listed above: they send alerts and
+// news all day, and their application emails have a job word in the subject.
 const SUBJECT_WORDS = [
   'application',
   'applied',
@@ -146,22 +144,17 @@ export class GmailClient implements MailClient {
 
   async list(token: string, since: Date, limit: number, companies: readonly string[]) {
     const q = gmailQuery(since, companies);
-    const ids: string[] = [];
-    let pageToken: string | undefined;
-    // Gmail lists newest first: page to the end, so the oldest are read first.
-    do {
-      const params = new URLSearchParams({ q, maxResults: '500' });
-      if (pageToken) params.set('pageToken', pageToken);
-      const page = await getJson<{ messages?: { id: string }[]; nextPageToken?: string }>(
-        this.fetcher,
-        `${API}/messages?${params.toString()}`,
-        token,
-      );
-      ids.push(...(page.messages ?? []).map((m) => m.id));
-      pageToken = page.nextPageToken;
-    } while (pageToken && ids.length < 2000);
+    // Gmail lists newest first: the newest `limit` since the last check, so
+    // new mail never waits behind a backlog (a busy inbox's first two weeks).
+    const params = new URLSearchParams({ q, maxResults: String(limit) });
+    const page = await getJson<{ messages?: { id: string }[] }>(
+      this.fetcher,
+      `${API}/messages?${params.toString()}`,
+      token,
+    );
+    const ids = (page.messages ?? []).map((m) => m.id).slice(0, limit);
     const out = [];
-    for (const id of ids.reverse().slice(0, limit)) {
+    for (const id of ids) {
       const meta = await getJson<GmailMessage>(
         this.fetcher,
         `${API}/messages/${encodeURIComponent(id)}?format=metadata&metadataHeaders=From&metadataHeaders=Subject`,

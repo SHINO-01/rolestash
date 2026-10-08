@@ -103,7 +103,8 @@ export class OutlookClient implements MailClient {
     const params = new URLSearchParams({
       $select: 'id,subject,from,receivedDateTime',
       $filter: `receivedDateTime ge ${since.toISOString()}`,
-      $orderby: 'receivedDateTime asc',
+      // The newest `limit`, as for Gmail: new mail never waits behind a backlog.
+      $orderby: 'receivedDateTime desc',
       $top: String(limit),
     });
     const page = await getJson<{ value?: GraphMessage[] }>(
@@ -111,11 +112,13 @@ export class OutlookClient implements MailClient {
       `${GRAPH}/mailFolders/inbox/messages?${params.toString()}`,
       token,
     );
-    return (page.value ?? []).map((m) => ({
-      id: m.id,
-      receivedAt: m.receivedDateTime ?? new Date().toISOString(),
-      look: graphFirstLook(m),
-    }));
+    return (page.value ?? [])
+      .map((m) => ({
+        id: m.id,
+        receivedAt: m.receivedDateTime ?? new Date().toISOString(),
+        look: graphFirstLook(m),
+      }))
+      .sort((a, b) => a.receivedAt.localeCompare(b.receivedAt));
   }
 
   async read(token: string, id: string): Promise<EmailInput | undefined> {

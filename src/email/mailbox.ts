@@ -16,6 +16,10 @@ export type { EmailInput };
 const JOB_SUBJECT =
   /\b(application|applied|applying|apply|candidate|candidacy|interview|interviewing|assessment|assignment|coding (?:challenge|test)|take[- ]home|position|role|vacancy|opening|job|offer|opportunit(?:y|ies)|recruit\w*|hiring|talent|career|next steps|your (?:profile|submission)|thank(?:s| you) for (?:your )?(?:interest|applying)|unfortunately|regret|shortlist\w*|phone screen|screening)\b/i;
 
+/** Job boards: a flood of alerts, among a few emails about an application. */
+const JOB_BOARD_SENDER =
+  /(^|\.)(linkedin\.com|seek\.(com\.au|co\.nz|com)|indeed\.com|indeedemail\.com|glassdoor\.com)$/i;
+
 /** Mail that is never about an application, whatever its subject says. */
 const NOT_JOB_SENDER =
   /(^|\.)(facebookmail|linkedin\.email|e\.linkedin|news|newsletter|marketing|promo|offers?|deals?)\./i;
@@ -35,7 +39,14 @@ export function likelyJobEmail(look: FirstLook, companies: readonly string[] = [
   const address = /<([^>]+)>/.exec(look.from)?.[1] ?? look.from;
   const domain = address.split('@')[1]?.toLowerCase().trim() ?? '';
   if (domain && NOT_JOB_SENDER.test(domain) && !JOB_SUBJECT.test(look.subject)) return false;
-  if (domain && isPlatformDomain(domain) && !/(gmail|outlook|hotmail|yahoo|icloud)\./.test(domain))
+  // Job boards send alerts and news all day: only their application mail
+  // (a job word in the subject, below) is worth reading.
+  if (
+    domain &&
+    isPlatformDomain(domain) &&
+    !/(gmail|outlook|hotmail|yahoo|icloud)\./.test(domain) &&
+    !JOB_BOARD_SENDER.test(domain)
+  )
     return true;
   if (JOB_SUBJECT.test(look.subject)) return true;
   const haystack = `${look.from} ${look.subject}`.toLowerCase();

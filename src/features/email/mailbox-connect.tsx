@@ -31,9 +31,12 @@ export function MailboxConnect() {
       const cancelled = e instanceof Error && /cancel|closed|did not approve/i.test(e.message);
       toast({
         tone: 'error',
-        message: cancelled
-          ? 'Connection cancelled.'
-          : 'Couldn’t connect the mailbox. Allow Rolestash to read your email, then try again.',
+        message:
+          key === 'check'
+            ? 'Couldn’t check your email just now. Try again in a moment.'
+            : cancelled
+              ? 'Connection cancelled.'
+              : 'Couldn’t connect the mailbox. Allow Rolestash to read your email, then try again.',
       });
     } finally {
       setBusy(null);
@@ -43,6 +46,28 @@ export function MailboxConnect() {
   const check = async (announce: boolean) => {
     const result = await email?.run();
     if (!announce || !result) return;
+    if (result.skipped) {
+      // Nothing was checked: never say "up to date" then.
+      toast({
+        tone: 'info',
+        message:
+          result.skipped === 'busy'
+            ? 'Already checking your email. Try again in a moment.'
+            : 'Email updates are part of Pro.',
+      });
+      return;
+    }
+    const problem = (await mailbox.state())?.problem;
+    if (problem) {
+      toast({
+        tone: 'error',
+        message:
+          problem === 'reconnect'
+            ? 'Rolestash can’t read your inbox any more. Connect it again.'
+            : 'Couldn’t reach your inbox. Check your connection, then try again.',
+      });
+      return;
+    }
     const total = result.applied + result.suggested + result.unsorted;
     toast({
       tone: 'success',
