@@ -13,24 +13,33 @@ export const GMAIL_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
 /**
  * Google's restricted-scope verification of `gmail.readonly`
  * (docs/guides/gmail-verification.md). Until it's approved, Google shows
- * every user an "unverified app" warning, so release builds don't offer
- * Gmail at all; staging, development and E2E builds keep it for testing and
- * the review video. Set to true, and release, once Google approves.
+ * every user an "unverified app" warning, which the connect panel explains,
+ * and caps new users at 100. Set to true, and release, once Google approves.
+ * Both switches are typed `boolean`, so flipping one isn't a lint error.
  */
-export const GMAIL_VERIFIED = false;
+export const GMAIL_VERIFIED = false as boolean;
 
 /**
- * Whether this build offers "Connect Gmail" (given a client ID). Release
- * builds wait for GMAIL_VERIFIED, except for an account with an active
- * "tester" grant (ADR-0035), such as Google's reviewer: the server decides
- * who that is, so no account is named in the code.
+ * Release builds offer Gmail to every Pro user before verification (from
+ * 0.6.7, the owner's choice). The Google OAuth app must be "In production"
+ * for that, or Google blocks everyone who isn't a listed test user. False
+ * goes back to offering it only to testers until GMAIL_VERIFIED.
+ */
+export const GMAIL_FOR_EVERYONE = true as boolean;
+
+/**
+ * Whether this build offers "Connect Gmail" (given a client ID). Staging,
+ * development and E2E builds always do. Release builds do once it's open
+ * (verified, or GMAIL_FOR_EVERYONE), and otherwise only for an account with
+ * an active "tester" grant (ADR-0035), such as Google's reviewer: the server
+ * decides who that is, so no account is named in the code.
  */
 export function gmailOffered(
   mode: string,
   tester = false,
-  verified: boolean = GMAIL_VERIFIED,
+  open: boolean = GMAIL_VERIFIED || GMAIL_FOR_EVERYONE,
 ): boolean {
-  return verified || mode !== 'production' || tester;
+  return open || mode !== 'production' || tester;
 }
 
 const AUTHORIZE = 'https://accounts.google.com/o/oauth2/v2/auth';

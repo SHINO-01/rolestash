@@ -32,13 +32,25 @@ into the roadmap or changelog. Last reviewed 9 October 2026.
       October). Brand verification is done, but `gmail.readonly` needs
       its own restricted-scope review: submit it with the answers and video
       in [gmail-verification.md](guides/gmail-verification.md). Until then
-      only listed test users can connect, behind Google's "unverified app"
-      screen. Release builds show "Connect Gmail" only to accounts with a
-      `tester` grant until then (`GMAIL_VERIFIED = false`; the reviewer
-      account has one, and its sign-in goes in Google's form). After
-      approval, flip `GMAIL_VERIFIED`, revoke the reviewer's grant
-      and release. The homepage FAQ already says users can connect Gmail or
-      Outlook; if verification drags on, ask us to soften it.
+      Google shows its "unverified app" screen and caps new users at 100.
+      After approval, flip `GMAIL_VERIFIED`, revoke the reviewer's grant
+      and release.
+- [ ] **0.6.7, Gmail for every Pro user (on dev; submit once 0.6.6 is
+      live, so its review isn't reset):**
+  - [ ] **Owner, first:** Google Auth Platform → Audience → publishing
+        status **In production**. In Testing, Google blocks everyone who
+        isn't a listed test user.
+  - [ ] Release 0.6.7 (`npm run release`), approve the store run.
+  - [ ] **The day it's live, ours:** put Gmail back in the public copy,
+        written as available but awaiting Google's review (the warning
+        screen), with no Outlook: the homepage email benefit, fact card and
+        FAQ (and its JSON-LD), `/private-job-tracker/` (list, email section,
+        FAQ, JSON-LD, meta description), `/compare/teal/` (row and
+        "Choose Rolestash if"), `llms.txt`, the privacy policy's
+        connected-mailbox and status-updates intros, known issues (replace
+        the "waiting for Google" limitation, set the current version),
+        `PRIVACY.md`, `README.md`, and in rolestash-extension
+        `store/listing.md` plus the dashboard description and disclosures.
 - [ ] **Outlook (ADR-0032):** register the Microsoft Entra app (public
       client, `Mail.Read`), then set `WXT_MICROSOFT_CLIENT_ID` in
       rolestash-extension

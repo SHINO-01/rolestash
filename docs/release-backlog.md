@@ -42,7 +42,17 @@ Google the reviewer's sign-in in the Gmail verification form
 
 ## Next, in order
 
-Nothing waiting.
+**0.6.7**, on `dev`, to submit once 0.6.6 is live (the owner's choice, so
+0.6.6's review isn't reset):
+
+- Connect Gmail for every Pro user, before Google's verification, with a
+  note on the "unverified app" warning (`GMAIL_FOR_EVERYONE`);
+- no empty "Connect your inbox" box when nothing can be connected.
+
+**Before submitting:** the owner sets the Google OAuth app to **In
+production**. **The day it's live:** the copy checklist in
+[todo.md](todo.md) puts Gmail back on the site, in the policies and in the
+store listing.
 
 ## Adding to the backlog
 

@@ -10,6 +10,7 @@ import {
   gmailOffered,
   gmailQuery,
   GMAIL_SCOPE,
+  GMAIL_FOR_EVERYONE,
   GMAIL_VERIFIED,
   readGmailRedirect,
 } from '@/services/mail/gmail';
@@ -132,18 +133,20 @@ const dinner = {
 };
 
 describe('offering Gmail before Google verifies the scope', () => {
-  it('release builds offer it only to testers until GMAIL_VERIFIED; other builds to all', () => {
+  it('release builds offer it to everyone before verification (0.6.7); closed, only to testers', () => {
     // Flip GMAIL_VERIFIED only once Google approves (docs/guides/gmail-verification.md).
     expect(GMAIL_VERIFIED).toBe(false);
-    expect(gmailOffered('production')).toBe(false);
-    expect(gmailOffered('production', true)).toBe(true);
+    expect(GMAIL_FOR_EVERYONE).toBe(true);
+    expect(gmailOffered('production')).toBe(true);
+    expect(gmailOffered('production', false, false)).toBe(false);
+    expect(gmailOffered('production', true, false)).toBe(true);
     expect(gmailOffered('staging')).toBe(true);
     expect(gmailOffered('development')).toBe(true);
     expect(gmailOffered('e2e')).toBe(true);
     expect(gmailOffered('production', false, true)).toBe(true);
   });
 
-  it('lists Gmail for a tester in a release build', () => {
+  it('lists Gmail for everyone in a release build, testers included', () => {
     const service = new MailboxService(
       new MemoryKeyValueStore(),
       new FakeAuthFlow(),
@@ -151,7 +154,7 @@ describe('offering Gmail before Google verifies the scope', () => {
       { googleClientId: 'gid', microsoftClientId: 'mid', mode: 'production' },
       testContext('2026-10-06T00:00:00.000Z'),
     );
-    expect(service.providers()).toEqual(['outlook']);
+    expect(service.providers()).toEqual(['gmail', 'outlook']);
     expect(service.providers(true)).toEqual(['gmail', 'outlook']);
   });
 });

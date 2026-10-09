@@ -49,8 +49,8 @@ export class ChromeWebAuthFlow implements WebAuthFlow {
 
 /** OAuth client IDs for connecting a mailbox (ADR-0032); each provider is off without its own. */
 export function mailConfig(): MailConfig {
-  // Its own switch, though usually the same client as sign-in. Release builds
-  // offer Gmail only to reviewers until Google verifies the scope (gmailOffered).
+  // Its own switch, though usually the same client as sign-in. Whether release
+  // builds offer Gmail before Google verifies the scope is gmailOffered's call.
   const google = import.meta.env.WXT_GMAIL_CLIENT_ID;
   const microsoft = import.meta.env.WXT_MICROSOFT_CLIENT_ID;
   return {

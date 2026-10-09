@@ -8,14 +8,17 @@ policy). That covers sign-in only. `gmail.readonly` is a **restricted**
 scope and needs its own review: Google Cloud → Google Auth Platform → **Data
 access** → the restricted scopes section → fill in the form below.
 
-Until Google approves, release builds offer Gmail only to testers:
-`GMAIL_VERIFIED` in `src/services/mail/gmail.ts` is `false`, so "Connect
-Gmail" shows only for an account with an active `tester` grant (ADR-0035),
-such as Google's reviewer. The server decides who that is; no account is
-named in the code. (Google's form warns against showing unverified scopes
-to production users.) Staging, development and E2E builds show it to
-everyone, for testing and the video. Mailboxes connected before 0.6.3 keep
-working.
+Before Google approves: 0.6.3 to 0.6.6 offered Gmail only to accounts
+with an active `tester` grant (ADR-0035), such as Google's reviewer. From
+0.6.7 release builds offer it to every Pro user (`GMAIL_FOR_EVERYONE` in
+`src/services/mail/gmail.ts`, the owner's choice on 9 October), behind
+Google's "unverified app" warning, which the connect panel explains, and
+Google's 100-user cap for unverified apps. That needs the OAuth app's
+publishing status to be **In production** (Google Auth Platform →
+Audience); in Testing, Google blocks everyone who isn't a listed test user.
+Google's form warns against showing unverified scopes to production users;
+setting `GMAIL_FOR_EVERYONE = false` goes back to testers only. Staging,
+development and E2E builds always show it.
 
 ## The reviewer account
 
@@ -139,7 +142,8 @@ Upload to YouTube as **Unlisted** and paste the link in the form.
 ## After Google approves
 
 1. Set `GMAIL_VERIFIED = true` in `src/services/mail/gmail.ts` (and the
-   test that pins it in `tests/unit/services/mailbox.test.ts`).
+   test that pins it in `tests/unit/services/mailbox.test.ts`). That drops
+   the connect panel's warning about the unverified-app screen.
 2. Check `WXT_GMAIL_CLIENT_ID` is still set in rolestash-extension (Settings
    → Secrets and variables → Actions → Variables).
 3. Release; "Connect Gmail" appears for everyone.

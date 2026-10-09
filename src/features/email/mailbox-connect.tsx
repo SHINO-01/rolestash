@@ -1,6 +1,7 @@
 import { BellRing, Mail, RefreshCw, Unplug } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { notificationsGranted, requestNotifications } from '@/platform/notifications';
+import { GMAIL_VERIFIED } from '@/services/mail/gmail';
 import type { MailProvider } from '@/services/mail/types';
 import { Button } from '@/ui/components/button';
 import { useToast } from '@/ui/components/toast';
@@ -87,14 +88,24 @@ export function MailboxConnect() {
       await check(true);
     });
 
-  if (!state)
+  if (!state) {
+    // Nothing this build or account can connect: forwarding below is the only way.
+    if (providers.length === 0) return null;
     return (
       <div className="bg-accent-soft/60 border-accent/20 mt-3 rounded-xl border p-3.5">
         <p className="text-sm font-medium">Connect your inbox</p>
         <p className="text-muted mt-1 text-[13px]">
-          Read-only. Rolestash looks only at job emails, on this computer, and updates your board
-          when Chrome opens and every few minutes after. Nothing from your inbox is sent to us.
+          Read-only. Rolestash looks only at job emails, on this computer: about every minute while
+          your board is open, and every 5 minutes while Chrome is. Your emails are never sent to us;
+          only the update lands on the card.
         </p>
+        {providers.includes('gmail') && !GMAIL_VERIFIED ? (
+          <p className="text-muted mt-2 text-[13px]">
+            Google is still reviewing Rolestash, so it warns that the app isn’t verified. To go on,
+            choose <span className="text-ink font-medium">Advanced</span>, then{' '}
+            <span className="text-ink font-medium">Go to Rolestash</span>.
+          </p>
+        ) : null}
         <div className="mt-3 flex flex-wrap gap-2">
           {providers.map((provider) => (
             <Button
@@ -112,6 +123,7 @@ export function MailboxConnect() {
         </div>
       </div>
     );
+  }
 
   return (
     <div

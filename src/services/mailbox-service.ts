@@ -91,8 +91,8 @@ export class MailboxService {
 
   /**
    * The providers this account can connect here: each needs its OAuth client
-   * ID, and Gmail waits for Google's verification in release builds, except
-   * for testers (gmailOffered).
+   * ID, and Gmail must be open in this build or the account a tester
+   * (gmailOffered).
    */
   providers(tester = false): MailProvider[] {
     return [
