@@ -19,14 +19,13 @@ live on 9 October 2026, after 0.6.1.
 
 ## In review
 
-**0.6.7**, released on 9 October 2026, waiting for the owner's approval of
-the Release run's Chrome Web Store step:
+**0.6.7**, submitted on 9 October 2026 (Release run 37910816346):
 
 - Connect Gmail for every Pro user, before Google's verification, with a
   note on the "unverified app" warning (`GMAIL_FOR_EVERYONE`);
 - no empty "Connect your inbox" box when nothing can be connected.
 
-**Before approving:** the owner sets the Google OAuth app to **In
+**Owner, before it goes live:** the Google OAuth app must be **In
 production**. **The day it's live:** the copy checklist in
 [todo.md](todo.md) puts Gmail back on the site, in the policies and in the
 store listing; set known issues to 0.6.7; retake the store screenshots when
