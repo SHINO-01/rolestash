@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.6.7] — 2026-10-09
+
 ### Changed
 
 - **Connect Gmail is back for every Pro user:** read-only, read on your

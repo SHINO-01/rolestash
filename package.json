@@ -1,7 +1,7 @@
 {
   "name": "rolestash",
   "description": "Local-first Chrome extension that turns job postings into Kanban cards. No AI; optional accounts, sync and email updates.",
-  "version": "0.6.6",
+  "version": "0.6.7",
   "private": true,
   "license": "UNLICENSED",
   "type": "module",
