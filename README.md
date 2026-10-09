@@ -9,18 +9,21 @@ nothing from your inbox on our servers, no data selling.
 Save any job posting to a Kanban board in one click. Rolestash is a Chrome
 extension that reads the job page you're on, extracts the title, company,
 location, salary, dates and description, and files it as a card on a local
-board you drag through _Saved → Applied → Screening → Interviewing → Offer_.
+board you drag through _Saved → Applied → Interviewing → Offer_ (and
+_Rejected_).
 
 - **No AI.** Extraction is deterministic: structured data first
   (schema.org JSON-LD and microdata), then 50 hand-written site adapters, then
   conservative heuristics. Every field records where it came from.
 - **Local-first.** Your data lives in `chrome.storage.local`. The free plan
-  needs no account and makes no network requests beyond the page you capture.
+  needs no account and makes no network requests beyond the page you capture
+  (unless you send a problem report or open the sign-in screen).
   Accounts, sync and email updates are Pro, the one paid plan, on our own
-  backend (Supabase, payments by Paddle). Connected Gmail or Outlook mail is
-  read on the device, never on our servers (ADR-0032). No analytics, no remote
+  backend (Supabase, payments by Paddle). Connected Gmail is read on the
+  device, never on our servers (ADR-0032); it's offered only to testers until
+  Google verifies it, and Outlook isn't offered yet. No analytics, no remote
   code, no AI vendors.
-- **A button on job sites, reading nothing until you open it.** The floating
+- **A button on job sites that only checks for a job until you open it.** The floating
   widget's button sits at the edge of supported job sites, and of every site
   if you turn that on (ADR-0033). It checks only whether a job is open, and
   reads the page only when you open the panel.
@@ -96,7 +99,8 @@ supported sites). Contributors — human or AI agent — should read
 
 ## Status
 
-v0.4.7 (one Pro plan, the floating widget, Gmail or Outlook read on the
-device). See [`docs/roadmap.md`](docs/roadmap.md) for what's next,
+v0.6.6 (one Pro plan, the floating widget, email updates by forwarding,
+Gmail read on the device for testers until Google verifies it, the guided
+tour). See [`docs/roadmap.md`](docs/roadmap.md) for what's next,
 [`docs/todo.md`](docs/todo.md) for what's open and
 [`CHANGELOG.md`](CHANGELOG.md) for what changed.

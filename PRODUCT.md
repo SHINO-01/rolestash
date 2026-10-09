@@ -26,7 +26,7 @@ it to Chrome.
 ## Positioning
 
 The private job application tracker: no AI reads your applications, no
-inbox access, no data selling. Capture and email updates run on plain rules.
+inbox access needed, no data selling. Capture and email updates run on plain rules.
 The free plan needs no account and keeps everything in the browser; accounts
 and sync are optional and paid.
 
@@ -36,7 +36,7 @@ and sync are optional and paid.
   press Alt+J; title, company, location, salary, closing date and the
   description are filled in, uncertain fields flagged. Duplicates across sites
   merge into one card.
-- Board: Saved → Applied → Screening → Interviewing → Offer, with notes, tags,
+- Board: Saved → Applied → Interviewing → Offer (and Rejected), with notes, tags,
   priorities, closing-date warnings and a timeline; side panel beside any page.
 - Autofill on application forms (basic free; full on Pro), never demographic
   questions, never submits.

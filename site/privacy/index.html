@@ -108,11 +108,12 @@
     <main id="main" class="wrap">
       <article class="prose">
         <h1>Privacy policy</h1>
-        <p class="updated">Last updated: 7 October 2026</p>
+        <p class="updated">Last updated: 9 October 2026</p>
         <div class="callout">
           <strong>In short:</strong> the free plan keeps everything in your browser and sends
-          nothing to us. If you create an account (for a trial or Pro), we store only what's needed
-          to run it. We don't sell data, show ads, run analytics or use AI on your information.
+          nothing to us unless you send us a problem report. If you create an account (for a trial
+          or Pro), we store only what's needed to run it. We don't sell data, show ads, run
+          analytics or use AI on your information.
         </div>
 
         <h2>Who we are</h2>
@@ -140,14 +141,17 @@
           <li>
             <strong>What it stores:</strong> the job details you choose to save (title, company,
             location, salary, dates, description, posting link) and your own notes, tags and board.
-            These stay in your browser's extension storage on your device. It also remembers there
-            whether it has asked you to rate Rolestash on the Chrome Web Store.
+            These stay in your browser's extension storage on your device, with your settings. It
+            also remembers there which tips and guided-tour steps you've seen, whether it has asked
+            you to rate Rolestash on the Chrome Web Store, and, once you sign in, which account the
+            board belongs to.
           </li>
           <li>
             <strong>What it sends:</strong> nothing on its own. On the free plan the extension makes
-            no network requests except to the page you are capturing, and to us only if you send a
-            <a href="#problem-reports">problem report</a>. Your jobs leave your browser only when
-            you export a file yourself.
+            no network requests except to the page you are capturing. It contacts us only if you
+            send a <a href="#problem-reports">problem report</a>, or open Account to sign in (it
+            then asks our sign-in service which sign-in options are on, and sends nothing about
+            you). Your jobs leave your browser only when you export a file yourself.
           </li>
         </ul>
 
@@ -270,10 +274,6 @@
               <td>To show your synced devices and apply your plan's device limit</td>
             </tr>
             <tr>
-              <td>Reminder settings, if you turn on email reminders</td>
-              <td>To send the reminders you asked for</td>
-            </tr>
-            <tr>
               <td>Messages you send to support</td>
               <td>To help you</td>
             </tr>
@@ -291,35 +291,42 @@
         </p>
         <h2>Connected mailbox (Pro)</h2>
         <p>
-          If you choose to connect Gmail or Outlook, Rolestash gets read-only access to your mailbox
-          (Gmail's <code>gmail.readonly</code> permission, or Microsoft's <code>Mail.Read</code>).
-          All reading happens in the extension on your computer.
+          If you choose to connect Gmail, Rolestash gets read-only access to your mailbox (Gmail's
+          <code>gmail.readonly</code> permission). All reading happens in the extension on your
+          computer. Connecting Gmail is paused while Google reviews this access: until then it's
+          offered only to Google's reviewers, and mailboxes connected before the pause keep working.
+          Outlook can't be connected yet; this policy will be updated before it can.
         </p>
         <ul>
           <li>
             <strong>What it reads:</strong> for new messages in your inbox, the sender and subject,
-            to pick out emails about job applications (Gmail's own search narrows these first). Only
-            those emails are downloaded in full, and only to find what they mean for an application:
-            received, assessment, interview, rejection or offer. Plain rules, no AI.
+            to pick out emails about job applications (Gmail's own search narrows these first, using
+            recruiting senders, job words and the companies on your board). Only those emails are
+            downloaded in full, and only to find what they mean for an application: received,
+            assessment, interview, rejection or offer. Plain rules, no AI.
           </li>
           <li>
             <strong>What it keeps:</strong> the update it found (for example "interview, Thu 10am,
-            Zoom link"), on the job's card. Never the email. On this computer it also remembers
-            which messages it has already looked at, and your access token.
+            Zoom link"), on the job's card, with the email's subject, sender and date as the reason,
+            so you can see why the card moved and undo it. Never the email itself. On this computer
+            it also remembers which messages it has already looked at, and your access token. If you
+            turn on its notifications, an update can also show as a notification on your computer.
           </li>
           <li>
-            <strong>What is sent to us:</strong> nothing from your mailbox. Your emails, their
-            senders and subjects never reach Rolestash's servers. If you turn on sync, the job's
-            updated column and the update itself sync like any other change you make.
+            <strong>What is sent to us:</strong> your emails are never sent to Rolestash's servers,
+            and neither is your access token. If you turn on sync, the job's card syncs like any
+            other change you make, including the update and its reason (the email's subject, sender
+            and date), and is stored with the rest of your synced board in Sydney.
           </li>
           <li>
-            <strong>Who else:</strong> your computer talks directly to Google or Microsoft to read
-            the mailbox. No one else is involved.
+            <strong>Who else:</strong> your computer talks directly to Google to read the mailbox.
+            No one else is involved.
           </li>
           <li>
             <strong>Stopping:</strong> choose Disconnect in Account. Rolestash then deletes the
             access token from your computer and asks Google to revoke it. You can also remove access
-            from your Google or Microsoft account settings at any time.
+            from your Google account settings at any time. Signing out of Rolestash disconnects the
+            mailbox too.
           </li>
         </ul>
         <p>
@@ -333,10 +340,11 @@
 
         <h2>Automatic status updates (Pro)</h2>
         <p>
-          Automatic status updates work in one of two ways, and you choose: connect your Gmail or
-          Outlook mailbox (read-only, read on your computer; see the next section), or get a private
-          forwarding address and choose which emails to forward to it. With the forwarding address,
-          Rolestash never connects to your mailbox. This section is about the forwarding address.
+          Automatic status updates work in one of two ways: get a private forwarding address and
+          choose which emails to forward to it, or connect Gmail (read-only, read on your computer;
+          see the section above, including when it's available). With the forwarding address,
+          Rolestash never connects to your mailbox, but the emails you forward are read on our email
+          service. This section is about the forwarding address.
         </p>
         <ul>
           <li>
@@ -370,9 +378,9 @@
             (made with names, companies, titles, numbers, dates and links removed) with its meaning,
             and which company an email domain belongs to. It never includes email text, subjects or
             which jobs you applied for. Contributions are recorded under a one-way code instead of
-            your account, and are used only after three different accounts agree. Turn off "Help
-            improve automatic updates" when you create your account, or in Account at any time; that
-            also withdraws what you shared, as does deleting your account.
+            your account, and are used only after at least five different paying accounts agree.
+            Turn off "Help improve automatic updates" when you create your account, or in Account at
+            any time; that also withdraws what you shared, as does deleting your account.
           </li>
           <li>
             <strong>Stopping it:</strong> delete your mail filter, get a new address in Account (the
@@ -396,9 +404,10 @@
             the details shown to you before sending: the Rolestash version, your browser, your plan
             and where you sent it from, and the page's address only if you tick the box for it;
           </li>
+          <li>if you're signed in, which account sent it;</li>
           <li>
-            if you're signed in, which account sent it, and a coded (keyed hash) form of your IP
-            address, so no one can send more than 5 reports an hour.
+            a coded (keyed hash) form of your IP address, so no one can send more than 5 reports an
+            hour.
           </li>
         </ul>
         <p>
@@ -432,30 +441,35 @@
                 Payments, tax and invoicing, as merchant of record (<a
                   href="https://www.paddle.com/legal/privacy"
                   >Paddle's privacy notice</a
-                >). To show plan prices in your currency, our server passes your IP address to
-                Paddle once; neither of us stores it for this
+                >). To show plan prices in your currency, your IP address goes to Paddle: from your
+                browser on our pricing and checkout pages, or from our server when the extension or
+                web board shows prices (it keeps it in memory for up to 10 minutes and never saves
+                it)
               </td>
               <td>United Kingdom and other regions</td>
             </tr>
             <tr>
               <td>Resend</td>
               <td>
-                Sign-in, welcome, reminder and product-news emails, and copies of problem reports to
-                our support inbox
+                Sign-in codes, welcome, security alert, offer and product-news emails, replies from
+                support, and copies of problem reports to our support inbox
               </td>
               <td>United States</td>
             </tr>
             <tr>
               <td>Cloudflare</td>
               <td>
-                This website, our email forwarding, and processing emails you forward for automatic
-                status updates
+                This website, our email forwarding, processing emails you forward for automatic
+                status updates, and the internal dashboard we use to support accounts
               </td>
               <td>Global network</td>
             </tr>
             <tr>
               <td>Google</td>
-              <td>Only if you choose "Sign in with Google"</td>
+              <td>
+                Only if you choose "Sign in with Google", or connect Gmail (your computer then talks
+                to Google directly)
+              </td>
               <td>Global</td>
             </tr>
           </tbody>
@@ -477,12 +491,14 @@
         <p>
           rolestash.com uses no cookies and no analytics. If you pick light or dark mode, your
           browser remembers that choice in its local storage; it is never sent to us. Its pages load
-          no third-party scripts, with one exception: the checkout page (rolestash.com/pay/). To
-          take your payment, it loads Paddle.js from Paddle, our merchant of record, which opens
-          Paddle's secure checkout window. Paddle's checkout may set its own cookies and use its own
-          services, such as error reporting, web fonts and translation. Paddle's privacy notice
-          covers these. Our host, Cloudflare, processes technical information such as IP addresses
-          to deliver and protect the site.
+          no third-party scripts, with two exceptions: the pricing page (rolestash.com/pricing/) and
+          the checkout page (rolestash.com/pay/). They load Paddle.js from Paddle, our merchant of
+          record: on the pricing page to show prices in your currency (Paddle works out your country
+          from your IP address), and on the checkout page to open Paddle's secure checkout window.
+          Paddle.js and Paddle's checkout may set their own cookies and use their own services, such
+          as error reporting, web fonts and translation. Paddle's privacy notice covers these. Our
+          host, Cloudflare, processes technical information such as IP addresses to deliver and
+          protect the site.
         </p>
 
         <h2 id="offers">Offer emails to account holders</h2>

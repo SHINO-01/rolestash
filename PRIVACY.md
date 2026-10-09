@@ -1,7 +1,7 @@
 # Privacy
 
 Rolestash is local-first. On the free plan it keeps everything in your
-browser and sends nothing to us. Accounts, sync and email updates are
+browser and sends nothing to us unless you send a problem report. Accounts, sync and email updates are
 optional (Pro) and store only what they need. No ads, no
 analytics, no crash reporting, no data selling, and no AI services.
 
@@ -31,7 +31,7 @@ Full policy: https://rolestash.com/privacy/
   description text, the posting link), your notes, tags, contacts, interview
   rounds, document names and board settings, in the browser's extension
   storage (`chrome.storage.local`).
-- **Autofill profile (Pro):** the details you save for filling
+- **Autofill profile:** the details you save for filling
   applications stay on this device only. They are not synced, not in backups
   and never sent to us. They go only into the application page you choose,
   when you click "Fill this application". Autofill never answers demographic
@@ -69,12 +69,16 @@ Full policy: https://rolestash.com/privacy/
 - **Sync (Pro):** a copy of your board and a name for each
   synced device, stored in our database in Sydney, Australia, so your devices
   stay in step. Deleting your account deletes it.
-- **Connected mailbox (Pro, if you connect Gmail or Outlook):** read-only
-  access, read in the extension on your computer. It looks at the sender
-  and subject of new inbox mail to pick out job emails, downloads only
-  those, and keeps the update it finds on the job's card, never the email.
-  Nothing from your mailbox is sent to Rolestash's servers; the access token
-  stays on your computer, and Disconnect deletes it (and revokes Google's).
+- **Connected mailbox (Pro, if you connect Gmail):** read-only access, read
+  in the extension on your computer. Connecting Gmail is paused for everyone
+  but Google's reviewers until Google approves it (mailboxes connected
+  earlier keep working); Outlook can't be connected yet. It looks at the
+  sender and subject of new inbox mail to pick out job emails, downloads
+  only those, and keeps the update it finds on the job's card, with the
+  email's subject, sender and date as the reason, never the email. Emails
+  and the access token are never sent to Rolestash's servers; with sync on,
+  the card (update and reason included) syncs like any other change.
+  Disconnect, or signing out, deletes the token (and revokes Google's).
   Rolestash's use of information from Google APIs adheres to the Google API
   Services User Data Policy, including the Limited Use requirements.
 - **Automatic status updates by forwarding (Pro):** you get a private forwarding
@@ -87,15 +91,18 @@ Full policy: https://rolestash.com/privacy/
   correct an update, your board shares a one-way fingerprint of the email's
   template (with names, companies, numbers, dates and links removed) and
   which company an email domain belongs to, under a one-way code instead of
-  your account. Never email text, subjects or which jobs you applied to.
+  your account, used only once five paying accounts agree. Never email
+  text, subjects or which jobs you applied to.
   Untick "Help improve automatic updates" when you create your account, or
   turn it off in Account later, which also withdraws what you shared.
 
-Network: the extension talks only to the page you capture and our Supabase
-project. To show plan prices in your currency, our server asks Paddle for
-the prices for your location, which means passing on your IP address; it
-isn't stored. Checkout, billing and Google sign-in open as pages on rolestash.com,
-Paddle and Google that you see. Nothing else.
+Network: the extension talks only to the page you capture, our Supabase
+project (when you sign in, sync, use Pro features or send a problem report)
+and, if you connect Gmail, Google's Gmail API directly. To show plan prices
+in your currency, our server asks Paddle for the prices for your location,
+which means passing on your IP address; it's held in memory for up to 10
+minutes and never saved. Checkout, billing and Google sign-in open as pages
+on rolestash.com, Paddle and Google that you see. Nothing else.
 
 ## Deleting your data
 
